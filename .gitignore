@@ -33,6 +33,7 @@
 *.bsc
 *.cnt
 *.exp
+*.ipch
 *.log
 *.map
 *.opensdf
