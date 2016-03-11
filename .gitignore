@@ -28,3 +28,12 @@
 *.app
 !Bison.exe
 !Flex.exe
+
+# Visual Studio Stuff
+*.log
+*.map
+*.opensdf
+*.pdb
+*.sdf
+*.suo
+*.tlog
