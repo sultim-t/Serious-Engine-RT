@@ -1,7 +1,5 @@
 GameAgent is the replacement for gameserver management, such as the serverlist.
 
-The masterserver runs on master1.croteam.org on port 9005.
-
 Querying the masterserver can be done using UDP packets the following way:
 
   UDP Masterserver:9005 {
