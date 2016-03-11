@@ -5136,7 +5136,7 @@ void CAudioOptionsMenu::Initialize_t(void)
   gm_lhGadgets.AddTail( mgMPEGVolume.mg_lnNode);
 
   mgAudioOptionsApply.mg_bfsFontSize = BFS_LARGE;
-  mgAudioOptionsApply.mg_boxOnScreen = BoxBigRow(5/*4*/);
+  mgAudioOptionsApply.mg_boxOnScreen = BoxBigRow(4);
   mgAudioOptionsApply.mg_strText = TRANS("APPLY");
   mgAudioOptionsApply.mg_strTip = TRANS("activate selected options");
   gm_lhGadgets.AddTail( mgAudioOptionsApply.mg_lnNode);
