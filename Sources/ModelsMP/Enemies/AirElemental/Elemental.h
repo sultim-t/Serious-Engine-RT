@@ -1,0 +1,25 @@
+/* Copyright (c) 2002-2012 Croteam Ltd. All rights reserved. */
+
+// Animation names
+#define ELEMENTAL_ANIM_DEFAULT_ANIMATION 0
+#define ELEMENTAL_ANIM_RAISE 1
+#define ELEMENTAL_ANIM_IDLE 2
+#define ELEMENTAL_ANIM_FIREPROJECTILES 3
+#define ELEMENTAL_ANIM_FIRETWISTER 4
+#define ELEMENTAL_ANIM_DEATH 5
+
+// Color names
+
+// Patch names
+
+// Names of collision boxes
+#define ELEMENTAL_COLLISION_BOX_DEFAULT 0
+
+// Attaching position names
+#define ELEMENTAL_ATTACHMENT_HEADFRONT 0
+#define ELEMENTAL_ATTACHMENT_HEADBACK 1
+#define ELEMENTAL_ATTACHMENT_TAIL 2
+#define ELEMENTAL_ATTACHMENT_RIGHTARM 3
+#define ELEMENTAL_ATTACHMENT_LEFTARM 4
+
+// Sound names

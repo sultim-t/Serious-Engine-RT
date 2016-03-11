@@ -1,0 +1,23 @@
+/* Copyright (c) 2002-2012 Croteam Ltd. All rights reserved. */
+
+// Animation names
+#define GRENADELAUNCHER_ANIM_CENTERED 0
+#define GRENADELAUNCHER_ANIM_FIRE 1
+#define GRENADELAUNCHER_ANIM_WAIT1 2
+#define GRENADELAUNCHER_ANIM_WAIT2 3
+#define GRENADELAUNCHER_ANIM_ACTIVATE 4
+#define GRENADELAUNCHER_ANIM_DEACTIVATE 5
+
+// Color names
+
+// Patch names
+
+// Names of collision boxes
+#define GRENADELAUNCHER_COLLISION_BOX_PART_NAME 0
+
+// Attaching position names
+#define GRENADELAUNCHER_ATTACHMENT_GRENADE 0
+#define GRENADELAUNCHER_ATTACHMENT_BODY 1
+#define GRENADELAUNCHER_ATTACHMENT_MOVING_PART 2
+
+// Sound names

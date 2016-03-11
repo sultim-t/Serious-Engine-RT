@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{fe5c9d04-bd48-46c9-a53c-cdec2710268a}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{35dbd032-f72b-4d4e-8a14-b9dd3610bab8}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;fi;fd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{8bc7607a-1165-4c3c-9775-61fbdccad572}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;cnt;rtf;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Dependency.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StdH.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UtilityDepend.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Dependency.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StdH.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

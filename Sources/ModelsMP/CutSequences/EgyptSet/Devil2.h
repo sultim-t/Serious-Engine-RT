@@ -1,0 +1,43 @@
+/* Copyright (c) 2002-2012 Croteam Ltd. All rights reserved. */
+
+// Animation names
+#define DEVIL2_ANIM_DEFAULT 0
+#define DEVIL2_ANIM_ANGER01 1
+#define DEVIL2_ANIM_ANGER02 2
+#define DEVIL2_ANIM_CELEBRATE01 3
+#define DEVIL2_ANIM_ATTACKCLOSE 4
+#define DEVIL2_ANIM_IDLE 5
+#define DEVIL2_ANIM_ALL 6
+
+// Color names
+
+// Patch names
+
+// Names of collision boxes
+#define DEVIL2_COLLISION_BOX_default 0
+#define DEVIL2_COLLISION_BOX_ 1
+#define DEVIL2_COLLISION_BOX_ 2
+#define DEVIL2_COLLISION_BOX_ 3
+#define DEVIL2_COLLISION_BOX_ 4
+#define DEVIL2_COLLISION_BOX_ 5
+#define DEVIL2_COLLISION_BOX_ 6
+#define DEVIL2_COLLISION_BOX_ 7
+#define DEVIL2_COLLISION_BOX_ 8
+#define DEVIL2_COLLISION_BOX_ 9
+#define DEVIL2_COLLISION_BOX_ 10
+#define DEVIL2_COLLISION_BOX_ 11
+#define DEVIL2_COLLISION_BOX_ 12
+#define DEVIL2_COLLISION_BOX_ 13
+#define DEVIL2_COLLISION_BOX_ 14
+#define DEVIL2_COLLISION_BOX_ 15
+#define DEVIL2_COLLISION_BOX_ 16
+#define DEVIL2_COLLISION_BOX_ 17
+#define DEVIL2_COLLISION_BOX_ 18
+#define DEVIL2_COLLISION_BOX_ 19
+#define DEVIL2_COLLISION_BOX_ 20
+#define DEVIL2_COLLISION_BOX_ 21
+#define DEVIL2_COLLISION_BOX_ 22
+
+// Attaching position names
+
+// Sound names

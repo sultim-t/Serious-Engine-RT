@@ -1,0 +1,99 @@
+  
+// Commands (ID_* and IDM_*)  
+HID_TEXTURE_OPEN                        0x18003
+HID_RESET_VIEW                          0x18004
+HID_IMPORT_ASCIIFILE                    0x18006
+HID_IMPORT_SKELETON                     0x18007
+HID_IMPORT_ANIMSET                      0x18008
+HID_SHOW_WIREFRAME                      0x18009
+HID_SHOW_SKELETON                       0x1800A
+HID_SHOW_TEXTURE                        0x1800B
+HID_IMPORT_SMCSCRIPT                    0x1800C
+HID_IMPORT_CONVERT                      0x18010
+HID_VIEW_TREEVIEW                       0x18013
+HID_ADD_MODEL_INSTANCE                  0x18016
+HID_ADD_MESHLOD                         0x18017
+HID_ADD_SKELETONLOD                     0x18018
+HID_ADD_ANIMATION                       0x18019
+HID_DELETESELECTED                      0x1801A
+HID_ADD_MESHLIST                        0x1801B
+HID_ADD_SKELETONLIST                    0x1801D
+HID_ADD_ANIMSET                         0x1801E
+HID_ADD_TEXTURE                         0x1801F
+HID_ADD_CHILD_MODEL_INSTANCE            0x18020
+HID_SHOW_WEIGHTS                        0x18021
+HID_ADD_COLISIONBOX                     0x18022
+HID_ANIM_STOP                           0x18023
+HID_ANIM_SYNC                           0x18024
+HID_AUTO_MIPING                         0x18026
+HID_SHOW_GROUND                         0x18027
+HID_SHOW_ANIM_QUEUE                     0x18029
+HID_FILE_SAVEMI                         0x1802C
+HID_SHOW_NORMALS                        0x1802D
+HID_SHOW_LIGHTS                         0x1802E
+HID_CHANGE_AMBIENT                      0x1802F
+HID_CHANGE_LIGHTCOLOR                   0x18030
+HID_CHANGE_AMBIENTCOLOR                 0x18031
+HID_ANIM_LOOP                           0x18032
+HID_ANIM_PAUSE                          0x18033
+HID_SHOW_COLISION                       0x18034
+HID_FILE_CREATETEXTURE                  0x18035
+HID_FILE_CREATE_TEXTURE                 0x18036
+HID_FILE_X                              0x18037
+HID_FILE_SAVEMI_AS                      0x18038
+HID_FILE_RECREATETEXTURE                0x18039
+HID_VK_UP                               0x1803A
+HID_VK_DOWN                             0x1803B
+HID_VIEW_ERRORLIST                      0x1803C
+HID_VK_ESCAPE                           0x1803D
+HID_CREATE_ADD_TEXTURE                  0x1803E
+HID_ADD_ALLFRAMES_BBOX                  0x1803F
+HID_ADD_TEXTURE_SPECULAR                0x18040
+HID_ADD_TEXTURE_BUMP                    0x18041
+HID_ADD_TEXTURE_REFLECTION              0x18042
+HID_SHOW_ACTIVE_SKELETON                0x18043
+HID_SHOW_ALL_FRAMES_BBOX                0x18044
+HID_CONVERT_SELECTED                    0x18047
+HID_ALL_FRAMES_RECALC                   0x18048
+HID_ANIMATION_PLAY                      0x18049
+HID_MODELINSTANCE_SAVEWITHOFFSET        0x1804A
+HID_VK_LEFT                             0x1804B
+HID_VK_RIGHT                            0x1804C
+HID_VK_LEFT_WITH_CTRL                   0x1804D
+HID_VK_RIGHT_WITH_CTRL                  0x1804E
+HID_BBOX_RESET                          0x1804F
+HID_RESET_COLISIONBOX                   0x18050
+HID_RELOAD_TEXTURE                      0x18051
+HID_RECREATE_TEXTURE                    0x18052
+HID_BROWSE_TEXTURE                      0x18053
+HID_MI_STRETCH                          0x18055
+HID_STATUS_BAR_TEXT                     0x1EF20
+HID_VIEW_DLG_PREFS                      0x1EF21
+  
+// Prompts (IDP_*)  
+  
+// Resources (IDR_*)  
+HIDR_MAINFRAME                          0x20080
+HIDR_SERIOUTYPE                         0x20081
+HIDR_NAVIGATION                         0x20082
+HIDR_MANAGE                             0x2008B
+HIDR_POPUP_MENU                         0x20097
+  
+// Dialogs (IDD_*)  
+HIDD_ABOUTBOX                           0x20064
+HIDD_TREEBAR                            0x20089
+HIDD_PARENT                             0x2008D
+HIDD_COLISION                           0x2008E
+HIDD_ANIMSET                            0x2008F
+HIDD_LOD                                0x20090
+HIDD_SHADER                             0x20091
+HIDD_TEXTURE                            0x20092
+HIDD_LIST_OPTIONS                       0x20093
+HIDD_ERROR_LIST                         0x20094
+HIDD_ALL_FRAMES_BBOX                    0x20095
+HIDD_BONE                               0x20098
+  
+// Frame Controls (IDW_*)  
+HIDW_TOOLBAR_MAINFRAME                  0x50065
+HIDW_TOOLBAR_NAVIGATION                 0x50066
+HIDW_TOOLBAR_MANAGE                     0x50067

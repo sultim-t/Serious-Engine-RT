@@ -1,0 +1,439 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{a5d68405-1d35-4cb7-9c38-32e21b7a8e7f}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{c0cb6a5c-17d3-408c-9105-da8f8a955692}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;fi;fd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{09b86ada-4a64-448e-8a71-c9756c717110}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;cnt;rtf;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+    <Filter Include="Help Files">
+      <UniqueIdentifier>{6f0f024b-e993-48ae-8e55-97ef401a2e2b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Wizard Files">
+      <UniqueIdentifier>{b933183f-60c0-4afe-a38e-e176b4dcb145}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AnimComboBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ChildFrm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ChoosedColorButton.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ColoredButton.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CtrlEditBoolean.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgAutoMipModeling.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgChooseAnim.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgCreateReflectionTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgCreateSpecularTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgExportForSkinning.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgInfoFrame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgInfoPgAnim.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgInfoPgGlobal.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgInfoPgMip.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgInfoPgNone.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgInfoPgPos.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgInfoPgRendering.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgInfoSheet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgMarkLinkedSurfaces.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgMultiplyMapping.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgNewProgress.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgNumericAlpha.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgPgCollision.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgPgInfoAttachingPlacement.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgPgInfoAttachingSound.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgPleaseWait.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgPreferences.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LinkedSurfaceList.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MainFrm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Modeler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelerDoc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelerView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PaletteButton.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PaletteDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PatchPalette.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PatchPaletteButton.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ScriptDoc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ScriptView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SkyFloat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StainsComboBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StdAfx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureComboBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Modeler.rc">
+      <Filter>Source Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AnimComboBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ChildFrm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ChoosedColorButton.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ColoredButton.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CtrlEditBoolean.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgAutoMipModeling.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgChooseAnim.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgCreateReflectionTexture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgCreateSpecularTexture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgExportForSkinning.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgInfoFrame.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgInfoPgAnim.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dlginfopgglobal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgInfoPgMip.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgInfoPgNone.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgInfoPgPos.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgInfoPgRendering.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgInfoSheet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgMarkLinkedSurfaces.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgMultiplyMapping.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgNewProgress.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgNumericAlpha.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgPgCollision.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgPgInfoAttachingPlacement.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgPgInfoAttachingSound.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgPleaseWait.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgPreferences.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LinkedSurfaceList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MainFrm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Modeler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelerDoc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelerView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PaletteButton.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PaletteDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PatchPalette.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PatchPaletteButton.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ScriptDoc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ScriptView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SkyFloat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StainsComboBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StdAfx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureComboBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="ReadMe.txt">
+      <Filter>Source Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\animcont.bmp">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\bmp00001.bmp">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\bmp00002.bmp">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\bmp00003.bmp">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\bmp00004.bmp">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\icon1.ico">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\idr_scri.ico">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\mipandli.bmp">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\Modeler.ico">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\Modeler.rc2">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\ModelerDoc.ico">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\nullcurs.cur">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\pick.ico">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\renderco.bmp">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\stain_ac.ico">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\stain_in.ico">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\stainsco.bmp">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\texturec.bmp">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\Toolbar.bmp">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\toolbar1.bmp">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\AfxCore.rtf">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\AppExit.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\Bullet.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\CurArw2.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\CurArw4.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\CurHelp.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\EditCopy.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\EditCut.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\EditPast.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\EditUndo.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\FileNew.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\FileOpen.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\FilePrnt.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\FileSave.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\HlpSBar.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\HlpTBar.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="MakeHelp.bat">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\Modeler.cnt">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\Modeler.hm">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\Modeler.hpj">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\Modeler.ph">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\RecFirst.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\RecLast.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\RecNext.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\RecPrev.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\Scmax.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\ScMenu.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\Scmin.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Modeler.clw">
+      <Filter>Wizard Files</Filter>
+    </CustomBuild>
+  </ItemGroup>
+</Project>

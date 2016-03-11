@@ -1,0 +1,423 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Template|Win32">
+      <Configuration>Template</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <Keyword>MFCProj</Keyword>
+    <ProjectGuid>{DC47DA88-14E2-0634-61C5-7CEEC46A45C2}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>Release\</OutDir>
+    <IntDir>Release\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir);$(SolutionDir)..\Tools.Win32\Libraries\DX8SDK\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\Bin;$(SolutionDir)..\Tools.Win32\Libraries\DX8SDK\Lib;$(LibraryPath)</LibraryPath>
+    <TargetName>SeriousEditor</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>Debug\</OutDir>
+    <IntDir>Debug\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir);$(SolutionDir)..\Tools.Win32\Libraries\DX8SDK\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\Bin\Debug;$(SolutionDir)..\Tools.Win32\Libraries\DX8SDK\Lib;$(LibraryPath)</LibraryPath>
+    <TargetName>SeriousEditor</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <Optimization>MaxSpeed</Optimization>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level3</WarningLevel>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <OmitFramePointers>false</OmitFramePointers>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;DIRECT3D_VERSION=0x0800;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AssemblerListingLocation>.\Release\</AssemblerListingLocation>
+      <PrecompiledHeaderOutputFile>.\Release\WorldEditor.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <ObjectFileName>.\Release\</ObjectFileName>
+      <ProgramDataBaseFileName>.\Release\</ProgramDataBaseFileName>
+      <DisableSpecificWarnings>4996;4333</DisableSpecificWarnings>
+    </ClCompile>
+    <Midl>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TypeLibraryName>.\Release\WorldEditor.tlb</TypeLibraryName>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <TargetEnvironment>Win32</TargetEnvironment>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Release\WorldEditor.bsc</OutputFile>
+    </Bscmake>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>game.lib gamemp.lib gamegui.lib gameguimp.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <OutputFile>Release/SeriousEditor.exe</OutputFile>
+      <AdditionalDependencies>htmlhelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateMapFile>true</GenerateMapFile>
+    </Link>
+    <CustomBuildStep>
+      <Command>copy Release\$(TargetName).exe $(SolutionDir)..\Bin\ &gt;nul
+copy Release\$(TargetName).map $(SolutionDir)..\Bin\ &gt;nul</Command>
+      <Message>Copying %(Filename) binaries to $(ENGINE_DIR)\Bin</Message>
+      <Outputs>$(ENGINE_DIR)\Bin\$(InputName).exe;%(Outputs)</Outputs>
+    </CustomBuildStep>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <Optimization>Disabled</Optimization>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level3</WarningLevel>
+      <MinimalRebuild>true</MinimalRebuild>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;DIRECT3D_VERSION=0x0800;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AssemblerListingLocation>.\Debug\</AssemblerListingLocation>
+      <PrecompiledHeaderOutputFile>.\Debug\WorldEditor.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <ObjectFileName>.\Debug\</ObjectFileName>
+      <ProgramDataBaseFileName>.\Debug\</ProgramDataBaseFileName>
+      <DisableSpecificWarnings>4996;4333</DisableSpecificWarnings>
+    </ClCompile>
+    <Midl>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TypeLibraryName>.\Debug\WorldEditor.tlb</TypeLibraryName>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <TargetEnvironment>Win32</TargetEnvironment>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Debug\WorldEditor.bsc</OutputFile>
+    </Bscmake>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>gamed.lib gamempd.lib gameguid.lib gameguimpd.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <OutputFile>Debug/SeriousEditor.exe</OutputFile>
+      <AdditionalDependencies>htmlhelp.lib;EngineD.lib;EngineGUID.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateMapFile>true</GenerateMapFile>
+    </Link>
+    <CustomBuildStep>
+      <Command>copy Debug\$(TargetName).exe $(SolutionDir)..\Bin\Debug\ &gt;nul
+copy Debug\$(TargetName).map $(SolutionDir)..\Bin\Debug\ &gt;nul</Command>
+      <Message>Copying %(Filename) binaries to $(ENGINE_DIR)\Bin\Debug</Message>
+      <Outputs>$(ENGINE_DIR)\Bin\Debug\$(InputName).exe;%(Outputs)</Outputs>
+    </CustomBuildStep>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="ActiveTextureWnd.cpp" />
+    <ClCompile Include="Browser.cpp" />
+    <ClCompile Include="BrowseWindow.cpp" />
+    <ClCompile Include="BrushPaletteWnd.cpp" />
+    <ClCompile Include="ChildFrm.cpp" />
+    <ClCompile Include="ColoredButton.cpp" />
+    <ClCompile Include="ColorPaletteWnd.cpp" />
+    <ClCompile Include="CSGDesitnationCombo.cpp" />
+    <ClCompile Include="CtlTipOfTheDayText.cpp" />
+    <ClCompile Include="CtrlAxisRadio.cpp" />
+    <ClCompile Include="CtrlBrowseFile.cpp" />
+    <ClCompile Include="CtrlEditBoolean.cpp" />
+    <ClCompile Include="CtrlEditFlags.cpp" />
+    <ClCompile Include="CtrlEditFloat.cpp" />
+    <ClCompile Include="CtrlEditString.cpp" />
+    <ClCompile Include="CtrlEnumCombo.cpp" />
+    <ClCompile Include="CustomComboWnd.cpp" />
+    <ClCompile Include="DlgAllignVertices.cpp" />
+    <ClCompile Include="DlgAutoDeltaCSG.cpp" />
+    <ClCompile Include="DlgAutTexturize.cpp" />
+    <ClCompile Include="DlgBrowseByClass.cpp" />
+    <ClCompile Include="DlgComment.cpp" />
+    <ClCompile Include="DlgCreateVirtualDirectory.cpp" />
+    <ClCompile Include="DlgDisplaceMapSize.cpp" />
+    <ClCompile Include="DlgEditFloat.cpp" />
+    <ClCompile Include="DlgEditTerrainBrush.cpp" />
+    <ClCompile Include="DlgEditTerrainLayer.cpp" />
+    <ClCompile Include="DlgFilterPolygonSelection.cpp" />
+    <ClCompile Include="DlgFilterVertexSelection.cpp" />
+    <ClCompile Include="DlgGenerateFBM.cpp" />
+    <ClCompile Include="DlgLightAnimationEditor.cpp" />
+    <ClCompile Include="DlgLinkTree.cpp" />
+    <ClCompile Include="DlgMirrorAndStretch.cpp" />
+    <ClCompile Include="DlgNumericAlpha.cpp" />
+    <ClCompile Include="DlgPgGlobal.cpp" />
+    <ClCompile Include="DlgPgPolygon.cpp" />
+    <ClCompile Include="DlgPgPosition.cpp" />
+    <ClCompile Include="DlgPgPrimitive.cpp" />
+    <ClCompile Include="DlgPgRenderingStatistics.cpp" />
+    <ClCompile Include="DlgPgSector.cpp" />
+    <ClCompile Include="DlgPgShadow.cpp" />
+    <ClCompile Include="DlgPgTerrain.cpp" />
+    <ClCompile Include="DlgPgTexture.cpp" />
+    <ClCompile Include="DlgPreferences.cpp" />
+    <ClCompile Include="DlgProgress.cpp" />
+    <ClCompile Include="DlgRenderingPreferences.cpp" />
+    <ClCompile Include="DlgSelectByName.cpp" />
+    <ClCompile Include="DlgSnapVertex.cpp" />
+    <ClCompile Include="DlgStretchChildOffset.cpp" />
+    <ClCompile Include="DlgTEOperationSettings.cpp" />
+    <ClCompile Include="DlgTerrainProperties.cpp" />
+    <ClCompile Include="DlgTipOfTheDay.cpp" />
+    <ClCompile Include="DlgTreeShortcuts.cpp" />
+    <ClCompile Include="DlgWorldSettings.cpp" />
+    <ClCompile Include="EditMipSwitchDistance.cpp" />
+    <ClCompile Include="EntitySelectionListBox.cpp" />
+    <ClCompile Include="InfoFrame.cpp" />
+    <ClCompile Include="InfoSheet.cpp" />
+    <ClCompile Include="MainFrm.cpp" />
+    <ClCompile Include="PrimitiveHistoryCombo.cpp" />
+    <ClCompile Include="PropertyComboBar.cpp" />
+    <ClCompile Include="PropertyComboBox.cpp" />
+    <ClCompile Include="SkyFloat.cpp" />
+    <ClCompile Include="StdAfx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">stdafx.h</PrecompiledHeaderFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">stdafx.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <ClCompile Include="TerrainEditing.cpp" />
+    <ClCompile Include="TerrainInterface.cpp" />
+    <ClCompile Include="ToolTipWnd.cpp" />
+    <ClCompile Include="TriangularisationCombo.cpp" />
+    <ClCompile Include="Viewers.cpp" />
+    <ClCompile Include="ViewTexture.cpp" />
+    <ClCompile Include="VirtualTreeCtrl.cpp" />
+    <ClCompile Include="VirtualTreeNode.cpp" />
+    <ClCompile Include="WndAnimationFrames.cpp" />
+    <ClCompile Include="WndDisplayTexture.cpp" />
+    <ClCompile Include="WndTerrainTilePalette.cpp" />
+    <ClCompile Include="WndTestAnimation.cpp" />
+    <ClCompile Include="WorldEditor.cpp" />
+    <ClCompile Include="WorldEditorDoc.cpp" />
+    <ClCompile Include="WorldEditorView.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="ReadMe.txt" />
+    <CustomBuild Include="..\..\Flesh\Data\SED_TipOfTheDay.txt" />
+    <CustomBuild Include="arrowcop.cur" />
+    <CustomBuild Include="res\bmp00001.bmp" />
+    <CustomBuild Include="res\bmp00002.bmp" />
+    <CustomBuild Include="res\bmp00003.bmp" />
+    <CustomBuild Include="RES\bmp00004.bmp" />
+    <CustomBuild Include="res\bmp00005.bmp" />
+    <CustomBuild Include="res\bmp00006.bmp" />
+    <CustomBuild Include="res\csg_tool.bmp" />
+    <CustomBuild Include="RES\cur00001.cur" />
+    <CustomBuild Include="RES\cur00002.cur" />
+    <CustomBuild Include="RES\cur00003.cur" />
+    <CustomBuild Include="RES\cur00004.cur" />
+    <CustomBuild Include="res\cut_curs.ico" />
+    <CustomBuild Include="res\cut_line.cur" />
+    <CustomBuild Include="res\director.bmp" />
+    <CustomBuild Include="res\ico00001.ico" />
+    <CustomBuild Include="res\ico00002.ico" />
+    <CustomBuild Include="res\ico00003.ico" />
+    <CustomBuild Include="res\ico00004.ico" />
+    <CustomBuild Include="res\ico00005.ico" />
+    <CustomBuild Include="res\ico00006.ico" />
+    <CustomBuild Include="res\ico00007.ico" />
+    <CustomBuild Include="res\ico00008.ico" />
+    <CustomBuild Include="res\ico00009.ico" />
+    <CustomBuild Include="res\ico00010.ico" />
+    <CustomBuild Include="res\ico00011.ico" />
+    <CustomBuild Include="res\ico00012.ico" />
+    <CustomBuild Include="res\ico00013.ico" />
+    <CustomBuild Include="res\ico00014.ico" />
+    <CustomBuild Include="res\ico00015.ico" />
+    <CustomBuild Include="res\ico00016.ico" />
+    <CustomBuild Include="res\ico00017.ico" />
+    <CustomBuild Include="res\ico00018.ico" />
+    <CustomBuild Include="res\ico00019.ico" />
+    <CustomBuild Include="res\ico00020.ico" />
+    <CustomBuild Include="res\ico00021.ico" />
+    <CustomBuild Include="res\ico00022.ico" />
+    <CustomBuild Include="res\ico00023.ico" />
+    <CustomBuild Include="res\ico00024.ico" />
+    <CustomBuild Include="res\ico00025.ico" />
+    <CustomBuild Include="res\ico00026.ico" />
+    <CustomBuild Include="RES\ico00027.ico" />
+    <CustomBuild Include="res\icon1.ico" />
+    <CustomBuild Include="res\idr_icon.ico" />
+    <CustomBuild Include="res\mainfram.bmp" />
+    <CustomBuild Include="res\mirror1.cur" />
+    <CustomBuild Include="RES\te_erase.cur" />
+    <CustomBuild Include="RES\te_heigh.cur" />
+    <CustomBuild Include="RES\te_layer.cur" />
+    <CustomBuild Include="RES\te_max1.cur" />
+    <CustomBuild Include="RES\te_min1.cur" />
+    <CustomBuild Include="RES\te_noise.cur" />
+    <CustomBuild Include="RES\te_pick.cur" />
+    <CustomBuild Include="RES\te_pick1.cur" />
+    <CustomBuild Include="RES\te_poste.cur" />
+    <CustomBuild Include="res\TipOfTheDay.bmp" />
+    <CustomBuild Include="res\Toolbar.bmp" />
+    <CustomBuild Include="res\toolbar1.bmp" />
+    <CustomBuild Include="res\view_too.bmp" />
+    <CustomBuild Include="res\WorldEditor.ico" />
+    <CustomBuild Include="res\WorldEditor.rc2">
+      <FileType>RC</FileType>
+    </CustomBuild>
+    <CustomBuild Include="res\WorldEditorDoc.ico" />
+    <CustomBuild Include="WorldEditor.clw">
+      <FileType>Document</FileType>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="WorldEditor.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ActiveTextureWnd.h" />
+    <ClInclude Include="Browser.h" />
+    <ClInclude Include="browsewindow.h" />
+    <ClInclude Include="BrushPaletteWnd.h" />
+    <ClInclude Include="ChildFrm.h" />
+    <ClInclude Include="coloredbutton.h" />
+    <ClInclude Include="ColorPaletteWnd.h" />
+    <ClInclude Include="CSGDesitnationCombo.h" />
+    <ClInclude Include="CtlTipOfTheDayText.h" />
+    <ClInclude Include="ctrlaxisradio.h" />
+    <ClInclude Include="CtrlBrowseFile.h" />
+    <ClInclude Include="CtrlEditBoolean.h" />
+    <ClInclude Include="CtrlEditFlags.h" />
+    <ClInclude Include="CtrlEditFloat.h" />
+    <ClInclude Include="CtrlEditString.h" />
+    <ClInclude Include="CtrlEnumCombo.h" />
+    <ClInclude Include="CustomComboWnd.h" />
+    <ClInclude Include="DlgAllignVertices.h" />
+    <ClInclude Include="DlgAutoDeltaCSG.h" />
+    <ClInclude Include="DlgAutTexturize.h" />
+    <ClInclude Include="DlgBrowseByClass.h" />
+    <ClInclude Include="DlgComment.h" />
+    <ClInclude Include="DlgCreateVirtualDirectory.h" />
+    <ClInclude Include="DlgDisplaceMapSize.h" />
+    <ClInclude Include="DlgEditFloat.h" />
+    <ClInclude Include="DlgEditTerrainBrush.h" />
+    <ClInclude Include="DlgEditTerrainLayer.h" />
+    <ClInclude Include="DlgFilterPolygonSelection.h" />
+    <ClInclude Include="DlgFilterVertexSelection.h" />
+    <ClInclude Include="DlgGenerateFBM.h" />
+    <ClInclude Include="DlgLightAnimationEditor.h" />
+    <ClInclude Include="DlgLinkTree.h" />
+    <ClInclude Include="DlgMirrorAndStretch.h" />
+    <ClInclude Include="DlgNumericAlpha.h" />
+    <ClInclude Include="DlgPgGlobal.h" />
+    <ClInclude Include="DlgPgPolygon.h" />
+    <ClInclude Include="DlgPgPosition.h" />
+    <ClInclude Include="DlgPgPrimitive.h" />
+    <ClInclude Include="DlgPgRenderingStatistics.h" />
+    <ClInclude Include="DlgPgSector.h" />
+    <ClInclude Include="DlgPgShadow.h" />
+    <ClInclude Include="DlgPgTerrain.h" />
+    <ClInclude Include="DlgPgTexture.h" />
+    <ClInclude Include="DlgPreferences.h" />
+    <ClInclude Include="DlgProgress.h" />
+    <ClInclude Include="DlgRenderingPreferences.h" />
+    <ClInclude Include="DlgSelectByName.h" />
+    <ClInclude Include="DlgSnapVertex.h" />
+    <ClInclude Include="DlgStretchChildOffset.h" />
+    <ClInclude Include="DlgTEOperationSettings.h" />
+    <ClInclude Include="DlgTerrainProperties.h" />
+    <ClInclude Include="DlgTipOfTheDay.h" />
+    <ClInclude Include="DlgTreeShortcuts.h" />
+    <ClInclude Include="dlgworldsettings.h" />
+    <ClInclude Include="EditMipSwitchDistance.h" />
+    <ClInclude Include="EntitySelectionListBox.h" />
+    <ClInclude Include="InfoFrame.h" />
+    <ClInclude Include="InfoSheet.h" />
+    <ClInclude Include="MainFrm.h" />
+    <ClInclude Include="PrimitiveHistoryCombo.h" />
+    <ClInclude Include="PropertyComboBar.h" />
+    <ClInclude Include="PropertyComboBox.h" />
+    <CustomBuild Include="resource.h">
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">makehm ID_,HID_,0x10000 IDM_,HIDM_,0x10000 resource.h &gt;&gt;"hlp\resources.hm"</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Building help ids from %(FullPath)</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">hlp\resources.hm;%(Outputs)</Outputs>
+    </CustomBuild>
+    <ClInclude Include="SkyFloat.h" />
+    <ClInclude Include="StdAfx.h" />
+    <ClInclude Include="TerrainEditing.h" />
+    <ClInclude Include="TerrainInterface.h" />
+    <ClInclude Include="ToolTipWnd.h" />
+    <ClInclude Include="TriangularisationCombo.h" />
+    <ClInclude Include="Viewers.h" />
+    <ClInclude Include="ViewTexture.h" />
+    <ClInclude Include="VirtualTreeCtrl.h" />
+    <ClInclude Include="VirtualTreeNode.h" />
+    <ClInclude Include="WndAnimationFrames.h" />
+    <ClInclude Include="WndDisplayTexture.h" />
+    <ClInclude Include="WndTerrainTilePalette.h" />
+    <ClInclude Include="WndTestAnimation.h" />
+    <ClInclude Include="WorldEditor.h" />
+    <ClInclude Include="WorldEditorDoc.h" />
+    <ClInclude Include="WorldEditorView.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

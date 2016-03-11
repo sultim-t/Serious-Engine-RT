@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{0020fbb2-e50f-49f1-b4bc-17cc8c0c186a}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;hpj;bat;for;f90</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{24e0bef6-bc2a-407e-83b9-786e62b24e82}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;fi;fd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{91274eac-444b-46e6-9d11-beaf0fa96d2d}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;cnt;rtf;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="MakeFONT.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

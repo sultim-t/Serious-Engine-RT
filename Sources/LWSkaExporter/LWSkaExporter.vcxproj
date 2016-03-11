@@ -1,0 +1,262 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Template|Win32">
+      <Configuration>Template</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <ProjectGuid>{ACF94A1E-A365-0A7E-A849-CBA468D5EFCF}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>Release\</OutDir>
+    <IntDir>Release\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir);$(SolutionDir)..\Tools.Win32\Libraries\DX8SDK\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\Bin;$(SolutionDir)..\Tools.Win32\Libraries\DX8SDK\Lib;$(LibraryPath)</LibraryPath>
+    <TargetExt>.p</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>Debug\</OutDir>
+    <IntDir>Debug\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir);$(SolutionDir)..\Tools.Win32\Libraries\DX8SDK\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\Bin\Debug;$(SolutionDir)..\Tools.Win32\Libraries\DX8SDK\Lib;$(LibraryPath)</LibraryPath>
+    <TargetExt>.p</TargetExt>
+    <TargetName>$(ProjectName)D</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <Optimization>MaxSpeed</Optimization>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level3</WarningLevel>
+      <AdditionalIncludeDirectories>.\SDK;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;WIN32;_WINDOWS;_USRDLL;LWSKAEXPORTER_EXPORTS;_X86_;_WIN32;DIRECT3D_VERSION=0x0800;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AssemblerListingLocation>.\Release\</AssemblerListingLocation>
+      <BrowseInformation>true</BrowseInformation>
+      <PrecompiledHeaderOutputFile>.\Release\LWSkaExporter.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <ObjectFileName>Release\</ObjectFileName>
+      <ProgramDataBaseFileName>Release\</ProgramDataBaseFileName>
+      <DisableSpecificWarnings>4996;4333</DisableSpecificWarnings>
+    </ClCompile>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <Midl>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TypeLibraryName>.\Release\LWSkaExporter.tlb</TypeLibraryName>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <TargetEnvironment>Win32</TargetEnvironment>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Release\LWSkaExporter.bsc</OutputFile>
+    </Bscmake>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <LinkDLL>true</LinkDLL>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <OutputFile>Release/LWSkaExporter.p</OutputFile>
+      <ImportLibrary>.\Release\LWSkaExporter.lib</ImportLibrary>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ModuleDefinitionFile>.\serv.def</ModuleDefinitionFile>
+    </Link>
+    <CustomBuildStep>
+      <Command>copy Release\$(TargetName).p $(SolutionDir)..\Bin\ &gt;nul
+copy Release\$(TargetName).map $(SolutionDir)..\Bin\ &gt;nul</Command>
+    </CustomBuildStep>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <Optimization>Disabled</Optimization>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level3</WarningLevel>
+      <MinimalRebuild>true</MinimalRebuild>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>.\SDK;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_DEBUG;WIN32;_WINDOWS;_USRDLL;LWSKAEXPORTER_EXPORTS;_X86_;_WIN32;DIRECT3D_VERSION=0x0800;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AssemblerListingLocation>Debug\</AssemblerListingLocation>
+      <BrowseInformation>true</BrowseInformation>
+      <PrecompiledHeaderOutputFile>.\Debug\LWSkaExporter.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <ObjectFileName>Debug\</ObjectFileName>
+      <ProgramDataBaseFileName>Debug\</ProgramDataBaseFileName>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <DisableSpecificWarnings>4996;4333</DisableSpecificWarnings>
+    </ClCompile>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+      <Message>
+      </Message>
+    </PostBuildEvent>
+    <Midl>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TypeLibraryName>.\Debug\LWSkaExporter.tlb</TypeLibraryName>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <TargetEnvironment>Win32</TargetEnvironment>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Debug\LWSkaExporter.bsc</OutputFile>
+    </Bscmake>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <LinkDLL>true</LinkDLL>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <OutputFile>Debug/LWSkaExporterD.p</OutputFile>
+      <ImportLibrary>.\Debug\LWSkaExporterD.lib</ImportLibrary>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ModuleDefinitionFile>.\serv.def</ModuleDefinitionFile>
+      <GenerateMapFile>true</GenerateMapFile>
+    </Link>
+    <CustomBuildStep>
+      <Command>copy Debug\$(TargetName).p $(SolutionDir)..\Bin\Debug\ &gt;nul
+copy Debug\$(TargetName).map $(SolutionDir)..\Bin\Debug\ &gt;nul</Command>
+    </CustomBuildStep>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="AnimExport.cpp" />
+    <ClCompile Include="CopyWeightMaps.cpp" />
+    <ClCompile Include="Master.cpp" />
+    <ClCompile Include="MeshExport.cpp" />
+    <ClCompile Include="ModelerMeshExporter.cpp" />
+    <ClCompile Include="plugin.cpp" />
+    <ClCompile Include="SectionsExport.cpp" />
+    <ClCompile Include="servmain.c" />
+    <ClCompile Include="shutdown.c" />
+    <ClCompile Include="startup.c" />
+    <ClCompile Include="SurfaceParameters.cpp" />
+    <ClCompile Include="username.c" />
+    <ClCompile Include="vecmat.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="serv.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Base.h" />
+    <ClInclude Include="vecmat.h" />
+    <ClInclude Include="SDK\lwanimlod.h" />
+    <ClInclude Include="SDK\lwanimsav.h" />
+    <ClInclude Include="SDK\lwchannel.h" />
+    <ClInclude Include="SDK\lwcmdseq.h" />
+    <ClInclude Include="SDK\lwcustobj.h" />
+    <ClInclude Include="SDK\lwdialog.h" />
+    <ClInclude Include="SDK\lwdisplay.h" />
+    <ClInclude Include="SDK\lwdisplce.h" />
+    <ClInclude Include="SDK\lwdyna.h" />
+    <ClInclude Include="SDK\lwenvel.h" />
+    <ClInclude Include="SDK\lwenviron.h" />
+    <ClInclude Include="SDK\lwfilter.h" />
+    <ClInclude Include="SDK\lwframbuf.h" />
+    <ClInclude Include="SDK\lwgeneric.h" />
+    <ClInclude Include="SDK\lwglobsrv.h" />
+    <ClInclude Include="SDK\lwhandler.h" />
+    <ClInclude Include="SDK\lwhost.h" />
+    <ClInclude Include="SDK\lwimage.h" />
+    <ClInclude Include="SDK\lwimageio.h" />
+    <ClInclude Include="SDK\lwio.h" />
+    <ClInclude Include="SDK\lwmaster.h" />
+    <ClInclude Include="SDK\lwmath.h" />
+    <ClInclude Include="SDK\lwmeshedt.h" />
+    <ClInclude Include="SDK\lwmeshes.h" />
+    <ClInclude Include="SDK\lwmodeler.h" />
+    <ClInclude Include="SDK\lwmodtool.h" />
+    <ClInclude Include="SDK\lwmodule.h" />
+    <ClInclude Include="SDK\lwmonitor.h" />
+    <ClInclude Include="SDK\lwmotion.h" />
+    <ClInclude Include="SDK\lwmtutil.h" />
+    <ClInclude Include="SDK\lwobjimp.h" />
+    <ClInclude Include="SDK\lwobjrep.h" />
+    <ClInclude Include="SDK\lwpanel.h" />
+    <ClInclude Include="SDK\lwpreview.h" />
+    <ClInclude Include="SDK\lwprtcl.h" />
+    <ClInclude Include="SDK\lwrender.h" />
+    <ClInclude Include="SDK\lwscenecv.h" />
+    <ClInclude Include="SDK\lwserver.h" />
+    <ClInclude Include="SDK\lwshader.h" />
+    <ClInclude Include="SDK\lwshelf.h" />
+    <ClInclude Include="SDK\lwsurf.h" />
+    <ClInclude Include="SDK\lwsurfed.h" />
+    <ClInclude Include="SDK\lwtexture.h" />
+    <ClInclude Include="SDK\lwtool.h" />
+    <ClInclude Include="SDK\lwtxtr.h" />
+    <ClInclude Include="SDK\lwtxtred.h" />
+    <ClInclude Include="SDK\lwtypes.h" />
+    <ClInclude Include="SDK\lwvolume.h" />
+    <ClInclude Include="SDK\lwvparm.h" />
+    <ClInclude Include="SDK\lwxpanel.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

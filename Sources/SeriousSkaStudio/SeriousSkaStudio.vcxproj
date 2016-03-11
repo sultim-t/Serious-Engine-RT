@@ -1,0 +1,346 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Template|Win32">
+      <Configuration>Template</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <Keyword>MFCProj</Keyword>
+    <ProjectGuid>{CC94A769-3B63-008D-0B03-525791C804D1}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>Debug\</OutDir>
+    <IntDir>Debug\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir);$(SolutionDir)..\Tools.Win32\Libraries\DX8SDK\Include;$(ProjectDir);$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\Bin\Debug;$(SolutionDir)..\Tools.Win32\Libraries\DX8SDK\Lib;$(LibraryPath)</LibraryPath>
+    <ExecutablePath>$(SolutionDir)..\Bin\Debug;$(SolutionDir)..\Tools.Win32\;$(ExecutablePath)</ExecutablePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>Release\</OutDir>
+    <IntDir>Release\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir);$(SolutionDir)..\Tools.Win32\Libraries\DX8SDK\Include;$(ProjectDir);$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\Bin;$(SolutionDir)..\Tools.Win32\Libraries\DX8SDK\Lib;$(LibraryPath)</LibraryPath>
+    <ExecutablePath>$(SolutionDir)..\Bin;$(SolutionDir)..\Tools.Win32\;$(ExecutablePath)</ExecutablePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <Optimization>Disabled</Optimization>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level3</WarningLevel>
+      <MinimalRebuild>true</MinimalRebuild>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;DIRECT3D_VERSION=0x0800;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AssemblerListingLocation>Debug\</AssemblerListingLocation>
+      <BrowseInformation>true</BrowseInformation>
+      <PrecompiledHeaderOutputFile>.\Debug\SeriousSkaStudio.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <ObjectFileName>Debug\</ObjectFileName>
+      <ProgramDataBaseFileName>Debug\</ProgramDataBaseFileName>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <DisableSpecificWarnings>4996;4603;4333</DisableSpecificWarnings>
+    </ClCompile>
+    <Midl>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TypeLibraryName>.\Debug\SeriousSkaStudio.tlb</TypeLibraryName>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <TargetEnvironment>Win32</TargetEnvironment>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Debug\SeriousSkaStudio.bsc</OutputFile>
+    </Bscmake>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>Debug\SeriousSkaStudio.exe</OutputFile>
+      <GenerateMapFile>true</GenerateMapFile>
+    </Link>
+    <CustomBuildStep>
+      <Command>copy Debug\$(TargetName).exe $(SolutionDir)..\Bin\Debug\ &gt;nul 
+copy Debug\$(TargetName).map $(SolutionDir)..\Bin\Debug\ &gt;nul </Command>
+      <Message>Copying %(Filename) binaries to $(ENGINE_DIR)\Bin\Debug</Message>
+      <Outputs>$(SolutionDir)..\Bin\Debug\$(TargetName).exe;%(Outputs)</Outputs>
+    </CustomBuildStep>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <Optimization>MaxSpeed</Optimization>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;DIRECT3D_VERSION=0x0800;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AssemblerListingLocation>.\Release\</AssemblerListingLocation>
+      <BrowseInformation>true</BrowseInformation>
+      <PrecompiledHeaderOutputFile>.\Release\SeriousSkaStudio.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <ObjectFileName>Release\</ObjectFileName>
+      <ProgramDataBaseFileName>Release\</ProgramDataBaseFileName>
+      <DisableSpecificWarnings>4996;4603;4333</DisableSpecificWarnings>
+    </ClCompile>
+    <Midl>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TypeLibraryName>.\Release\SeriousSkaStudio.tlb</TypeLibraryName>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <TargetEnvironment>Win32</TargetEnvironment>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Release\SeriousSkaStudio.bsc</OutputFile>
+    </Bscmake>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>.\Release\SeriousSkaStudio.exe</OutputFile>
+      <GenerateMapFile>true</GenerateMapFile>
+    </Link>
+    <CustomBuildStep>
+      <Command>copy Release\$(TargetName).exe $(SolutionDir)..\Bin\ &gt;nul 
+copy Release\$(TargetName).map $(SolutionDir)..\Bin\ &gt;nul </Command>
+      <Message>Copying %(Filename) binaries to $(ENGINE_DIR)\Bin</Message>
+      <Outputs>$(SolutionDir)..\Bin\$(TargetName).exe;%(Outputs)</Outputs>
+    </CustomBuildStep>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="CheckBox.cpp" />
+    <ClCompile Include="ChildFrm.cpp" />
+    <ClCompile Include="ColoredButton.cpp" />
+    <ClCompile Include="DlgBarTreeView.cpp" />
+    <ClCompile Include="DlgClient.cpp" />
+    <ClCompile Include="DlgTemplate.cpp" />
+    <ClCompile Include="DropDown.cpp" />
+    <ClCompile Include="MainFrm.cpp" />
+    <ClCompile Include="MDIClientWnd.cpp" />
+    <ClCompile Include="ModelTreeCtrl.cpp" />
+    <ClCompile Include="SeriousSkaStudio.cpp" />
+    <ClCompile Include="SeriousSkaStudioDoc.cpp" />
+    <ClCompile Include="SeriousSkaStudioView.cpp" />
+    <ClCompile Include="SplitterFrame.cpp" />
+    <ClCompile Include="StdAfx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">stdafx.h</PrecompiledHeaderFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">stdafx.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <ClCompile Include="TextBox.cpp" />
+    <ClCompile Include="TexView.cpp" />
+    <ClCompile Include="Parser.cpp" />
+    <ClCompile Include="scanner.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="hlp\SeriousSkaStudio.hpj">
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </CustomBuild>
+    <CustomBuild Include="res\bmp00001.bmp" />
+    <CustomBuild Include="res\bmp00002.bmp" />
+    <CustomBuild Include="res\Icons.bmp" />
+    <CustomBuild Include="res\SeriousSkaStudio.ico" />
+    <CustomBuild Include="res\SeriousSkaStudio.rc2">
+      <FileType>RC</FileType>
+    </CustomBuild>
+    <CustomBuild Include="res\SeriousSkaStudioDoc.ico" />
+    <CustomBuild Include="res\Toolbar.bmp" />
+    <CustomBuild Include="res\toolbar1.bmp" />
+    <CustomBuild Include="hlp\AfxCore.rtf">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="hlp\AppExit.bmp" />
+    <CustomBuild Include="hlp\Bullet.bmp" />
+    <CustomBuild Include="hlp\CurArw2.bmp" />
+    <CustomBuild Include="hlp\CurArw4.bmp" />
+    <CustomBuild Include="hlp\CurHelp.bmp" />
+    <CustomBuild Include="hlp\EditCopy.bmp" />
+    <CustomBuild Include="hlp\EditCut.bmp" />
+    <CustomBuild Include="hlp\EditPast.bmp" />
+    <CustomBuild Include="hlp\EditUndo.bmp" />
+    <CustomBuild Include="hlp\FileNew.bmp" />
+    <CustomBuild Include="hlp\FileOpen.bmp" />
+    <CustomBuild Include="hlp\FilePrnt.bmp" />
+    <CustomBuild Include="hlp\FileSave.bmp" />
+    <CustomBuild Include="hlp\HlpSBar.bmp" />
+    <CustomBuild Include="hlp\HlpTBar.bmp" />
+    <CustomBuild Include="hlp\RecFirst.bmp" />
+    <CustomBuild Include="hlp\RecLast.bmp" />
+    <CustomBuild Include="hlp\RecNext.bmp" />
+    <CustomBuild Include="hlp\RecPrev.bmp" />
+    <CustomBuild Include="hlp\Scmax.bmp" />
+    <CustomBuild Include="hlp\ScMenu.bmp" />
+    <CustomBuild Include="hlp\Scmin.bmp" />
+    <CustomBuild Include="hlp\SeriousSkaStudio.cnt">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "hlp\%(Filename).cnt" $(OutDir)</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Copying contents file...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)\$(InputName).cnt;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "hlp\%(Filename).cnt" $(OutDir)</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Copying contents file...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)\$(InputName).cnt;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="Parser.y">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pushd $(SolutionDir)
+bison -o$(ProjectName)/Parser.c $(ProjectName)/Parser.y -d
+popd
+copy %(RootDir)%(Directory)\Parser.c %(RootDir)%(Directory)\Parser.cpp  
+del %(RootDir)%(Directory)\Parser.c /q</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Creating parser source</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(InputDir)Parser.cpp;$(InputDir)Parser.h;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pushd $(SolutionDir)
+bison -o$(ProjectName)/Parser.c $(ProjectName)/Parser.y -d
+popd
+copy %(RootDir)%(Directory)\Parser.c %(RootDir)%(Directory)\Parser.cpp  
+del %(RootDir)%(Directory)\Parser.c /q</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Creating parser source</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(InputDir)Parser.cpp;$(InputDir)Parser.h;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="Scanner.l">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">flex -o%(RootDir)%(Directory)\Scanner.cpp  %(RootDir)%(Directory)\Scanner.l</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Creating scanner source</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Scanner.cpp;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">flex -o%(RootDir)%(Directory)\Scanner.cpp  %(RootDir)%(Directory)\Scanner.l</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Creating scanner source</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Scanner.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="SeriousSkaStudio.clw">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CheckBox.h" />
+    <ClInclude Include="ChildFrm.h" />
+    <ClInclude Include="ColoredButton.h" />
+    <ClInclude Include="DlgBarTreeView.h" />
+    <ClInclude Include="DlgClient.h" />
+    <ClInclude Include="DlgTemplate.h" />
+    <ClInclude Include="DropDown.h" />
+    <ClInclude Include="MainFrm.h" />
+    <ClInclude Include="MDIClientWnd.h" />
+    <ClInclude Include="ModelTreeCtrl.h" />
+    <ClInclude Include="ParsingSymbols.h" />
+    <ClInclude Include="unistd.h" />
+    <CustomBuild Include="Resource.h">
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">echo. &gt;"hlp\$(TargetName).hm" 
+echo // Commands (ID_* and IDM_*) &gt;&gt;"hlp\$(TargetName).hm" 
+makehm ID_,HID_,0x10000 IDM_,HIDM_,0x10000 resource.h &gt;&gt;"hlp\$(TargetName).hm" 
+echo. &gt;&gt;"hlp\$(TargetName).hm" 
+echo // Prompts (IDP_*) &gt;&gt;"hlp\$(TargetName).hm" 
+makehm IDP_,HIDP_,0x30000 resource.h &gt;&gt;"hlp\$(TargetName).hm" 
+echo. &gt;&gt;"hlp\$(TargetName).hm" 
+echo // Resources (IDR_*) &gt;&gt;"hlp\$(TargetName).hm" 
+makehm IDR_,HIDR_,0x20000 resource.h &gt;&gt;"hlp\$(TargetName).hm" 
+echo. &gt;&gt;"hlp\$(TargetName).hm" 
+echo // Dialogs (IDD_*) &gt;&gt;"hlp\$(TargetName).hm" 
+makehm IDD_,HIDD_,0x20000 resource.h &gt;&gt;"hlp\$(TargetName).hm" 
+echo. &gt;&gt;"hlp\$(TargetName).hm" 
+echo // Frame Controls (IDW_*) &gt;&gt;"hlp\$(TargetName).hm" 
+makehm IDW_,HIDW_,0x50000 resource.h &gt;&gt;"hlp\$(TargetName).hm" </Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Making help include file...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">hlp\$(TargetName).hm;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">echo. &gt;"hlp\$(TargetName).hm" 
+echo // Commands (ID_* and IDM_*) &gt;&gt;"hlp\$(TargetName).hm" 
+makehm ID_,HID_,0x10000 IDM_,HIDM_,0x10000 resource.h &gt;&gt;"hlp\$(TargetName).hm" 
+echo. &gt;&gt;"hlp\$(TargetName).hm" 
+echo // Prompts (IDP_*) &gt;&gt;"hlp\$(TargetName).hm" 
+makehm IDP_,HIDP_,0x30000 resource.h &gt;&gt;"hlp\$(TargetName).hm" 
+echo. &gt;&gt;"hlp\$(TargetName).hm" 
+echo // Resources (IDR_*) &gt;&gt;"hlp\$(TargetName).hm" 
+makehm IDR_,HIDR_,0x20000 resource.h &gt;&gt;"hlp\$(TargetName).hm" 
+echo. &gt;&gt;"hlp\$(TargetName).hm" 
+echo // Dialogs (IDD_*) &gt;&gt;"hlp\$(TargetName).hm" 
+makehm IDD_,HIDD_,0x20000 resource.h &gt;&gt;"hlp\$(TargetName).hm" 
+echo. &gt;&gt;"hlp\$(TargetName).hm" 
+echo // Frame Controls (IDW_*) &gt;&gt;"hlp\$(TargetName).hm" 
+makehm IDW_,HIDW_,0x50000 resource.h &gt;&gt;"hlp\$(TargetName).hm" </Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Making help include file...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">hlp\$(TargetName).hm;%(Outputs)</Outputs>
+    </CustomBuild>
+    <ClInclude Include="SeriousSkaStudio.h" />
+    <ClInclude Include="SeriousSkaStudioDoc.h" />
+    <ClInclude Include="SeriousSkaStudioView.h" />
+    <ClInclude Include="SplitterFrame.h" />
+    <ClInclude Include="StdAfx.h" />
+    <ClInclude Include="TextBox.h" />
+    <ClInclude Include="TexView.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="SeriousSkaStudio.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{acd5aeef-9312-4c06-9a18-ffc69148b586}</UniqueIdentifier>
+      <Extensions>cpp</Extensions>
+    </Filter>
+    <Filter Include="Source Files\Grammar files">
+      <UniqueIdentifier>{97120739-0d00-462f-bb75-be637f0e69f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Dummy">
+      <UniqueIdentifier>{414eb5ab-c891-41f1-85bb-3594afce7081}</UniqueIdentifier>
+      <Extensions>c</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{aebfcf57-f684-490f-baf9-b3c0fd748e23}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;fi;fd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{cf15f1a2-66f9-41f7-872d-8fbaa310a5e2}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;cnt;rtf;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Parser.c">
+      <Filter>Source Files\Dummy</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Scanner.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Main.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StdH.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="unistd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="Parser.y">
+      <Filter>Source Files\Grammar files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Scanner.l">
+      <Filter>Source Files\Grammar files</Filter>
+    </CustomBuild>
+  </ItemGroup>
+</Project>

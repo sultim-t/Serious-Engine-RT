@@ -1,0 +1,267 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{2953f639-36e0-4308-8fa8-2c7c6838a348}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{1c36de11-980f-4626-9b1d-c6dddec59ea8}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{b88eff4c-81bb-4974-a95b-c01850cf9c6d}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+    <Filter Include="Help Files">
+      <UniqueIdentifier>{83d67333-7b36-4dd6-95fa-bf4e2fc4d969}</UniqueIdentifier>
+      <Extensions>cnt;rtf</Extensions>
+    </Filter>
+    <Filter Include="Grammar Files">
+      <UniqueIdentifier>{4dc79c34-55cd-4c11-8598-d67eeb0fe62a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Generated Sources">
+      <UniqueIdentifier>{ca9b6825-9be2-4731-8d17-cf7d82221e3e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Wizard Files">
+      <UniqueIdentifier>{559c60f9-0f88-43cc-96a1-5bed55379d06}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="CheckBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ChildFrm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ColoredButton.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgBarTreeView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgClient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgTemplate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DropDown.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MainFrm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MDIClientWnd.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelTreeCtrl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SeriousSkaStudio.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SeriousSkaStudioDoc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SeriousSkaStudioView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SplitterFrame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StdAfx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TextBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TexView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Parser.cpp">
+      <Filter>Generated Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="scanner.cpp">
+      <Filter>Generated Sources</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CheckBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ChildFrm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ColoredButton.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgBarTreeView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgClient.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgTemplate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DropDown.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MainFrm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MDIClientWnd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelTreeCtrl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ParsingSymbols.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SeriousSkaStudio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SeriousSkaStudioDoc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SeriousSkaStudioView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SplitterFrame.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StdAfx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TextBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TexView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="unistd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="SeriousSkaStudio.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="hlp\SeriousSkaStudio.hpj">
+      <Filter>Source Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Resource.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\bmp00001.bmp">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\bmp00002.bmp">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\Icons.bmp">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\SeriousSkaStudio.ico">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\SeriousSkaStudio.rc2">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\SeriousSkaStudioDoc.ico">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\Toolbar.bmp">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="res\toolbar1.bmp">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\AfxCore.rtf">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\AppExit.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\Bullet.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\CurArw2.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\CurArw4.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\CurHelp.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\EditCopy.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\EditCut.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\EditPast.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\EditUndo.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\FileNew.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\FileOpen.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\FilePrnt.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\FileSave.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\HlpSBar.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\HlpTBar.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\RecFirst.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\RecLast.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\RecNext.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\RecPrev.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\Scmax.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\ScMenu.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\Scmin.bmp">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="hlp\SeriousSkaStudio.cnt">
+      <Filter>Help Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Parser.y">
+      <Filter>Grammar Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Scanner.l">
+      <Filter>Grammar Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="SeriousSkaStudio.clw">
+      <Filter>Wizard Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="ReadMe.txt" />
+  </ItemGroup>
+</Project>

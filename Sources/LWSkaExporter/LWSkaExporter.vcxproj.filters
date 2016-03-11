@@ -1,0 +1,224 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{fbc66ce1-01e9-488f-a71b-190cf51de15b}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{ee18e859-2bde-4ce0-8569-320c6b638711}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="SDK">
+      <UniqueIdentifier>{53a015bd-72b8-4e25-be8a-7d3d47495df3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{072da51b-dafa-46aa-bb5c-8a8832a58ba5}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AnimExport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CopyWeightMaps.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Master.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshExport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelerMeshExporter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="plugin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SectionsExport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="servmain.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="shutdown.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="startup.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SurfaceParameters.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="username.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vecmat.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Base.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vecmat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwanimlod.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwanimsav.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwchannel.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwcmdseq.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwcustobj.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwdialog.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwdisplay.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwdisplce.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwdyna.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwenvel.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwenviron.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwfilter.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwframbuf.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwgeneric.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwglobsrv.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwhandler.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwhost.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwimage.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwimageio.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwio.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwmaster.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwmath.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwmeshedt.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwmeshes.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwmodeler.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwmodtool.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwmodule.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwmonitor.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwmotion.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwmtutil.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwobjimp.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwobjrep.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwpanel.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwpreview.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwprtcl.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwrender.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwscenecv.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwserver.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwshader.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwshelf.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwsurf.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwsurfed.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwtexture.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwtool.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwtxtr.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwtxtred.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwtypes.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwvolume.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwvparm.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\lwxpanel.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="serv.def">
+      <Filter>Source Files</Filter>
+    </CustomBuild>
+  </ItemGroup>
+</Project>
