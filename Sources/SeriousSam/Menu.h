@@ -139,6 +139,8 @@ public:
   void Initialize_t(void);
   void StartMenu(void);
   void Think(void);
+
+  BOOL OnKeyDown(int iVKey); // __Evolution
 };
 
 class CPlayerProfileMenu : public CGameMenu {

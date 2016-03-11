@@ -3,6 +3,7 @@
 #include "StdH.h"
 
 #include "MenuPrinting.h"
+#include "ArrowDir.h"
 
 static const FLOAT _fBigStartJ = 0.25f;
 static const FLOAT _fBigSizeJ = 0.066f;

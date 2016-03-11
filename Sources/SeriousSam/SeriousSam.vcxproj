@@ -188,13 +188,22 @@ copy Release\$(TargetName).map $(SolutionDir)..\Bin\ &gt;nul </Command>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">StdH.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="MenuGadgets.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">StdH.h</PrecompiledHeaderFile>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">StdH.h</PrecompiledHeaderFile>
-    </ClCompile>
+    <ClCompile Include="MenuGadget.cpp" />
     <ClCompile Include="MenuPrinting.cpp" />
+    <ClCompile Include="MGArrow.cpp" />
+    <ClCompile Include="MGButton.cpp" />
+    <ClCompile Include="MGChangePlayer.cpp" />
+    <ClCompile Include="MGEdit.cpp" />
+    <ClCompile Include="MGFileButton.cpp" />
+    <ClCompile Include="MGHighScore.cpp" />
+    <ClCompile Include="MGKeyDefinition.cpp" />
+    <ClCompile Include="MGLevelButton.cpp" />
+    <ClCompile Include="MGModel.cpp" />
+    <ClCompile Include="MGServerList.cpp" />
+    <ClCompile Include="MGSlider.cpp" />
+    <ClCompile Include="MGTitle.cpp" />
+    <ClCompile Include="MGTrigger.cpp" />
+    <ClCompile Include="MGVarButton.cpp" />
     <ClCompile Include="SeriousSam.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">StdH.h</PrecompiledHeaderFile>
@@ -211,6 +220,7 @@ copy Release\$(TargetName).map $(SolutionDir)..\Bin\ &gt;nul </Command>
     <ClCompile Include="VarList.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ArrowDir.h" />
     <ClInclude Include="CDCheck.h" />
     <ClInclude Include="CmdLine.h" />
     <ClInclude Include="Credits.h" />
@@ -219,8 +229,22 @@ copy Release\$(TargetName).map $(SolutionDir)..\Bin\ &gt;nul </Command>
     <ClInclude Include="LevelInfo.h" />
     <ClInclude Include="MainWindow.h" />
     <ClInclude Include="Menu.h" />
-    <ClInclude Include="MenuGadgets.h" />
+    <ClInclude Include="MenuGadget.h" />
     <ClInclude Include="MenuPrinting.h" />
+    <ClInclude Include="MGArrow.h" />
+    <ClInclude Include="MGButton.h" />
+    <ClInclude Include="MGChangePlayer.h" />
+    <ClInclude Include="MGEdit.h" />
+    <ClInclude Include="MGFileButton.h" />
+    <ClInclude Include="MGHighScore.h" />
+    <ClInclude Include="MGKeyDefinition.h" />
+    <ClInclude Include="MGLevelButton.h" />
+    <ClInclude Include="MGModel.h" />
+    <ClInclude Include="MGServerList.h" />
+    <ClInclude Include="MGSlider.h" />
+    <ClInclude Include="MGTitle.h" />
+    <ClInclude Include="MGTrigger.h" />
+    <ClInclude Include="MGVarButton.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SeriousSam.h" />
     <ClInclude Include="SplashScreen.h" />

@@ -13,6 +13,21 @@
 #include "LevelInfo.h"
 #include "VarList.h"
 
+#include "MGArrow.h"
+#include "MGButton.h"
+#include "MGChangePlayer.h"
+#include "MGEdit.h"
+#include "MGFileButton.h"
+#include "MGHighScore.h"
+#include "MGKeyDefinition.h"
+#include "MGLevelButton.h"
+#include "MGModel.h"
+#include "MGServerList.h"
+#include "MGSlider.h"
+#include "MGTitle.h"
+#include "MGTrigger.h"
+#include "MGVarButton.h"
+
 // macros for translating radio button text arrays
 #define RADIOTRANS(str) ("ETRS" str)
 #define TRANSLATERADIOARRAY(array) TranslateRadioTexts(array, ARRAYCOUNT(array))
@@ -5121,7 +5136,7 @@ void CAudioOptionsMenu::Initialize_t(void)
   gm_lhGadgets.AddTail( mgMPEGVolume.mg_lnNode);
 
   mgAudioOptionsApply.mg_bfsFontSize = BFS_LARGE;
-  mgAudioOptionsApply.mg_boxOnScreen = BoxBigRow(4);
+  mgAudioOptionsApply.mg_boxOnScreen = BoxBigRow(5/*4*/);
   mgAudioOptionsApply.mg_strText = TRANS("APPLY");
   mgAudioOptionsApply.mg_strTip = TRANS("activate selected options");
   gm_lhGadgets.AddTail( mgAudioOptionsApply.mg_lnNode);
@@ -5461,6 +5476,17 @@ void CServersMenu::StartMenu(void)
   CGameMenu::StartMenu();
 }
 
+// __Evolution
+BOOL CServersMenu::OnKeyDown(int iVKey)
+{
+	if (iVKey == VK_F5) {
+		RefreshServerListManually();
+		return TRUE;
+	}
+	return CGameMenu::OnKeyDown(iVKey);
+}
+// __Evolution
+
 // ------------------------ CNetworkMenu implementation
 void CNetworkMenu::Initialize_t(void)
 {
@@ -5506,6 +5532,7 @@ void CNetworkMenu::Initialize_t(void)
   mgNetworkLoad.mg_pActivatedFunction = &StartNetworkLoadMenu;
 
 }
+
 void CNetworkMenu::StartMenu(void)
 {
   CGameMenu::StartMenu();

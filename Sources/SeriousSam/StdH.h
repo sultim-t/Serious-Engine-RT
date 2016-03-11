@@ -24,4 +24,3 @@
 
 #include "SeriousSam.h"
 #include "Menu.h"
-#include "MenuGadgets.h"
