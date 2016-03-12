@@ -252,6 +252,10 @@ ESStatus GetESStatus()
         return result;
 
     char* temporaryBuffer = (char*)malloc(length);
+
+    if (!temporaryBuffer)
+        return ESStatus::Error;
+
     fseek(_fInput, 0, SEEK_SET);
     fread(temporaryBuffer, length, 1, _fInput);
     fseek(_fInput, 0, SEEK_SET);
@@ -398,6 +402,7 @@ int main(int argc, char *argv[])
       case ESStatus::Error:
       {
           fclose(_fInput);
+          printf("Ecc encountered an error during the es verification.\n");
           return EXIT_FAILURE;
       }
   }
