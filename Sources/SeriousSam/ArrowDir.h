@@ -6,6 +6,7 @@
   #pragma once
 #endif
 
+
 enum ArrowDir {
 	AD_NONE,
 	AD_UP,
@@ -13,6 +14,5 @@ enum ArrowDir {
 	AD_LEFT,
 	AD_RIGHT,
 };
-
 
 #endif  /* include-once check. */

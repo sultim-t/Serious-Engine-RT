@@ -1,0 +1,19 @@
+/* Copyright (c) 2002-2012 Croteam Ltd. All rights reserved. */
+
+#ifndef SE_INCL_GAME_MENU_SPLITSTART_H
+#define SE_INCL_GAME_MENU_SPLITSTART_H
+#ifdef PRAGMA_ONCE
+  #pragma once
+#endif
+
+#include "GameMenu.h"
+
+
+class CSplitStartMenu : public CGameMenu {
+public:
+	void Initialize_t(void);
+	void StartMenu(void);
+	void EndMenu(void);
+};
+
+#endif  /* include-once check. */
