@@ -273,7 +273,7 @@ BEGIN
     EDITTEXT        IDC_CONSOLE_OUTPUT,7,7,429,169,ES_MULTILINE | 
                     ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | 
                     WS_VSCROLL | WS_HSCROLL
-    LTEXT           "Available symols:",IDC_STATIC,7,181,69,8
+    LTEXT           "Available symbols:",IDC_STATIC,7,181,69,8
     COMBOBOX        IDC_CONSOLE_SYMBOLS,76,179,360,108,CBS_DROPDOWNLIST | 
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
 END
