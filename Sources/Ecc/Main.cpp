@@ -239,7 +239,7 @@ enum ESStatus
 };
 
 /* Determine whether or not our target ES file is indeed valid input. */
-ESStatus GetESStatus(char *filename)
+ESStatus GetESStatus()
 {
     ESStatus result = ESStatus::Empty;
 
@@ -249,7 +249,7 @@ ESStatus GetESStatus(char *filename)
     char* temporaryBuffer = (char*)malloc(length);
     fseek(_fInput, 0, SEEK_SET);
     fread(temporaryBuffer, length, 1, _fInput);
-    fclose(_fInput);
+    fseek(_fInput, 0, SEEK_SET);
 
     // Loop through each line
     char* currentSequence = strtok(temporaryBuffer, "\n");
@@ -315,17 +315,10 @@ ESStatus GetESStatus(char *filename)
                     result = ESStatus::Good;
 
             free(temporaryBuffer);
-            if (result == ESStatus::Good)
-                _fInput = FOpen(filename, "r");
-
             return result;
         }
     }
     while(currentSequence = strtok(NULL, "\n"));
-
-    free(temporaryBuffer);
-    if (result == ESStatus::Good)
-        _fInput = FOpen(filename, "r");
 
     return result;
 }
@@ -388,7 +381,7 @@ int main(int argc, char *argv[])
   _fInput = FOpen(argv[1], "r");
 
   // Make sure we're loading a valid ES file
-  ESStatus status = GetESStatus(argv[1]);
+  ESStatus status = GetESStatus();
 
   switch (status)
   {
