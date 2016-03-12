@@ -391,9 +391,15 @@ int main(int argc, char *argv[])
   switch (status)
   {
       case ESStatus::Empty:
+      {
+          fclose(_fInput);
           return EXIT_SUCCESS;
+      }
       case ESStatus::Error:
+      {
+          fclose(_fInput);
           return EXIT_FAILURE;
+      }
   }
 
   //printf("%s\n", argv[1]);
