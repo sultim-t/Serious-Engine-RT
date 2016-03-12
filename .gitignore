@@ -43,3 +43,19 @@
 *.sdf
 *.suo
 *.tlog
+
+# Engine Generated Stuff
+Sources/Engine/Classes/*.h
+Sources/Engine/Classes/*.cpp
+
+# EntitiesMP Generated Stuff
+Sources/EntitiesMP/*.cpp
+Sources/EntitiesMP/*.h
+!Sources/EntitiesMP/Common/*
+!Sources/EntitiesMP/StdH/*
+
+# Game Generated Stuff
+Data/*.bin
+Data/*.gms
+Players/*
+Temp/ConsoleHistory.txt
