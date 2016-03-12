@@ -246,6 +246,11 @@ ESStatus GetESStatus()
     // Read a temporary buffer of the entire file contents
     fseek(_fInput, 0, SEEK_END);
     size_t length = ftell(_fInput);
+
+    // Hard-stop on Empty out of paranoia
+    if (length == 0)
+        return result;
+
     char* temporaryBuffer = (char*)malloc(length);
     fseek(_fInput, 0, SEEK_SET);
     fread(temporaryBuffer, length, 1, _fInput);
