@@ -41,6 +41,7 @@ Debug/
 *.opensdf
 *.suo
 *.tlog
+*.ipch
 
 # Generated configuration files
 *.plr
