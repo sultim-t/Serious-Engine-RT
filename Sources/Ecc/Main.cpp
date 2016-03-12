@@ -241,7 +241,7 @@ enum ESStatus
 /* Determine whether or not our target ES file is indeed valid input. */
 ESStatus GetESStatus(char *filename)
 {
-    ESStatus result = ESStatus::Good;
+    ESStatus result = ESStatus::Empty;
 
     // Read a temporary buffer of the entire file contents
     fseek(_fInput, 0, SEEK_END);
@@ -251,72 +251,77 @@ ESStatus GetESStatus(char *filename)
     fread(temporaryBuffer, length, 1, _fInput);
     fclose(_fInput);
 
-    // First, let's remove line comments
-    char *commentBegin = NULL;
-    while (commentBegin = strstr(temporaryBuffer, "//"))
+    // Loop through each line
+    char* currentSequence = strtok(temporaryBuffer, "\n");
+
+    // No newlines, but it might still be valid.
+    if (!currentSequence)
+        currentSequence = temporaryBuffer;
+
+    bool inBlockComment = false;
+    do
     {
-        size_t commentLength = length;
+        size_t sequenceLength = strlen(currentSequence);
 
-        char* lineEnding = strstr(commentBegin, "\n");
-        if (lineEnding)
-            commentLength = (size_t)(lineEnding) - (size_t)commentBegin;
-
-        memset(commentBegin, 0x20, commentLength);
-    }
-
-    // Then block comments
-    commentBegin = NULL;
-    while (commentBegin = strstr(temporaryBuffer, "/*"))
-    {
-        size_t commentLength = length;
-
-        char* commentEnd = strstr(commentBegin, "*/");
-        if (commentEnd)
-            commentLength = (size_t)(commentEnd + 3) - (size_t)commentBegin;
-        else
+        for (size_t iteration = 0; iteration < sequenceLength; iteration++)
         {
-            result = ESStatus::Error;
-            break;
-        }
-
-        memset(commentBegin, 0x20, commentLength);
-    }
-
-    // If we return here, it was because of unbalanced block comments
-    if (result != ESStatus::Good)
-    {
-        free(temporaryBuffer);
-        return result;
-    }
-
-    // Now we just loop through the buffer until we find something that's not 0x20 or \n
-    result = ESStatus::Empty;
-    for (size_t iteration = 0; iteration < length; iteration++)
-        if (temporaryBuffer[iteration] != 0x20 && temporaryBuffer[iteration] != '\n')
-        {
-            size_t checkLength = length;
-            char* checkStart = &temporaryBuffer[iteration];
-
-            char* lineEnding = strstr(checkStart, "\n");
-            if (lineEnding)
-                checkLength = (size_t)(lineEnding) - (size_t)checkStart;
-
-            // Loop through and use isdigit to check all the digits
-            checkStart[checkLength + 1] = 0x00;
-
-            for (int digit = 0; digit < strlen(checkStart); digit++)
-                if (checkStart[digit] != 0x20 && checkStart[digit] != '\n' && isdigit(checkStart[digit]))
-                    result = ESStatus::Good;
-                else if (checkStart[digit] != 0x20 && checkStart[digit] != '\n')
+            // If we're still in a block comment, find the closing */
+            if (inBlockComment)
+            {
+                char* blockClosing = strstr(currentSequence, "*/");
+                if (!blockClosing)
+                    break;
+                else
                 {
-                    // If this occurs, then the first non-whitespace line we read wasn't a number.
+                    inBlockComment = false;
+                    iteration = ((size_t)blockClosing - (size_t)currentSequence) + 2;
+                }
+            }
+
+            // If we find a // sequence, simply skip this line
+            if (currentSequence[iteration] == '/' && currentSequence[iteration + 1] == '/')
+                break;
+
+            // If we find a /* on this line but not a closing */, skip this line
+            if (currentSequence[iteration] == '/' && currentSequence[iteration + 1] == '*')
+            {
+                // Is there a closing */ on this line?
+                char* blockClosing = strstr(currentSequence, "*/");
+
+                if (!blockClosing)
+                {
+                    inBlockComment = true;
+                    break;
+                }
+                else
+                {
+                    iteration = ((size_t)blockClosing - (size_t)currentSequence) + 2;
+                    inBlockComment = false;
+                    continue;
+                }
+            }
+
+            if (iteration >= sequenceLength)
+                break;
+
+            // If we got to this point, we should be able to read only a number on this line
+            for (size_t checkIteration = 0; checkIteration < sequenceLength; checkIteration++)
+                if (currentSequence[checkIteration] != '\n' && currentSequence[checkIteration] != 0x20 && !isdigit(currentSequence[checkIteration]))
+                {
                     result = ESStatus::Error;
                     break;
                 }
+                else if (currentSequence[checkIteration] != '\n' && currentSequence[checkIteration] != 0x20)
+                    result = ESStatus::Good;
 
-            break;
+            free(temporaryBuffer);
+            if (result == ESStatus::Good)
+                _fInput = FOpen(filename, "r");
+
+            return result;
         }
-
+    }
+    while(currentSequence = strtok(NULL, "\n"));
 
     free(temporaryBuffer);
     if (result == ESStatus::Good)
