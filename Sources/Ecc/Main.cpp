@@ -239,17 +239,26 @@ enum ESStatus
 };
 
 /* Determine whether or not our target ES file is indeed valid input. */
-ESStatus GetESStatus(char *filename)
+ESStatus GetESStatus()
 {
     ESStatus result = ESStatus::Empty;
 
     // Read a temporary buffer of the entire file contents
     fseek(_fInput, 0, SEEK_END);
     size_t length = ftell(_fInput);
+
+    // Hard-stop on Empty out of paranoia
+    if (length == 0)
+        return result;
+
     char* temporaryBuffer = (char*)malloc(length);
+
+    if (!temporaryBuffer)
+        return ESStatus::Error;
+
     fseek(_fInput, 0, SEEK_SET);
     fread(temporaryBuffer, length, 1, _fInput);
-    fclose(_fInput);
+    fseek(_fInput, 0, SEEK_SET);
 
     // Loop through each line
     char* currentSequence = strtok(temporaryBuffer, "\n");
@@ -315,17 +324,10 @@ ESStatus GetESStatus(char *filename)
                     result = ESStatus::Good;
 
             free(temporaryBuffer);
-            if (result == ESStatus::Good)
-                _fInput = FOpen(filename, "r");
-
             return result;
         }
     }
     while(currentSequence = strtok(NULL, "\n"));
-
-    free(temporaryBuffer);
-    if (result == ESStatus::Good)
-        _fInput = FOpen(filename, "r");
 
     return result;
 }
@@ -388,14 +390,21 @@ int main(int argc, char *argv[])
   _fInput = FOpen(argv[1], "r");
 
   // Make sure we're loading a valid ES file
-  ESStatus status = GetESStatus(argv[1]);
+  ESStatus status = GetESStatus();
 
   switch (status)
   {
       case ESStatus::Empty:
+      {
+          fclose(_fInput);
           return EXIT_SUCCESS;
+      }
       case ESStatus::Error:
+      {
+          fclose(_fInput);
+          printf("Ecc encountered an error during the es verification.\n");
           return EXIT_FAILURE;
+      }
   }
 
   //printf("%s\n", argv[1]);
