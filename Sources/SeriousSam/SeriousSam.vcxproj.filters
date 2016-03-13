@@ -111,7 +111,25 @@
     <ClCompile Include="MGTrigger.cpp">
       <Filter>Source Files\Gadgets</Filter>
     </ClCompile>
+    <ClCompile Include="MenuStuff.h">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MenuStuff.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MConfirm.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="MMain.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
     <ClCompile Include="Menu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MInGame.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="MSinglePlayer.cpp">
       <Filter>Source Files\Menus</Filter>
     </ClCompile>
   </ItemGroup>

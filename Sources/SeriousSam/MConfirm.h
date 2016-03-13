@@ -7,10 +7,15 @@
 #endif
 
 #include "GameMenu.h"
+#include "MGButton.h"
 
 
 class CConfirmMenu : public CGameMenu {
 public:
+	CMGButton gm_mgConfirmLabel;
+	CMGButton gm_mgConfirmYes;
+	CMGButton gm_mgConfirmNo;
+
 	void Initialize_t(void);
 	// return TRUE if handled
 	BOOL OnKeyDown(int iVKey);

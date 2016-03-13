@@ -54,6 +54,8 @@
 #include "MVar.h"
 #include "MVideoOptions.h"
 
+#include "MenuStuff.h"
+
 // macros for translating radio button text arrays
 #define RADIOTRANS(str) ("ETRS" str)
 #define TRANSLATERADIOARRAY(array) TranslateRadioTexts(array, ARRAYCOUNT(array))
@@ -87,40 +89,6 @@ extern BOOL IsCDInDrive(void);
 
 void OnPlayerSelect(void);
 
-
-
-ULONG SpawnFlagsForGameType(INDEX iGameType)
-{
-  if (iGameType==-1) return SPF_SINGLEPLAYER;
-
-  // get function that will provide us the flags
-  CShellSymbol *pss = _pShell->GetSymbol("GetSpawnFlagsForGameTypeSS", /*bDeclaredOnly=*/ TRUE);
-  // if none
-  if (pss==NULL) {
-    // error
-    ASSERT(FALSE);
-    return 0;
-  }
-
-  ULONG (*pFunc)(INDEX) = (ULONG (*)(INDEX))pss->ss_pvValue;
-  return pFunc(iGameType);
-}
-
-BOOL IsMenuEnabled(const CTString &strMenuName)
-{
-  // get function that will provide us the flags
-  CShellSymbol *pss = _pShell->GetSymbol("IsMenuEnabledSS", /*bDeclaredOnly=*/ TRUE);
-  // if none
-  if (pss==NULL) {
-    // error
-    ASSERT(FALSE);
-    return TRUE;
-  }
-
-  BOOL (*pFunc)(const CTString &) = (BOOL (*)(const CTString &))pss->ss_pvValue;
-  return pFunc(strMenuName);
-}
-
 // last tick done
 TIME _tmMenuLastTickDone = -1;
 // all possible menu entities
@@ -133,6 +101,12 @@ extern CTString sam_strNetworkSettings;
 
 // function to activate when level is chosen
 void (*_pAfterLevelChosen)(void);
+
+// functions for init actions
+void InitActionsForConfirmMenu();
+void InitActionsForMainMenu();
+void InitActionsForInGameMenu();
+void InitActionsForSinglePlayerMenu();
 
 // functions to activate when user chose 'yes/no' on confirmation
 void (*_pConfimedYes)(void) = NULL;
@@ -310,51 +284,15 @@ CMGButton mgBack;
 
 // -------- Confirm menu
 CConfirmMenu gmConfirmMenu;
-CMGButton mgConfirmLabel;
-CMGButton mgConfirmYes;
-CMGButton mgConfirmNo;
 
 // -------- Main menu
 CMainMenu gmMainMenu;
-//CMGTitle mgMainTitle;
-CMGButton mgMainVersionLabel;
-CMGButton mgMainModLabel;
-CMGButton mgMainSingle;
-CMGButton mgMainNetwork;
-CMGButton mgMainSplitScreen;
-CMGButton mgMainDemo;
-CMGButton mgMainMods;
-CMGButton mgMainHighScore;
-CMGButton mgMainOptions;
-CMGButton mgMainQuit;
 
 // -------- InGame menu
 CInGameMenu gmInGameMenu;
-CMGTitle mgInGameTitle;
-CMGButton mgInGameLabel1;
-CMGButton mgInGameLabel2;
-CMGButton mgInGameQuickLoad;
-CMGButton mgInGameQuickSave;
-CMGButton mgInGameLoad;
-CMGButton mgInGameSave;
-CMGButton mgInGameDemoRec;
-CMGButton mgInGameHighScore;
-CMGButton mgInGameOptions;
-CMGButton mgInGameStop;
-CMGButton mgInGameQuit;
 
 // -------- Single player menu
 CSinglePlayerMenu gmSinglePlayerMenu;
-CMGTitle mgSingleTitle;
-CMGButton mgSinglePlayerLabel;
-CMGButton mgSingleNewGame;
-CMGButton mgSingleCustom;
-CMGButton mgSingleQuickLoad;
-CMGButton mgSingleLoad;
-CMGButton mgSingleTraining;
-CMGButton mgSingleTechTest;
-CMGButton mgSinglePlayersAndControls;
-CMGButton mgSingleOptions;
 
 // -------- New single player menu
 CSinglePlayerNewMenu gmSinglePlayerNewMenu;
@@ -426,10 +364,12 @@ CMGButton mgLoadSaveNotes;
 CMGFileButton amgLSButton[SAVELOAD_BUTTONS_CT];
 CMGArrow mgLSArrowUp;
 CMGArrow mgLSArrowDn;
+
 // -------- High-score menu
 CHighScoreMenu gmHighScoreMenu;
 CMGTitle mgHighScoreTitle;
 CMGHighScore mgHScore;
+
 // -------- Customize keyboard menu
 CCustomizeKeyboardMenu gmCustomizeKeyboardMenu;
 CMGTitle mgCustomizeKeyboardTitle;
@@ -873,7 +813,7 @@ void ExitConfirm(void)
 {
   _pConfimedYes = &ExitGame;
   _pConfimedNo = NULL;
-  mgConfirmLabel.mg_strText = TRANS("ARE YOU SERIOUS?");
+  gmConfirmMenu.gm_mgConfirmLabel.mg_strText = TRANS("ARE YOU SERIOUS?");
   gmConfirmMenu.gm_pgmParentMenu = pgmCurrentMenu;
   gmConfirmMenu.BeLarge();
   ChangeToMenu( &gmConfirmMenu);
@@ -884,7 +824,7 @@ void StopConfirm(void)
   extern void StopCurrentGame(void);
   _pConfimedYes = &StopCurrentGame;
   _pConfimedNo = NULL;
-  mgConfirmLabel.mg_strText = TRANS("ARE YOU SERIOUS?");
+  gmConfirmMenu.gm_mgConfirmLabel.mg_strText = TRANS("ARE YOU SERIOUS?");
   gmConfirmMenu.gm_pgmParentMenu = pgmCurrentMenu;
   gmConfirmMenu.BeLarge();
   ChangeToMenu( &gmConfirmMenu);
@@ -916,7 +856,7 @@ void ModConnectConfirm(void)
   CPrintF(TRANS("Server is running a different MOD (%s).\nYou need to reload to connect.\n"), _fnmModSelected);
   _pConfimedYes = &ModConnect;
   _pConfimedNo = NULL;
-  mgConfirmLabel.mg_strText = TRANS("CHANGE THE MOD?");
+  gmConfirmMenu.gm_mgConfirmLabel.mg_strText = TRANS("CHANGE THE MOD?");
   gmConfirmMenu.gm_pgmParentMenu = pgmCurrentMenu;
   gmConfirmMenu.BeLarge();
   ChangeToMenu( &gmConfirmMenu);
@@ -927,7 +867,7 @@ void SaveConfirm(void)
   extern void OnFileSaveOK(void);
   _pConfimedYes = &OnFileSaveOK;
   _pConfimedNo = NULL;
-  mgConfirmLabel.mg_strText = TRANS("OVERWRITE?");
+  gmConfirmMenu.gm_mgConfirmLabel.mg_strText = TRANS("OVERWRITE?");
   gmConfirmMenu.gm_pgmParentMenu = pgmCurrentMenu;
   gmConfirmMenu.BeLarge();
   ChangeToMenu( &gmConfirmMenu);
@@ -944,7 +884,7 @@ void ModConfirm(void)
 {
   _pConfimedYes = &ModLoadYes;
   _pConfimedNo = NULL;
-  mgConfirmLabel.mg_strText = TRANS("LOAD THIS MOD?");
+  gmConfirmMenu.gm_mgConfirmLabel.mg_strText = TRANS("LOAD THIS MOD?");
   gmConfirmMenu.gm_pgmParentMenu = &gmLoadSaveMenu;
   gmConfirmMenu.BeLarge();
   ChangeToMenu( &gmConfirmMenu);
@@ -961,7 +901,7 @@ void VideoConfirm(void)
   void RevertVideoSettings(void);
   _pConfimedNo = RevertVideoSettings;
 
-  mgConfirmLabel.mg_strText = TRANS("KEEP THIS SETTING?");
+  gmConfirmMenu.gm_mgConfirmLabel.mg_strText = TRANS("KEEP THIS SETTING?");
   gmConfirmMenu.gm_pgmParentMenu = pgmCurrentMenu;
   gmConfirmMenu.BeLarge();
   ChangeToMenu( &gmConfirmMenu);
@@ -971,7 +911,7 @@ void CDConfirm(void (*pOk)(void))
 {
   _pConfimedYes = pOk;
   _pConfimedNo = NULL;
-  mgConfirmLabel.mg_strText = TRANS("PLEASE INSERT GAME CD?");
+  gmConfirmMenu.gm_mgConfirmLabel.mg_strText = TRANS("PLEASE INSERT GAME CD?");
   if (pgmCurrentMenu!=&gmConfirmMenu) {
     gmConfirmMenu.gm_pgmParentMenu = pgmCurrentMenu;
     gmConfirmMenu.BeLarge();
@@ -1119,7 +1059,7 @@ void ModNotInstalled(void)
 {
   _pConfimedYes = &ExitAndSpawnExplorer;
   _pConfimedNo = NULL;
-  mgConfirmLabel.mg_strText.PrintF(
+  gmConfirmMenu.gm_mgConfirmLabel.mg_strText.PrintF(
     TRANS("You don't have MOD '%s' installed.\nDo you want to visit its web site?"), (const char*)_fnmModSelected);
   gmConfirmMenu.gm_pgmParentMenu = pgmCurrentMenu;
   gmConfirmMenu.BeSmall();
@@ -1154,7 +1094,7 @@ void StartDemoPlay(void)
 
 void StartSelectLevelFromSingle(void)
 {
-  FilterLevels(SpawnFlagsForGameType(-1));
+  FilterLevels(GetSpawnFlagsForGameType(-1));
   _pAfterLevelChosen = StartSinglePlayerNewMenuCustom;
   ChangeToMenu( &gmLevelsMenu);
   gmLevelsMenu.gm_pgmParentMenu = &gmSinglePlayerMenu;
@@ -1358,7 +1298,7 @@ void StartSelectServerNET(void)
 
 void StartSelectLevelFromSplit(void)
 {
-  FilterLevels(SpawnFlagsForGameType(mgSplitGameType.mg_iSelected));
+  FilterLevels(GetSpawnFlagsForGameType(mgSplitGameType.mg_iSelected));
   void StartSplitStartMenu(void);
   _pAfterLevelChosen = StartSplitStartMenu;
   ChangeToMenu( &gmLevelsMenu);
@@ -1366,7 +1306,7 @@ void StartSelectLevelFromSplit(void)
 }
 void StartSelectLevelFromNetwork(void)
 {
-  FilterLevels(SpawnFlagsForGameType(mgNetworkGameType.mg_iSelected));
+  FilterLevels(GetSpawnFlagsForGameType(mgNetworkGameType.mg_iSelected));
   void StartNetworkStartMenu(void);
   _pAfterLevelChosen = StartNetworkStartMenu;
   ChangeToMenu( &gmLevelsMenu);
@@ -2246,23 +2186,27 @@ void InitializeMenus(void)
     // ------------------- Initialize menus
     gmConfirmMenu.Initialize_t();
     gmConfirmMenu.gm_strName="Confirm";
-    gmConfirmMenu.gm_pmgSelectedByDefault = &mgConfirmYes;
+	gmConfirmMenu.gm_pmgSelectedByDefault = &gmConfirmMenu.gm_mgConfirmYes;
     gmConfirmMenu.gm_pgmParentMenu = NULL;
+	InitActionsForConfirmMenu();
 
     gmMainMenu.Initialize_t();
     gmMainMenu.gm_strName="Main";
-    gmMainMenu.gm_pmgSelectedByDefault = &mgMainSingle;
+	gmMainMenu.gm_pmgSelectedByDefault = &gmMainMenu.gm_mgSingle;
     gmMainMenu.gm_pgmParentMenu = NULL;
+	InitActionsForMainMenu();
 
     gmInGameMenu.Initialize_t();
     gmInGameMenu.gm_strName="InGame";
-    gmInGameMenu.gm_pmgSelectedByDefault = &mgInGameQuickLoad;
+    gmInGameMenu.gm_pmgSelectedByDefault = &gmInGameMenu.gm_mgQuickLoad;
     gmInGameMenu.gm_pgmParentMenu = NULL;
+	InitActionsForInGameMenu();
 
     gmSinglePlayerMenu.Initialize_t();
     gmSinglePlayerMenu.gm_strName="SinglePlayer";
-    gmSinglePlayerMenu.gm_pmgSelectedByDefault = &mgSingleNewGame;
+	gmSinglePlayerMenu.gm_pmgSelectedByDefault = &gmSinglePlayerMenu.gm_mgNewGame;
     gmSinglePlayerMenu.gm_pgmParentMenu = &gmMainMenu;
+	InitActionsForSinglePlayerMenu();
 
     gmSinglePlayerNewMenu.Initialize_t();
     gmSinglePlayerNewMenu.gm_strName="SinglePlayerNew";
@@ -3233,53 +3177,9 @@ BOOL CGameMenu::OnChar(MSG msg)
 }
 
 // ------------------------ CConfirmMenu implementation
-void CConfirmMenu::Initialize_t(void)
-{
-  gm_bPopup = TRUE;
-
-  mgConfirmLabel.mg_strText = "";
-  gm_lhGadgets.AddTail(mgConfirmLabel.mg_lnNode);
-  mgConfirmLabel.mg_boxOnScreen = BoxPopupLabel();
-  mgConfirmLabel.mg_iCenterI = 0;
-  mgConfirmLabel.mg_bfsFontSize = BFS_LARGE;
-  
-  mgConfirmYes.mg_strText = TRANS("YES");
-  gm_lhGadgets.AddTail(mgConfirmYes.mg_lnNode);
-  mgConfirmYes.mg_boxOnScreen = BoxPopupYesLarge();
-  mgConfirmYes.mg_pActivatedFunction = &ConfirmYes;
-  mgConfirmYes.mg_pmgLeft =
-  mgConfirmYes.mg_pmgRight = &mgConfirmNo;
-  mgConfirmYes.mg_iCenterI = 1;
-  mgConfirmYes.mg_bfsFontSize = BFS_LARGE;
-
-  mgConfirmNo.mg_strText = TRANS("NO");
-  gm_lhGadgets.AddTail(mgConfirmNo.mg_lnNode);
-  mgConfirmNo.mg_boxOnScreen = BoxPopupNoLarge();
-  mgConfirmNo.mg_pActivatedFunction = &ConfirmNo;
-  mgConfirmNo.mg_pmgLeft =
-  mgConfirmNo.mg_pmgRight = &mgConfirmYes;
-  mgConfirmNo.mg_iCenterI = -1;
-  mgConfirmNo.mg_bfsFontSize = BFS_LARGE;
-}
-
-void CConfirmMenu::BeLarge(void)
-{
-  mgConfirmLabel.mg_bfsFontSize = BFS_LARGE;
-  mgConfirmYes.mg_bfsFontSize = BFS_LARGE;
-  mgConfirmNo.mg_bfsFontSize = BFS_LARGE;
-  mgConfirmLabel.mg_iCenterI = 0;
-  mgConfirmYes.mg_boxOnScreen = BoxPopupYesLarge();
-  mgConfirmNo.mg_boxOnScreen = BoxPopupNoLarge();
-}
-
-void CConfirmMenu::BeSmall(void)
-{
-  mgConfirmLabel.mg_bfsFontSize = BFS_MEDIUM;
-  mgConfirmYes.mg_bfsFontSize = BFS_MEDIUM;
-  mgConfirmNo.mg_bfsFontSize = BFS_MEDIUM;
-  mgConfirmLabel.mg_iCenterI = -1;
-  mgConfirmYes.mg_boxOnScreen = BoxPopupYesSmall();
-  mgConfirmNo.mg_boxOnScreen = BoxPopupNoSmall();
+void InitActionsForConfirmMenu() {
+	gmConfirmMenu.gm_mgConfirmLabel.mg_pActivatedFunction = &ConfirmYes;
+	gmConfirmMenu.gm_mgConfirmNo.mg_pActivatedFunction = &ConfirmNo;
 }
 
 // return TRUE if handled
@@ -3293,428 +3193,69 @@ BOOL CConfirmMenu::OnKeyDown(int iVKey)
 }
 
 // ------------------------ CMainMenu implementation
-void CMainMenu::Initialize_t(void)
-{
-  // intialize main menu
-/*
-  mgMainTitle.mg_strText = "SERIOUS SAM - BETA";  // nothing to see here, kazuya
-  mgMainTitle.mg_boxOnScreen = BoxTitle();
-  gm_lhGadgets.AddTail( mgMainTitle.mg_lnNode);
-  */
-
-  extern CTString sam_strVersion;
-  mgMainVersionLabel.mg_strText = sam_strVersion;
-  mgMainVersionLabel.mg_boxOnScreen = BoxVersion();
-  mgMainVersionLabel.mg_bfsFontSize = BFS_MEDIUM;
-  mgMainVersionLabel.mg_iCenterI = +1;
-  mgMainVersionLabel.mg_bEnabled = FALSE;
-  mgMainVersionLabel.mg_bLabel = TRUE;
-  gm_lhGadgets.AddTail( mgMainVersionLabel.mg_lnNode);
-
-  extern CTString sam_strModName;
-  mgMainModLabel.mg_strText = sam_strModName;
-  mgMainModLabel.mg_boxOnScreen = BoxMediumRow(-2.0f);
-  mgMainModLabel.mg_bfsFontSize = BFS_MEDIUM;
-  mgMainModLabel.mg_iCenterI = 0;
-  mgMainModLabel.mg_bEnabled = FALSE;
-  mgMainModLabel.mg_bLabel = TRUE;
-  gm_lhGadgets.AddTail( mgMainModLabel.mg_lnNode);
-
-  mgMainSingle.mg_strText = TRANS("SINGLE PLAYER");
-  mgMainSingle.mg_bfsFontSize = BFS_LARGE;
-  mgMainSingle.mg_boxOnScreen = BoxBigRow(0.0f);
-  mgMainSingle.mg_strTip = TRANS("single player game menus");
-  gm_lhGadgets.AddTail( mgMainSingle.mg_lnNode);
-  mgMainSingle.mg_pmgUp = &mgMainQuit;
-  mgMainSingle.mg_pmgDown = &mgMainNetwork;
-  mgMainSingle.mg_pActivatedFunction = &StartSinglePlayerMenu;
-
-  mgMainNetwork.mg_strText = TRANS("NETWORK");
-  mgMainNetwork.mg_bfsFontSize = BFS_LARGE;
-  mgMainNetwork.mg_boxOnScreen = BoxBigRow(1.0f);
-  mgMainNetwork.mg_strTip = TRANS("LAN/iNet multiplayer menus");
-  gm_lhGadgets.AddTail( mgMainNetwork.mg_lnNode);
-  mgMainNetwork.mg_pmgUp = &mgMainSingle;
-  mgMainNetwork.mg_pmgDown = &mgMainSplitScreen;
-  mgMainNetwork.mg_pActivatedFunction = StartNetworkMenu;
-
-  mgMainSplitScreen.mg_strText = TRANS("SPLIT SCREEN");
-  mgMainSplitScreen.mg_bfsFontSize = BFS_LARGE;
-  mgMainSplitScreen.mg_boxOnScreen = BoxBigRow(2.0f);
-  mgMainSplitScreen.mg_strTip = TRANS("play with multiple players on one computer");
-  gm_lhGadgets.AddTail( mgMainSplitScreen.mg_lnNode);
-  mgMainSplitScreen.mg_pmgUp = &mgMainNetwork;
-  mgMainSplitScreen.mg_pmgDown = &mgMainDemo;
-  mgMainSplitScreen.mg_pActivatedFunction = &StartSplitScreenMenu;
-
-  mgMainDemo.mg_strText = TRANS("DEMO");
-  mgMainDemo.mg_bfsFontSize = BFS_LARGE;
-  mgMainDemo.mg_boxOnScreen = BoxBigRow(3.0f);
-  mgMainDemo.mg_strTip = TRANS("play a game demo");
-  gm_lhGadgets.AddTail( mgMainDemo.mg_lnNode);
-  mgMainDemo.mg_pmgUp = &mgMainSplitScreen;
-  mgMainDemo.mg_pmgDown = &mgMainMods;
-  mgMainDemo.mg_pActivatedFunction = &StartDemoLoadMenu;
-
-  mgMainMods.mg_strText = TRANS("MODS");
-  mgMainMods.mg_bfsFontSize = BFS_LARGE;
-  mgMainMods.mg_boxOnScreen = BoxBigRow(4.0f);
-  mgMainMods.mg_strTip = TRANS("run one of installed game modifications");
-  gm_lhGadgets.AddTail( mgMainMods.mg_lnNode);
-  mgMainMods.mg_pmgUp = &mgMainDemo;
-  mgMainMods.mg_pmgDown = &mgMainHighScore;
-
-  #if TECHTESTONLY
-    mgMainMods.mg_pActivatedFunction = &DisabledFunction;
-  #else
-    mgMainMods.mg_pActivatedFunction = &StartModsLoadMenu;
-  #endif
-
-  mgMainHighScore.mg_strText = TRANS("HIGH SCORES");
-  mgMainHighScore.mg_bfsFontSize = BFS_LARGE;
-  mgMainHighScore.mg_boxOnScreen = BoxBigRow(5.0f);
-  mgMainHighScore.mg_strTip = TRANS("view list of top ten best scores");
-  gm_lhGadgets.AddTail( mgMainHighScore.mg_lnNode);
-  mgMainHighScore.mg_pmgUp = &mgMainMods;
-  mgMainHighScore.mg_pmgDown = &mgMainOptions;
-  mgMainHighScore.mg_pActivatedFunction = &StartHighScoreMenu;
-
-  mgMainOptions.mg_strText = TRANS("OPTIONS");
-  mgMainOptions.mg_bfsFontSize = BFS_LARGE;
-  mgMainOptions.mg_boxOnScreen = BoxBigRow(6.0f);
-  mgMainOptions.mg_strTip = TRANS("adjust video, audio and input options");
-  gm_lhGadgets.AddTail( mgMainOptions.mg_lnNode);
-  mgMainOptions.mg_pmgUp = &mgMainHighScore;
-  mgMainOptions.mg_pmgDown = &mgMainQuit;
-  mgMainOptions.mg_pActivatedFunction = &StartOptionsMenu;
-  
-  mgMainQuit.mg_strText = TRANS("QUIT");
-  mgMainQuit.mg_bfsFontSize = BFS_LARGE;
-  mgMainQuit.mg_boxOnScreen = BoxBigRow(7.0f);
-  mgMainQuit.mg_strTip = TRANS("exit game immediately");
-  gm_lhGadgets.AddTail( mgMainQuit.mg_lnNode);
-  mgMainQuit.mg_pmgUp = &mgMainOptions;
-  mgMainQuit.mg_pmgDown = &mgMainSingle;
-  mgMainQuit.mg_pActivatedFunction = &ExitConfirm;
-}
-void CMainMenu::StartMenu(void)
-{
-  mgMainSingle.mg_bEnabled      = IsMenuEnabled("Single Player");
-  mgMainNetwork.mg_bEnabled     = IsMenuEnabled("Network");
-  mgMainSplitScreen.mg_bEnabled = IsMenuEnabled("Split Screen");
-  mgMainHighScore.mg_bEnabled   = IsMenuEnabled("High Score");
-  CGameMenu::StartMenu();
-}
-
-// ------------------------ CMainMenu implementation
-void CInGameMenu::Initialize_t(void)
-{
-  // intialize main menu
-  mgInGameTitle.mg_strText = TRANS("GAME");
-  mgInGameTitle.mg_boxOnScreen = BoxTitle();
-  gm_lhGadgets.AddTail( mgInGameTitle.mg_lnNode);
-
-  mgInGameLabel1.mg_strText = "";
-  mgInGameLabel1.mg_boxOnScreen = BoxMediumRow(-2.0);
-  mgInGameLabel1.mg_bfsFontSize = BFS_MEDIUM;
-  mgInGameLabel1.mg_iCenterI = -1;
-  mgInGameLabel1.mg_bEnabled = FALSE;
-  mgInGameLabel1.mg_bLabel = TRUE;
-  gm_lhGadgets.AddTail( mgInGameLabel1.mg_lnNode);
-
-  mgInGameLabel2.mg_strText = "";
-  mgInGameLabel2.mg_boxOnScreen = BoxMediumRow(-1.0);
-  mgInGameLabel2.mg_bfsFontSize = BFS_MEDIUM;
-  mgInGameLabel2.mg_iCenterI = -1;
-  mgInGameLabel2.mg_bEnabled = FALSE;
-  mgInGameLabel2.mg_bLabel = TRUE;
-  gm_lhGadgets.AddTail( mgInGameLabel2.mg_lnNode);
-
-  mgInGameQuickLoad.mg_strText = TRANS("QUICK LOAD");
-  mgInGameQuickLoad.mg_bfsFontSize = BFS_LARGE;
-  mgInGameQuickLoad.mg_boxOnScreen = BoxBigRow(0.0f);
-  mgInGameQuickLoad.mg_strTip = TRANS("load a quick-saved game (F9)");
-  gm_lhGadgets.AddTail( mgInGameQuickLoad.mg_lnNode);
-  mgInGameQuickLoad.mg_pmgUp = &mgInGameQuit;
-  mgInGameQuickLoad.mg_pmgDown = &mgInGameQuickSave;
-  mgInGameQuickLoad.mg_pActivatedFunction = &StartCurrentQuickLoadMenu;
-
-  mgInGameQuickSave.mg_strText = TRANS("QUICK SAVE");
-  mgInGameQuickSave.mg_bfsFontSize = BFS_LARGE;
-  mgInGameQuickSave.mg_boxOnScreen = BoxBigRow(1.0f);
-  mgInGameQuickSave.mg_strTip = TRANS("quick-save current game (F6)");
-  gm_lhGadgets.AddTail( mgInGameQuickSave.mg_lnNode);
-  mgInGameQuickSave.mg_pmgUp = &mgInGameQuickLoad;
-  mgInGameQuickSave.mg_pmgDown = &mgInGameLoad;
-  mgInGameQuickSave.mg_pActivatedFunction = &QuickSaveFromMenu;
-
-  mgInGameLoad.mg_strText = TRANS("LOAD");
-  mgInGameLoad.mg_bfsFontSize = BFS_LARGE;
-  mgInGameLoad.mg_boxOnScreen = BoxBigRow(2.0f);
-  mgInGameLoad.mg_strTip = TRANS("load a saved game");
-  gm_lhGadgets.AddTail( mgInGameLoad.mg_lnNode);
-  mgInGameLoad.mg_pmgUp = &mgInGameQuickSave;
-  mgInGameLoad.mg_pmgDown = &mgInGameSave;
-  mgInGameLoad.mg_pActivatedFunction = &StartCurrentLoadMenu;
-
-  mgInGameSave.mg_strText = TRANS("SAVE");
-  mgInGameSave.mg_bfsFontSize = BFS_LARGE;
-  mgInGameSave.mg_boxOnScreen = BoxBigRow(3.0f);
-  mgInGameSave.mg_strTip = TRANS("save current game (each player has own slots!)");
-  gm_lhGadgets.AddTail( mgInGameSave.mg_lnNode);
-  mgInGameSave.mg_pmgUp = &mgInGameLoad;
-  mgInGameSave.mg_pmgDown = &mgInGameDemoRec;
-  mgInGameSave.mg_pActivatedFunction = &StartCurrentSaveMenu;
-
-  mgInGameDemoRec.mg_boxOnScreen = BoxBigRow(4.0f);
-  mgInGameDemoRec.mg_bfsFontSize = BFS_LARGE;
-  mgInGameDemoRec.mg_pmgUp = &mgInGameSave;
-  mgInGameDemoRec.mg_pmgDown = &mgInGameHighScore;
-  mgInGameDemoRec.mg_strText = "Text not set";
-  gm_lhGadgets.AddTail( mgInGameDemoRec.mg_lnNode);
-  mgInGameDemoRec.mg_pActivatedFunction = NULL; // !!! must be set on start menu
-
-  mgInGameHighScore.mg_strText = TRANS("HIGH SCORES");
-  mgInGameHighScore.mg_bfsFontSize = BFS_LARGE;
-  mgInGameHighScore.mg_boxOnScreen = BoxBigRow(5.0f);
-  mgInGameHighScore.mg_strTip = TRANS("view list of top ten best scores");
-  gm_lhGadgets.AddTail( mgInGameHighScore.mg_lnNode);
-  mgInGameHighScore.mg_pmgUp = &mgInGameDemoRec;
-  mgInGameHighScore.mg_pmgDown = &mgInGameOptions;
-  mgInGameHighScore.mg_pActivatedFunction = &StartHighScoreMenu;
-
-  mgInGameOptions.mg_strText = TRANS("OPTIONS");
-  mgInGameOptions.mg_bfsFontSize = BFS_LARGE;
-  mgInGameOptions.mg_boxOnScreen = BoxBigRow(6.0f);
-  mgInGameOptions.mg_strTip = TRANS("adjust video, audio and input options");
-  gm_lhGadgets.AddTail( mgInGameOptions.mg_lnNode);
-  mgInGameOptions.mg_pmgUp = &mgInGameHighScore;
-  mgInGameOptions.mg_pmgDown = &mgInGameStop;
-  mgInGameOptions.mg_pActivatedFunction = &StartOptionsMenu;
-  
-  mgInGameStop.mg_strText = TRANS("STOP GAME");
-  mgInGameStop.mg_bfsFontSize = BFS_LARGE;
-  mgInGameStop.mg_boxOnScreen = BoxBigRow(7.0f);
-  mgInGameStop.mg_strTip = TRANS("stop currently running game");
-  gm_lhGadgets.AddTail( mgInGameStop.mg_lnNode);
-  mgInGameStop.mg_pmgUp = &mgInGameOptions;
-  mgInGameStop.mg_pmgDown = &mgInGameQuit;
+void InitActionsForMainMenu() {
+	gmMainMenu.gm_mgSingle.mg_pActivatedFunction = &StartSinglePlayerMenu;
+	gmMainMenu.gm_mgNetwork.mg_pActivatedFunction = StartNetworkMenu;
+	gmMainMenu.gm_mgSplitScreen.mg_pActivatedFunction = &StartSplitScreenMenu;
+	gmMainMenu.gm_mgDemo.mg_pActivatedFunction = &StartDemoLoadMenu;
 #if TECHTESTONLY
-  mgInGameStop.mg_pActivatedFunction = &ExitConfirm;
+	gmMainMenu.gm_mgMods.mg_pActivatedFunction = &DisabledFunction;
 #else
-  mgInGameStop.mg_pActivatedFunction = &StopConfirm;
+	gmMainMenu.gm_mgMods.mg_pActivatedFunction = &StartModsLoadMenu;
 #endif
-
-  mgInGameQuit.mg_strText = TRANS("QUIT");
-  mgInGameQuit.mg_bfsFontSize = BFS_LARGE;
-  mgInGameQuit.mg_boxOnScreen = BoxBigRow(8.0f);
-  mgInGameQuit.mg_strTip = TRANS("exit game immediately");
-  gm_lhGadgets.AddTail( mgInGameQuit.mg_lnNode);
-  mgInGameQuit.mg_pmgUp = &mgInGameStop;
-  mgInGameQuit.mg_pmgDown = &mgInGameQuickLoad;
-  mgInGameQuit.mg_pActivatedFunction = &ExitConfirm;
+	gmMainMenu.gm_mgHighScore.mg_pActivatedFunction = &StartHighScoreMenu;
+	gmMainMenu.gm_mgOptions.mg_pActivatedFunction = &StartOptionsMenu;
+	gmMainMenu.gm_mgQuit.mg_pActivatedFunction = &ExitConfirm;
 }
 
-void SetDemoStartStopRecText(void)
+// ------------------------ CInGameMenu implementation
+void InitActionsForInGameMenu() {
+	
+	gmInGameMenu.gm_mgQuickLoad.mg_pActivatedFunction = &StartCurrentQuickLoadMenu;
+	gmInGameMenu.gm_mgQuickSave.mg_pActivatedFunction = &QuickSaveFromMenu;
+	gmInGameMenu.gm_mgLoad.mg_pActivatedFunction = &StartCurrentLoadMenu;
+	gmInGameMenu.gm_mgSave.mg_pActivatedFunction = &StartCurrentSaveMenu;
+	gmInGameMenu.gm_mgHighScore.mg_pActivatedFunction = &StartHighScoreMenu;
+	gmInGameMenu.gm_mgOptions.mg_pActivatedFunction = &StartOptionsMenu;
+#if TECHTESTONLY
+	gmInGameMenu.gm_mgStop.mg_pActivatedFunction = &ExitConfirm;
+#else
+	gmInGameMenu.gm_mgStop.mg_pActivatedFunction = &StopConfirm;
+#endif
+	gmInGameMenu.gm_mgQuit.mg_pActivatedFunction = &ExitConfirm;
+}
+
+extern void SetDemoStartStopRecText(void)
 {
   if( _pNetwork->IsRecordingDemo())
   {
-    mgInGameDemoRec.SetText( TRANS("STOP RECORDING"));
-    mgInGameDemoRec.mg_strTip = TRANS("stop current recording");
-    mgInGameDemoRec.mg_pActivatedFunction = &StopRecordingDemo;
+	gmInGameMenu.gm_mgDemoRec.SetText(TRANS("STOP RECORDING"));
+	gmInGameMenu.gm_mgDemoRec.mg_strTip = TRANS("stop current recording");
+	gmInGameMenu.gm_mgDemoRec.mg_pActivatedFunction = &StopRecordingDemo;
   }
   else
   {
-    mgInGameDemoRec.SetText( TRANS("RECORD DEMO"));
-    mgInGameDemoRec.mg_strTip = TRANS("start recording current game");
-    mgInGameDemoRec.mg_pActivatedFunction = &StartDemoSaveMenu;
+    gmInGameMenu.gm_mgDemoRec.SetText(TRANS("RECORD DEMO"));
+    gmInGameMenu.gm_mgDemoRec.mg_strTip = TRANS("start recording current game");
+    gmInGameMenu.gm_mgDemoRec.mg_pActivatedFunction = &StartDemoSaveMenu;
   }
 }
 
-void CInGameMenu::StartMenu(void)
-{
-  mgInGameQuickLoad.mg_bEnabled = _pNetwork->IsServer();
-  mgInGameQuickSave.mg_bEnabled = _pNetwork->IsServer();
-  mgInGameLoad.mg_bEnabled      = _pNetwork->IsServer();
-  mgInGameSave.mg_bEnabled      = _pNetwork->IsServer();
-  mgInGameDemoRec.mg_bEnabled   = TRUE;//_pNetwork->IsServer();
-  SetDemoStartStopRecText();
-
-
-  if (_gmRunningGameMode==GM_SINGLE_PLAYER) {
-    CPlayerCharacter &pc = _pGame->gm_apcPlayers[ _pGame->gm_iSinglePlayer];
-    mgInGameLabel1.mg_strText.PrintF( TRANS("Player: %s"), pc.GetNameForPrinting());
-    mgInGameLabel2.mg_strText = "";
-
-  } else {
-    if (_pNetwork->IsServer()) {
-
-      CTString strHost, strAddress;
-      CTString strHostName;
-      _pNetwork->GetHostName(strHost, strAddress);
-      if (strHost=="") {
-        strHostName = TRANS("<not started yet>");
-      } else {
-        strHostName = strHost + " ("+strAddress+")";
-      }
-
-      mgInGameLabel1.mg_strText = TRANS("Address: ")+strHostName;
-      mgInGameLabel2.mg_strText = "";
-    } else {
-
-      CTString strConfig;
-      strConfig = TRANS("<not adjusted>");
-      if (sam_strNetworkSettings!="") {
-        LoadStringVar(CTFileName(sam_strNetworkSettings).NoExt()+".des", strConfig);
-        strConfig.OnlyFirstLine();
-      }
-
-      mgInGameLabel1.mg_strText = TRANS("Connected to: ")+_pGame->gam_strJoinAddress;
-      mgInGameLabel2.mg_strText = TRANS("Connection: ")+strConfig;
-    }
-  }
-
-  CGameMenu::StartMenu();
-}
 
 // ------------------------ CSinglePlayerMenu implementation
-void CSinglePlayerMenu::Initialize_t(void)
-{
-  // intialize single player menu
-  mgSingleTitle.mg_strText = TRANS("SINGLE PLAYER");
-  mgSingleTitle.mg_boxOnScreen = BoxTitle();
-  gm_lhGadgets.AddTail( mgSingleTitle.mg_lnNode);
-
-  mgSinglePlayerLabel.mg_boxOnScreen = BoxBigRow(-1.0f);
-  mgSinglePlayerLabel.mg_bfsFontSize = BFS_MEDIUM;
-  mgSinglePlayerLabel.mg_iCenterI = -1;
-  mgSinglePlayerLabel.mg_bEnabled = FALSE;
-  mgSinglePlayerLabel.mg_bLabel = TRUE;
-  gm_lhGadgets.AddTail(mgSinglePlayerLabel.mg_lnNode);
-
-  mgSingleNewGame.mg_strText = TRANS("NEW GAME");
-  mgSingleNewGame.mg_bfsFontSize = BFS_LARGE;
-  mgSingleNewGame.mg_boxOnScreen = BoxBigRow(0.0f);
-  mgSingleNewGame.mg_strTip = TRANS("start new game with current player");
-  gm_lhGadgets.AddTail( mgSingleNewGame.mg_lnNode);
-  mgSingleNewGame.mg_pmgUp = &mgSingleOptions;
-  mgSingleNewGame.mg_pmgDown = &mgSingleCustom;
-  mgSingleNewGame.mg_pActivatedFunction = &StartSinglePlayerNewMenu;
-
-  mgSingleCustom.mg_strText = TRANS("CUSTOM LEVEL");
-  mgSingleCustom.mg_bfsFontSize = BFS_LARGE;
-  mgSingleCustom.mg_boxOnScreen = BoxBigRow(1.0f);
-  mgSingleCustom.mg_strTip = TRANS("start new game on a custom level");
-  gm_lhGadgets.AddTail( mgSingleCustom.mg_lnNode);
-  mgSingleCustom.mg_pmgUp = &mgSingleNewGame;
-  mgSingleCustom.mg_pmgDown = &mgSingleQuickLoad;
-  #if _SE_DEMO || TECHTESTONLY
-    mgSingleCustom.mg_pActivatedFunction = &DisabledFunction;
-  #else
-    mgSingleCustom.mg_pActivatedFunction = &StartSelectLevelFromSingle;
-  #endif
-
-  mgSingleQuickLoad.mg_strText = TRANS("QUICK LOAD");
-  mgSingleQuickLoad.mg_bfsFontSize = BFS_LARGE;
-  mgSingleQuickLoad.mg_boxOnScreen = BoxBigRow(2.0f);
-  mgSingleQuickLoad.mg_strTip = TRANS("load a quick-saved game (F9)");
-  gm_lhGadgets.AddTail( mgSingleQuickLoad.mg_lnNode);
-  mgSingleQuickLoad.mg_pmgUp = &mgSingleCustom;
-  mgSingleQuickLoad.mg_pmgDown = &mgSingleLoad;
-  mgSingleQuickLoad.mg_pActivatedFunction = &StartSinglePlayerQuickLoadMenu;
-
-  mgSingleLoad.mg_strText = TRANS("LOAD");
-  mgSingleLoad.mg_bfsFontSize = BFS_LARGE;
-  mgSingleLoad.mg_boxOnScreen = BoxBigRow(3.0f);
-  mgSingleLoad.mg_strTip = TRANS("load a saved game of current player");
-  gm_lhGadgets.AddTail( mgSingleLoad.mg_lnNode);
-  mgSingleLoad.mg_pmgUp = &mgSingleQuickLoad;
-  mgSingleLoad.mg_pmgDown = &mgSingleTraining;
-  mgSingleLoad.mg_pActivatedFunction = &StartSinglePlayerLoadMenu;
-
-  mgSingleTraining.mg_strText = TRANS("TRAINING");
-  mgSingleTraining.mg_bfsFontSize = BFS_LARGE;
-  mgSingleTraining.mg_boxOnScreen = BoxBigRow(4.0f);
-  mgSingleTraining.mg_strTip = TRANS("start training level - KarnakDemo");
-  gm_lhGadgets.AddTail( mgSingleTraining.mg_lnNode);
-  mgSingleTraining.mg_pmgUp = &mgSingleLoad;
-  mgSingleTraining.mg_pmgDown = &mgSingleTechTest;
-  mgSingleTraining.mg_pActivatedFunction = &StartTraining;
-
-  mgSingleTechTest.mg_strText = TRANS("TECHNOLOGY TEST");
-  mgSingleTechTest.mg_bfsFontSize = BFS_LARGE;
-  mgSingleTechTest.mg_boxOnScreen = BoxBigRow(5.0f);
-  mgSingleTechTest.mg_strTip = TRANS("start technology testing level");
-  gm_lhGadgets.AddTail( mgSingleTechTest.mg_lnNode);
-  mgSingleTechTest.mg_pmgUp = &mgSingleTraining;
-  mgSingleTechTest.mg_pmgDown = &mgSinglePlayersAndControls;
-  mgSingleTechTest.mg_pActivatedFunction = &StartTechTest;
-
-  mgSinglePlayersAndControls.mg_bfsFontSize = BFS_LARGE;
-  mgSinglePlayersAndControls.mg_boxOnScreen = BoxBigRow(6.0f);
-  mgSinglePlayersAndControls.mg_pmgUp = &mgSingleTechTest;
-  mgSinglePlayersAndControls.mg_pmgDown = &mgSingleOptions;
-  mgSinglePlayersAndControls.mg_strText = TRANS("PLAYERS AND CONTROLS");
-  mgSinglePlayersAndControls.mg_strTip = TRANS("change currently active player or adjust controls");
-  gm_lhGadgets.AddTail( mgSinglePlayersAndControls.mg_lnNode);
-  mgSinglePlayersAndControls.mg_pActivatedFunction = &StartChangePlayerMenuFromSinglePlayer;
-
-  mgSingleOptions.mg_strText = TRANS("GAME OPTIONS");
-  mgSingleOptions.mg_bfsFontSize = BFS_LARGE;
-  mgSingleOptions.mg_boxOnScreen = BoxBigRow(7.0f);
-  mgSingleOptions.mg_strTip = TRANS("adjust miscellaneous game options");
-  gm_lhGadgets.AddTail( mgSingleOptions.mg_lnNode);
-  mgSingleOptions.mg_pmgUp = &mgSinglePlayersAndControls;
-  mgSingleOptions.mg_pmgDown = &mgSingleNewGame;
-  mgSingleOptions.mg_pActivatedFunction = &StartSinglePlayerGameOptions;
-}
-
-void CSinglePlayerMenu::StartMenu(void)
-{
-  mgSingleTraining.mg_bEnabled = IsMenuEnabled("Training");
-  mgSingleTechTest.mg_bEnabled = IsMenuEnabled("Technology Test");
-
-  if (mgSingleTraining.mg_bEnabled) {
-    if (!mgSingleTraining.mg_lnNode.IsLinked()) {
-      gm_lhGadgets.AddTail( mgSingleTraining.mg_lnNode);
-    }
-
-    mgSingleLoad.mg_boxOnScreen = BoxBigRow(3.0f);
-    mgSingleLoad.mg_pmgUp = &mgSingleQuickLoad;
-    mgSingleLoad.mg_pmgDown = &mgSingleTraining;
-
-    mgSingleTraining.mg_boxOnScreen = BoxBigRow(4.0f);
-    mgSingleTraining.mg_pmgUp = &mgSingleLoad;
-    mgSingleTraining.mg_pmgDown = &mgSingleTechTest;
-
-    mgSingleTechTest.mg_boxOnScreen = BoxBigRow(5.0f);
-    mgSingleTechTest.mg_pmgUp = &mgSingleTraining;
-    mgSingleTechTest.mg_pmgDown = &mgSinglePlayersAndControls;
-
-    mgSinglePlayersAndControls.mg_boxOnScreen = BoxBigRow(6.0f);
-    mgSingleOptions.mg_boxOnScreen = BoxBigRow(7.0f);
-
-  } else {
-    if (mgSingleTraining.mg_lnNode.IsLinked()) {
-      mgSingleTraining.mg_lnNode.Remove();
-    }
-
-    mgSingleLoad.mg_boxOnScreen = BoxBigRow(3.0f);
-    mgSingleLoad.mg_pmgUp = &mgSingleQuickLoad;
-    mgSingleLoad.mg_pmgDown = &mgSingleTechTest;
-
-    mgSingleTechTest.mg_boxOnScreen = BoxBigRow(4.0f);
-    mgSingleTechTest.mg_pmgUp = &mgSingleLoad;
-    mgSingleTechTest.mg_pmgDown = &mgSinglePlayersAndControls;
-
-    mgSinglePlayersAndControls.mg_boxOnScreen = BoxBigRow(5.0f);
-    mgSingleOptions.mg_boxOnScreen = BoxBigRow(6.0f);
-  }
-
-  CGameMenu::StartMenu();
-
-  CPlayerCharacter &pc = _pGame->gm_apcPlayers[ _pGame->gm_iSinglePlayer];
-  mgSinglePlayerLabel.mg_strText.PrintF( TRANS("Player: %s\n"), pc.GetNameForPrinting());
+void InitActionsForSinglePlayerMenu() {
+	gmSinglePlayerMenu.gm_mgNewGame.mg_pActivatedFunction = &StartSinglePlayerNewMenu;
+#if _SE_DEMO || TECHTESTONLY
+	gmSinglePlayerMenu.gm_mgCustom.mg_pActivatedFunction = &DisabledFunction;
+#else
+	gmSinglePlayerMenu.gm_mgCustom.mg_pActivatedFunction = &StartSelectLevelFromSingle;
+#endif
+	gmSinglePlayerMenu.gm_mgQuickLoad.mg_pActivatedFunction = &StartSinglePlayerQuickLoadMenu;
+	gmSinglePlayerMenu.gm_mgLoad.mg_pActivatedFunction = &StartSinglePlayerLoadMenu;
+	gmSinglePlayerMenu.gm_mgTraining.mg_pActivatedFunction = &StartTraining;
+	gmSinglePlayerMenu.gm_mgTechTest.mg_pActivatedFunction = &StartTechTest;
+	gmSinglePlayerMenu.gm_mgPlayersAndControls.mg_pActivatedFunction = &StartChangePlayerMenuFromSinglePlayer;
+	gmSinglePlayerMenu.gm_mgOptions.mg_pActivatedFunction = &StartSinglePlayerGameOptions;
 }
 
 // ------------------------ CSinglePlayerNewMenu implementation
@@ -5567,7 +5108,7 @@ void CNetworkMenu::StartMenu(void)
 void UpdateNetworkLevel(INDEX iDummy)
 {
   ValidateLevelForFlags(_pGame->gam_strCustomLevel, 
-    SpawnFlagsForGameType(mgNetworkGameType.mg_iSelected));
+    GetSpawnFlagsForGameType(mgNetworkGameType.mg_iSelected));
   mgNetworkLevel.mg_strText = FindLevelByFileName(_pGame->gam_strCustomLevel).li_strName;
 }
 
@@ -6102,7 +5643,7 @@ void CSplitScreenMenu::StartMenu(void)
 void UpdateSplitLevel(INDEX iDummy)
 {
   ValidateLevelForFlags(_pGame->gam_strCustomLevel, 
-    SpawnFlagsForGameType(mgSplitGameType.mg_iSelected));
+    GetSpawnFlagsForGameType(mgSplitGameType.mg_iSelected));
   mgSplitLevel.mg_strText = FindLevelByFileName(_pGame->gam_strCustomLevel).li_strName;
 }
 
@@ -6174,6 +5715,7 @@ void CSplitStartMenu::StartMenu(void)
   UpdateSplitLevel(0);
   CGameMenu::StartMenu();
 }
+
 void CSplitStartMenu::EndMenu(void)
 {
   _pShell->SetINDEX("gam_iStartDifficulty", mgSplitDifficulty.mg_iSelected-1);
