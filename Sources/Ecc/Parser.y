@@ -1073,7 +1073,7 @@ statements
   ;
 statement
   : expression ';' {$$=$1+$2;}
-  | k_switch '(' expression ')' '{' statements '}' {$$=$1+$2+$3+$4+$5+$6+$7}
+  | k_switch '(' expression ')' '{' statements '}' {$$=$1+$2+$3+$4+$5+$6+$7;}
   | k_case case_constant_expression ':' {$$=$1+" "+$2+$3+" ";}
   | '{' statements '}' {$$=$1+$2+$3;}
   | expression '{' statements '}' {$$=$1+$2+$3+$4;}
