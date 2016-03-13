@@ -7,11 +7,22 @@
 #endif
 
 #include "GameMenu.h"
+#include "MGArrow.h"
+#include "MGButton.h"
+#include "MGTitle.h"
+#include "MGVarButton.h"
 
 
 class CVarMenu : public CGameMenu {
 public:
 	CTFileName gm_fnmMenuCFG;
+
+	CMGTitle gm_mgTitle;
+	CMGVarButton gm_mgVar[LEVELS_ON_SCREEN];
+	CMGButton gm_mgApply;
+	CMGArrow gm_mgArrowUp;
+	CMGArrow gm_mgArrowDn;
+
 	void Initialize_t(void);
 	void FillListItems(void);
 	void StartMenu(void);

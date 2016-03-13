@@ -183,6 +183,7 @@ copy Release\$(TargetName).map $(SolutionDir)..\Bin\ &gt;nul </Command>
     <ClCompile Include="LevelInfo.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="MConfirm.cpp" />
+    <ClCompile Include="MDisabled.cpp" />
     <ClCompile Include="Menu.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">StdH.h</PrecompiledHeaderFile>
@@ -210,8 +211,11 @@ copy Release\$(TargetName).map $(SolutionDir)..\Bin\ &gt;nul </Command>
     <ClCompile Include="MGTrigger.cpp" />
     <ClCompile Include="MGVarButton.cpp" />
     <ClCompile Include="MInGame.cpp" />
+    <ClCompile Include="MLevels.cpp" />
     <ClCompile Include="MMain.cpp" />
     <ClCompile Include="MSinglePlayer.cpp" />
+    <ClCompile Include="MSinglePlayerNew.cpp" />
+    <ClCompile Include="MVar.cpp" />
     <ClCompile Include="SeriousSam.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">StdH.h</PrecompiledHeaderFile>

@@ -7,10 +7,15 @@
 #endif
 
 #include "GameMenu.h"
+#include "MGButton.h"
+#include "MGTitle.h"
 
 
 class CDisabledMenu : public CGameMenu {
 public:
+	CMGTitle gm_mgTitle;
+	CMGButton gm_mgButton;
+
 	void Initialize_t(void);
 };
 

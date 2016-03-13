@@ -7,10 +7,20 @@
 #endif
 
 #include "GameMenu.h"
+#include "MGButton.h"
+#include "MGTitle.h"
 
 
 class CSinglePlayerNewMenu : public CGameMenu {
 public:
+	CMGTitle gm_mgTitle;
+	CMGButton gm_mgTourist;
+	CMGButton gm_mgEasy;
+	CMGButton gm_mgMedium;
+	CMGButton gm_mgHard;
+	CMGButton gm_mgSerious;
+	CMGButton gm_mgMental;
+
 	void Initialize_t(void);
 	void StartMenu(void);
 };

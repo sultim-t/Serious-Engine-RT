@@ -107,6 +107,9 @@ void InitActionsForConfirmMenu();
 void InitActionsForMainMenu();
 void InitActionsForInGameMenu();
 void InitActionsForSinglePlayerMenu();
+void InitActionsForSinglePlayerNewMenu();
+void InitActionsForVarMenu();
+
 
 // functions to activate when user chose 'yes/no' on confirmation
 void (*_pConfimedYes)(void) = NULL;
@@ -296,32 +299,16 @@ CSinglePlayerMenu gmSinglePlayerMenu;
 
 // -------- New single player menu
 CSinglePlayerNewMenu gmSinglePlayerNewMenu;
-CMGTitle mgSingleNewTitle;
-CMGButton mgSingleNewTourist;
-CMGButton mgSingleNewEasy;
-CMGButton mgSingleNewMedium;
-CMGButton mgSingleNewHard;
-CMGButton mgSingleNewSerious;
-CMGButton mgSingleNewMental;
+
 // -------- Disabled menu
 CDisabledMenu gmDisabledFunction;
-CMGTitle mgDisabledTitle;
-CMGButton mgDisabledMenuButton;
+
 // -------- Manual levels menu
 CLevelsMenu gmLevelsMenu;
-CMGTitle mgLevelsTitle;
-CMGLevelButton mgManualLevel[ LEVELS_ON_SCREEN];
-CMGArrow mgLevelsArrowUp;
-CMGArrow mgLevelsArrowDn;
 
 // -------- console variable adjustment menu
-BOOL _bVarChanged = FALSE;
+extern BOOL _bVarChanged = FALSE;
 CVarMenu gmVarMenu;
-CMGTitle mgVarTitle;
-CMGVarButton mgVar[LEVELS_ON_SCREEN];
-CMGButton mgVarApply;
-CMGArrow mgVarArrowUp;
-CMGArrow mgVarArrowDn;
 
 // -------- Player profile menu
 CPlayerProfileMenu gmPlayerProfile;
@@ -1050,8 +1037,8 @@ void StartControlsMenuFromOptions(void)
 void DisabledFunction(void)
 {
   gmDisabledFunction.gm_pgmParentMenu = pgmCurrentMenu;
-  mgDisabledMenuButton.mg_strText = TRANS("The feature is not available in this version!");
-  mgDisabledTitle.mg_strText = TRANS("DISABLED");
+  gmDisabledFunction.gm_mgButton.mg_strText = TRANS("The feature is not available in this version!");
+  gmDisabledFunction.gm_mgTitle.mg_strText = TRANS("DISABLED");
   ChangeToMenu( &gmDisabledFunction);
 }
 
@@ -1426,7 +1413,7 @@ BOOL LSLoadMod(const CTFileName &fnm)
 
 BOOL LSLoadCustom(const CTFileName &fnm)
 {
-  mgVarTitle.mg_strText = TRANS("ADVANCED OPTIONS");
+  gmVarMenu.gm_mgTitle.mg_strText = TRANS("ADVANCED OPTIONS");
 //  LoadStringVar(fnm.NoExt()+".des", mgVarTitle.mg_strText);
 //  mgVarTitle.mg_strText.OnlyFirstLine();
   gmVarMenu.gm_fnmMenuCFG = fnm;
@@ -1817,13 +1804,13 @@ void StartSplitScreenSaveMenu(void)
 // game options var settings
 void StartVarGameOptions(void)
 {
-  mgVarTitle.mg_strText = TRANS("GAME OPTIONS");
+  gmVarMenu.gm_mgTitle.mg_strText = TRANS("GAME OPTIONS");
   gmVarMenu.gm_fnmMenuCFG = CTFILENAME("Scripts\\Menu\\GameOptions.cfg");
   ChangeToMenu( &gmVarMenu);
 }
 void StartSinglePlayerGameOptions(void)
 {
-  mgVarTitle.mg_strText = TRANS("GAME OPTIONS");
+  gmVarMenu.gm_mgTitle.mg_strText = TRANS("GAME OPTIONS");
   gmVarMenu.gm_fnmMenuCFG = CTFILENAME("Scripts\\Menu\\SPOptions.cfg");
   ChangeToMenu( &gmVarMenu);
   gmVarMenu.gm_pgmParentMenu = &gmSinglePlayerMenu;
@@ -1845,7 +1832,7 @@ void StartGameOptionsFromSplitScreen(void)
 // rendering options var settings
 void StartRenderingOptionsMenu(void)
 {
-  mgVarTitle.mg_strText = TRANS("RENDERING OPTIONS");
+  gmVarMenu.gm_mgTitle.mg_strText = TRANS("RENDERING OPTIONS");
   gmVarMenu.gm_fnmMenuCFG = CTFILENAME("Scripts\\Menu\\RenderingOptions.cfg");
   gmVarMenu.gm_pgmParentMenu = &gmVideoOptionsMenu;
   ChangeToMenu( &gmVarMenu);
@@ -2210,12 +2197,13 @@ void InitializeMenus(void)
 
     gmSinglePlayerNewMenu.Initialize_t();
     gmSinglePlayerNewMenu.gm_strName="SinglePlayerNew";
-    gmSinglePlayerNewMenu.gm_pmgSelectedByDefault = &mgSingleNewMedium;
+	gmSinglePlayerNewMenu.gm_pmgSelectedByDefault = &gmSinglePlayerNewMenu.gm_mgMedium;
     gmSinglePlayerNewMenu.gm_pgmParentMenu = &gmSinglePlayerMenu;
+	InitActionsForSinglePlayerNewMenu();
 
     gmDisabledFunction.Initialize_t();
     gmDisabledFunction.gm_strName="DisabledFunction";
-    gmDisabledFunction.gm_pmgSelectedByDefault = &mgDisabledMenuButton;
+	gmDisabledFunction.gm_pmgSelectedByDefault = &gmDisabledFunction.gm_mgButton;
     gmDisabledFunction.gm_pgmParentMenu = NULL;
 
     gmPlayerProfile.Initialize_t();
@@ -2263,13 +2251,14 @@ void InitializeMenus(void)
 
     gmLevelsMenu.Initialize_t();
     gmLevelsMenu.gm_strName="Levels";
-    gmLevelsMenu.gm_pmgSelectedByDefault = &mgManualLevel[0];
+	gmLevelsMenu.gm_pmgSelectedByDefault = &gmLevelsMenu.gm_mgManualLevel[0];
     gmLevelsMenu.gm_pgmParentMenu = &gmSinglePlayerMenu;
 
     gmVarMenu.Initialize_t();
     gmVarMenu.gm_strName="Var";
-    gmVarMenu.gm_pmgSelectedByDefault = &mgVar[0];
+	gmVarMenu.gm_pmgSelectedByDefault = &gmVarMenu.gm_mgVar[0];
     gmVarMenu.gm_pgmParentMenu = &gmNetworkStartMenu;
+	InitActionsForVarMenu();
 
     gmServersMenu.Initialize_t();
     gmServersMenu.gm_strName="Servers";
@@ -2769,7 +2758,7 @@ void MenuBack(void)
   MenuGoToParent();
 }
 
-void FixupBackButton(CGameMenu *pgm)
+extern void FixupBackButton(CGameMenu *pgm)
 {
   BOOL bResume = FALSE;
 
@@ -3259,93 +3248,16 @@ void InitActionsForSinglePlayerMenu() {
 }
 
 // ------------------------ CSinglePlayerNewMenu implementation
-void CSinglePlayerNewMenu::Initialize_t(void)
-{
-  // intialize single player new menu
-  mgSingleNewTitle.mg_strText = TRANS("NEW GAME");
-  mgSingleNewTitle.mg_boxOnScreen = BoxTitle();
-  gm_lhGadgets.AddTail( mgSingleNewTitle.mg_lnNode);
-
-  mgSingleNewTourist.mg_strText = TRANS("TOURIST");
-  mgSingleNewTourist.mg_bfsFontSize = BFS_LARGE;
-  mgSingleNewTourist.mg_boxOnScreen = BoxBigRow(0.0f);
-  mgSingleNewTourist.mg_strTip = TRANS("for non-FPS players");
-  gm_lhGadgets.AddTail( mgSingleNewTourist.mg_lnNode);
-  mgSingleNewTourist.mg_pmgUp = &mgSingleNewSerious;
-  mgSingleNewTourist.mg_pmgDown = &mgSingleNewEasy;
-  mgSingleNewTourist.mg_pActivatedFunction = &StartSinglePlayerGame_Tourist;
-
-  mgSingleNewEasy.mg_strText = TRANS("EASY");
-  mgSingleNewEasy.mg_bfsFontSize = BFS_LARGE;
-  mgSingleNewEasy.mg_boxOnScreen = BoxBigRow(1.0f);
-  mgSingleNewEasy.mg_strTip = TRANS("for unexperienced FPS players");
-  gm_lhGadgets.AddTail( mgSingleNewEasy.mg_lnNode);
-  mgSingleNewEasy.mg_pmgUp = &mgSingleNewTourist;
-  mgSingleNewEasy.mg_pmgDown = &mgSingleNewMedium;
-  mgSingleNewEasy.mg_pActivatedFunction = &StartSinglePlayerGame_Easy;
-
-  mgSingleNewMedium.mg_strText = TRANS("NORMAL");
-  mgSingleNewMedium.mg_bfsFontSize = BFS_LARGE;
-  mgSingleNewMedium.mg_boxOnScreen = BoxBigRow(2.0f);
-  mgSingleNewMedium.mg_strTip = TRANS("for experienced FPS players");
-  gm_lhGadgets.AddTail( mgSingleNewMedium.mg_lnNode);
-  mgSingleNewMedium.mg_pmgUp = &mgSingleNewEasy;
-  mgSingleNewMedium.mg_pmgDown = &mgSingleNewHard;
-  mgSingleNewMedium.mg_pActivatedFunction = &StartSinglePlayerGame_Normal;
-
-  mgSingleNewHard.mg_strText = TRANS("HARD");
-  mgSingleNewHard.mg_bfsFontSize = BFS_LARGE;
-  mgSingleNewHard.mg_boxOnScreen = BoxBigRow(3.0f);
-  mgSingleNewHard.mg_strTip = TRANS("for experienced Serious Sam players");
-  gm_lhGadgets.AddTail( mgSingleNewHard.mg_lnNode);
-  mgSingleNewHard.mg_pmgUp = &mgSingleNewMedium;
-  mgSingleNewHard.mg_pmgDown = &mgSingleNewSerious;
-  mgSingleNewHard.mg_pActivatedFunction = &StartSinglePlayerGame_Hard;
-
-  mgSingleNewSerious.mg_strText = TRANS("SERIOUS");
-  mgSingleNewSerious.mg_bfsFontSize = BFS_LARGE;
-  mgSingleNewSerious.mg_boxOnScreen = BoxBigRow(4.0f);
-  mgSingleNewSerious.mg_strTip = TRANS("are you serious?");
-  gm_lhGadgets.AddTail( mgSingleNewSerious.mg_lnNode);
-  mgSingleNewSerious.mg_pmgUp = &mgSingleNewHard;
-  mgSingleNewSerious.mg_pmgDown = &mgSingleNewTourist;
-  mgSingleNewSerious.mg_pActivatedFunction = &StartSinglePlayerGame_Serious;
-
-  mgSingleNewMental.mg_strText = TRANS("MENTAL");
-  mgSingleNewMental.mg_bfsFontSize = BFS_LARGE;
-  mgSingleNewMental.mg_boxOnScreen = BoxBigRow(5.0f);
-  mgSingleNewMental.mg_strTip = TRANS("you are not serious!");
-  gm_lhGadgets.AddTail( mgSingleNewMental.mg_lnNode);
-  mgSingleNewMental.mg_pmgUp = &mgSingleNewSerious;
-  mgSingleNewMental.mg_pmgDown = &mgSingleNewTourist;
-  mgSingleNewMental.mg_pActivatedFunction = &StartSinglePlayerGame_Mental;
-  mgSingleNewMental.mg_bMental = TRUE;
-}
-void CSinglePlayerNewMenu::StartMenu(void)
-{
-  CGameMenu::StartMenu();
-  extern INDEX sam_bMentalActivated;
-  if (sam_bMentalActivated) {
-    mgSingleNewMental.Appear();
-    mgSingleNewSerious.mg_pmgDown = &mgSingleNewMental;
-    mgSingleNewTourist.mg_pmgUp = &mgSingleNewMental;
-  } else {
-    mgSingleNewMental.Disappear();
-    mgSingleNewSerious.mg_pmgDown = &mgSingleNewTourist;
-    mgSingleNewTourist.mg_pmgUp = &mgSingleNewSerious;
-  }
+void InitActionsForSinglePlayerNewMenu() {
+	gmSinglePlayerNewMenu.gm_mgTourist.mg_pActivatedFunction = &StartSinglePlayerGame_Tourist;
+	gmSinglePlayerNewMenu.gm_mgEasy.mg_pActivatedFunction = &StartSinglePlayerGame_Easy;
+	gmSinglePlayerNewMenu.gm_mgMedium.mg_pActivatedFunction = &StartSinglePlayerGame_Normal;
+	gmSinglePlayerNewMenu.gm_mgHard.mg_pActivatedFunction = &StartSinglePlayerGame_Hard;
+	gmSinglePlayerNewMenu.gm_mgSerious.mg_pActivatedFunction = &StartSinglePlayerGame_Serious;
+	gmSinglePlayerNewMenu.gm_mgMental.mg_pActivatedFunction = &StartSinglePlayerGame_Mental;
 }
 
-void CDisabledMenu::Initialize_t(void) 
-{
-  mgDisabledTitle.mg_boxOnScreen = BoxTitle();
-  gm_lhGadgets.AddTail( mgDisabledTitle.mg_lnNode);
-
-  mgDisabledMenuButton.mg_bfsFontSize = BFS_MEDIUM;
-  mgDisabledMenuButton.mg_boxOnScreen = BoxBigRow(0.0f);
-  gm_lhGadgets.AddTail( mgDisabledMenuButton.mg_lnNode);
-  mgDisabledMenuButton.mg_pActivatedFunction = NULL;
-}
+// ------------------------ CDisabledMenu implementation
 
 void ChangeCrosshair(INDEX iNew)
 {
@@ -4718,97 +4630,7 @@ void CAudioOptionsMenu::StartMenu(void)
   CGameMenu::StartMenu();
 }
 
-// ------------------------ CLevelsMenu implementation
-void CLevelsMenu::FillListItems(void)
-{
-  // disable all items first
-  for(INDEX i=0; i<LEVELS_ON_SCREEN; i++) {
-    mgManualLevel[i].mg_bEnabled = FALSE;
-    mgManualLevel[i].mg_strText = TRANS("<empty>");
-    mgManualLevel[i].mg_iInList = -2;
-  }
-
-  BOOL bHasFirst = FALSE;
-  BOOL bHasLast = FALSE;
-  INDEX ctLabels = _lhFilteredLevels.Count();
-  INDEX iLabel=0;
-  FOREACHINLIST(CLevelInfo, li_lnNode, _lhFilteredLevels, itli) {
-    CLevelInfo &li = *itli;
-    INDEX iInMenu = iLabel-gm_iListOffset;
-    if( (iLabel>=gm_iListOffset) && 
-        (iLabel<(gm_iListOffset+LEVELS_ON_SCREEN)) )
-    {
-      bHasFirst|=(iLabel==0);
-      bHasLast |=(iLabel==ctLabels-1);
-      mgManualLevel[iInMenu].mg_strText  = li.li_strName;
-      mgManualLevel[iInMenu].mg_fnmLevel = li.li_fnLevel;
-      mgManualLevel[iInMenu].mg_bEnabled = TRUE;
-      mgManualLevel[iInMenu].mg_iInList = iLabel;
-    }
-    iLabel++;
-  }
-
-  // enable/disable up/down arrows
-  mgLevelsArrowUp.mg_bEnabled = !bHasFirst && ctLabels>0;
-  mgLevelsArrowDn.mg_bEnabled = !bHasLast  && ctLabels>0;
-}
-
-void CLevelsMenu::Initialize_t(void)
-{
-  mgLevelsTitle.mg_boxOnScreen = BoxTitle();
-  mgLevelsTitle.mg_strText = TRANS("CHOOSE LEVEL");
-  gm_lhGadgets.AddTail( mgLevelsTitle.mg_lnNode);
-
-  for( INDEX iLabel=0; iLabel<LEVELS_ON_SCREEN; iLabel++)
-  {
-    INDEX iPrev = (LEVELS_ON_SCREEN+iLabel-1)%LEVELS_ON_SCREEN;
-    INDEX iNext = (iLabel+1)%LEVELS_ON_SCREEN;
-    // initialize label gadgets
-    mgManualLevel[iLabel].mg_pmgUp = &mgManualLevel[iPrev];
-    mgManualLevel[iLabel].mg_pmgDown = &mgManualLevel[iNext];
-    mgManualLevel[iLabel].mg_boxOnScreen = BoxMediumRow(iLabel);
-    mgManualLevel[iLabel].mg_pActivatedFunction = NULL; // never called!
-    gm_lhGadgets.AddTail( mgManualLevel[iLabel].mg_lnNode);
-  }
-
-  gm_lhGadgets.AddTail( mgLevelsArrowUp.mg_lnNode);
-  gm_lhGadgets.AddTail( mgLevelsArrowDn.mg_lnNode);
-  mgLevelsArrowUp.mg_adDirection = AD_UP;
-  mgLevelsArrowDn.mg_adDirection = AD_DOWN;
-  mgLevelsArrowUp.mg_boxOnScreen = BoxArrow(AD_UP);
-  mgLevelsArrowDn.mg_boxOnScreen = BoxArrow(AD_DOWN);
-  mgLevelsArrowUp.mg_pmgRight = mgLevelsArrowUp.mg_pmgDown = 
-    &mgManualLevel[0];
-  mgLevelsArrowDn.mg_pmgRight = mgLevelsArrowDn.mg_pmgUp = 
-    &mgManualLevel[LEVELS_ON_SCREEN-1];
-
-  gm_ctListVisible = LEVELS_ON_SCREEN;
-  gm_pmgArrowUp = &mgLevelsArrowUp;
-  gm_pmgArrowDn = &mgLevelsArrowDn;
-  gm_pmgListTop = &mgManualLevel[0];
-  gm_pmgListBottom = &mgManualLevel[LEVELS_ON_SCREEN-1];
-}
-void CLevelsMenu::StartMenu(void)
-{
-  // set default parameters for the list
-  gm_iListOffset = 0;
-  gm_ctListTotal = _lhFilteredLevels.Count();
-  gm_iListWantedItem = 0;
-  // for each level
-  INDEX i=0;
-  FOREACHINLIST(CLevelInfo, li_lnNode, _lhFilteredLevels, itlid) {
-    CLevelInfo &lid = *itlid;
-    // if it is the chosen one
-    if (lid.li_fnLevel == _pGame->gam_strCustomLevel) {
-      // demand focus on it
-      gm_iListWantedItem = i;
-      break;
-    }
-    i++;
-  }
-  CGameMenu::StartMenu();
-}
-
+// ------------------------ CVarMenu implementation
 void VarApply(void)
 {
   FlushVarSettings(TRUE);
@@ -4816,114 +4638,8 @@ void VarApply(void)
   gmVarMenu.StartMenu();
 }
 
-void CVarMenu::Initialize_t(void)
-{
-  mgVarTitle.mg_boxOnScreen = BoxTitle();
-  mgVarTitle.mg_strText = "";
-  gm_lhGadgets.AddTail( mgVarTitle.mg_lnNode);
-
-  for( INDEX iLabel=0; iLabel<VARS_ON_SCREEN; iLabel++)
-  {
-    INDEX iPrev = (VARS_ON_SCREEN+iLabel-1)%VARS_ON_SCREEN;
-    INDEX iNext = (iLabel+1)%VARS_ON_SCREEN;
-    // initialize label gadgets
-    mgVar[iLabel].mg_pmgUp = &mgVar[iPrev];
-    mgVar[iLabel].mg_pmgDown = &mgVar[iNext];
-    mgVar[iLabel].mg_pmgLeft = &mgVarApply;
-    mgVar[iLabel].mg_boxOnScreen = BoxMediumRow(iLabel);
-    mgVar[iLabel].mg_pActivatedFunction = NULL; // never called!
-    gm_lhGadgets.AddTail( mgVar[iLabel].mg_lnNode);
-  }
-
-  mgVarApply.mg_boxOnScreen = BoxMediumRow(16.5f);
-  mgVarApply.mg_bfsFontSize = BFS_LARGE;
-  mgVarApply.mg_iCenterI = 1;
-  mgVarApply.mg_pmgLeft = 
-  mgVarApply.mg_pmgRight = 
-  mgVarApply.mg_pmgUp = 
-  mgVarApply.mg_pmgDown = &mgVar[0];
-  mgVarApply.mg_strText = TRANS("APPLY");
-  mgVarApply.mg_strTip = TRANS("apply changes");
-  gm_lhGadgets.AddTail( mgVarApply.mg_lnNode);
-  mgVarApply.mg_pActivatedFunction = &VarApply;
-
-  gm_lhGadgets.AddTail( mgVarArrowUp.mg_lnNode);
-  gm_lhGadgets.AddTail( mgVarArrowDn.mg_lnNode);
-  mgVarArrowUp.mg_adDirection = AD_UP;
-  mgVarArrowDn.mg_adDirection = AD_DOWN;
-  mgVarArrowUp.mg_boxOnScreen = BoxArrow(AD_UP);
-  mgVarArrowDn.mg_boxOnScreen = BoxArrow(AD_DOWN);
-  mgVarArrowUp.mg_pmgRight = mgVarArrowUp.mg_pmgDown = 
-    &mgVar[0];
-  mgVarArrowDn.mg_pmgRight = mgVarArrowDn.mg_pmgUp = 
-    &mgVar[VARS_ON_SCREEN-1];
-
-  gm_ctListVisible = VARS_ON_SCREEN;
-  gm_pmgArrowUp = &mgVarArrowUp;
-  gm_pmgArrowDn = &mgVarArrowDn;
-  gm_pmgListTop = &mgVar[0];
-  gm_pmgListBottom = &mgVar[VARS_ON_SCREEN-1];
-}
-
-void CVarMenu::FillListItems(void)
-{
-  // disable all items first
-  for(INDEX i=0; i<VARS_ON_SCREEN; i++) {
-    mgVar[i].mg_bEnabled = FALSE;
-    mgVar[i].mg_pvsVar = NULL;
-    mgVar[i].mg_iInList = -2;
-  }
-  BOOL bHasFirst = FALSE;
-  BOOL bHasLast = FALSE;
-  INDEX ctLabels = _lhVarSettings.Count();
-  INDEX iLabel=0;
-
-  FOREACHINLIST(CVarSetting, vs_lnNode, _lhVarSettings, itvs) {
-    CVarSetting &vs = *itvs;
-    INDEX iInMenu = iLabel-gm_iListOffset;
-    if( (iLabel>=gm_iListOffset) && 
-        (iLabel<(gm_iListOffset+VARS_ON_SCREEN)) )
-    {
-      bHasFirst|=(iLabel==0);
-      bHasLast |=(iLabel==ctLabels-1);
-      mgVar[iInMenu].mg_pvsVar = &vs;
-      mgVar[iInMenu].mg_strTip = vs.vs_strTip;
-      mgVar[iInMenu].mg_bEnabled = mgVar[iInMenu].IsEnabled();
-      mgVar[iInMenu].mg_iInList = iLabel;
-    }
-    iLabel++;
-  }
-  // enable/disable up/down arrows
-  mgVarArrowUp.mg_bEnabled = !bHasFirst && ctLabels>0;
-  mgVarArrowDn.mg_bEnabled = !bHasLast  && ctLabels>0;
-}
-
-void CVarMenu::StartMenu(void)
-{
-  LoadVarSettings(gm_fnmMenuCFG);
-  // set default parameters for the list
-  gm_iListOffset = 0;
-  gm_ctListTotal = _lhVarSettings.Count();
-  gm_iListWantedItem = 0;
-  CGameMenu::StartMenu();
-}
-
-void CVarMenu::EndMenu(void)
-{
-  // disable all items first
-  for(INDEX i=0; i<VARS_ON_SCREEN; i++) {
-    mgVar[i].mg_bEnabled = FALSE;
-    mgVar[i].mg_pvsVar = NULL;
-    mgVar[i].mg_iInList = -2;
-  }
-  FlushVarSettings(FALSE);
-  _bVarChanged = FALSE;
-}
-
-void CVarMenu::Think(void)
-{
-  mgVarApply.mg_bEnabled = _bVarChanged;
-  FixupBackButton(this);
+void InitActionsForVarMenu() {
+	gmVarMenu.gm_mgApply.mg_pActivatedFunction = &VarApply;
 }
 
 // ------------------------ CServersMenu implementation
