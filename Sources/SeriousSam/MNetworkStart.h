@@ -7,10 +7,25 @@
 #endif
 
 #include "GameMenu.h"
+#include "MGButton.h"
+#include "MGEdit.h"
+#include "MGTitle.h"
+#include "MGTrigger.h"
 
 
 class CNetworkStartMenu : public CGameMenu {
 public:
+	CMGTitle gm_mgTitle;
+	CMGEdit gm_mgSessionName;
+	CMGTrigger gm_mgGameType;
+	CMGTrigger gm_mgDifficulty;
+	CMGButton gm_mgLevel;
+	CMGTrigger gm_mgMaxPlayers;
+	CMGTrigger gm_mgWaitAllPlayers;
+	CMGTrigger gm_mgVisible;
+	CMGButton gm_mgGameOptions;
+	CMGButton gm_mgStart;
+
 	void Initialize_t(void);
 	void StartMenu(void);
 	void EndMenu(void);

@@ -111,9 +111,6 @@
     <ClCompile Include="MGTrigger.cpp">
       <Filter>Source Files\Gadgets</Filter>
     </ClCompile>
-    <ClCompile Include="MenuStuff.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="MenuStuff.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -169,6 +166,15 @@
       <Filter>Source Files\Menus</Filter>
     </ClCompile>
     <ClCompile Include="MCustomizeKeyboard.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="MSelectPlayers.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="MNetworkStart.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="MServers.cpp">
       <Filter>Source Files\Menus</Filter>
     </ClCompile>
   </ItemGroup>
@@ -349,6 +355,9 @@
     </ClInclude>
     <ClInclude Include="MCustomizeAxis.h">
       <Filter>Header Files\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="MenuStuff.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

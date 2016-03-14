@@ -18,10 +18,9 @@
 	mg.mg_strLabel = text; \
 	mg.mg_strValue = astr[0];
 
-
 extern INDEX ctGameTypeRadioTexts;
 extern void UpdateSplitLevel(INDEX iDummy);
-extern void SplitStartMenuSubInit(CSplitStartMenu* gm);
+
 
 void CSplitStartMenu::Initialize_t(void)
 {
@@ -31,7 +30,6 @@ void CSplitStartMenu::Initialize_t(void)
 	gm_lhGadgets.AddTail(gm_mgTitle.mg_lnNode);
 
 	// game type trigger
-	extern CTString astrGameTypeRadioTexts[20];
 	TRIGGER_MG(gm_mgGameType, 0,
 		gm_mgStart, gm_mgDifficulty, TRANS("Game type:"), astrGameTypeRadioTexts);
 	gm_mgGameType.mg_ctTexts = ctGameTypeRadioTexts;
@@ -39,7 +37,6 @@ void CSplitStartMenu::Initialize_t(void)
 	gm_mgGameType.mg_pOnTriggerChange = &UpdateSplitLevel;
 
 	// difficulty trigger
-	extern CTString astrDifficultyRadioTexts[6];
 	TRIGGER_MG(gm_mgDifficulty, 1,
 		gm_mgGameType, gm_mgLevel, TRANS("Difficulty:"), astrDifficultyRadioTexts);
 	gm_mgDifficulty.mg_strTip = TRANS("choose difficulty level");

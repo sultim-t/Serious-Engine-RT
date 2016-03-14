@@ -57,7 +57,6 @@
 #include "MenuStuff.h"
 
 // macros for translating radio button text arrays
-#define RADIOTRANS(str) ("ETRS" str)
 #define TRANSLATERADIOARRAY(array) TranslateRadioTexts(array, ARRAYCOUNT(array))
 
 extern CMenuGadget *_pmgLastActivatedGadget;
@@ -110,7 +109,10 @@ void InitActionsForInGameMenu();
 void InitActionsForNetworkMenu();
 void InitActionsForNetworkJoinMenu();
 void InitActionsForNetworkOpenMenu();
+void InitActionsForNetworkStartMenu();
 void InitActionsForOptionsMenu();
+void InitActionsForSelectPlayersMenu();
+void InitActionsForServersMenu();
 void InitActionsForSinglePlayerMenu();
 void InitActionsForSinglePlayerNewMenu();
 void InitActionsForSplitScreenMenu();
@@ -219,74 +221,6 @@ static CTextureObject _toLogoMenuB;
 #define PLACEMENT(x,y,z) CPlacement3D( FLOAT3D( x, y, z), \
   ANGLE3D( AngleDeg(0.0f), AngleDeg(0.0f), AngleDeg(0.0f)))
 
-extern CTString astrNoYes[] = {
-  RADIOTRANS( "No"),
-  RADIOTRANS( "Yes"),
-};
-CTString astrComputerInvoke[] = {
-  RADIOTRANS( "Use"),
-  RADIOTRANS( "Double-click use"),
-};
-CTString astrWeapon[] = {
-  RADIOTRANS( "Only if new"),
-  RADIOTRANS( "Never"),
-  RADIOTRANS( "Always"),
-  RADIOTRANS( "Only if stronger"),
-};
-CTString astrCrosshair[] = {
-  "",
-  "Textures\\Interface\\Crosshairs\\Crosshair1.tex",
-  "Textures\\Interface\\Crosshairs\\Crosshair2.tex",
-  "Textures\\Interface\\Crosshairs\\Crosshair3.tex",
-  "Textures\\Interface\\Crosshairs\\Crosshair4.tex",
-  "Textures\\Interface\\Crosshairs\\Crosshair5.tex",
-  "Textures\\Interface\\Crosshairs\\Crosshair6.tex",
-  "Textures\\Interface\\Crosshairs\\Crosshair7.tex",
-};
-
-CTString astrMaxPlayersRadioTexts[] = {
-  RADIOTRANS( "2"),
-  RADIOTRANS( "3"),
-  RADIOTRANS( "4"),
-  RADIOTRANS( "5"),
-  RADIOTRANS( "6"),
-  RADIOTRANS( "7"),
-  RADIOTRANS( "8"),
-  RADIOTRANS( "9"),
-  RADIOTRANS( "10"),
-  RADIOTRANS( "11"),
-  RADIOTRANS( "12"),
-  RADIOTRANS( "13"),
-  RADIOTRANS( "14"),
-  RADIOTRANS( "15"),
-  RADIOTRANS( "16"),
-};
-// here, we just reserve space for up to 16 different game types
-// actual names are added later
-extern CTString astrGameTypeRadioTexts[] = {
-  "", "", "", "", "", 
-  "", "", "", "", "", 
-  "", "", "", "", "", 
-  "", "", "", "", "", 
-};
-
-extern INDEX ctGameTypeRadioTexts = 1;
-extern CTString astrDifficultyRadioTexts[] = {
-  RADIOTRANS("Tourist"),
-  RADIOTRANS("Easy"),
-  RADIOTRANS("Normal"),
-  RADIOTRANS("Hard"),
-  RADIOTRANS("Serious"),
-  RADIOTRANS("Mental"),
-};
-
-CTString astrSplitScreenRadioTexts[] = {
-  RADIOTRANS( "1"),
-  RADIOTRANS( "2 - split screen"),
-  RADIOTRANS( "3 - split screen"),
-  RADIOTRANS( "4 - split screen"),
-};
-
 // ptr to current menu
 CGameMenu *pgmCurrentMenu = NULL;
 
@@ -368,11 +302,6 @@ CCustomizeKeyboardMenu gmCustomizeKeyboardMenu;
 
 // -------- Choose servers menu
 CServersMenu gmServersMenu;
-CMGTitle mgServersTitle;
-CMGServerList mgServerList;
-CMGButton mgServerColumn[7];
-CMGEdit mgServerFilter[7];
-CMGButton mgServerRefresh;
 
 // -------- Customize axis menu
 CCustomizeAxisMenu gmCustomizeAxisMenu;
@@ -384,20 +313,11 @@ COptionsMenu gmOptionsMenu;
 CVideoOptionsMenu gmVideoOptionsMenu;
 CMGTitle mgVideoOptionsTitle;
 CMGTrigger mgDisplayAPITrigger;
-CTString astrDisplayAPIRadioTexts[] = {
-  RADIOTRANS( "OpenGL"),
-  RADIOTRANS( "Direct3D"),
-};
 CMGTrigger mgDisplayAdaptersTrigger;
 CMGTrigger mgFullScreenTrigger;
 CMGTrigger mgResolutionsTrigger;
 CMGTrigger mgDisplayPrefsTrigger;
-CTString astrDisplayPrefsRadioTexts[] = {
-  RADIOTRANS( "Speed"),
-  RADIOTRANS( "Normal"),
-  RADIOTRANS( "Quality"),
-  RADIOTRANS( "Custom"),
-};
+
 INDEX         _ctResolutions = 0;
 CTString     * _astrResolutionTexts = NULL;
 CDisplayMode *_admResolutionModes  = NULL;
@@ -405,12 +325,6 @@ INDEX         _ctAdapters = 0;
 CTString     * _astrAdapterTexts = NULL;
 CMGButton mgVideoRendering;
 CMGTrigger mgBitsPerPixelTrigger;
-CTString astrBitsPerPixelRadioTexts[] = {
-  RADIOTRANS( "Desktop"),
-  RADIOTRANS( "16 BPP"),
-  RADIOTRANS( "32 BPP"),
-};
-
 CMGButton mgVideoOptionsApply;
 
 // -------- Audio options menu
@@ -419,17 +333,6 @@ CMGTitle mgAudioOptionsTitle;
 CMGTrigger mgAudioAutoTrigger;
 CMGTrigger mgAudioAPITrigger;
 CMGTrigger mgFrequencyTrigger;
-CTString astrFrequencyRadioTexts[] = {
-  RADIOTRANS( "No sound"),
-  RADIOTRANS( "11kHz"),
-  RADIOTRANS( "22kHz"),
-  RADIOTRANS( "44kHz"),
-};
-CTString astrSoundAPIRadioTexts[] = {
-  RADIOTRANS( "WaveOut"),
-  RADIOTRANS( "DirectSound"),
-  RADIOTRANS( "EAX"),
-};
 CMGSlider mgWaveVolume;
 CMGSlider mgMPEGVolume;
 CMGButton mgAudioOptionsApply;
@@ -442,16 +345,6 @@ CNetworkJoinMenu gmNetworkJoinMenu;
 
 // -------- Network start menu
 CNetworkStartMenu gmNetworkStartMenu;
-CMGTitle mgNetworkStartTitle;
-CMGEdit mgNetworkSessionName;
-CMGTrigger mgNetworkGameType;
-CMGTrigger mgNetworkDifficulty;
-CMGButton mgNetworkLevel;
-CMGTrigger mgNetworkMaxPlayers;
-CMGTrigger mgNetworkWaitAllPlayers;
-CMGTrigger mgNetworkVisible;
-CMGButton mgNetworkGameOptions;
-CMGButton mgNetworkStartStart;
 
 // -------- Network open menu
 CNetworkOpenMenu gmNetworkOpenMenu;
@@ -464,20 +357,6 @@ CSplitStartMenu gmSplitStartMenu;
 
 // -------- Select players menu
 CSelectPlayersMenu gmSelectPlayersMenu;
-CMGTitle mgSelectPlayerTitle;
-
-CMGTrigger mgDedicated;
-CMGTrigger mgObserver;
-CMGTrigger mgSplitScreenCfg;
-
-CMGChangePlayer mgPlayer0Change;
-CMGChangePlayer mgPlayer1Change;
-CMGChangePlayer mgPlayer2Change;
-CMGChangePlayer mgPlayer3Change;
-
-CMGButton mgSelectPlayersNotes;
-
-CMGButton mgSelectPlayersStart;
 
 extern void PlayMenuSound(CSoundData *psd)
 {
@@ -500,49 +379,6 @@ CModelObject *AddAttachment_t(CModelObject *pmoParent, INDEX iPosition,
   pamo->amo_moModelObject.mo_toReflection.SetData_t(fnmReflection);
   pamo->amo_moModelObject.mo_toSpecular.SetData_t(fnmSpecular);
   return &pamo->amo_moModelObject;
-}
-
-void SetPlayerModel(CModelObject *pmoPlayer)
-{
-/*  try {
-    pmoPlayer->SetData_t( CTFILENAME( "Models\\Player\\SeriousSam\\Player.mdl"));
-    pmoPlayer->mo_toTexture.SetData_t( CTFILENAME( "Models\\Player\\SeriousSam\\Player.tex"));
-    pmoPlayer->PlayAnim(PLAYER_ANIM_WALK, AOF_LOOPING);
-    CModelObject *pmoBody = AddAttachment_t(pmoPlayer, PLAYER_ATTACHMENT_TORSO,
-      CTFILENAME("Models\\Player\\SeriousSam\\Body.mdl"), BODY_ANIM_MINIGUN_STAND,
-      CTFILENAME("Models\\Player\\SeriousSam\\Body.tex"),
-      CTFILENAME(""), 
-      CTFILENAME(""));
-    CModelObject *pmoHead = AddAttachment_t(pmoBody, BODY_ATTACHMENT_HEAD,
-      CTFILENAME("Models\\Player\\SeriousSam\\Head.mdl"), 0,
-      CTFILENAME("Models\\Player\\SeriousSam\\Head.tex"),
-      CTFILENAME(""), 
-      CTFILENAME(""));
-    CModelObject *pmoMiniGun = AddAttachment_t(pmoBody, BODY_ATTACHMENT_MINIGUN,
-      CTFILENAME("Models\\Weapons\\MiniGun\\MiniGunItem.mdl"), 0,
-      CTFILENAME("Models\\Weapons\\MiniGun\\MiniGun.tex"),
-      CTFILENAME(""), 
-      CTFILENAME(""));
-    AddAttachment_t(pmoMiniGun, MINIGUNITEM_ATTACHMENT_BARRELS,
-      CTFILENAME("Models\\Weapons\\MiniGun\\Barrels.mdl"), 0,
-      CTFILENAME("Models\\Weapons\\MiniGun\\MiniGun.tex"),
-      CTFILENAME("Models\\ReflectionTextures\\LightBlueMetal01.tex"), 
-      CTFILENAME("Models\\SpecularTextures\\Medium.tex"));
-    AddAttachment_t(pmoMiniGun, MINIGUNITEM_ATTACHMENT_BODY,
-      CTFILENAME("Models\\Weapons\\MiniGun\\Body.mdl"), 0,
-      CTFILENAME("Models\\Weapons\\MiniGun\\MiniGun.tex"),
-      CTFILENAME("Models\\ReflectionTextures\\LightBlueMetal01.tex"), 
-      CTFILENAME("Models\\SpecularTextures\\Medium.tex"));
-    AddAttachment_t(pmoMiniGun, MINIGUNITEM_ATTACHMENT_ENGINE,
-      CTFILENAME("Models\\Weapons\\MiniGun\\Engine.mdl"), 0,
-      CTFILENAME("Models\\Weapons\\MiniGun\\MiniGun.tex"),
-      CTFILENAME("Models\\ReflectionTextures\\LightBlueMetal01.tex"), 
-      CTFILENAME("Models\\SpecularTextures\\Medium.tex"));
-
-  } catch( char *strError) { 
-    FatalError( strError);
-  }     
-  */
 }
 
 // translate all texts in array for one radio button
@@ -1186,7 +1022,7 @@ void StartSelectPlayersMenuFromSplit(void)
 {
   gmSelectPlayersMenu.gm_bAllowDedicated = FALSE;
   gmSelectPlayersMenu.gm_bAllowObserving = FALSE;
-  mgSelectPlayersStart.mg_pActivatedFunction = &StartSplitScreenGame;
+  gmSelectPlayersMenu.gm_mgStart.mg_pActivatedFunction = &StartSplitScreenGame;
   gmSelectPlayersMenu.gm_pgmParentMenu = &gmSplitStartMenu;
   ChangeToMenu( &gmSelectPlayersMenu);
 }
@@ -1195,7 +1031,7 @@ void StartSelectPlayersMenuFromNetwork(void)
 {
   gmSelectPlayersMenu.gm_bAllowDedicated = TRUE;
   gmSelectPlayersMenu.gm_bAllowObserving = TRUE;
-  mgSelectPlayersStart.mg_pActivatedFunction = &StartNetworkGame;
+  gmSelectPlayersMenu.gm_mgStart.mg_pActivatedFunction = &StartNetworkGame;
   gmSelectPlayersMenu.gm_pgmParentMenu = &gmNetworkStartMenu;
   ChangeToMenu( &gmSelectPlayersMenu);
 }
@@ -1204,7 +1040,7 @@ void StartSelectPlayersMenuFromOpen(void)
 {
   gmSelectPlayersMenu.gm_bAllowDedicated = FALSE;
   gmSelectPlayersMenu.gm_bAllowObserving = TRUE;
-  mgSelectPlayersStart.mg_pActivatedFunction = &JoinNetworkGame;
+  gmSelectPlayersMenu.gm_mgStart.mg_pActivatedFunction = &JoinNetworkGame;
   gmSelectPlayersMenu.gm_pgmParentMenu = &gmNetworkOpenMenu;
   ChangeToMenu( &gmSelectPlayersMenu);
 
@@ -1220,7 +1056,7 @@ void StartSelectPlayersMenuFromServers(void)
 {
   gmSelectPlayersMenu.gm_bAllowDedicated = FALSE;
   gmSelectPlayersMenu.gm_bAllowObserving = TRUE;
-  mgSelectPlayersStart.mg_pActivatedFunction = &JoinNetworkGame;
+  gmSelectPlayersMenu.gm_mgStart.mg_pActivatedFunction = &JoinNetworkGame;
   gmSelectPlayersMenu.gm_pgmParentMenu = &gmServersMenu;
   ChangeToMenu( &gmSelectPlayersMenu);
 
@@ -1255,7 +1091,7 @@ void StartSelectLevelFromSplit(void)
 }
 void StartSelectLevelFromNetwork(void)
 {
-  FilterLevels(GetSpawnFlagsForGameType(mgNetworkGameType.mg_iSelected));
+  FilterLevels(GetSpawnFlagsForGameType(gmNetworkStartMenu.gm_mgGameType.mg_iSelected));
   void StartNetworkStartMenu(void);
   _pAfterLevelChosen = StartNetworkStartMenu;
   ChangeToMenu( &gmLevelsMenu);
@@ -1266,7 +1102,7 @@ void StartSelectPlayersMenuFromSplitScreen(void)
 {
   gmSelectPlayersMenu.gm_bAllowDedicated = FALSE;
   gmSelectPlayersMenu.gm_bAllowObserving = FALSE;
-//  mgSelectPlayersStart.mg_pActivatedFunction = &StartSplitScreenGame;
+//  gmSelectPlayersMenu.gm_mgStart.mg_pActivatedFunction = &StartSplitScreenGame;
   gmSelectPlayersMenu.gm_pgmParentMenu = &gmSplitScreenMenu;
   ChangeToMenu( &gmSelectPlayersMenu);
 }
@@ -1274,7 +1110,7 @@ void StartSelectPlayersMenuFromNetworkLoad(void)
 {
   gmSelectPlayersMenu.gm_bAllowDedicated = FALSE;
   gmSelectPlayersMenu.gm_bAllowObserving = TRUE;
-  mgSelectPlayersStart.mg_pActivatedFunction = &StartNetworkLoadGame;
+  gmSelectPlayersMenu.gm_mgStart.mg_pActivatedFunction = &StartNetworkLoadGame;
   gmSelectPlayersMenu.gm_pgmParentMenu = &gmLoadSaveMenu;
   ChangeToMenu( &gmSelectPlayersMenu);
 }
@@ -1283,7 +1119,7 @@ void StartSelectPlayersMenuFromSplitScreenLoad(void)
 {
   gmSelectPlayersMenu.gm_bAllowDedicated = FALSE;
   gmSelectPlayersMenu.gm_bAllowObserving = FALSE;
-  mgSelectPlayersStart.mg_pActivatedFunction = &StartSplitScreenGameLoad;
+  gmSelectPlayersMenu.gm_mgStart.mg_pActivatedFunction = &StartSplitScreenGameLoad;
   gmSelectPlayersMenu.gm_pgmParentMenu = &gmLoadSaveMenu;
   ChangeToMenu( &gmSelectPlayersMenu);
 }
@@ -2226,8 +2062,9 @@ void InitializeMenus(void)
 
     gmServersMenu.Initialize_t();
     gmServersMenu.gm_strName="Servers";
-    gmServersMenu.gm_pmgSelectedByDefault = &mgServerList;
+	gmServersMenu.gm_pmgSelectedByDefault = &gmServersMenu.gm_mgList;
     gmServersMenu.gm_pgmParentMenu = &gmNetworkOpenMenu;
+	InitActionsForServersMenu();
 
     gmNetworkMenu.Initialize_t();
     gmNetworkMenu.gm_strName="Network";
@@ -2237,9 +2074,10 @@ void InitializeMenus(void)
 
     gmNetworkStartMenu.Initialize_t();
     gmNetworkStartMenu.gm_strName="NetworkStart";
-    gmNetworkStartMenu.gm_pmgSelectedByDefault = &mgNetworkStartStart;
+	gmNetworkStartMenu.gm_pmgSelectedByDefault = &gmNetworkStartMenu.gm_mgStart;
     gmNetworkStartMenu.gm_pgmParentMenu = &gmNetworkMenu;
-    
+	InitActionsForNetworkStartMenu();
+
     gmNetworkJoinMenu.Initialize_t();
     gmNetworkJoinMenu.gm_strName="NetworkJoin";
 	gmNetworkJoinMenu.gm_pmgSelectedByDefault = &gmNetworkJoinMenu.gm_mgLAN;
@@ -2250,7 +2088,8 @@ void InitializeMenus(void)
     gmSelectPlayersMenu.gm_bAllowObserving = FALSE;
     gmSelectPlayersMenu.Initialize_t();
     gmSelectPlayersMenu.gm_strName="SelectPlayers";
-    gmSelectPlayersMenu.gm_pmgSelectedByDefault = &mgSelectPlayersStart;
+    gmSelectPlayersMenu.gm_pmgSelectedByDefault = &gmSelectPlayersMenu.gm_mgStart;
+	InitActionsForSelectPlayersMenu();
 
     gmNetworkOpenMenu.Initialize_t();
     gmNetworkOpenMenu.gm_strName="NetworkOpen";
@@ -4325,7 +4164,7 @@ void InitActionsForVarMenu() {
 }
 
 // ------------------------ CServersMenu implementation
-void RefreshServerList(void)
+extern void RefreshServerList(void)
 {
   _pNetwork->EnumSessions(gmServersMenu.m_bInternet);
 }
@@ -4335,24 +4174,14 @@ void RefreshServerListManually(void)
   ChangeToMenu(&gmServersMenu); // this refreshes the list and sets focuses
 }
 
-void CServersMenu::Think(void)
-{
-  if (!_pNetwork->ga_bEnumerationChange) {
-    return;
-  }
-  _pNetwork->ga_bEnumerationChange = FALSE;
-}
-
-CTString _strServerFilter[7];
-
 void SortByColumn(int i)
 {
-  if (mgServerList.mg_iSort==i) {
-    mgServerList.mg_bSortDown = !mgServerList.mg_bSortDown;
+  if (gmServersMenu.gm_mgList.mg_iSort==i) {
+	gmServersMenu.gm_mgList.mg_bSortDown = !gmServersMenu.gm_mgList.mg_bSortDown;
   } else {
-    mgServerList.mg_bSortDown = FALSE;
+	gmServersMenu.gm_mgList.mg_bSortDown = FALSE;
   }
-  mgServerList.mg_iSort=i;
+  gmServersMenu.gm_mgList.mg_iSort = i;
 }
 
 void SortByServer(void) { SortByColumn(0); }
@@ -4363,94 +4192,20 @@ void SortByGame(void)   { SortByColumn(4); }
 void SortByMod(void)    { SortByColumn(5); }
 void SortByVer(void)    { SortByColumn(6); }
 
-void CServersMenu::Initialize_t(void)
-{
-  mgServersTitle.mg_boxOnScreen = BoxTitle();
-  mgServersTitle.mg_strText = TRANS("CHOOSE SERVER");
-  gm_lhGadgets.AddTail( mgServersTitle.mg_lnNode);
+extern CMGButton mgServerColumn[7];
+extern CMGEdit mgServerFilter[7];
 
-  mgServerList.mg_boxOnScreen = FLOATaabbox2D(FLOAT2D(0,0), FLOAT2D(1,1));
-  mgServerList.mg_pmgLeft = &mgServerList;  // make sure it can get focus
-  mgServerList.mg_bEnabled = TRUE;
-  gm_lhGadgets.AddTail(mgServerList.mg_lnNode);
+void InitActionsForServersMenu() {
+	gmServersMenu.gm_mgRefresh.mg_pActivatedFunction = &RefreshServerList;
 
-  ASSERT(ARRAYCOUNT(mgServerColumn)==ARRAYCOUNT(mgServerFilter));
-  for (INDEX i=0; i<ARRAYCOUNT(mgServerFilter); i++) {
-    mgServerColumn[i].mg_strText = "";
-    mgServerColumn[i].mg_boxOnScreen = BoxPlayerEdit(5.0);
-    mgServerColumn[i].mg_bfsFontSize = BFS_SMALL;
-    mgServerColumn[i].mg_iCenterI = -1;
-    mgServerColumn[i].mg_pmgUp = &mgServerList;
-    mgServerColumn[i].mg_pmgDown = &mgServerFilter[i];
-    gm_lhGadgets.AddTail( mgServerColumn[i].mg_lnNode);
-
-    mgServerFilter[i].mg_ctMaxStringLen = 25;
-    mgServerFilter[i].mg_boxOnScreen = BoxPlayerEdit(5.0);
-    mgServerFilter[i].mg_bfsFontSize = BFS_SMALL;
-    mgServerFilter[i].mg_iCenterI = -1;
-    mgServerFilter[i].mg_pmgUp = &mgServerColumn[i];
-    mgServerFilter[i].mg_pmgDown = &mgServerList;
-    gm_lhGadgets.AddTail( mgServerFilter[i].mg_lnNode);
-    mgServerFilter[i].mg_pstrToChange = &_strServerFilter[i];
-    mgServerFilter[i].SetText( *mgServerFilter[i].mg_pstrToChange);
-  }
-
-  mgServerRefresh.mg_strText = TRANS("REFRESH");
-  mgServerRefresh.mg_boxOnScreen = BoxLeftColumn(15.0);
-  mgServerRefresh.mg_bfsFontSize = BFS_SMALL;
-  mgServerRefresh.mg_iCenterI = -1;
-  mgServerRefresh.mg_pmgDown = &mgServerList;
-  mgServerRefresh.mg_pActivatedFunction = &RefreshServerList;
-  gm_lhGadgets.AddTail( mgServerRefresh.mg_lnNode);
-
-  CTString astrColumns[7];
-  mgServerColumn[0].mg_strText = TRANS("Server") ;
-  mgServerColumn[1].mg_strText = TRANS("Map")    ;
-  mgServerColumn[2].mg_strText = TRANS("Ping")   ;
-  mgServerColumn[3].mg_strText = TRANS("Players");
-  mgServerColumn[4].mg_strText = TRANS("Game")   ;
-  mgServerColumn[5].mg_strText = TRANS("Mod")    ;
-  mgServerColumn[6].mg_strText = TRANS("Ver")    ;
-  mgServerColumn[0].mg_pActivatedFunction = SortByServer;
-  mgServerColumn[1].mg_pActivatedFunction = SortByMap;
-  mgServerColumn[2].mg_pActivatedFunction = SortByPing;
-  mgServerColumn[3].mg_pActivatedFunction = SortByPlayers;
-  mgServerColumn[4].mg_pActivatedFunction = SortByGame;
-  mgServerColumn[5].mg_pActivatedFunction = SortByMod;
-  mgServerColumn[6].mg_pActivatedFunction = SortByVer;
-  mgServerColumn[0].mg_strTip = TRANS("sort by server") ;
-  mgServerColumn[1].mg_strTip = TRANS("sort by map")    ;
-  mgServerColumn[2].mg_strTip = TRANS("sort by ping")   ;
-  mgServerColumn[3].mg_strTip = TRANS("sort by players");
-  mgServerColumn[4].mg_strTip = TRANS("sort by game")   ;
-  mgServerColumn[5].mg_strTip = TRANS("sort by mod")    ;
-  mgServerColumn[6].mg_strTip = TRANS("sort by version");
-  mgServerFilter[0].mg_strTip = TRANS("filter by server");
-  mgServerFilter[1].mg_strTip = TRANS("filter by map")    ;
-  mgServerFilter[2].mg_strTip = TRANS("filter by ping (ie. <200)")   ;
-  mgServerFilter[3].mg_strTip = TRANS("filter by players (ie. >=2)");
-  mgServerFilter[4].mg_strTip = TRANS("filter by game (ie. coop)")   ;
-  mgServerFilter[5].mg_strTip = TRANS("filter by mod")    ;
-  mgServerFilter[6].mg_strTip = TRANS("filter by version");
+	mgServerColumn[0].mg_pActivatedFunction = SortByServer;
+	mgServerColumn[1].mg_pActivatedFunction = SortByMap;
+	mgServerColumn[2].mg_pActivatedFunction = SortByPing;
+	mgServerColumn[3].mg_pActivatedFunction = SortByPlayers;
+	mgServerColumn[4].mg_pActivatedFunction = SortByGame;
+	mgServerColumn[5].mg_pActivatedFunction = SortByMod;
+	mgServerColumn[6].mg_pActivatedFunction = SortByVer;
 }
-
-void CServersMenu::StartMenu(void)
-{
-  RefreshServerList();
-
-  CGameMenu::StartMenu();
-}
-
-// __Evolution
-BOOL CServersMenu::OnKeyDown(int iVKey)
-{
-	if (iVKey == VK_F5) {
-		RefreshServerListManually();
-		return TRUE;
-	}
-	return CGameMenu::OnKeyDown(iVKey);
-}
-// __Evolution
 
 // ------------------------ CNetworkMenu implementation
 void InitActionsForNetworkMenu()
@@ -4470,136 +4225,21 @@ void InitActionsForNetworkJoinMenu()
 }
 
 // ------------------------ CNetworkStartMenu implementation
-void UpdateNetworkLevel(INDEX iDummy)
+extern void UpdateNetworkLevel(INDEX iDummy)
 {
 	ValidateLevelForFlags(_pGame->gam_strCustomLevel,
-		GetSpawnFlagsForGameType(mgNetworkGameType.mg_iSelected));
-	mgNetworkLevel.mg_strText = FindLevelByFileName(_pGame->gam_strCustomLevel).li_strName;
+		GetSpawnFlagsForGameType(gmNetworkStartMenu.gm_mgGameType.mg_iSelected));
+	gmNetworkStartMenu.gm_mgLevel.mg_strText = FindLevelByFileName(_pGame->gam_strCustomLevel).li_strName;
 }
 
-void CNetworkStartMenu::Initialize_t(void)
+void InitActionsForNetworkStartMenu()
 {
-  // title
-  mgNetworkStartTitle.mg_boxOnScreen = BoxTitle();
-  mgNetworkStartTitle.mg_strText = TRANS("START SERVER");
-  gm_lhGadgets.AddTail( mgNetworkStartTitle.mg_lnNode);
-
-  // session name edit box
-  mgNetworkSessionName.mg_strText = _pGame->gam_strSessionName;
-  mgNetworkSessionName.mg_strLabel = TRANS("Session name:");
-  mgNetworkSessionName.mg_ctMaxStringLen = 25;
-  mgNetworkSessionName.mg_pstrToChange = &_pGame->gam_strSessionName;
-  mgNetworkSessionName.mg_boxOnScreen = BoxMediumRow(1);
-  mgNetworkSessionName.mg_bfsFontSize = BFS_MEDIUM;
-  mgNetworkSessionName.mg_iCenterI = -1;
-  mgNetworkSessionName.mg_pmgUp = &mgNetworkStartStart;
-  mgNetworkSessionName.mg_pmgDown = &mgNetworkGameType;
-  mgNetworkSessionName.mg_strTip = TRANS("name the session to start");
-  gm_lhGadgets.AddTail( mgNetworkSessionName.mg_lnNode);
-
-  // game type trigger
-  TRIGGER_MG(mgNetworkGameType, 2,
-       mgNetworkSessionName, mgNetworkDifficulty, TRANS("Game type:"), astrGameTypeRadioTexts);
-  mgNetworkGameType.mg_ctTexts = ctGameTypeRadioTexts;
-  mgNetworkGameType.mg_strTip = TRANS("choose type of multiplayer game");
-  mgNetworkGameType.mg_pOnTriggerChange = &UpdateNetworkLevel;
-
-  // difficulty trigger
-  TRIGGER_MG(mgNetworkDifficulty, 3,
-       mgNetworkGameType, mgNetworkLevel, TRANS("Difficulty:"), astrDifficultyRadioTexts);
-  mgNetworkDifficulty.mg_strTip = TRANS("choose difficulty level");
-
-  // level name
-  mgNetworkLevel.mg_strText = "";
-  mgNetworkLevel.mg_strLabel = TRANS("Level:");
-  mgNetworkLevel.mg_boxOnScreen = BoxMediumRow(4);
-  mgNetworkLevel.mg_bfsFontSize = BFS_MEDIUM;
-  mgNetworkLevel.mg_iCenterI = -1;
-  mgNetworkLevel.mg_pmgUp = &mgNetworkDifficulty;
-  mgNetworkLevel.mg_pmgDown = &mgNetworkMaxPlayers;
-  mgNetworkLevel.mg_strTip = TRANS("choose the level to start");
-  mgNetworkLevel.mg_pActivatedFunction = &StartSelectLevelFromNetwork;
-  gm_lhGadgets.AddTail( mgNetworkLevel.mg_lnNode);
-
-  // max players trigger
-  TRIGGER_MG(mgNetworkMaxPlayers, 5,
-       mgNetworkLevel, mgNetworkWaitAllPlayers, TRANS("Max players:"), astrMaxPlayersRadioTexts);
-  mgNetworkMaxPlayers.mg_strTip = TRANS("choose maximum allowed number of players");
-
-  // wait all players trigger
-  TRIGGER_MG(mgNetworkWaitAllPlayers, 6,
-       mgNetworkMaxPlayers, mgNetworkVisible, TRANS("Wait for all players:"), astrNoYes);
-  mgNetworkWaitAllPlayers.mg_strTip = TRANS("if on, game won't start until all players have joined");
-
-  // server visible trigger
-  TRIGGER_MG(mgNetworkVisible, 7,
-       mgNetworkMaxPlayers, mgNetworkGameOptions, TRANS("Server visible:"), astrNoYes);
-  mgNetworkVisible.mg_strTip = TRANS("invisible servers are not listed, cleints have to join manually");
-
-  // options button
-  mgNetworkGameOptions.mg_strText = TRANS("Game options");
-  mgNetworkGameOptions.mg_boxOnScreen = BoxMediumRow(8);
-  mgNetworkGameOptions.mg_bfsFontSize = BFS_MEDIUM;
-  mgNetworkGameOptions.mg_iCenterI = 0;
-  mgNetworkGameOptions.mg_pmgUp = &mgNetworkVisible;
-  mgNetworkGameOptions.mg_pmgDown = &mgNetworkStartStart;
-  mgNetworkGameOptions.mg_strTip = TRANS("adjust game rules");
-  mgNetworkGameOptions.mg_pActivatedFunction = &StartGameOptionsFromNetwork;
-  gm_lhGadgets.AddTail( mgNetworkGameOptions.mg_lnNode);
-
-  // start button
-  mgNetworkStartStart.mg_bfsFontSize = BFS_LARGE;
-  mgNetworkStartStart.mg_boxOnScreen = BoxBigRow(7);
-  mgNetworkStartStart.mg_pmgUp = &mgNetworkGameOptions;
-  mgNetworkStartStart.mg_pmgDown = &mgNetworkSessionName;
-  mgNetworkStartStart.mg_strText = TRANS("START");
-  gm_lhGadgets.AddTail( mgNetworkStartStart.mg_lnNode);
-  mgNetworkStartStart.mg_pActivatedFunction = &StartSelectPlayersMenuFromNetwork;
+	gmNetworkStartMenu.gm_mgLevel.mg_pActivatedFunction = &StartSelectLevelFromNetwork;
+	gmNetworkStartMenu.gm_mgGameOptions.mg_pActivatedFunction = &StartGameOptionsFromNetwork;
+	gmNetworkStartMenu.gm_mgStart.mg_pActivatedFunction = &StartSelectPlayersMenuFromNetwork;
 }
 
-void CNetworkStartMenu::StartMenu(void)
-{
-  extern INDEX sam_bMentalActivated;
-  mgNetworkDifficulty.mg_ctTexts = sam_bMentalActivated?6:5;
-
-  mgNetworkGameType.mg_iSelected = Clamp(_pShell->GetINDEX("gam_iStartMode"), 0L, ctGameTypeRadioTexts-1L);
-  mgNetworkGameType.ApplyCurrentSelection();
-  mgNetworkDifficulty.mg_iSelected = _pShell->GetINDEX("gam_iStartDifficulty")+1;
-  mgNetworkDifficulty.ApplyCurrentSelection();
-
-  _pShell->SetINDEX("gam_iStartMode", CSessionProperties::GM_COOPERATIVE);
-
-  INDEX ctMaxPlayers = _pShell->GetINDEX("gam_ctMaxPlayers");
-  if (ctMaxPlayers<2 || ctMaxPlayers>16) {
-    ctMaxPlayers = 2;
-    _pShell->SetINDEX("gam_ctMaxPlayers", ctMaxPlayers);
-  }
-
-  mgNetworkMaxPlayers.mg_iSelected = ctMaxPlayers-2;
-  mgNetworkMaxPlayers.ApplyCurrentSelection();
-
-  mgNetworkWaitAllPlayers.mg_iSelected = Clamp(_pShell->GetINDEX("gam_bWaitAllPlayers"), 0L, 1L);
-  mgNetworkWaitAllPlayers.ApplyCurrentSelection();
-
-  mgNetworkVisible.mg_iSelected = _pShell->GetINDEX("ser_bEnumeration");
-  mgNetworkVisible.ApplyCurrentSelection();
-
-  UpdateNetworkLevel(0);
-
-  CGameMenu::StartMenu();
-}
-
-void CNetworkStartMenu::EndMenu(void)
-{
-  _pShell->SetINDEX("gam_iStartDifficulty", mgNetworkDifficulty.mg_iSelected-1);
-  _pShell->SetINDEX("gam_iStartMode", mgNetworkGameType.mg_iSelected);
-  _pShell->SetINDEX("gam_bWaitAllPlayers", mgNetworkWaitAllPlayers.mg_iSelected);
-  _pShell->SetINDEX("gam_ctMaxPlayers", mgNetworkMaxPlayers.mg_iSelected+2);
-  _pShell->SetINDEX("ser_bEnumeration", mgNetworkVisible.mg_iSelected);
-
-  CGameMenu::EndMenu();
-}
-
+//
 #define ADD_GADGET( gd, box, up, dn, lf, rt, txt) \
   gd.mg_boxOnScreen = box;\
   gd.mg_pmgUp = up;\
@@ -4636,44 +4276,44 @@ INDEX FindUnusedPlayer(void)
   return iPlayer;
 }
 
-void SelectPlayersFillMenu(void)
+extern void SelectPlayersFillMenu(void)
 {
   INDEX *ai = _pGame->gm_aiMenuLocalPlayers;
 
-  mgPlayer0Change.mg_iLocalPlayer = 0;
-  mgPlayer1Change.mg_iLocalPlayer = 1;
-  mgPlayer2Change.mg_iLocalPlayer = 2;
-  mgPlayer3Change.mg_iLocalPlayer = 3;
+  gmSelectPlayersMenu.gm_mgPlayer0Change.mg_iLocalPlayer = 0;
+  gmSelectPlayersMenu.gm_mgPlayer1Change.mg_iLocalPlayer = 1;
+  gmSelectPlayersMenu.gm_mgPlayer2Change.mg_iLocalPlayer = 2;
+  gmSelectPlayersMenu.gm_mgPlayer3Change.mg_iLocalPlayer = 3;
 
   if (gmSelectPlayersMenu.gm_bAllowDedicated && _pGame->gm_MenuSplitScreenCfg==CGame::SSC_DEDICATED) {
-    mgDedicated.mg_iSelected = 1;
+	gmSelectPlayersMenu.gm_mgDedicated.mg_iSelected = 1;
   } else {
-    mgDedicated.mg_iSelected = 0;
+	gmSelectPlayersMenu.gm_mgDedicated.mg_iSelected = 0;
   }
-  mgDedicated.ApplyCurrentSelection();
+  gmSelectPlayersMenu.gm_mgDedicated.ApplyCurrentSelection();
 
   if (gmSelectPlayersMenu.gm_bAllowObserving && _pGame->gm_MenuSplitScreenCfg==CGame::SSC_OBSERVER) {
-    mgObserver.mg_iSelected = 1;
+	gmSelectPlayersMenu.gm_mgObserver.mg_iSelected = 1;
   } else {
-    mgObserver.mg_iSelected = 0;
+	gmSelectPlayersMenu.gm_mgObserver.mg_iSelected = 0;
   }
-  mgObserver.ApplyCurrentSelection();
+  gmSelectPlayersMenu.gm_mgObserver.ApplyCurrentSelection();
 
   if (_pGame->gm_MenuSplitScreenCfg>=CGame::SSC_PLAY1) {
-    mgSplitScreenCfg.mg_iSelected = _pGame->gm_MenuSplitScreenCfg;
-    mgSplitScreenCfg.ApplyCurrentSelection();
+	gmSelectPlayersMenu.gm_mgSplitScreenCfg.mg_iSelected = _pGame->gm_MenuSplitScreenCfg;
+	gmSelectPlayersMenu.gm_mgSplitScreenCfg.ApplyCurrentSelection();
   }
 
   BOOL bHasDedicated = gmSelectPlayersMenu.gm_bAllowDedicated;
   BOOL bHasObserver = gmSelectPlayersMenu.gm_bAllowObserving;
   BOOL bHasPlayers = TRUE;
 
-  if (bHasDedicated && mgDedicated.mg_iSelected) {
+  if (bHasDedicated && gmSelectPlayersMenu.gm_mgDedicated.mg_iSelected) {
     bHasObserver = FALSE;
     bHasPlayers = FALSE;
   }
 
-  if (bHasObserver && mgObserver.mg_iSelected) {
+  if (bHasObserver && gmSelectPlayersMenu.gm_mgObserver.mg_iSelected) {
     bHasPlayers = FALSE;
   }
 
@@ -4682,16 +4322,16 @@ void SelectPlayersFillMenu(void)
   INDEX i=0;
 
   if (bHasDedicated) {
-    mgDedicated.Appear();
-    apmg[i++] = &mgDedicated;
+	gmSelectPlayersMenu.gm_mgDedicated.Appear();
+	apmg[i++] = &gmSelectPlayersMenu.gm_mgDedicated;
   } else {
-    mgDedicated.Disappear();
+	gmSelectPlayersMenu.gm_mgDedicated.Disappear();
   }
   if (bHasObserver) {
-    mgObserver.Appear();
-    apmg[i++] = &mgObserver;
+	gmSelectPlayersMenu.gm_mgObserver.Appear();
+	apmg[i++] = &gmSelectPlayersMenu.gm_mgObserver;
   } else {
-    mgObserver.Disappear();
+	gmSelectPlayersMenu.gm_mgObserver.Disappear();
   }
 
   for (INDEX iLocal=0; iLocal<4; iLocal++) {
@@ -4705,32 +4345,32 @@ void SelectPlayersFillMenu(void)
     }
   }
 
-  mgPlayer0Change.Disappear();
-  mgPlayer1Change.Disappear();
-  mgPlayer2Change.Disappear();
-  mgPlayer3Change.Disappear();
+  gmSelectPlayersMenu.gm_mgPlayer0Change.Disappear();
+  gmSelectPlayersMenu.gm_mgPlayer1Change.Disappear();
+  gmSelectPlayersMenu.gm_mgPlayer2Change.Disappear();
+  gmSelectPlayersMenu.gm_mgPlayer3Change.Disappear();
 
   if (bHasPlayers) {
-    mgSplitScreenCfg.Appear();
-    apmg[i++] = &mgSplitScreenCfg;
-    mgPlayer0Change.Appear();
-    apmg[i++] = &mgPlayer0Change;
-    if (mgSplitScreenCfg.mg_iSelected>=1) {
-      mgPlayer1Change.Appear();
-      apmg[i++] = &mgPlayer1Change;
+	gmSelectPlayersMenu.gm_mgSplitScreenCfg.Appear();
+	apmg[i++] = &gmSelectPlayersMenu.gm_mgSplitScreenCfg;
+	gmSelectPlayersMenu.gm_mgPlayer0Change.Appear();
+	apmg[i++] = &gmSelectPlayersMenu.gm_mgPlayer0Change;
+	if (gmSelectPlayersMenu.gm_mgSplitScreenCfg.mg_iSelected >= 1) {
+	  gmSelectPlayersMenu.gm_mgPlayer1Change.Appear();
+	  apmg[i++] = &gmSelectPlayersMenu.gm_mgPlayer1Change;
     }
-    if (mgSplitScreenCfg.mg_iSelected>=2) {
-      mgPlayer2Change.Appear();
-      apmg[i++] = &mgPlayer2Change;
+	if (gmSelectPlayersMenu.gm_mgSplitScreenCfg.mg_iSelected >= 2) {
+	  gmSelectPlayersMenu.gm_mgPlayer2Change.Appear();
+	  apmg[i++] = &gmSelectPlayersMenu.gm_mgPlayer2Change;
     }
-    if (mgSplitScreenCfg.mg_iSelected>=3) {
-      mgPlayer3Change.Appear();
-      apmg[i++] = &mgPlayer3Change;
+	if (gmSelectPlayersMenu.gm_mgSplitScreenCfg.mg_iSelected >= 3) {
+	  gmSelectPlayersMenu.gm_mgPlayer3Change.Appear();
+	  apmg[i++] = &gmSelectPlayersMenu.gm_mgPlayer3Change;
     }
   } else {
-    mgSplitScreenCfg.Disappear();
+	gmSelectPlayersMenu.gm_mgSplitScreenCfg.Disappear();
   }
-  apmg[i++] = &mgSelectPlayersStart;
+  apmg[i++] = &gmSelectPlayersMenu.gm_mgStart;
 
   // relink
   for (INDEX img=0; img<8; img++) {
@@ -4753,31 +4393,31 @@ void SelectPlayersFillMenu(void)
     apmg[img]->mg_pmgDown = apmg[imgSucc];
   }
 
-  mgPlayer0Change.SetPlayerText();
-  mgPlayer1Change.SetPlayerText();
-  mgPlayer2Change.SetPlayerText();
-  mgPlayer3Change.SetPlayerText();
+  gmSelectPlayersMenu.gm_mgPlayer0Change.SetPlayerText();
+  gmSelectPlayersMenu.gm_mgPlayer1Change.SetPlayerText();
+  gmSelectPlayersMenu.gm_mgPlayer2Change.SetPlayerText();
+  gmSelectPlayersMenu.gm_mgPlayer3Change.SetPlayerText();
 
-  if (bHasPlayers && mgSplitScreenCfg.mg_iSelected>=1) {
-    mgSelectPlayersNotes.mg_strText = TRANS("Make sure you set different controls for each player!");
+  if (bHasPlayers && gmSelectPlayersMenu.gm_mgSplitScreenCfg.mg_iSelected>=1) {
+	gmSelectPlayersMenu.gm_mgNotes.mg_strText = TRANS("Make sure you set different controls for each player!");
   } else {
-    mgSelectPlayersNotes.mg_strText = "";
+	gmSelectPlayersMenu.gm_mgNotes.mg_strText = "";
   }
 }
 
-void SelectPlayersApplyMenu(void)
+extern void SelectPlayersApplyMenu(void)
 {
-  if (gmSelectPlayersMenu.gm_bAllowDedicated && mgDedicated.mg_iSelected) {
+	if (gmSelectPlayersMenu.gm_bAllowDedicated && gmSelectPlayersMenu.gm_mgDedicated.mg_iSelected) {
     _pGame->gm_MenuSplitScreenCfg = CGame::SSC_DEDICATED;
     return;
   }
 
-  if (gmSelectPlayersMenu.gm_bAllowObserving && mgObserver.mg_iSelected) {
+  if (gmSelectPlayersMenu.gm_bAllowObserving && gmSelectPlayersMenu.gm_mgObserver.mg_iSelected) {
     _pGame->gm_MenuSplitScreenCfg = CGame::SSC_OBSERVER;
     return;
   }
 
-  _pGame->gm_MenuSplitScreenCfg = (enum CGame::SplitScreenCfg) mgSplitScreenCfg.mg_iSelected;
+  _pGame->gm_MenuSplitScreenCfg = (enum CGame::SplitScreenCfg) gmSelectPlayersMenu.gm_mgSplitScreenCfg.mg_iSelected;
 }
 
 void UpdateSelectPlayers(INDEX i)
@@ -4786,90 +4426,12 @@ void UpdateSelectPlayers(INDEX i)
   SelectPlayersFillMenu();
 }
 
-void CSelectPlayersMenu::Initialize_t(void)
+void InitActionsForSelectPlayersMenu()
 {
-  // intialize split screen menu
-  mgSelectPlayerTitle.mg_boxOnScreen = BoxTitle();
-  mgSelectPlayerTitle.mg_strText = TRANS("SELECT PLAYERS");
-  gm_lhGadgets.AddTail( mgSelectPlayerTitle.mg_lnNode);
-
-  TRIGGER_MG(mgDedicated, 0, mgSelectPlayersStart, mgObserver, TRANS("Dedicated:"), astrNoYes);
-  mgDedicated.mg_strTip = TRANS("select to start dedicated server");
-  mgDedicated.mg_pOnTriggerChange = UpdateSelectPlayers;
-
-  TRIGGER_MG(mgObserver, 1, mgDedicated, mgSplitScreenCfg, TRANS("Observer:"), astrNoYes);
-  mgObserver.mg_strTip = TRANS("select to join in for observing, not for playing");
-  mgObserver.mg_pOnTriggerChange = UpdateSelectPlayers;
-
-  // split screen config trigger
-  TRIGGER_MG(mgSplitScreenCfg, 2, mgObserver, mgPlayer0Change, TRANS("Number of players:"), astrSplitScreenRadioTexts);
-  mgSplitScreenCfg.mg_strTip = TRANS("choose more than one player to play in split screen");
-  mgSplitScreenCfg.mg_pOnTriggerChange = UpdateSelectPlayers;
-
-  mgPlayer0Change.mg_iCenterI = -1;
-  mgPlayer1Change.mg_iCenterI = -1;
-  mgPlayer2Change.mg_iCenterI = -1;
-  mgPlayer3Change.mg_iCenterI = -1;
-  mgPlayer0Change.mg_boxOnScreen = BoxMediumMiddle(4);
-  mgPlayer1Change.mg_boxOnScreen = BoxMediumMiddle(5);
-  mgPlayer2Change.mg_boxOnScreen = BoxMediumMiddle(6);
-  mgPlayer3Change.mg_boxOnScreen = BoxMediumMiddle(7);
-  mgPlayer0Change.mg_strTip =
-  mgPlayer1Change.mg_strTip =
-  mgPlayer2Change.mg_strTip =
-  mgPlayer3Change.mg_strTip = TRANS("select profile for this player");
-  gm_lhGadgets.AddTail( mgPlayer0Change.mg_lnNode);
-  gm_lhGadgets.AddTail( mgPlayer1Change.mg_lnNode);
-  gm_lhGadgets.AddTail( mgPlayer2Change.mg_lnNode);
-  gm_lhGadgets.AddTail( mgPlayer3Change.mg_lnNode);
-
-  mgSelectPlayersNotes.mg_boxOnScreen = BoxMediumRow(9.0);
-  mgSelectPlayersNotes.mg_bfsFontSize = BFS_MEDIUM;
-  mgSelectPlayersNotes.mg_iCenterI = -1;
-  mgSelectPlayersNotes.mg_bEnabled = FALSE;
-  mgSelectPlayersNotes.mg_bLabel = TRUE;
-  gm_lhGadgets.AddTail( mgSelectPlayersNotes.mg_lnNode);
-  mgSelectPlayersNotes.mg_strText = "";
-
-  /*  // options button
-  mgSplitOptions.mg_strText = TRANS("Game options");
-  mgSplitOptions.mg_boxOnScreen = BoxMediumRow(3);
-  mgSplitOptions.mg_bfsFontSize = BFS_MEDIUM;
-  mgSplitOptions.mg_iCenterI = 0;
-  mgSplitOptions.mg_pmgUp = &mgSplitLevel;
-  mgSplitOptions.mg_pmgDown = &mgSplitStartStart;
-  mgSplitOptions.mg_strTip = TRANS("adjust game rules");
-  mgSplitOptions.mg_pActivatedFunction = &StartGameOptionsFromSplitScreen;
-  gm_lhGadgets.AddTail( mgSplitOptions.mg_lnNode);*/
-
-/*  // start button
-  mgSplitStartStart.mg_bfsFontSize = BFS_LARGE;
-  mgSplitStartStart.mg_boxOnScreen = BoxBigRow(4);
-  mgSplitStartStart.mg_pmgUp = &mgSplitOptions;
-  mgSplitStartStart.mg_pmgDown = &mgSplitGameType;
-  mgSplitStartStart.mg_strText = TRANS("START");
-  gm_lhGadgets.AddTail( mgSplitStartStart.mg_lnNode);
-  mgSplitStartStart.mg_pActivatedFunction = &StartSelectPlayersMenuFromSplit;
-*/
-
-  ADD_GADGET( mgSelectPlayersStart, BoxMediumRow(11), &mgSplitScreenCfg, &mgPlayer0Change, NULL, NULL, TRANS("START"));
-  mgSelectPlayersStart.mg_bfsFontSize = BFS_LARGE;
-  mgSelectPlayersStart.mg_iCenterI = 0;
+	gmSelectPlayersMenu.gm_mgDedicated.mg_pOnTriggerChange = UpdateSelectPlayers;
+	gmSelectPlayersMenu.gm_mgObserver.mg_pOnTriggerChange = UpdateSelectPlayers;
+	gmSelectPlayersMenu.gm_mgSplitScreenCfg.mg_pOnTriggerChange = UpdateSelectPlayers;
 }
-
-void CSelectPlayersMenu::StartMenu(void)
-{
-  CGameMenu::StartMenu();
-  SelectPlayersFillMenu();
-  SelectPlayersApplyMenu();
-}
-
-void CSelectPlayersMenu::EndMenu(void)
-{
-  SelectPlayersApplyMenu();
-  CGameMenu::EndMenu();
-}
-
 
 // ------------------------ CNetworkOpenMenu implementation
 void InitActionsForNetworkOpenMenu()

@@ -219,7 +219,10 @@ copy Release\$(TargetName).map $(SolutionDir)..\Bin\ &gt;nul </Command>
     <ClCompile Include="MNetwork.cpp" />
     <ClCompile Include="MNetworkJoin.cpp" />
     <ClCompile Include="MNetworkOpen.cpp" />
+    <ClCompile Include="MNetworkStart.cpp" />
     <ClCompile Include="MOptions.cpp" />
+    <ClCompile Include="MSelectPlayers.cpp" />
+    <ClCompile Include="MServers.cpp" />
     <ClCompile Include="MSinglePlayer.cpp" />
     <ClCompile Include="MSinglePlayerNew.cpp" />
     <ClCompile Include="MSplitScreen.cpp" />

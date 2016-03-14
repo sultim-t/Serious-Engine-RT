@@ -7,16 +7,23 @@
 #endif
 
 #include "GameMenu.h"
+#include "MGButton.h"
+#include "MGEdit.h"
+#include "MGServerList.h"
+#include "MGTitle.h"
 
 
 class CServersMenu : public CGameMenu {
 public:
 	BOOL m_bInternet;
+
+	CMGTitle gm_mgTitle;
+	CMGServerList gm_mgList;
+	CMGButton gm_mgRefresh;
+
 	void Initialize_t(void);
 	void StartMenu(void);
 	void Think(void);
-
-	BOOL OnKeyDown(int iVKey); // __Evolution
 };
 
 #endif  /* include-once check. */

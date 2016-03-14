@@ -7,12 +7,32 @@
 #endif
 
 #include "GameMenu.h"
+#include "MGButton.h"
+#include "MGChangePlayer.h"
+#include "MGTitle.h"
+#include "MGTrigger.h"
 
 
 class CSelectPlayersMenu : public CGameMenu {
 public:
 	BOOL gm_bAllowDedicated;
 	BOOL gm_bAllowObserving;
+
+	CMGTitle gm_mgTitle;
+
+	CMGTrigger gm_mgDedicated;
+	CMGTrigger gm_mgObserver;
+	CMGTrigger gm_mgSplitScreenCfg;
+
+	CMGChangePlayer gm_mgPlayer0Change;
+	CMGChangePlayer gm_mgPlayer1Change;
+	CMGChangePlayer gm_mgPlayer2Change;
+	CMGChangePlayer gm_mgPlayer3Change;
+
+	CMGButton gm_mgNotes;
+
+	CMGButton gm_mgStart;
+
 	void Initialize_t(void);
 	void StartMenu(void);
 	void EndMenu(void);
