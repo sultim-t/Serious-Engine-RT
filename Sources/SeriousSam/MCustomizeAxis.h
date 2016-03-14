@@ -7,10 +7,22 @@
 #endif
 
 #include "GameMenu.h"
+#include "MGSlider.h"
+#include "MGTitle.h"
+#include "MGTrigger.h"
 
 
 class CCustomizeAxisMenu : public CGameMenu {
 public:
+	CMGTitle gm_mgTitle;
+	CMGTrigger gm_mgActionTrigger;
+	CMGTrigger gm_mgMountedTrigger;
+	CMGSlider gm_mgSensitivity;
+	CMGSlider gm_mgDeadzone;
+	CMGTrigger gm_mgInvertTrigger;
+	CMGTrigger gm_mgRelativeTrigger;
+	CMGTrigger gm_mgSmoothTrigger;
+
 	~CCustomizeAxisMenu(void);
 	void Initialize_t(void);
 	void StartMenu(void);

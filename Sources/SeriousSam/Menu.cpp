@@ -104,16 +104,18 @@ void (*_pAfterLevelChosen)(void);
 
 // functions for init actions
 void InitActionsForConfirmMenu();
+void InitActionsForCustomizeAxisMenu();
 void InitActionsForMainMenu();
 void InitActionsForInGameMenu();
+void InitActionsForNetworkMenu();
 void InitActionsForNetworkJoinMenu();
 void InitActionsForNetworkOpenMenu();
+void InitActionsForOptionsMenu();
 void InitActionsForSinglePlayerMenu();
 void InitActionsForSinglePlayerNewMenu();
 void InitActionsForSplitScreenMenu();
 void InitActionsForSplitStartMenu();
 void InitActionsForVarMenu();
-
 
 // functions to activate when user chose 'yes/no' on confirmation
 void (*_pConfimedYes)(void) = NULL;
@@ -139,7 +141,7 @@ void ConfirmNo(void)
 }
 
 
-void ControlsMenuOn()
+extern void ControlsMenuOn()
 {
   _pGame->SavePlayersAndControls();
   try {
@@ -149,7 +151,7 @@ void ControlsMenuOn()
   }
 }
 
-void ControlsMenuOff()
+extern void ControlsMenuOff()
 {
   try {
     if (_pGame->gm_ctrlControlsExtra.ctrl_lhButtonActions.Count()>0) {
@@ -217,7 +219,7 @@ static CTextureObject _toLogoMenuB;
 #define PLACEMENT(x,y,z) CPlacement3D( FLOAT3D( x, y, z), \
   ANGLE3D( AngleDeg(0.0f), AngleDeg(0.0f), AngleDeg(0.0f)))
 
-CTString astrNoYes[] = {
+extern CTString astrNoYes[] = {
   RADIOTRANS( "No"),
   RADIOTRANS( "Yes"),
 };
@@ -360,15 +362,9 @@ CMGArrow mgLSArrowDn;
 
 // -------- High-score menu
 CHighScoreMenu gmHighScoreMenu;
-CMGTitle mgHighScoreTitle;
-CMGHighScore mgHScore;
 
 // -------- Customize keyboard menu
 CCustomizeKeyboardMenu gmCustomizeKeyboardMenu;
-CMGTitle mgCustomizeKeyboardTitle;
-CMGKeyDefinition mgKey[KEYS_ON_SCREEN];
-CMGArrow mgCustomizeArrowUp;
-CMGArrow mgCustomizeArrowDn;
 
 // -------- Choose servers menu
 CServersMenu gmServersMenu;
@@ -380,24 +376,9 @@ CMGButton mgServerRefresh;
 
 // -------- Customize axis menu
 CCustomizeAxisMenu gmCustomizeAxisMenu;
-CMGTitle mgCustomizeAxisTitle;
-CMGTrigger mgAxisActionTrigger;
-CMGTrigger mgAxisMountedTrigger;
-CMGSlider mgAxisSensitivity;
-CMGSlider mgAxisDeadzone;
-CMGTrigger mgAxisInvertTrigger;
-CMGTrigger mgAxisRelativeTrigger;
-CMGTrigger mgAxisSmoothTrigger;
 
 // -------- Options menu
 COptionsMenu gmOptionsMenu;
-CMGTitle mgOptionsTitle;
-CMGButton mgVideoOptions;
-CMGButton mgAudioOptions;
-CMGButton mgPlayerProfileOptions;
-CMGButton mgNetworkOptions;
-CMGButton mgCustomOptions;
-CMGButton mgAddonOptions;
 
 // -------- Video options menu
 CVideoOptionsMenu gmVideoOptionsMenu;
@@ -455,11 +436,6 @@ CMGButton mgAudioOptionsApply;
 
 // -------- Network menu
 CNetworkMenu gmNetworkMenu;
-CMGTitle  mgNetworkTitle;
-CMGButton mgNetworkJoin;
-CMGButton mgNetworkStart;
-CMGButton mgNetworkQuickLoad;
-CMGButton mgNetworkLoad;
 
 // -------- Network join menu
 CNetworkJoinMenu gmNetworkJoinMenu;
@@ -2212,18 +2188,20 @@ void InitializeMenus(void)
 
     gmCustomizeKeyboardMenu.Initialize_t();
     gmCustomizeKeyboardMenu.gm_strName="CustomizeKeyboard";
-    gmCustomizeKeyboardMenu.gm_pmgSelectedByDefault = &mgKey[0];
+	gmCustomizeKeyboardMenu.gm_pmgSelectedByDefault = &gmCustomizeKeyboardMenu.gm_mgKey[0];
     gmCustomizeKeyboardMenu.gm_pgmParentMenu = &gmControls;
 
     gmCustomizeAxisMenu.Initialize_t();
     gmCustomizeAxisMenu.gm_strName="CustomizeAxis";
-    gmCustomizeAxisMenu.gm_pmgSelectedByDefault = &mgAxisActionTrigger;
+	gmCustomizeAxisMenu.gm_pmgSelectedByDefault = &gmCustomizeAxisMenu.gm_mgActionTrigger;
     gmCustomizeAxisMenu.gm_pgmParentMenu = &gmControls;
+	InitActionsForCustomizeAxisMenu();
 
     gmOptionsMenu.Initialize_t();
     gmOptionsMenu.gm_strName="Options";
-    gmOptionsMenu.gm_pmgSelectedByDefault = &mgVideoOptions;
+	gmOptionsMenu.gm_pmgSelectedByDefault = &gmOptionsMenu.gm_mgVideoOptions;
     gmOptionsMenu.gm_pgmParentMenu = &gmMainMenu;
+	InitActionsForOptionsMenu();
 
     gmVideoOptionsMenu.Initialize_t();
     gmVideoOptionsMenu.gm_strName="VideoOptions";
@@ -2253,8 +2231,9 @@ void InitializeMenus(void)
 
     gmNetworkMenu.Initialize_t();
     gmNetworkMenu.gm_strName="Network";
-    gmNetworkMenu.gm_pmgSelectedByDefault = &mgNetworkJoin;
+	gmNetworkMenu.gm_pmgSelectedByDefault = &gmNetworkMenu.gm_mgJoin;
     gmNetworkMenu.gm_pgmParentMenu = &gmMainMenu;
+	InitActionsForNetworkMenu();
 
     gmNetworkStartMenu.Initialize_t();
     gmNetworkStartMenu.gm_strName="NetworkStart";
@@ -3980,320 +3959,33 @@ BOOL CLoadSaveMenu::ParseFile(const CTFileName &fnm, CTString &strName)
   return TRUE;
 }
 
-void CHighScoreMenu::Initialize_t(void)
-{
-  mgHScore.mg_boxOnScreen = FLOATaabbox2D(FLOAT2D(0,0), FLOAT2D(1,0.5));
-  gm_lhGadgets.AddTail( mgHScore.mg_lnNode);
-
-  mgHighScoreTitle.mg_strText = TRANS("HIGH SCORE TABLE");
-  mgHighScoreTitle.mg_boxOnScreen = BoxTitle();
-  gm_lhGadgets.AddTail( mgHighScoreTitle.mg_lnNode);
-}
-
-void CHighScoreMenu::StartMenu(void)
-{
-  gm_pgmParentMenu = pgmCurrentMenu;
-  CGameMenu::StartMenu();
-}
-
-// ------------------------ CCustomizeKeyboardMenu implementation
-void CCustomizeKeyboardMenu::FillListItems(void)
-{
-  // disable all items first
-  for(INDEX i=0; i<KEYS_ON_SCREEN; i++) {
-    mgKey[i].mg_bEnabled = FALSE;
-    mgKey[i].mg_iInList = -2;
-  }
-
-  BOOL bHasFirst = FALSE;
-  BOOL bHasLast = FALSE;
-  // set diks to key buttons
-  INDEX iLabel=0;
-  INDEX ctLabels = _pGame->gm_ctrlControlsExtra.ctrl_lhButtonActions.Count();
-  FOREACHINLIST( CButtonAction, ba_lnNode, _pGame->gm_ctrlControlsExtra.ctrl_lhButtonActions, itAct)
-  {
-    INDEX iInMenu = iLabel-gm_iListOffset;
-    if( (iLabel>=gm_iListOffset) && 
-        (iLabel<(gm_iListOffset+gm_ctListVisible)) )
-    {
-      bHasFirst|=(iLabel==0);
-      bHasLast |=(iLabel==ctLabels-1);
-      mgKey[iInMenu].mg_strLabel = TranslateConst(itAct->ba_strName, 0);
-      mgKey[iInMenu].mg_iControlNumber = iLabel;
-      mgKey[iInMenu].SetBindingNames(FALSE);
-      mgKey[iInMenu].mg_strTip = TRANS("Enter - change binding, Backspace - unbind");
-      mgKey[iInMenu].mg_bEnabled = TRUE;
-      mgKey[iInMenu].mg_iInList = iLabel;
-    }
-    iLabel++;
-  }
-
-  // enable/disable up/down arrows
-  mgCustomizeArrowUp.mg_bEnabled = !bHasFirst && ctLabels>0;
-  mgCustomizeArrowDn.mg_bEnabled = !bHasLast  && ctLabels>0;
-}
-
-void CCustomizeKeyboardMenu::Initialize_t(void)
-{
-  // intialize Audio options menu
-  mgCustomizeKeyboardTitle.mg_strText = TRANS("CUSTOMIZE BUTTONS");
-  mgCustomizeKeyboardTitle.mg_boxOnScreen = BoxTitle();
-  gm_lhGadgets.AddTail( mgCustomizeKeyboardTitle.mg_lnNode);
-
-#define KL_START 3.0f
-#define KL_STEEP -1.45f
-  for( INDEX iLabel=0; iLabel<KEYS_ON_SCREEN; iLabel++)
-  {
-    INDEX iPrev = (gm_ctListVisible+iLabel-1)%KEYS_ON_SCREEN;
-    INDEX iNext = (iLabel+1)%KEYS_ON_SCREEN;
-    // initialize label entities
-    mgKey[iLabel].mg_boxOnScreen = BoxKeyRow(iLabel);
-    // initialize label gadgets
-    mgKey[iLabel].mg_pmgUp = &mgKey[iPrev];
-    mgKey[iLabel].mg_pmgDown = &mgKey[iNext];
-    mgKey[iLabel].mg_bVisible = TRUE;
-    gm_lhGadgets.AddTail( mgKey[iLabel].mg_lnNode);
-  }
-  // arrows just exist
-  gm_lhGadgets.AddTail( mgCustomizeArrowDn.mg_lnNode);
-  gm_lhGadgets.AddTail( mgCustomizeArrowUp.mg_lnNode);
-  mgCustomizeArrowDn.mg_adDirection = AD_DOWN;
-  mgCustomizeArrowUp.mg_adDirection = AD_UP;
-  mgCustomizeArrowDn.mg_boxOnScreen = BoxArrow(AD_DOWN);
-  mgCustomizeArrowUp.mg_boxOnScreen = BoxArrow(AD_UP);
-  mgCustomizeArrowDn.mg_pmgRight = mgCustomizeArrowDn.mg_pmgUp = 
-    &mgKey[KEYS_ON_SCREEN-1];
-  mgCustomizeArrowUp.mg_pmgRight = mgCustomizeArrowUp.mg_pmgDown = 
-    &mgKey[0];
-
-  gm_ctListVisible = KEYS_ON_SCREEN;
-  gm_pmgArrowUp = &mgCustomizeArrowUp;
-  gm_pmgArrowDn = &mgCustomizeArrowDn;
-  gm_pmgListTop = &mgKey[0];
-  gm_pmgListBottom = &mgKey[KEYS_ON_SCREEN-1];
-}
-void CCustomizeKeyboardMenu::StartMenu(void)
-{
-  ControlsMenuOn();
-  gm_iListOffset = 0;
-  gm_ctListTotal = _pGame->gm_ctrlControlsExtra.ctrl_lhButtonActions.Count();
-  gm_iListWantedItem = 0;
-  CGameMenu::StartMenu();
-}
-void CCustomizeKeyboardMenu::EndMenu(void)
-{
-  ControlsMenuOff();
-  CGameMenu::EndMenu();
-}
-
-CCustomizeAxisMenu::~CCustomizeAxisMenu(void)
-{
-  delete[] mgAxisActionTrigger.mg_astrTexts;
-  delete[] mgAxisMountedTrigger.mg_astrTexts;
-}
-
+// ------------------------ CCustomizeAxisMenu implementation
 void PreChangeAxis(INDEX iDummy)
 {
-  gmCustomizeAxisMenu.ApplyActionSettings();
+	gmCustomizeAxisMenu.ApplyActionSettings();
 }
 void PostChangeAxis(INDEX iDummy)
 {
-  gmCustomizeAxisMenu.ObtainActionSettings();
+	gmCustomizeAxisMenu.ObtainActionSettings();
 }
 
-void CCustomizeAxisMenu::Initialize_t(void)
-{
-  // intialize axis menu
-  mgCustomizeAxisTitle.mg_strText = TRANS("CUSTOMIZE AXIS");
-  mgCustomizeAxisTitle.mg_boxOnScreen = BoxTitle();
-  gm_lhGadgets.AddTail( mgCustomizeAxisTitle.mg_lnNode);
-
-  TRIGGER_MG(mgAxisActionTrigger, 0, mgAxisSmoothTrigger, mgAxisMountedTrigger, TRANS("ACTION"), astrNoYes);
-  mgAxisActionTrigger.mg_strTip = TRANS("choose action to customize");
-  TRIGGER_MG(mgAxisMountedTrigger, 2, mgAxisActionTrigger, mgAxisSensitivity, TRANS("MOUNTED TO"), astrNoYes);
-  mgAxisMountedTrigger.mg_strTip = TRANS("choose controller axis that will perform the action");
-  
-  mgAxisActionTrigger.mg_astrTexts = new CTString[ AXIS_ACTIONS_CT];
-  mgAxisActionTrigger.mg_ctTexts = AXIS_ACTIONS_CT;
-
-  mgAxisActionTrigger.mg_pPreTriggerChange = PreChangeAxis;
-  mgAxisActionTrigger.mg_pOnTriggerChange = PostChangeAxis;
-
-  // for all available axis type controlers
-  for( INDEX iControler=0; iControler<AXIS_ACTIONS_CT; iControler++) {
-    mgAxisActionTrigger.mg_astrTexts[ iControler] = TranslateConst(CTString(_pGame->gm_astrAxisNames[ iControler]), 0);
-  }
-  mgAxisActionTrigger.mg_iSelected = 3;
-  
-  INDEX ctAxis = _pInput->GetAvailableAxisCount();
-  mgAxisMountedTrigger.mg_astrTexts = new CTString[ ctAxis];
-  mgAxisMountedTrigger.mg_ctTexts = ctAxis;
-  // for all axis actions that can be mounted
-  for( INDEX iAxis=0; iAxis<ctAxis; iAxis++) {
-    mgAxisMountedTrigger.mg_astrTexts[ iAxis] = _pInput->GetAxisTransName( iAxis);
-  }
-  
-  mgAxisSensitivity.mg_boxOnScreen = BoxMediumRow(3);
-  mgAxisSensitivity.mg_strText = TRANS("SENSITIVITY");
-  mgAxisSensitivity.mg_pmgUp = &mgAxisMountedTrigger;
-  mgAxisSensitivity.mg_pmgDown = &mgAxisDeadzone;
-  gm_lhGadgets.AddTail( mgAxisSensitivity.mg_lnNode);
-  mgAxisSensitivity.mg_strTip = TRANS("set sensitivity for this axis");
-
-  mgAxisDeadzone.mg_boxOnScreen = BoxMediumRow(4);
-  mgAxisDeadzone.mg_strText = TRANS("DEAD ZONE");
-  mgAxisDeadzone.mg_pmgUp = &mgAxisSensitivity;
-  mgAxisDeadzone.mg_pmgDown = &mgAxisInvertTrigger;
-  gm_lhGadgets.AddTail( mgAxisDeadzone.mg_lnNode);
-  mgAxisDeadzone.mg_strTip = TRANS("set dead zone for this axis");
-
-  TRIGGER_MG(mgAxisInvertTrigger, 5, mgAxisDeadzone, mgAxisRelativeTrigger, TRANS("INVERTED"), astrNoYes);
-  mgAxisInvertTrigger.mg_strTip = TRANS("choose whether to invert this axis or not");
-  TRIGGER_MG(mgAxisRelativeTrigger, 6, mgAxisInvertTrigger, mgAxisSmoothTrigger, TRANS("RELATIVE"), astrNoYes);
-  mgAxisRelativeTrigger.mg_strTip = TRANS("select relative or absolute axis reading");
-  TRIGGER_MG(mgAxisSmoothTrigger, 7, mgAxisRelativeTrigger, mgAxisActionTrigger, TRANS("SMOOTH"), astrNoYes);
-  mgAxisSmoothTrigger.mg_strTip = TRANS("turn this on to filter readings on this axis");
-}
-
-void CCustomizeAxisMenu::ObtainActionSettings(void)
-{
-  ControlsMenuOn();
-  CControls &ctrls = _pGame->gm_ctrlControlsExtra;
-  INDEX iSelectedAction = mgAxisActionTrigger.mg_iSelected;
-  INDEX iMountedAxis = ctrls.ctrl_aaAxisActions[ iSelectedAction].aa_iAxisAction;
-  
-  mgAxisMountedTrigger.mg_iSelected = iMountedAxis;
-
-  mgAxisSensitivity.mg_iMinPos = 0;
-  mgAxisSensitivity.mg_iMaxPos = 50;
-  mgAxisSensitivity.mg_iCurPos = ctrls.ctrl_aaAxisActions[ iSelectedAction].aa_fSensitivity/2;
-  mgAxisSensitivity.ApplyCurrentPosition();
-
-  mgAxisDeadzone.mg_iMinPos = 0;
-  mgAxisDeadzone.mg_iMaxPos = 50;
-  mgAxisDeadzone.mg_iCurPos = ctrls.ctrl_aaAxisActions[ iSelectedAction].aa_fDeadZone/2;
-  mgAxisDeadzone.ApplyCurrentPosition();
-
-  mgAxisInvertTrigger.mg_iSelected = ctrls.ctrl_aaAxisActions[ iSelectedAction].aa_bInvert ? 1 : 0;
-  mgAxisRelativeTrigger.mg_iSelected = ctrls.ctrl_aaAxisActions[ iSelectedAction].aa_bRelativeControler ? 1 : 0;
-  mgAxisSmoothTrigger.mg_iSelected = ctrls.ctrl_aaAxisActions[ iSelectedAction].aa_bSmooth ? 1 : 0;
-
-  mgAxisActionTrigger.ApplyCurrentSelection();
-  mgAxisMountedTrigger.ApplyCurrentSelection();
-  mgAxisInvertTrigger.ApplyCurrentSelection();
-  mgAxisRelativeTrigger.ApplyCurrentSelection();
-  mgAxisSmoothTrigger.ApplyCurrentSelection();
-}
-
-void CCustomizeAxisMenu::ApplyActionSettings(void)
-{
-  CControls &ctrls = _pGame->gm_ctrlControlsExtra;
-  INDEX iSelectedAction = mgAxisActionTrigger.mg_iSelected;
-  INDEX iMountedAxis = mgAxisMountedTrigger.mg_iSelected;
-  FLOAT fSensitivity = 
-    FLOAT(mgAxisSensitivity.mg_iCurPos-mgAxisSensitivity.mg_iMinPos) /
-    FLOAT(mgAxisSensitivity.mg_iMaxPos-mgAxisSensitivity.mg_iMinPos)*100.0f;
-  FLOAT fDeadZone = 
-    FLOAT(mgAxisDeadzone.mg_iCurPos-mgAxisDeadzone.mg_iMinPos) /
-    FLOAT(mgAxisDeadzone.mg_iMaxPos-mgAxisDeadzone.mg_iMinPos)*100.0f;
-  
-  BOOL bInvert = mgAxisInvertTrigger.mg_iSelected != 0;
-  BOOL bRelative = mgAxisRelativeTrigger.mg_iSelected != 0;
-  BOOL bSmooth = mgAxisSmoothTrigger.mg_iSelected != 0;
-
-  ctrls.ctrl_aaAxisActions[ iSelectedAction].aa_iAxisAction = iMountedAxis;
-  if (INDEX(ctrls.ctrl_aaAxisActions[ iSelectedAction].aa_fSensitivity)!=INDEX(fSensitivity)) {
-    ctrls.ctrl_aaAxisActions[ iSelectedAction].aa_fSensitivity = fSensitivity;
-  }
-  if (INDEX(ctrls.ctrl_aaAxisActions[ iSelectedAction].aa_fDeadZone)!=INDEX(fDeadZone)) {
-    ctrls.ctrl_aaAxisActions[ iSelectedAction].aa_fDeadZone = fDeadZone;
-  }
-  ctrls.ctrl_aaAxisActions[ iSelectedAction].aa_bInvert = bInvert;
-  ctrls.ctrl_aaAxisActions[ iSelectedAction].aa_bRelativeControler = bRelative;
-  ctrls.ctrl_aaAxisActions[ iSelectedAction].aa_bSmooth = bSmooth;
-  ctrls.CalculateInfluencesForAllAxis();
-  ControlsMenuOff();
-}
-
-void CCustomizeAxisMenu::StartMenu(void)
-{
-  ObtainActionSettings();
-
-  CGameMenu::StartMenu();
-}
-
-void CCustomizeAxisMenu::EndMenu(void)
-{
-  ApplyActionSettings();
-  CGameMenu::EndMenu();
+void InitActionsForCustomizeAxisMenu() {
+	gmCustomizeAxisMenu.gm_mgActionTrigger.mg_pPreTriggerChange = PreChangeAxis;
+	gmCustomizeAxisMenu.gm_mgActionTrigger.mg_pOnTriggerChange = PostChangeAxis;
 }
 
 // ------------------------ COptionsMenu implementation
-void COptionsMenu::Initialize_t(void)
+void InitActionsForOptionsMenu()
 {
-  // intialize options menu
-  mgOptionsTitle.mg_boxOnScreen = BoxTitle();
-  mgOptionsTitle.mg_strText = TRANS("OPTIONS");
-  gm_lhGadgets.AddTail( mgOptionsTitle.mg_lnNode);
-
-  mgVideoOptions.mg_bfsFontSize = BFS_LARGE;
-  mgVideoOptions.mg_boxOnScreen = BoxBigRow(0.0f);
-  mgVideoOptions.mg_pmgUp = &mgAddonOptions;
-  mgVideoOptions.mg_pmgDown = &mgAudioOptions;
-  mgVideoOptions.mg_strText = TRANS("VIDEO OPTIONS");
-  mgVideoOptions.mg_strTip = TRANS("set video mode and driver");
-  gm_lhGadgets.AddTail( mgVideoOptions.mg_lnNode);
-  mgVideoOptions.mg_pActivatedFunction = &StartVideoOptionsMenu;
-
-  mgAudioOptions.mg_bfsFontSize = BFS_LARGE;
-  mgAudioOptions.mg_boxOnScreen = BoxBigRow(1.0f);
-  mgAudioOptions.mg_pmgUp = &mgVideoOptions;
-  mgAudioOptions.mg_pmgDown = &mgPlayerProfileOptions;
-  mgAudioOptions.mg_strText = TRANS("AUDIO OPTIONS");
-  mgAudioOptions.mg_strTip = TRANS("set audio quality and volume");
-  gm_lhGadgets.AddTail( mgAudioOptions.mg_lnNode);
-  mgAudioOptions.mg_pActivatedFunction = &StartAudioOptionsMenu;
-
-  mgPlayerProfileOptions.mg_bfsFontSize = BFS_LARGE;
-  mgPlayerProfileOptions.mg_boxOnScreen = BoxBigRow(2.0f);
-  mgPlayerProfileOptions.mg_pmgUp = &mgAudioOptions;
-  mgPlayerProfileOptions.mg_pmgDown = &mgNetworkOptions;
-  mgPlayerProfileOptions.mg_strText = TRANS("PLAYERS AND CONTROLS");
-  mgPlayerProfileOptions.mg_strTip = TRANS("change currently active player or adjust controls");
-  gm_lhGadgets.AddTail( mgPlayerProfileOptions.mg_lnNode);
-  mgPlayerProfileOptions.mg_pActivatedFunction = &StartChangePlayerMenuFromOptions;
-  
-  mgNetworkOptions.mg_bfsFontSize = BFS_LARGE;
-  mgNetworkOptions.mg_boxOnScreen = BoxBigRow(3);
-  mgNetworkOptions.mg_pmgUp = &mgPlayerProfileOptions;
-  mgNetworkOptions.mg_pmgDown = &mgCustomOptions;
-  mgNetworkOptions.mg_strText = TRANS("NETWORK CONNECTION");
-  mgNetworkOptions.mg_strTip = TRANS("choose your connection parameters");
-  gm_lhGadgets.AddTail( mgNetworkOptions.mg_lnNode);
-  mgNetworkOptions.mg_pActivatedFunction = &StartNetworkSettingsMenu;
-  
-  mgCustomOptions.mg_bfsFontSize = BFS_LARGE;
-  mgCustomOptions.mg_boxOnScreen = BoxBigRow(4);
-  mgCustomOptions.mg_pmgUp = &mgNetworkOptions;
-  mgCustomOptions.mg_pmgDown = &mgAddonOptions;
-  mgCustomOptions.mg_strText = TRANS("ADVANCED OPTIONS");
-  mgCustomOptions.mg_strTip = TRANS("for advanced users only");
-  gm_lhGadgets.AddTail( mgCustomOptions.mg_lnNode);
-  mgCustomOptions.mg_pActivatedFunction = &StartCustomLoadMenu;
-
-  mgAddonOptions.mg_bfsFontSize = BFS_LARGE;
-  mgAddonOptions.mg_boxOnScreen = BoxBigRow(5);
-  mgAddonOptions.mg_pmgUp = &mgCustomOptions;
-  mgAddonOptions.mg_pmgDown = &mgVideoOptions;
-  mgAddonOptions.mg_strText = TRANS("EXECUTE ADDON");
-  mgAddonOptions.mg_strTip = TRANS("choose from list of addons to execute");
-  gm_lhGadgets.AddTail( mgAddonOptions.mg_lnNode);
-  mgAddonOptions.mg_pActivatedFunction = &StartAddonsLoadMenu;
+	gmOptionsMenu.gm_mgVideoOptions.mg_pActivatedFunction = &StartVideoOptionsMenu;
+	gmOptionsMenu.gm_mgAudioOptions.mg_pActivatedFunction = &StartAudioOptionsMenu;
+	gmOptionsMenu.gm_mgPlayerProfileOptions.mg_pActivatedFunction = &StartChangePlayerMenuFromOptions;
+	gmOptionsMenu.gm_mgNetworkOptions.mg_pActivatedFunction = &StartNetworkSettingsMenu;
+	gmOptionsMenu.gm_mgCustomOptions.mg_pActivatedFunction = &StartCustomLoadMenu;
+	gmOptionsMenu.gm_mgAddonOptions.mg_pActivatedFunction = &StartAddonsLoadMenu;
 }
 
-
 // ------------------------ CVideoOptionsMenu implementation
-
 static void FillResolutionsList(void)
 {
   // free resolutions
@@ -4761,61 +4453,12 @@ BOOL CServersMenu::OnKeyDown(int iVKey)
 // __Evolution
 
 // ------------------------ CNetworkMenu implementation
-void CNetworkMenu::Initialize_t(void)
+void InitActionsForNetworkMenu()
 {
-  // intialize network menu
-  mgNetworkTitle.mg_boxOnScreen = BoxTitle();
-  mgNetworkTitle.mg_strText = TRANS("NETWORK");
-  gm_lhGadgets.AddTail( mgNetworkTitle.mg_lnNode);
-
-  mgNetworkJoin.mg_bfsFontSize = BFS_LARGE;
-  mgNetworkJoin.mg_boxOnScreen = BoxBigRow(1.0f);
-  mgNetworkJoin.mg_pmgUp = &mgNetworkLoad;
-  mgNetworkJoin.mg_pmgDown = &mgNetworkStart;
-  mgNetworkJoin.mg_strText = TRANS("JOIN GAME");
-  mgNetworkJoin.mg_strTip = TRANS("join a network game");
-  gm_lhGadgets.AddTail( mgNetworkJoin.mg_lnNode);
-  mgNetworkJoin.mg_pActivatedFunction = &StartNetworkJoinMenu;
-  
-  mgNetworkStart.mg_bfsFontSize = BFS_LARGE;
-  mgNetworkStart.mg_boxOnScreen = BoxBigRow(2.0f);
-  mgNetworkStart.mg_pmgUp = &mgNetworkJoin;
-  mgNetworkStart.mg_pmgDown = &mgNetworkQuickLoad;
-  mgNetworkStart.mg_strText = TRANS("START SERVER");
-  mgNetworkStart.mg_strTip = TRANS("start a network game server");
-  gm_lhGadgets.AddTail( mgNetworkStart.mg_lnNode);
-  mgNetworkStart.mg_pActivatedFunction = &StartNetworkStartMenu;
-
-  mgNetworkQuickLoad.mg_bfsFontSize = BFS_LARGE;
-  mgNetworkQuickLoad.mg_boxOnScreen = BoxBigRow(3.0f);
-  mgNetworkQuickLoad.mg_pmgUp = &mgNetworkStart;
-  mgNetworkQuickLoad.mg_pmgDown = &mgNetworkLoad;
-  mgNetworkQuickLoad.mg_strText = TRANS("QUICK LOAD");
-  mgNetworkQuickLoad.mg_strTip = TRANS("load a quick-saved game (F9)");
-  gm_lhGadgets.AddTail( mgNetworkQuickLoad.mg_lnNode);
-  mgNetworkQuickLoad.mg_pActivatedFunction = &StartNetworkQuickLoadMenu;
-
-  mgNetworkLoad.mg_bfsFontSize = BFS_LARGE;
-  mgNetworkLoad.mg_boxOnScreen = BoxBigRow(4.0f);
-  mgNetworkLoad.mg_pmgUp = &mgNetworkQuickLoad;
-  mgNetworkLoad.mg_pmgDown = &mgNetworkJoin;
-  mgNetworkLoad.mg_strText = TRANS("LOAD");
-  mgNetworkLoad.mg_strTip = TRANS("start server and load a network game (server only)");
-  gm_lhGadgets.AddTail( mgNetworkLoad.mg_lnNode);
-  mgNetworkLoad.mg_pActivatedFunction = &StartNetworkLoadMenu;
-
-}
-
-void CNetworkMenu::StartMenu(void)
-{
-  CGameMenu::StartMenu();
-}
-
-void UpdateNetworkLevel(INDEX iDummy)
-{
-  ValidateLevelForFlags(_pGame->gam_strCustomLevel, 
-    GetSpawnFlagsForGameType(mgNetworkGameType.mg_iSelected));
-  mgNetworkLevel.mg_strText = FindLevelByFileName(_pGame->gam_strCustomLevel).li_strName;
+	gmNetworkMenu.gm_mgJoin.mg_pActivatedFunction = &StartNetworkJoinMenu;
+	gmNetworkMenu.gm_mgStart.mg_pActivatedFunction = &StartNetworkStartMenu;
+	gmNetworkMenu.gm_mgQuickLoad.mg_pActivatedFunction = &StartNetworkQuickLoadMenu;
+	gmNetworkMenu.gm_mgLoad.mg_pActivatedFunction = &StartNetworkLoadMenu;
 }
 
 // ------------------------ CNetworkJoinMenu implementation
@@ -4827,6 +4470,13 @@ void InitActionsForNetworkJoinMenu()
 }
 
 // ------------------------ CNetworkStartMenu implementation
+void UpdateNetworkLevel(INDEX iDummy)
+{
+	ValidateLevelForFlags(_pGame->gam_strCustomLevel,
+		GetSpawnFlagsForGameType(mgNetworkGameType.mg_iSelected));
+	mgNetworkLevel.mg_strText = FindLevelByFileName(_pGame->gam_strCustomLevel).li_strName;
+}
+
 void CNetworkStartMenu::Initialize_t(void)
 {
   // title

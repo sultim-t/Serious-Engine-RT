@@ -7,10 +7,18 @@
 #endif
 
 #include "GameMenu.h"
+#include "MGArrow.h"
+#include "MGKeyDefinition.h"
+#include "MGTitle.h"
 
 
 class CCustomizeKeyboardMenu : public CGameMenu {
 public:
+	CMGTitle gm_mgTitle;
+	CMGKeyDefinition gm_mgKey[KEYS_ON_SCREEN];
+	CMGArrow gm_mgArrowUp;
+	CMGArrow gm_mgArrowDn;
+
 	void Initialize_t(void);
 	void StartMenu(void);
 	void EndMenu(void);

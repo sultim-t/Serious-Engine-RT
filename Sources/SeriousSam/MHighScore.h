@@ -7,10 +7,15 @@
 #endif
 
 #include "GameMenu.h"
+#include "MGHighScore.h"
+#include "MGTitle.h"
 
 
 class CHighScoreMenu : public CGameMenu {
 public:
+	CMGTitle gm_mgTitle;
+	CMGHighScore gm_mgHScore;
+
 	void Initialize_t(void);
 	void StartMenu(void);
 };
