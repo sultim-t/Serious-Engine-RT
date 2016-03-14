@@ -106,8 +106,12 @@ void (*_pAfterLevelChosen)(void);
 void InitActionsForConfirmMenu();
 void InitActionsForMainMenu();
 void InitActionsForInGameMenu();
+void InitActionsForNetworkJoinMenu();
+void InitActionsForNetworkOpenMenu();
 void InitActionsForSinglePlayerMenu();
 void InitActionsForSinglePlayerNewMenu();
+void InitActionsForSplitScreenMenu();
+void InitActionsForSplitStartMenu();
 void InitActionsForVarMenu();
 
 
@@ -257,14 +261,15 @@ CTString astrMaxPlayersRadioTexts[] = {
 };
 // here, we just reserve space for up to 16 different game types
 // actual names are added later
-CTString astrGameTypeRadioTexts[] = {
+extern CTString astrGameTypeRadioTexts[] = {
   "", "", "", "", "", 
   "", "", "", "", "", 
   "", "", "", "", "", 
   "", "", "", "", "", 
 };
-INDEX ctGameTypeRadioTexts = 1;
-CTString astrDifficultyRadioTexts[] = {
+
+extern INDEX ctGameTypeRadioTexts = 1;
+extern CTString astrDifficultyRadioTexts[] = {
   RADIOTRANS("Tourist"),
   RADIOTRANS("Easy"),
   RADIOTRANS("Normal"),
@@ -272,6 +277,7 @@ CTString astrDifficultyRadioTexts[] = {
   RADIOTRANS("Serious"),
   RADIOTRANS("Mental"),
 };
+
 CTString astrSplitScreenRadioTexts[] = {
   RADIOTRANS( "1"),
   RADIOTRANS( "2 - split screen"),
@@ -457,10 +463,6 @@ CMGButton mgNetworkLoad;
 
 // -------- Network join menu
 CNetworkJoinMenu gmNetworkJoinMenu;
-CMGTitle  mgNetworkJoinTitle;
-CMGButton mgNetworkJoinLAN;
-CMGButton mgNetworkJoinNET;
-CMGButton mgNetworkJoinOpen;
 
 // -------- Network start menu
 CNetworkStartMenu gmNetworkStartMenu;
@@ -477,28 +479,12 @@ CMGButton mgNetworkStartStart;
 
 // -------- Network open menu
 CNetworkOpenMenu gmNetworkOpenMenu;
-CMGTitle mgNetworkOpenTitle;
-CMGButton mgNetworkOpenAddressLabel;
-CMGEdit mgNetworkOpenAddress;
-CMGButton mgNetworkOpenPortLabel;
-CMGEdit mgNetworkOpenPort;
-CMGButton mgNetworkOpenJoin;
 
 // -------- Split screen menu
 CSplitScreenMenu gmSplitScreenMenu;
-CMGTitle mgSplitScreenTitle;
-CMGButton mgSplitScreenStart;
-CMGButton mgSplitScreenQuickLoad;
-CMGButton mgSplitScreenLoad;
 
 // -------- Split screen start menu
 CSplitStartMenu gmSplitStartMenu;
-CMGTitle mgSplitStartTitle;
-CMGTrigger mgSplitGameType;
-CMGTrigger mgSplitDifficulty;
-CMGButton mgSplitLevel;
-CMGButton mgSplitOptions;
-CMGButton mgSplitStartStart;
 
 // -------- Select players menu
 CSelectPlayersMenu gmSelectPlayersMenu;
@@ -1285,7 +1271,7 @@ void StartSelectServerNET(void)
 
 void StartSelectLevelFromSplit(void)
 {
-  FilterLevels(GetSpawnFlagsForGameType(mgSplitGameType.mg_iSelected));
+  FilterLevels(GetSpawnFlagsForGameType(gmSplitStartMenu.gm_mgGameType.mg_iSelected));
   void StartSplitStartMenu(void);
   _pAfterLevelChosen = StartSplitStartMenu;
   ChangeToMenu( &gmLevelsMenu);
@@ -2277,8 +2263,9 @@ void InitializeMenus(void)
     
     gmNetworkJoinMenu.Initialize_t();
     gmNetworkJoinMenu.gm_strName="NetworkJoin";
-    gmNetworkJoinMenu.gm_pmgSelectedByDefault = &mgNetworkJoinLAN;
+	gmNetworkJoinMenu.gm_pmgSelectedByDefault = &gmNetworkJoinMenu.gm_mgLAN;
     gmNetworkJoinMenu.gm_pgmParentMenu = &gmNetworkMenu;
+	InitActionsForNetworkJoinMenu();
 
     gmSelectPlayersMenu.gm_bAllowDedicated = FALSE;
     gmSelectPlayersMenu.gm_bAllowObserving = FALSE;
@@ -2288,18 +2275,21 @@ void InitializeMenus(void)
 
     gmNetworkOpenMenu.Initialize_t();
     gmNetworkOpenMenu.gm_strName="NetworkOpen";
-    gmNetworkOpenMenu.gm_pmgSelectedByDefault = &mgNetworkOpenJoin;
+	gmNetworkOpenMenu.gm_pmgSelectedByDefault = &gmNetworkOpenMenu.gm_mgJoin;
     gmNetworkOpenMenu.gm_pgmParentMenu = &gmNetworkJoinMenu;
+	InitActionsForNetworkOpenMenu();
 
     gmSplitScreenMenu.Initialize_t();
     gmSplitScreenMenu.gm_strName="SplitScreen";
-    gmSplitScreenMenu.gm_pmgSelectedByDefault = &mgSplitScreenStart;
+    gmSplitScreenMenu.gm_pmgSelectedByDefault = &gmSplitScreenMenu.gm_mgStart;
     gmSplitScreenMenu.gm_pgmParentMenu = &gmMainMenu;
+	InitActionsForSplitScreenMenu();
 
     gmSplitStartMenu.Initialize_t();
     gmSplitStartMenu.gm_strName="SplitStart";
-    gmSplitStartMenu.gm_pmgSelectedByDefault = &mgSplitStartStart;
+	gmSplitStartMenu.gm_pmgSelectedByDefault = &gmSplitStartMenu.gm_mgStart;
     gmSplitStartMenu.gm_pgmParentMenu = &gmSplitScreenMenu;
+	InitActionsForSplitStartMenu();
   }
   catch( char *strError)
   {
@@ -4829,39 +4819,11 @@ void UpdateNetworkLevel(INDEX iDummy)
 }
 
 // ------------------------ CNetworkJoinMenu implementation
-void CNetworkJoinMenu::Initialize_t(void)
+void InitActionsForNetworkJoinMenu()
 {
-  // title
-  mgNetworkJoinTitle.mg_boxOnScreen = BoxTitle();
-  mgNetworkJoinTitle.mg_strText = TRANS("JOIN GAME");
-  gm_lhGadgets.AddTail( mgNetworkJoinTitle.mg_lnNode);
-
-  mgNetworkJoinLAN.mg_bfsFontSize = BFS_LARGE;
-  mgNetworkJoinLAN.mg_boxOnScreen = BoxBigRow(1.0f);
-  mgNetworkJoinLAN.mg_pmgUp = &mgNetworkJoinOpen;
-  mgNetworkJoinLAN.mg_pmgDown = &mgNetworkJoinNET;
-  mgNetworkJoinLAN.mg_strText = TRANS("SEARCH LAN");
-  mgNetworkJoinLAN.mg_strTip = TRANS("search local network for servers");
-  gm_lhGadgets.AddTail( mgNetworkJoinLAN.mg_lnNode);
-  mgNetworkJoinLAN.mg_pActivatedFunction = &StartSelectServerLAN;
-
-  mgNetworkJoinNET.mg_bfsFontSize = BFS_LARGE;
-  mgNetworkJoinNET.mg_boxOnScreen = BoxBigRow(2.0f);
-  mgNetworkJoinNET.mg_pmgUp = &mgNetworkJoinLAN;
-  mgNetworkJoinNET.mg_pmgDown = &mgNetworkJoinOpen;
-  mgNetworkJoinNET.mg_strText = TRANS("SEARCH INTERNET");
-  mgNetworkJoinNET.mg_strTip = TRANS("search internet for servers");
-  gm_lhGadgets.AddTail( mgNetworkJoinNET.mg_lnNode);
-  mgNetworkJoinNET.mg_pActivatedFunction = &StartSelectServerNET;
-
-  mgNetworkJoinOpen.mg_bfsFontSize = BFS_LARGE;
-  mgNetworkJoinOpen.mg_boxOnScreen = BoxBigRow(3.0f);
-  mgNetworkJoinOpen.mg_pmgUp = &mgNetworkJoinNET;
-  mgNetworkJoinOpen.mg_pmgDown = &mgNetworkJoinLAN;
-  mgNetworkJoinOpen.mg_strText = TRANS("SPECIFY SERVER");
-  mgNetworkJoinOpen.mg_strTip = TRANS("type in server address to connect to");
-  gm_lhGadgets.AddTail( mgNetworkJoinOpen.mg_lnNode);
-  mgNetworkJoinOpen.mg_pActivatedFunction = &StartNetworkOpenMenu;
+	gmNetworkJoinMenu.gm_mgLAN.mg_pActivatedFunction = &StartSelectServerLAN;
+	gmNetworkJoinMenu.gm_mgNET.mg_pActivatedFunction = &StartSelectServerNET;
+	gmNetworkJoinMenu.gm_mgOpen.mg_pActivatedFunction = &StartNetworkOpenMenu;
 }
 
 // ------------------------ CNetworkStartMenu implementation
@@ -4891,6 +4853,7 @@ void CNetworkStartMenu::Initialize_t(void)
   mgNetworkGameType.mg_ctTexts = ctGameTypeRadioTexts;
   mgNetworkGameType.mg_strTip = TRANS("choose type of multiplayer game");
   mgNetworkGameType.mg_pOnTriggerChange = &UpdateNetworkLevel;
+
   // difficulty trigger
   TRIGGER_MG(mgNetworkDifficulty, 3,
        mgNetworkGameType, mgNetworkLevel, TRANS("Difficulty:"), astrDifficultyRadioTexts);
@@ -5022,6 +4985,7 @@ INDEX FindUnusedPlayer(void)
   ASSERT(FALSE);
   return iPlayer;
 }
+
 void SelectPlayersFillMenu(void)
 {
   INDEX *ai = _pGame->gm_aiMenuLocalPlayers;
@@ -5150,6 +5114,7 @@ void SelectPlayersFillMenu(void)
     mgSelectPlayersNotes.mg_strText = "";
   }
 }
+
 void SelectPlayersApplyMenu(void)
 {
   if (gmSelectPlayersMenu.gm_bAllowDedicated && mgDedicated.mg_iSelected) {
@@ -5255,187 +5220,32 @@ void CSelectPlayersMenu::EndMenu(void)
   CGameMenu::EndMenu();
 }
 
-CTString _strPort;
+
 // ------------------------ CNetworkOpenMenu implementation
-void CNetworkOpenMenu::Initialize_t(void)
+void InitActionsForNetworkOpenMenu()
 {
-  // intialize network join menu
-  mgNetworkOpenTitle.mg_boxOnScreen = BoxTitle();
-  mgNetworkOpenTitle.mg_strText = TRANS("JOIN");
-  gm_lhGadgets.AddTail( mgNetworkOpenTitle.mg_lnNode);
-
-  mgNetworkOpenAddressLabel.mg_strText = TRANS("Address:");
-  mgNetworkOpenAddressLabel.mg_boxOnScreen = BoxMediumLeft(1);
-  mgNetworkOpenAddressLabel.mg_iCenterI = -1;
-  gm_lhGadgets.AddTail( mgNetworkOpenAddressLabel.mg_lnNode);
-
-  mgNetworkOpenAddress.mg_strText = _pGame->gam_strJoinAddress;
-  mgNetworkOpenAddress.mg_ctMaxStringLen = 20;
-  mgNetworkOpenAddress.mg_pstrToChange = &_pGame->gam_strJoinAddress;
-  mgNetworkOpenAddress.mg_boxOnScreen = BoxMediumMiddle(1);
-  mgNetworkOpenAddress.mg_bfsFontSize = BFS_MEDIUM;
-  mgNetworkOpenAddress.mg_iCenterI = -1;
-  mgNetworkOpenAddress.mg_pmgUp = &mgNetworkOpenJoin;
-  mgNetworkOpenAddress.mg_pmgDown = &mgNetworkOpenPort;
-  mgNetworkOpenAddress.mg_strTip = TRANS("specify server address");
-  gm_lhGadgets.AddTail( mgNetworkOpenAddress.mg_lnNode);
-
-  mgNetworkOpenPortLabel.mg_strText = TRANS("Port:");
-  mgNetworkOpenPortLabel.mg_boxOnScreen = BoxMediumLeft(2);
-  mgNetworkOpenPortLabel.mg_iCenterI = -1;
-  gm_lhGadgets.AddTail( mgNetworkOpenPortLabel.mg_lnNode);
-
-  mgNetworkOpenPort.mg_strText = "";
-  mgNetworkOpenPort.mg_ctMaxStringLen = 10;
-  mgNetworkOpenPort.mg_pstrToChange = &_strPort;
-  mgNetworkOpenPort.mg_boxOnScreen = BoxMediumMiddle(2);
-  mgNetworkOpenPort.mg_bfsFontSize = BFS_MEDIUM;
-  mgNetworkOpenPort.mg_iCenterI = -1;
-  mgNetworkOpenPort.mg_pmgUp = &mgNetworkOpenAddress;
-  mgNetworkOpenPort.mg_pmgDown = &mgNetworkOpenJoin;
-  mgNetworkOpenPort.mg_strTip = TRANS("specify server address");
-  gm_lhGadgets.AddTail( mgNetworkOpenPort.mg_lnNode);
-
-  mgNetworkOpenJoin.mg_boxOnScreen = BoxMediumMiddle(3);
-  mgNetworkOpenJoin.mg_pmgUp = &mgNetworkOpenPort;
-  mgNetworkOpenJoin.mg_pmgDown = &mgNetworkOpenAddress;
-  mgNetworkOpenJoin.mg_strText = TRANS("Join");
-  gm_lhGadgets.AddTail( mgNetworkOpenJoin.mg_lnNode);
-  mgNetworkOpenJoin.mg_pActivatedFunction = &StartSelectPlayersMenuFromOpen;
-}
-
-void CNetworkOpenMenu::StartMenu(void)
-{
-  _strPort = _pShell->GetValue("net_iPort");
-  mgNetworkOpenPort.mg_strText = _strPort;
-}
-
-void CNetworkOpenMenu::EndMenu(void)
-{
-  _pShell->SetValue("net_iPort", _strPort);
+	gmNetworkOpenMenu.gm_mgJoin.mg_pActivatedFunction = &StartSelectPlayersMenuFromOpen;
 }
 
 // ------------------------ CSplitScreenMenu implementation
-void CSplitScreenMenu::Initialize_t(void)
+void InitActionsForSplitScreenMenu()
 {
-  // intialize split screen menu
-  mgSplitScreenTitle.mg_boxOnScreen = BoxTitle();
-  mgSplitScreenTitle.mg_strText = TRANS("SPLIT SCREEN");
-  gm_lhGadgets.AddTail( mgSplitScreenTitle.mg_lnNode);
-
-  mgSplitScreenStart.mg_bfsFontSize = BFS_LARGE;
-  mgSplitScreenStart.mg_boxOnScreen = BoxBigRow(0);
-  mgSplitScreenStart.mg_pmgUp = &mgSplitScreenLoad;
-  mgSplitScreenStart.mg_pmgDown = &mgSplitScreenQuickLoad;
-  mgSplitScreenStart.mg_strText = TRANS("NEW GAME");
-  mgSplitScreenStart.mg_strTip = TRANS("start new split-screen game");
-  gm_lhGadgets.AddTail( mgSplitScreenStart.mg_lnNode);
-  mgSplitScreenStart.mg_pActivatedFunction = &StartSplitStartMenu;
-
-  mgSplitScreenQuickLoad.mg_bfsFontSize = BFS_LARGE;
-  mgSplitScreenQuickLoad.mg_boxOnScreen = BoxBigRow(1);
-  mgSplitScreenQuickLoad.mg_pmgUp = &mgSplitScreenStart;
-  mgSplitScreenQuickLoad.mg_pmgDown = &mgSplitScreenLoad;
-  mgSplitScreenQuickLoad.mg_strText = TRANS("QUICK LOAD");
-  mgSplitScreenQuickLoad.mg_strTip = TRANS("load a quick-saved game (F9)");
-  gm_lhGadgets.AddTail( mgSplitScreenQuickLoad.mg_lnNode);
-  mgSplitScreenQuickLoad.mg_pActivatedFunction = &StartSplitScreenQuickLoadMenu;
-
-  mgSplitScreenLoad.mg_bfsFontSize = BFS_LARGE;
-  mgSplitScreenLoad.mg_boxOnScreen = BoxBigRow(2);
-  mgSplitScreenLoad.mg_pmgUp = &mgSplitScreenQuickLoad;
-  mgSplitScreenLoad.mg_pmgDown = &mgSplitScreenStart;
-  mgSplitScreenLoad.mg_strText = TRANS("LOAD");
-  mgSplitScreenLoad.mg_strTip = TRANS("load a saved split-screen game");
-  gm_lhGadgets.AddTail( mgSplitScreenLoad.mg_lnNode);
-  mgSplitScreenLoad.mg_pActivatedFunction = &StartSplitScreenLoadMenu;
-}
-
-void CSplitScreenMenu::StartMenu(void)
-{
-  CGameMenu::StartMenu();
-}
-
-void UpdateSplitLevel(INDEX iDummy)
-{
-  ValidateLevelForFlags(_pGame->gam_strCustomLevel, 
-    GetSpawnFlagsForGameType(mgSplitGameType.mg_iSelected));
-  mgSplitLevel.mg_strText = FindLevelByFileName(_pGame->gam_strCustomLevel).li_strName;
+	gmSplitScreenMenu.gm_mgStart.mg_pActivatedFunction = &StartSplitStartMenu;
+	gmSplitScreenMenu.gm_mgQuickLoad.mg_pActivatedFunction = &StartSplitScreenQuickLoadMenu;
+	gmSplitScreenMenu.gm_mgLoad.mg_pActivatedFunction = &StartSplitScreenLoadMenu;
 }
 
 // ------------------------ CSplitStartMenu implementation
-void CSplitStartMenu::Initialize_t(void)
+void InitActionsForSplitStartMenu()
 {
-  // intialize split screen menu
-  mgSplitStartTitle.mg_boxOnScreen = BoxTitle();
-  mgSplitStartTitle.mg_strText = TRANS("START SPLIT SCREEN");
-  gm_lhGadgets.AddTail( mgSplitStartTitle.mg_lnNode);
-
-  // game type trigger
-  TRIGGER_MG(mgSplitGameType, 0,
-       mgSplitStartStart, mgSplitDifficulty, TRANS("Game type:"), astrGameTypeRadioTexts);
-  mgSplitGameType.mg_ctTexts = ctGameTypeRadioTexts;
-  mgSplitGameType.mg_strTip = TRANS("choose type of multiplayer game");
-  mgSplitGameType.mg_pOnTriggerChange = UpdateSplitLevel;
-  // difficulty trigger
-  TRIGGER_MG(mgSplitDifficulty, 1,
-       mgSplitGameType, mgSplitLevel, TRANS("Difficulty:"), astrDifficultyRadioTexts);
-  mgSplitDifficulty.mg_strTip = TRANS("choose difficulty level");
-
-  // level name
-  mgSplitLevel.mg_strText = "";
-  mgSplitLevel.mg_strLabel = TRANS("Level:");
-  mgSplitLevel.mg_boxOnScreen = BoxMediumRow(2);
-  mgSplitLevel.mg_bfsFontSize = BFS_MEDIUM;
-  mgSplitLevel.mg_iCenterI = -1;
-  mgSplitLevel.mg_pmgUp = &mgSplitDifficulty;
-  mgSplitLevel.mg_pmgDown = &mgSplitOptions;
-  mgSplitLevel.mg_strTip = TRANS("choose the level to start");
-  mgSplitLevel.mg_pActivatedFunction = &StartSelectLevelFromSplit;
-  gm_lhGadgets.AddTail( mgSplitLevel.mg_lnNode);
-
-  // options button
-  mgSplitOptions.mg_strText = TRANS("Game options");
-  mgSplitOptions.mg_boxOnScreen = BoxMediumRow(3);
-  mgSplitOptions.mg_bfsFontSize = BFS_MEDIUM;
-  mgSplitOptions.mg_iCenterI = 0;
-  mgSplitOptions.mg_pmgUp = &mgSplitLevel;
-  mgSplitOptions.mg_pmgDown = &mgSplitStartStart;
-  mgSplitOptions.mg_strTip = TRANS("adjust game rules");
-  mgSplitOptions.mg_pActivatedFunction = &StartGameOptionsFromSplitScreen;
-  gm_lhGadgets.AddTail( mgSplitOptions.mg_lnNode);
-
-  // start button
-  mgSplitStartStart.mg_bfsFontSize = BFS_LARGE;
-  mgSplitStartStart.mg_boxOnScreen = BoxBigRow(4);
-  mgSplitStartStart.mg_pmgUp = &mgSplitOptions;
-  mgSplitStartStart.mg_pmgDown = &mgSplitGameType;
-  mgSplitStartStart.mg_strText = TRANS("START");
-  gm_lhGadgets.AddTail( mgSplitStartStart.mg_lnNode);
-  mgSplitStartStart.mg_pActivatedFunction = &StartSelectPlayersMenuFromSplit;
+	gmSplitStartMenu.gm_mgLevel.mg_pActivatedFunction = &StartSelectLevelFromSplit;
+	gmSplitStartMenu.gm_mgOptions.mg_pActivatedFunction = &StartGameOptionsFromSplitScreen;
+	gmSplitStartMenu.gm_mgStart.mg_pActivatedFunction = &StartSelectPlayersMenuFromSplit;
 }
 
-void CSplitStartMenu::StartMenu(void)
+extern void UpdateSplitLevel(INDEX iDummy)
 {
-  extern INDEX sam_bMentalActivated;
-  mgSplitDifficulty.mg_ctTexts = sam_bMentalActivated?6:5;
-
-  mgSplitGameType.mg_iSelected = Clamp(_pShell->GetINDEX("gam_iStartMode"), 0L, ctGameTypeRadioTexts-1L);
-  mgSplitGameType.ApplyCurrentSelection();
-  mgSplitDifficulty.mg_iSelected = _pShell->GetINDEX("gam_iStartDifficulty")+1;
-  mgSplitDifficulty.ApplyCurrentSelection();
-
-  // clamp maximum number of players to at least 4
-  _pShell->SetINDEX("gam_ctMaxPlayers", ClampDn(_pShell->GetINDEX("gam_ctMaxPlayers"), 4L));
-
-  UpdateSplitLevel(0);
-  CGameMenu::StartMenu();
-}
-
-void CSplitStartMenu::EndMenu(void)
-{
-  _pShell->SetINDEX("gam_iStartDifficulty", mgSplitDifficulty.mg_iSelected-1);
-  _pShell->SetINDEX("gam_iStartMode", mgSplitGameType.mg_iSelected);
-
-  CGameMenu::EndMenu();
+	ValidateLevelForFlags(_pGame->gam_strCustomLevel,
+		GetSpawnFlagsForGameType(gmSplitStartMenu.gm_mgGameType.mg_iSelected));
+	gmSplitStartMenu.gm_mgLevel.mg_strText = FindLevelByFileName(_pGame->gam_strCustomLevel).li_strName;
 }

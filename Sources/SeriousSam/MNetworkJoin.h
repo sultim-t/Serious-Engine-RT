@@ -7,10 +7,17 @@
 #endif
 
 #include "GameMenu.h"
+#include "MGButton.h"
+#include "MGTitle.h"
 
 
 class CNetworkJoinMenu : public CGameMenu {
 public:
+	CMGTitle  gm_mgTitle;
+	CMGButton gm_mgLAN;
+	CMGButton gm_mgNET;
+	CMGButton gm_mgOpen;
+
 	void Initialize_t(void);
 };
 

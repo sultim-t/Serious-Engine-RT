@@ -213,8 +213,12 @@ copy Release\$(TargetName).map $(SolutionDir)..\Bin\ &gt;nul </Command>
     <ClCompile Include="MInGame.cpp" />
     <ClCompile Include="MLevels.cpp" />
     <ClCompile Include="MMain.cpp" />
+    <ClCompile Include="MNetworkJoin.cpp" />
+    <ClCompile Include="MNetworkOpen.cpp" />
     <ClCompile Include="MSinglePlayer.cpp" />
     <ClCompile Include="MSinglePlayerNew.cpp" />
+    <ClCompile Include="MSplitScreen.cpp" />
+    <ClCompile Include="MSplitStart.cpp" />
     <ClCompile Include="MVar.cpp" />
     <ClCompile Include="SeriousSam.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
