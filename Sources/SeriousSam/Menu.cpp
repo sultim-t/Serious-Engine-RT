@@ -102,7 +102,9 @@ extern CTString sam_strNetworkSettings;
 void (*_pAfterLevelChosen)(void);
 
 // functions for init actions
+void InitActionsForAudioOptionsMenu();
 void InitActionsForConfirmMenu();
+void InitActionsForControlsMenu();
 void InitActionsForCustomizeAxisMenu();
 void InitActionsForMainMenu();
 void InitActionsForInGameMenu();
@@ -117,6 +119,7 @@ void InitActionsForSinglePlayerMenu();
 void InitActionsForSinglePlayerNewMenu();
 void InitActionsForSplitScreenMenu();
 void InitActionsForSplitStartMenu();
+void InitActionsForVideoOptionsMenu();
 void InitActionsForVarMenu();
 
 // functions to activate when user chose 'yes/no' on confirmation
@@ -201,17 +204,6 @@ static CTextureObject _toLogoMenuB;
 #define BIG_BUTTONS_CT 6
 #define SAVELOAD_BUTTONS_CT 14
 
-#define TRIGGER_MG(mg, y, up, down, text, astr) \
-  mg.mg_pmgUp = &up;\
-  mg.mg_pmgDown = &down;\
-  mg.mg_boxOnScreen = BoxMediumRow(y);\
-  gm_lhGadgets.AddTail( mg.mg_lnNode);\
-  mg.mg_astrTexts = astr;\
-  mg.mg_ctTexts = sizeof( astr)/sizeof( astr[0]);\
-  mg.mg_iSelected = 0;\
-  mg.mg_strLabel = text;\
-  mg.mg_strValue = astr[0];
-
 #define CHANGETRIGGERARRAY(ltbmg, astr) \
   ltbmg.mg_astrTexts = astr;\
   ltbmg.mg_ctTexts = sizeof( astr)/sizeof( astr[0]);\
@@ -275,16 +267,6 @@ CMGModel mgPlayerModel;
 
 // -------- Controls menu
 CControlsMenu gmControls;
-CMGTitle mgControlsTitle;
-CMGButton mgControlsNameLabel;
-CMGButton mgControlsButtons;
-CMGSlider mgControlsSensitivity;
-CMGTrigger mgControlsInvertTrigger;
-CMGTrigger mgControlsSmoothTrigger;
-CMGTrigger mgControlsAccelTrigger;
-CMGTrigger mgControlsIFeelTrigger;
-CMGButton mgControlsPredefined;
-CMGButton mgControlsAdvanced;
 
 // -------- Load/Save menu
 CLoadSaveMenu gmLoadSaveMenu;
@@ -311,31 +293,16 @@ COptionsMenu gmOptionsMenu;
 
 // -------- Video options menu
 CVideoOptionsMenu gmVideoOptionsMenu;
-CMGTitle mgVideoOptionsTitle;
-CMGTrigger mgDisplayAPITrigger;
-CMGTrigger mgDisplayAdaptersTrigger;
-CMGTrigger mgFullScreenTrigger;
-CMGTrigger mgResolutionsTrigger;
-CMGTrigger mgDisplayPrefsTrigger;
 
 INDEX         _ctResolutions = 0;
 CTString     * _astrResolutionTexts = NULL;
 CDisplayMode *_admResolutionModes  = NULL;
 INDEX         _ctAdapters = 0;
 CTString     * _astrAdapterTexts = NULL;
-CMGButton mgVideoRendering;
-CMGTrigger mgBitsPerPixelTrigger;
-CMGButton mgVideoOptionsApply;
+
 
 // -------- Audio options menu
 CAudioOptionsMenu gmAudioOptionsMenu;
-CMGTitle mgAudioOptionsTitle;
-CMGTrigger mgAudioAutoTrigger;
-CMGTrigger mgAudioAPITrigger;
-CMGTrigger mgFrequencyTrigger;
-CMGSlider mgWaveVolume;
-CMGSlider mgMPEGVolume;
-CMGButton mgAudioOptionsApply;
 
 // -------- Network menu
 CNetworkMenu gmNetworkMenu;
@@ -1724,8 +1691,8 @@ static enum DisplayDepth SwitchToDepth(INDEX i)
   }
 }
 
-static void InitVideoOptionsButtons(void);
-static void UpdateVideoOptionsButtons(INDEX i);
+extern void InitVideoOptionsButtons(void);
+extern void UpdateVideoOptionsButtons(INDEX i);
 
 void RevertVideoSettings(void)
 {
@@ -1757,17 +1724,17 @@ void ApplyVideoOptions(void)
   sam_old_iGfxAPI           = sam_iGfxAPI;
   sam_old_iVideoSetup       = sam_iVideoSetup;
 
-  BOOL bFullScreenMode = mgFullScreenTrigger.mg_iSelected == 1;
+  BOOL bFullScreenMode = gmVideoOptionsMenu.gm_mgFullScreenTrigger.mg_iSelected == 1;
   PIX pixWindowSizeI, pixWindowSizeJ;
-  ResolutionToSize(mgResolutionsTrigger.mg_iSelected, pixWindowSizeI, pixWindowSizeJ);
-  enum GfxAPIType gat  = SwitchToAPI(mgDisplayAPITrigger.mg_iSelected);
-  enum DisplayDepth dd = SwitchToDepth(mgBitsPerPixelTrigger.mg_iSelected);
-  const INDEX iAdapter = mgDisplayAdaptersTrigger.mg_iSelected;
+  ResolutionToSize(gmVideoOptionsMenu.gm_mgResolutionsTrigger.mg_iSelected, pixWindowSizeI, pixWindowSizeJ);
+  enum GfxAPIType gat = SwitchToAPI(gmVideoOptionsMenu.gm_mgDisplayAPITrigger.mg_iSelected);
+  enum DisplayDepth dd = SwitchToDepth(gmVideoOptionsMenu.gm_mgBitsPerPixelTrigger.mg_iSelected);
+  const INDEX iAdapter = gmVideoOptionsMenu.gm_mgDisplayAdaptersTrigger.mg_iSelected;
 
   // setup preferences
   extern INDEX _iLastPreferences;
   if( sam_iVideoSetup==3) _iLastPreferences = 3;
-  sam_iVideoSetup = mgDisplayPrefsTrigger.mg_iSelected;
+  sam_iVideoSetup = gmVideoOptionsMenu.gm_mgDisplayPrefsTrigger.mg_iSelected;
 
   // force fullscreen mode if needed
   CDisplayAdapter &da = _pGfx->gl_gaAPI[gat].ga_adaAdapter[iAdapter];
@@ -1789,44 +1756,44 @@ void ApplyVideoOptions(void)
 
 #define VOLUME_STEPS  50
 
-void RefreshSoundFormat( void)
+extern void RefreshSoundFormat( void)
 {
   switch( _pSound->GetFormat())
   {
-  case CSoundLibrary::SF_NONE:     {mgFrequencyTrigger.mg_iSelected = 0;break;}
-  case CSoundLibrary::SF_11025_16: {mgFrequencyTrigger.mg_iSelected = 1;break;}
-  case CSoundLibrary::SF_22050_16: {mgFrequencyTrigger.mg_iSelected = 2;break;}
-  case CSoundLibrary::SF_44100_16: {mgFrequencyTrigger.mg_iSelected = 3;break;}
-  default:                          mgFrequencyTrigger.mg_iSelected = 0;
+  case CSoundLibrary::SF_NONE:     {gmAudioOptionsMenu.gm_mgFrequencyTrigger.mg_iSelected = 0; break; }
+  case CSoundLibrary::SF_11025_16: {gmAudioOptionsMenu.gm_mgFrequencyTrigger.mg_iSelected = 1; break; }
+  case CSoundLibrary::SF_22050_16: {gmAudioOptionsMenu.gm_mgFrequencyTrigger.mg_iSelected = 2; break; }
+  case CSoundLibrary::SF_44100_16: {gmAudioOptionsMenu.gm_mgFrequencyTrigger.mg_iSelected = 3; break; }
+  default:                          gmAudioOptionsMenu.gm_mgFrequencyTrigger.mg_iSelected = 0;
   }
 
-  mgAudioAutoTrigger.mg_iSelected = Clamp(sam_bAutoAdjustAudio, 0, 1);
-  mgAudioAPITrigger.mg_iSelected = Clamp(_pShell->GetINDEX("snd_iInterface"), 0L, 2L);
+  gmAudioOptionsMenu.gm_mgAudioAutoTrigger.mg_iSelected = Clamp(sam_bAutoAdjustAudio, 0, 1);
+  gmAudioOptionsMenu.gm_mgAudioAPITrigger.mg_iSelected = Clamp(_pShell->GetINDEX("snd_iInterface"), 0L, 2L);
 
-  mgWaveVolume.mg_iMinPos = 0;
-  mgWaveVolume.mg_iMaxPos = VOLUME_STEPS;
-  mgWaveVolume.mg_iCurPos = (INDEX)(_pShell->GetFLOAT("snd_fSoundVolume")*VOLUME_STEPS +0.5f);
-  mgWaveVolume.ApplyCurrentPosition();
+  gmAudioOptionsMenu.gm_mgWaveVolume.mg_iMinPos = 0;
+  gmAudioOptionsMenu.gm_mgWaveVolume.mg_iMaxPos = VOLUME_STEPS;
+  gmAudioOptionsMenu.gm_mgWaveVolume.mg_iCurPos = (INDEX)(_pShell->GetFLOAT("snd_fSoundVolume")*VOLUME_STEPS + 0.5f);
+  gmAudioOptionsMenu.gm_mgWaveVolume.ApplyCurrentPosition();
 
-  mgMPEGVolume.mg_iMinPos = 0;
-  mgMPEGVolume.mg_iMaxPos = VOLUME_STEPS;
-  mgMPEGVolume.mg_iCurPos = (INDEX)(_pShell->GetFLOAT("snd_fMusicVolume")*VOLUME_STEPS +0.5f);
-  mgMPEGVolume.ApplyCurrentPosition();
+  gmAudioOptionsMenu.gm_mgMPEGVolume.mg_iMinPos = 0;
+  gmAudioOptionsMenu.gm_mgMPEGVolume.mg_iMaxPos = VOLUME_STEPS;
+  gmAudioOptionsMenu.gm_mgMPEGVolume.mg_iCurPos = (INDEX)(_pShell->GetFLOAT("snd_fMusicVolume")*VOLUME_STEPS + 0.5f);
+  gmAudioOptionsMenu.gm_mgMPEGVolume.ApplyCurrentPosition();
 
-  mgAudioAutoTrigger.ApplyCurrentSelection();
-  mgAudioAPITrigger.ApplyCurrentSelection();
-  mgFrequencyTrigger.ApplyCurrentSelection();
+  gmAudioOptionsMenu.gm_mgAudioAutoTrigger.ApplyCurrentSelection();
+  gmAudioOptionsMenu.gm_mgAudioAPITrigger.ApplyCurrentSelection();
+  gmAudioOptionsMenu.gm_mgFrequencyTrigger.ApplyCurrentSelection();
 }
 
 void ApplyAudioOptions(void)
 {
-  sam_bAutoAdjustAudio = mgAudioAutoTrigger.mg_iSelected;
+  sam_bAutoAdjustAudio = gmAudioOptionsMenu.gm_mgAudioAutoTrigger.mg_iSelected;
   if (sam_bAutoAdjustAudio) {
     _pShell->Execute("include \"Scripts\\Addons\\SFX-AutoAdjust.ini\"");
   } else {
-    _pShell->SetINDEX("snd_iInterface", mgAudioAPITrigger.mg_iSelected);
+	_pShell->SetINDEX("snd_iInterface", gmAudioOptionsMenu.gm_mgAudioAPITrigger.mg_iSelected);
 
-    switch( mgFrequencyTrigger.mg_iSelected)
+	switch (gmAudioOptionsMenu.gm_mgFrequencyTrigger.mg_iSelected)
     {
     case 0: {_pSound->SetFormat(CSoundLibrary::SF_NONE)    ;break;}
     case 1: {_pSound->SetFormat(CSoundLibrary::SF_11025_16);break;}
@@ -2010,7 +1977,8 @@ void InitializeMenus(void)
 
     gmControls.Initialize_t();
     gmControls.gm_strName="Controls";
-    gmControls.gm_pmgSelectedByDefault = &mgControlsButtons;
+	gmControls.gm_pmgSelectedByDefault = &gmControls.gm_mgButtons;
+	InitActionsForControlsMenu();
 
     // warning! parent menu has to be set inside button activate function from where
     // Load/Save menu is called
@@ -2041,13 +2009,15 @@ void InitializeMenus(void)
 
     gmVideoOptionsMenu.Initialize_t();
     gmVideoOptionsMenu.gm_strName="VideoOptions";
-    gmVideoOptionsMenu.gm_pmgSelectedByDefault = &mgDisplayAPITrigger;
+	gmVideoOptionsMenu.gm_pmgSelectedByDefault = &gmVideoOptionsMenu.gm_mgDisplayAPITrigger;
     gmVideoOptionsMenu.gm_pgmParentMenu = &gmOptionsMenu;
+	InitActionsForVideoOptionsMenu();
 
     gmAudioOptionsMenu.Initialize_t();
     gmAudioOptionsMenu.gm_strName="AudioOptions";
-    gmAudioOptionsMenu.gm_pmgSelectedByDefault = &mgFrequencyTrigger;
+	gmAudioOptionsMenu.gm_pmgSelectedByDefault = &gmAudioOptionsMenu.gm_mgFrequencyTrigger;
     gmAudioOptionsMenu.gm_pgmParentMenu = &gmOptionsMenu;
+	InitActionsForAudioOptionsMenu();
 
     gmLevelsMenu.Initialize_t();
     gmLevelsMenu.gm_strName="Levels";
@@ -3426,141 +3396,13 @@ void CPlayerProfileMenu::EndMenu(void)
 }
 
 // ------------------------ CControlsMenu implementation
-void CControlsMenu::Initialize_t(void)
+void InitActionsForControlsMenu()
 {
-  // intialize player and controls menu
-  mgControlsTitle.mg_boxOnScreen = BoxTitle();
-  mgControlsTitle.mg_strText = TRANS("CONTROLS");
-  gm_lhGadgets.AddTail( mgControlsTitle.mg_lnNode);
-
-  mgControlsNameLabel.mg_strText = "";
-  mgControlsNameLabel.mg_boxOnScreen = BoxMediumRow(0.0);
-  mgControlsNameLabel.mg_bfsFontSize = BFS_MEDIUM;
-  mgControlsNameLabel.mg_iCenterI = -1;
-  mgControlsNameLabel.mg_bEnabled = FALSE;
-  mgControlsNameLabel.mg_bLabel = TRUE;
-  gm_lhGadgets.AddTail( mgControlsNameLabel.mg_lnNode);
-
-  mgControlsButtons.mg_strText = TRANS("CUSTOMIZE BUTTONS");
-  mgControlsButtons.mg_boxOnScreen = BoxMediumRow(2.0);
-  mgControlsButtons.mg_bfsFontSize = BFS_MEDIUM;
-  mgControlsButtons.mg_iCenterI = 0;
-  gm_lhGadgets.AddTail( mgControlsButtons.mg_lnNode);
-  mgControlsButtons.mg_pmgUp = &mgControlsPredefined;
-  mgControlsButtons.mg_pmgDown = &mgControlsAdvanced;
-  mgControlsButtons.mg_pActivatedFunction = &StartCustomizeKeyboardMenu;
-  mgControlsButtons.mg_strTip = TRANS("customize buttons in current controls");
-
-  mgControlsAdvanced.mg_strText = TRANS("ADVANCED JOYSTICK SETUP");
-  mgControlsAdvanced.mg_iCenterI = 0;
-  mgControlsAdvanced.mg_boxOnScreen = BoxMediumRow(3);
-  mgControlsAdvanced.mg_bfsFontSize = BFS_MEDIUM;
-  gm_lhGadgets.AddTail( mgControlsAdvanced.mg_lnNode);
-  mgControlsAdvanced.mg_pmgUp = &mgControlsButtons;
-  mgControlsAdvanced.mg_pmgDown = &mgControlsSensitivity;
-  mgControlsAdvanced.mg_pActivatedFunction = &StartCustomizeAxisMenu;
-  mgControlsAdvanced.mg_strTip = TRANS("adjust advanced settings for joystick axis");
-
-  mgControlsSensitivity.mg_boxOnScreen = BoxMediumRow(4.5);
-  mgControlsSensitivity.mg_strText = TRANS("SENSITIVITY");
-  mgControlsSensitivity.mg_pmgUp = &mgControlsAdvanced;
-  mgControlsSensitivity.mg_pmgDown = &mgControlsInvertTrigger;
-  mgControlsSensitivity.mg_strTip = TRANS("sensitivity for all axis in this control set");
-  gm_lhGadgets.AddTail( mgControlsSensitivity.mg_lnNode);
-
-  TRIGGER_MG( mgControlsInvertTrigger, 5.5, mgControlsSensitivity, mgControlsSmoothTrigger, 
-              TRANS("INVERT LOOK"), astrNoYes);
-  mgControlsInvertTrigger.mg_strTip = TRANS("invert up/down looking");
-  TRIGGER_MG( mgControlsSmoothTrigger, 6.5, mgControlsInvertTrigger, mgControlsAccelTrigger, 
-              TRANS("SMOOTH AXIS"), astrNoYes);
-  mgControlsSmoothTrigger.mg_strTip = TRANS("smooth mouse/joystick movements");
-  TRIGGER_MG( mgControlsAccelTrigger, 7.5, mgControlsSmoothTrigger, mgControlsIFeelTrigger, 
-              TRANS("MOUSE ACCELERATION"), astrNoYes);
-  mgControlsAccelTrigger.mg_strTip = TRANS("allow mouse acceleration");
-  TRIGGER_MG( mgControlsIFeelTrigger, 8.5, mgControlsAccelTrigger, mgControlsPredefined, 
-              TRANS("ENABLE IFEEL"), astrNoYes);
-  mgControlsIFeelTrigger.mg_strTip = TRANS("enable support for iFeel tactile feedback mouse");
-
-  mgControlsPredefined.mg_strText = TRANS("LOAD PREDEFINED SETTINGS");
-  mgControlsPredefined.mg_iCenterI = 0;
-  mgControlsPredefined.mg_boxOnScreen = BoxMediumRow(10);
-  mgControlsPredefined.mg_bfsFontSize = BFS_MEDIUM;
-  gm_lhGadgets.AddTail( mgControlsPredefined.mg_lnNode);
-  mgControlsPredefined.mg_pmgUp   = &mgControlsIFeelTrigger;
-  mgControlsPredefined.mg_pmgDown = &mgControlsButtons;
-  mgControlsPredefined.mg_pActivatedFunction = &StartControlsLoadMenu;
-  mgControlsPredefined.mg_strTip = TRANS("load one of several predefined control settings");
+	gmControls.gm_mgButtons.mg_pActivatedFunction = &StartCustomizeKeyboardMenu;
+	gmControls.gm_mgAdvanced.mg_pActivatedFunction = &StartCustomizeAxisMenu;
+	gmControls.gm_mgPredefined.mg_pActivatedFunction = &StartControlsLoadMenu;
 }
 
-void CControlsMenu::StartMenu(void)
-{
-  gm_pmgSelectedByDefault = &mgControlsButtons;
-  INDEX iPlayer = _pGame->gm_iSinglePlayer;
-  if (_iLocalPlayer>=0 && _iLocalPlayer<4) {
-    iPlayer = _pGame->gm_aiMenuLocalPlayers[_iLocalPlayer];
-  }
-  _fnmControlsToCustomize.PrintF("Controls\\Controls%d.ctl", iPlayer);
-
-  ControlsMenuOn();
-
-  mgControlsNameLabel.mg_strText.PrintF(TRANS("CONTROLS FOR: %s"), _pGame->gm_apcPlayers[iPlayer].GetNameForPrinting());
-
-  ObtainActionSettings();
-  CGameMenu::StartMenu();
-}
-
-void CControlsMenu::EndMenu(void)
-{
-  ApplyActionSettings();
-
-  ControlsMenuOff();
-
-  CGameMenu::EndMenu();
-}
-
-void CControlsMenu::ObtainActionSettings(void)
-{
-  CControls &ctrls = _pGame->gm_ctrlControlsExtra;
-
-  mgControlsSensitivity.mg_iMinPos = 0;
-  mgControlsSensitivity.mg_iMaxPos = 50;
-  mgControlsSensitivity.mg_iCurPos = ctrls.ctrl_fSensitivity/2;
-  mgControlsSensitivity.ApplyCurrentPosition();
-
-  mgControlsInvertTrigger.mg_iSelected = ctrls.ctrl_bInvertLook ? 1 : 0;
-  mgControlsSmoothTrigger.mg_iSelected = ctrls.ctrl_bSmoothAxes ? 1 : 0;
-  mgControlsAccelTrigger .mg_iSelected = _pShell->GetINDEX("inp_bAllowMouseAcceleration") ? 1 : 0;
-  mgControlsIFeelTrigger .mg_bEnabled = _pShell->GetINDEX("sys_bIFeelEnabled") ? 1 : 0;
-  mgControlsIFeelTrigger .mg_iSelected = _pShell->GetFLOAT("inp_fIFeelGain")>0 ? 1 : 0;
-
-  mgControlsInvertTrigger.ApplyCurrentSelection();
-  mgControlsSmoothTrigger.ApplyCurrentSelection();
-  mgControlsAccelTrigger .ApplyCurrentSelection();
-  mgControlsIFeelTrigger .ApplyCurrentSelection();
-}
-
-void CControlsMenu::ApplyActionSettings(void)
-{
-  CControls &ctrls = _pGame->gm_ctrlControlsExtra;
-
-  FLOAT fSensitivity = 
-    FLOAT(mgControlsSensitivity.mg_iCurPos-mgControlsSensitivity.mg_iMinPos) /
-    FLOAT(mgControlsSensitivity.mg_iMaxPos-mgControlsSensitivity.mg_iMinPos)*100.0f;
-  
-  BOOL bInvert = mgControlsInvertTrigger.mg_iSelected != 0;
-  BOOL bSmooth = mgControlsSmoothTrigger.mg_iSelected != 0;
-  BOOL bAccel  = mgControlsAccelTrigger .mg_iSelected != 0;
-  BOOL bIFeel  = mgControlsIFeelTrigger .mg_iSelected != 0;
-
-  if (INDEX(ctrls.ctrl_fSensitivity)!=INDEX(fSensitivity)) {
-    ctrls.ctrl_fSensitivity = fSensitivity;
-  }
-  ctrls.ctrl_bInvertLook = bInvert;
-  ctrls.ctrl_bSmoothAxes = bSmooth;
-  _pShell->SetINDEX("inp_bAllowMouseAcceleration", bAccel);
-  _pShell->SetFLOAT("inp_fIFeelGain", bIFeel ? 1.0f : 0.0f);
-  ctrls.CalculateInfluencesForAllAxis();
-}
 
 // ------------------------ CLoadSaveMenu implementation
 void CLoadSaveMenu::Initialize_t(void)
@@ -3604,31 +3446,6 @@ void CLoadSaveMenu::Initialize_t(void)
   gm_pmgArrowDn = &mgLSArrowDn;
   gm_pmgListTop = &amgLSButton[0];
   gm_pmgListBottom = &amgLSButton[SAVELOAD_BUTTONS_CT-1];
-}
-
-int qsort_CompareFileInfos_NameUp(const void *elem1, const void *elem2 )
-{
-  const CFileInfo &fi1 = **(CFileInfo **)elem1;
-  const CFileInfo &fi2 = **(CFileInfo **)elem2;
-  return strcmp(fi1.fi_strName, fi2.fi_strName);
-}
-int qsort_CompareFileInfos_NameDn(const void *elem1, const void *elem2 )
-{
-  const CFileInfo &fi1 = **(CFileInfo **)elem1;
-  const CFileInfo &fi2 = **(CFileInfo **)elem2;
-  return -strcmp(fi1.fi_strName, fi2.fi_strName);
-}
-int qsort_CompareFileInfos_FileUp(const void *elem1, const void *elem2 )
-{
-  const CFileInfo &fi1 = **(CFileInfo **)elem1;
-  const CFileInfo &fi2 = **(CFileInfo **)elem2;
-  return strcmp(fi1.fi_fnFile, fi2.fi_fnFile);
-}
-int qsort_CompareFileInfos_FileDn(const void *elem1, const void *elem2 )
-{
-  const CFileInfo &fi1 = **(CFileInfo **)elem1;
-  const CFileInfo &fi2 = **(CFileInfo **)elem2;
-  return -strcmp(fi1.fi_fnFile, fi2.fi_fnFile);
 }
 
 void CLoadSaveMenu::StartMenu(void)
@@ -3837,7 +3654,7 @@ static void FillResolutionsList(void)
   _ctResolutions = 0;
 
   // if window
-  if( mgFullScreenTrigger.mg_iSelected==0) {
+  if (gmVideoOptionsMenu.gm_mgFullScreenTrigger.mg_iSelected == 0) {
     // always has fixed resolutions, but not greater than desktop
     static PIX apixWidths[][2] = {
        320, 240,
@@ -3876,7 +3693,7 @@ static void FillResolutionsList(void)
   } else {
     // get resolutions list from engine
     CDisplayMode *pdm = _pGfx->EnumDisplayModes(_ctResolutions, 
-      SwitchToAPI(mgDisplayAPITrigger.mg_iSelected), mgDisplayAdaptersTrigger.mg_iSelected);
+		SwitchToAPI(gmVideoOptionsMenu.gm_mgDisplayAPITrigger.mg_iSelected), gmVideoOptionsMenu.gm_mgDisplayAdaptersTrigger.mg_iSelected);
     // allocate that much
     _astrResolutionTexts = new CTString    [_ctResolutions];
     _admResolutionModes  = new CDisplayMode[_ctResolutions];
@@ -3886,8 +3703,8 @@ static void FillResolutionsList(void)
       SetResolutionInList( iRes, pdm[iRes].dm_pixSizeI, pdm[iRes].dm_pixSizeJ);
     }
   }
-  mgResolutionsTrigger.mg_astrTexts = _astrResolutionTexts;
-  mgResolutionsTrigger.mg_ctTexts = _ctResolutions;
+  gmVideoOptionsMenu.gm_mgResolutionsTrigger.mg_astrTexts = _astrResolutionTexts;
+  gmVideoOptionsMenu.gm_mgResolutionsTrigger.mg_ctTexts = _ctResolutions;
 }
 
 
@@ -3898,18 +3715,18 @@ static void FillAdaptersList(void)
   }
   _ctAdapters = 0;
 
-  INDEX iApi = SwitchToAPI(mgDisplayAPITrigger.mg_iSelected);
+  INDEX iApi = SwitchToAPI(gmVideoOptionsMenu.gm_mgDisplayAPITrigger.mg_iSelected);
   _ctAdapters = _pGfx->gl_gaAPI[iApi].ga_ctAdapters;
   _astrAdapterTexts = new CTString[_ctAdapters];
   for(INDEX iAdapter = 0; iAdapter<_ctAdapters; iAdapter++) {
     _astrAdapterTexts[iAdapter] = _pGfx->gl_gaAPI[iApi].ga_adaAdapter[iAdapter].da_strRenderer;
   }
-  mgDisplayAdaptersTrigger.mg_astrTexts = _astrAdapterTexts;
-  mgDisplayAdaptersTrigger.mg_ctTexts = _ctAdapters;
+  gmVideoOptionsMenu.gm_mgDisplayAdaptersTrigger.mg_astrTexts = _astrAdapterTexts;
+  gmVideoOptionsMenu.gm_mgDisplayAdaptersTrigger.mg_ctTexts = _ctAdapters;
 }
 
 
-static void UpdateVideoOptionsButtons(INDEX iSelected)
+extern void UpdateVideoOptionsButtons(INDEX iSelected)
 {
   const BOOL _bVideoOptionsChanged = (iSelected != -1);
 
@@ -3920,142 +3737,90 @@ static void UpdateVideoOptionsButtons(INDEX iSelected)
 #else // 
   ASSERT( bOGLEnabled ); 
 #endif // SE1_D3D
-  CDisplayAdapter &da = _pGfx->gl_gaAPI[SwitchToAPI(mgDisplayAPITrigger.mg_iSelected)]
-                                .ga_adaAdapter[mgDisplayAdaptersTrigger.mg_iSelected];
+  CDisplayAdapter &da = _pGfx->gl_gaAPI[SwitchToAPI(gmVideoOptionsMenu.gm_mgDisplayAPITrigger.mg_iSelected)]
+	  .ga_adaAdapter[gmVideoOptionsMenu.gm_mgDisplayAdaptersTrigger.mg_iSelected];
 
   // number of available preferences is higher if video setup is custom
-  mgDisplayPrefsTrigger.mg_ctTexts = 3;
-  if( sam_iVideoSetup==3) mgDisplayPrefsTrigger.mg_ctTexts++;
+  gmVideoOptionsMenu.gm_mgDisplayPrefsTrigger.mg_ctTexts = 3;
+  if (sam_iVideoSetup == 3) gmVideoOptionsMenu.gm_mgDisplayPrefsTrigger.mg_ctTexts++;
 
   // enumerate adapters
   FillAdaptersList();
 
   // show or hide buttons
-  mgDisplayAPITrigger.mg_bEnabled = bOGLEnabled 
+  gmVideoOptionsMenu.gm_mgDisplayAPITrigger.mg_bEnabled = bOGLEnabled
 #ifdef SE1_D3D
     && bD3DEnabled
 #endif // SE1_D3D
     ;
-  mgDisplayAdaptersTrigger.mg_bEnabled = _ctAdapters>1;
-  mgVideoOptionsApply.mg_bEnabled = _bVideoOptionsChanged;
+  gmVideoOptionsMenu.gm_mgDisplayAdaptersTrigger.mg_bEnabled = _ctAdapters>1;
+  gmVideoOptionsMenu.gm_mgApply.mg_bEnabled = _bVideoOptionsChanged;
   // determine which should be visible
-  mgFullScreenTrigger.mg_bEnabled = TRUE;
+  gmVideoOptionsMenu.gm_mgFullScreenTrigger.mg_bEnabled = TRUE;
   if( da.da_ulFlags&DAF_FULLSCREENONLY) {
-    mgFullScreenTrigger.mg_bEnabled  = FALSE;
-    mgFullScreenTrigger.mg_iSelected = 1;
-    mgFullScreenTrigger.ApplyCurrentSelection();
+	gmVideoOptionsMenu.gm_mgFullScreenTrigger.mg_bEnabled = FALSE;
+	gmVideoOptionsMenu.gm_mgFullScreenTrigger.mg_iSelected = 1;
+	gmVideoOptionsMenu.gm_mgFullScreenTrigger.ApplyCurrentSelection();
   }
-  mgBitsPerPixelTrigger.mg_bEnabled = TRUE;
-  if( mgFullScreenTrigger.mg_iSelected==0) {
-    mgBitsPerPixelTrigger.mg_bEnabled = FALSE;
-    mgBitsPerPixelTrigger.mg_iSelected = DepthToSwitch(DD_DEFAULT);
-    mgBitsPerPixelTrigger.ApplyCurrentSelection();
+  gmVideoOptionsMenu.gm_mgBitsPerPixelTrigger.mg_bEnabled = TRUE;
+  if (gmVideoOptionsMenu.gm_mgFullScreenTrigger.mg_iSelected == 0) {
+	gmVideoOptionsMenu.gm_mgBitsPerPixelTrigger.mg_bEnabled = FALSE;
+	gmVideoOptionsMenu.gm_mgBitsPerPixelTrigger.mg_iSelected = DepthToSwitch(DD_DEFAULT);
+	gmVideoOptionsMenu.gm_mgBitsPerPixelTrigger.ApplyCurrentSelection();
   } else if( da.da_ulFlags&DAF_16BITONLY) {
-    mgBitsPerPixelTrigger.mg_bEnabled = FALSE;
-    mgBitsPerPixelTrigger.mg_iSelected = DepthToSwitch(DD_16BIT);
-    mgBitsPerPixelTrigger.ApplyCurrentSelection();
+	gmVideoOptionsMenu.gm_mgBitsPerPixelTrigger.mg_bEnabled = FALSE;
+	gmVideoOptionsMenu.gm_mgBitsPerPixelTrigger.mg_iSelected = DepthToSwitch(DD_16BIT);
+    gmVideoOptionsMenu.gm_mgBitsPerPixelTrigger.ApplyCurrentSelection();
   }
 
   // remember current selected resolution
   PIX pixSizeI, pixSizeJ;
-  ResolutionToSize(mgResolutionsTrigger.mg_iSelected, pixSizeI, pixSizeJ);
+  ResolutionToSize(gmVideoOptionsMenu.gm_mgResolutionsTrigger.mg_iSelected, pixSizeI, pixSizeJ);
 
   // select same resolution again if possible
   FillResolutionsList();
-  SizeToResolution(pixSizeI, pixSizeJ, mgResolutionsTrigger.mg_iSelected);
+  SizeToResolution(pixSizeI, pixSizeJ, gmVideoOptionsMenu.gm_mgResolutionsTrigger.mg_iSelected);
 
   // apply adapter and resolutions
-  mgDisplayAdaptersTrigger.ApplyCurrentSelection();
-  mgResolutionsTrigger.ApplyCurrentSelection();
+  gmVideoOptionsMenu.gm_mgDisplayAdaptersTrigger.ApplyCurrentSelection();
+  gmVideoOptionsMenu.gm_mgResolutionsTrigger.ApplyCurrentSelection();
 }
 
 
-static void InitVideoOptionsButtons(void)
+extern void InitVideoOptionsButtons(void)
 {
   if( sam_bFullScreenActive) {
-    mgFullScreenTrigger.mg_iSelected = 1;
+	gmVideoOptionsMenu.gm_mgFullScreenTrigger.mg_iSelected = 1;
   } else {
-    mgFullScreenTrigger.mg_iSelected = 0;
+	gmVideoOptionsMenu.gm_mgFullScreenTrigger.mg_iSelected = 0;
   }
 
-  mgDisplayAPITrigger.mg_iSelected = APIToSwitch((GfxAPIType)(INDEX)sam_iGfxAPI);
-  mgDisplayAdaptersTrigger.mg_iSelected = sam_iDisplayAdapter;
-  mgBitsPerPixelTrigger.mg_iSelected = DepthToSwitch((enum DisplayDepth)(INDEX)sam_iDisplayDepth);
+  gmVideoOptionsMenu.gm_mgDisplayAPITrigger.mg_iSelected = APIToSwitch((GfxAPIType)(INDEX)sam_iGfxAPI);
+  gmVideoOptionsMenu.gm_mgDisplayAdaptersTrigger.mg_iSelected = sam_iDisplayAdapter;
+  gmVideoOptionsMenu.gm_mgBitsPerPixelTrigger.mg_iSelected = DepthToSwitch((enum DisplayDepth)(INDEX)sam_iDisplayDepth);
 
   FillResolutionsList();
-  SizeToResolution( sam_iScreenSizeI, sam_iScreenSizeJ, mgResolutionsTrigger.mg_iSelected);
-  mgDisplayPrefsTrigger.mg_iSelected = Clamp(int(sam_iVideoSetup), 0,3);
+  SizeToResolution(sam_iScreenSizeI, sam_iScreenSizeJ, gmVideoOptionsMenu.gm_mgResolutionsTrigger.mg_iSelected);
+  gmVideoOptionsMenu.gm_mgDisplayPrefsTrigger.mg_iSelected = Clamp(int(sam_iVideoSetup), 0, 3);
 
-  mgFullScreenTrigger.ApplyCurrentSelection();
-  mgDisplayPrefsTrigger.ApplyCurrentSelection();
-  mgDisplayAPITrigger.ApplyCurrentSelection();
-  mgDisplayAdaptersTrigger.ApplyCurrentSelection();
-  mgResolutionsTrigger.ApplyCurrentSelection();
-  mgBitsPerPixelTrigger.ApplyCurrentSelection();  
+  gmVideoOptionsMenu.gm_mgFullScreenTrigger.ApplyCurrentSelection();
+  gmVideoOptionsMenu.gm_mgDisplayPrefsTrigger.ApplyCurrentSelection();
+  gmVideoOptionsMenu.gm_mgDisplayAPITrigger.ApplyCurrentSelection();
+  gmVideoOptionsMenu.gm_mgDisplayAdaptersTrigger.ApplyCurrentSelection();
+  gmVideoOptionsMenu.gm_mgResolutionsTrigger.ApplyCurrentSelection();
+  gmVideoOptionsMenu.gm_mgBitsPerPixelTrigger.ApplyCurrentSelection();
 }
 
-
-void CVideoOptionsMenu::Initialize_t(void)
+void InitActionsForVideoOptionsMenu()
 {
-  // intialize video options menu
-  mgVideoOptionsTitle.mg_boxOnScreen = BoxTitle();
-  mgVideoOptionsTitle.mg_strText = TRANS("VIDEO");
-  gm_lhGadgets.AddTail( mgVideoOptionsTitle.mg_lnNode);
-
-  TRIGGER_MG(mgDisplayAPITrigger, 0,
-    mgVideoOptionsApply, mgDisplayAdaptersTrigger, TRANS("GRAPHICS API"), astrDisplayAPIRadioTexts);
-  mgDisplayAPITrigger.mg_strTip = TRANS("choose graphics API to be used");
-  TRIGGER_MG(mgDisplayAdaptersTrigger, 1,
-    mgDisplayAPITrigger, mgDisplayPrefsTrigger, TRANS("DISPLAY ADAPTER"), astrNoYes);
-  mgDisplayAdaptersTrigger.mg_strTip = TRANS("choose display adapter to be used");
-  TRIGGER_MG(mgDisplayPrefsTrigger, 2,
-          mgDisplayAdaptersTrigger, mgResolutionsTrigger, TRANS("PREFERENCES"), astrDisplayPrefsRadioTexts);
-  mgDisplayPrefsTrigger.mg_strTip = TRANS("balance between speed and rendering quality, depending on your system");
-  TRIGGER_MG(mgResolutionsTrigger, 3,
-          mgDisplayPrefsTrigger, mgFullScreenTrigger, TRANS("RESOLUTION"), astrNoYes);
-  mgResolutionsTrigger.mg_strTip = TRANS("select video mode resolution");
-  TRIGGER_MG(mgFullScreenTrigger, 4,
-          mgResolutionsTrigger, mgBitsPerPixelTrigger, TRANS("FULL SCREEN"), astrNoYes);
-  mgFullScreenTrigger.mg_strTip = TRANS("make game run in a window or in full screen");
-  TRIGGER_MG(mgBitsPerPixelTrigger, 5,
-          mgFullScreenTrigger, mgVideoRendering, TRANS("BITS PER PIXEL"), astrBitsPerPixelRadioTexts);
-  mgBitsPerPixelTrigger.mg_strTip = TRANS("select number of colors used for display");
-
-  mgDisplayPrefsTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
-  mgDisplayAPITrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
-  mgDisplayAdaptersTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
-  mgFullScreenTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
-  mgResolutionsTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
-  mgBitsPerPixelTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
-  
-
-  mgVideoRendering.mg_bfsFontSize = BFS_MEDIUM;
-  mgVideoRendering.mg_boxOnScreen = BoxMediumRow(7.0f);
-  mgVideoRendering.mg_pmgUp = &mgBitsPerPixelTrigger;
-  mgVideoRendering.mg_pmgDown = &mgVideoOptionsApply;
-  mgVideoRendering.mg_strText = TRANS("RENDERING OPTIONS");
-  mgVideoRendering.mg_strTip = TRANS("manually adjust rendering settings");
-  gm_lhGadgets.AddTail( mgVideoRendering.mg_lnNode);
-  mgVideoRendering.mg_pActivatedFunction = &StartRenderingOptionsMenu;
-
-  mgVideoOptionsApply.mg_bfsFontSize = BFS_LARGE;
-  mgVideoOptionsApply.mg_boxOnScreen = BoxBigRow(5.5f);
-  mgVideoOptionsApply.mg_pmgUp = &mgVideoRendering;
-  mgVideoOptionsApply.mg_pmgDown = &mgDisplayAPITrigger;
-  mgVideoOptionsApply.mg_strText = TRANS("APPLY");
-  mgVideoOptionsApply.mg_strTip = TRANS("apply selected options");
-  gm_lhGadgets.AddTail( mgVideoOptionsApply.mg_lnNode);
-  mgVideoOptionsApply.mg_pActivatedFunction = &ApplyVideoOptions;
-}
-
-
-void CVideoOptionsMenu::StartMenu(void)
-{
-  InitVideoOptionsButtons();
-
-  CGameMenu::StartMenu();
-
-  UpdateVideoOptionsButtons(-1);
+	gmVideoOptionsMenu.gm_mgDisplayPrefsTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
+	gmVideoOptionsMenu.gm_mgDisplayAPITrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
+	gmVideoOptionsMenu.gm_mgDisplayAdaptersTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
+	gmVideoOptionsMenu.gm_mgFullScreenTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
+	gmVideoOptionsMenu.gm_mgResolutionsTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
+	gmVideoOptionsMenu.gm_mgBitsPerPixelTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
+	gmVideoOptionsMenu.gm_mgVideoRendering.mg_pActivatedFunction = &StartRenderingOptionsMenu;
+	gmVideoOptionsMenu.gm_mgApply.mg_pActivatedFunction = &ApplyVideoOptions;
 }
 
 // ------------------------ CAudioOptionsMenu implementation
@@ -4067,88 +3832,43 @@ static void OnWaveVolumeChange(INDEX iCurPos)
 void WaveSliderChange(void)
 {
   if (_bMouseRight) {
-    mgWaveVolume.mg_iCurPos+=5;
+    gmAudioOptionsMenu.gm_mgWaveVolume.mg_iCurPos += 5;
   } else {
-    mgWaveVolume.mg_iCurPos-=5;
+    gmAudioOptionsMenu.gm_mgWaveVolume.mg_iCurPos -= 5;
   }
-  mgWaveVolume.ApplyCurrentPosition();
+  gmAudioOptionsMenu.gm_mgWaveVolume.ApplyCurrentPosition();
 }
 
 void FrequencyTriggerChange(INDEX iDummy)
 {
   sam_bAutoAdjustAudio = 0;
-  mgAudioAutoTrigger.mg_iSelected = 0;
-  mgAudioAutoTrigger.ApplyCurrentSelection();
+  gmAudioOptionsMenu.gm_mgAudioAutoTrigger.mg_iSelected = 0;
+  gmAudioOptionsMenu.gm_mgAudioAutoTrigger.ApplyCurrentSelection();
 }
 
 void MPEGSliderChange(void)
 {
   if (_bMouseRight) {
-    mgMPEGVolume.mg_iCurPos+=5;
+	gmAudioOptionsMenu.gm_mgMPEGVolume.mg_iCurPos += 5;
   } else {
-    mgMPEGVolume.mg_iCurPos-=5;
+	gmAudioOptionsMenu.gm_mgMPEGVolume.mg_iCurPos -= 5;
   }
-  mgMPEGVolume.ApplyCurrentPosition();
+  gmAudioOptionsMenu.gm_mgMPEGVolume.ApplyCurrentPosition();
 }
 
 static void OnMPEGVolumeChange(INDEX iCurPos)
 {
-  _pShell->SetFLOAT("snd_fMusicVolume", iCurPos/FLOAT(VOLUME_STEPS));
+	_pShell->SetFLOAT("snd_fMusicVolume", iCurPos / FLOAT(VOLUME_STEPS));
 }
 
-void CAudioOptionsMenu::Initialize_t(void)
+void InitActionsForAudioOptionsMenu()
 {
-  // intialize Audio options menu
-  mgAudioOptionsTitle.mg_boxOnScreen = BoxTitle();
-  mgAudioOptionsTitle.mg_strText = TRANS("AUDIO");
-  gm_lhGadgets.AddTail( mgAudioOptionsTitle.mg_lnNode);
-
-  TRIGGER_MG(mgAudioAutoTrigger, 0,
-          mgAudioOptionsApply, mgFrequencyTrigger, TRANS("AUTO-ADJUST"), astrNoYes);
-  mgAudioAutoTrigger.mg_strTip = TRANS("adjust quality to fit your system");
-  
-  TRIGGER_MG(mgFrequencyTrigger, 1,
-          mgAudioAutoTrigger, mgAudioAPITrigger, TRANS("FREQUENCY"), astrFrequencyRadioTexts);
-  mgFrequencyTrigger.mg_strTip = TRANS("select sound quality or turn sound off");
-  mgFrequencyTrigger.mg_pOnTriggerChange = FrequencyTriggerChange;
-
-  TRIGGER_MG(mgAudioAPITrigger, 2,
-          mgFrequencyTrigger, mgWaveVolume, TRANS("SOUND SYSTEM"), astrSoundAPIRadioTexts);
-  mgAudioAPITrigger.mg_strTip = TRANS("choose sound system (API) to use");
-  mgAudioAPITrigger.mg_pOnTriggerChange = FrequencyTriggerChange;
-
-  mgWaveVolume.mg_boxOnScreen = BoxMediumRow(3);
-  mgWaveVolume.mg_strText = TRANS("SOUND EFFECTS VOLUME");
-  mgWaveVolume.mg_strTip = TRANS("adjust volume of in-game sound effects");
-  mgWaveVolume.mg_pmgUp = &mgAudioAPITrigger;
-  mgWaveVolume.mg_pmgDown = &mgMPEGVolume;
-  mgWaveVolume.mg_pOnSliderChange = &OnWaveVolumeChange;
-  mgWaveVolume.mg_pActivatedFunction = WaveSliderChange;
-  gm_lhGadgets.AddTail( mgWaveVolume.mg_lnNode);
-
-  mgMPEGVolume.mg_boxOnScreen = BoxMediumRow(4);
-  mgMPEGVolume.mg_strText = TRANS("MUSIC VOLUME");
-  mgMPEGVolume.mg_strTip = TRANS("adjust volume of in-game music");
-  mgMPEGVolume.mg_pmgUp = &mgWaveVolume;
-  mgMPEGVolume.mg_pmgDown = &mgAudioOptionsApply;
-  mgMPEGVolume.mg_pOnSliderChange = &OnMPEGVolumeChange;
-  mgMPEGVolume.mg_pActivatedFunction = MPEGSliderChange;
-  gm_lhGadgets.AddTail( mgMPEGVolume.mg_lnNode);
-
-  mgAudioOptionsApply.mg_bfsFontSize = BFS_LARGE;
-  mgAudioOptionsApply.mg_boxOnScreen = BoxBigRow(4);
-  mgAudioOptionsApply.mg_strText = TRANS("APPLY");
-  mgAudioOptionsApply.mg_strTip = TRANS("activate selected options");
-  gm_lhGadgets.AddTail( mgAudioOptionsApply.mg_lnNode);
-  mgAudioOptionsApply.mg_pmgUp = &mgMPEGVolume;
-  mgAudioOptionsApply.mg_pmgDown = &mgAudioAutoTrigger;
-  mgAudioOptionsApply.mg_pActivatedFunction = &ApplyAudioOptions;
-}
-
-void CAudioOptionsMenu::StartMenu(void)
-{
-  RefreshSoundFormat();
-  CGameMenu::StartMenu();
+  gmAudioOptionsMenu.gm_mgFrequencyTrigger.mg_pOnTriggerChange = FrequencyTriggerChange;
+  gmAudioOptionsMenu.gm_mgWaveVolume.mg_pOnSliderChange = &OnWaveVolumeChange;
+  gmAudioOptionsMenu.gm_mgWaveVolume.mg_pActivatedFunction = WaveSliderChange;
+  gmAudioOptionsMenu.gm_mgMPEGVolume.mg_pOnSliderChange = &OnMPEGVolumeChange;
+  gmAudioOptionsMenu.gm_mgMPEGVolume.mg_pActivatedFunction = MPEGSliderChange;
+  gmAudioOptionsMenu.gm_mgApply.mg_pActivatedFunction = &ApplyAudioOptions;
 }
 
 // ------------------------ CVarMenu implementation

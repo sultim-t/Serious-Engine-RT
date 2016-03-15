@@ -7,18 +7,6 @@
 #include "MenuStuff.h"
 #include "MSplitStart.h"
 
-#define TRIGGER_MG(mg, y, up, down, text, astr) \
-	mg.mg_pmgUp = &up; \
-	mg.mg_pmgDown = &down; \
-	mg.mg_boxOnScreen = BoxMediumRow(y); \
-	gm_lhGadgets.AddTail(mg.mg_lnNode); \
-	mg.mg_astrTexts = astr; \
-	mg.mg_ctTexts = sizeof(astr) / sizeof(astr[0]); \
-	mg.mg_iSelected = 0; \
-	mg.mg_strLabel = text; \
-	mg.mg_strValue = astr[0];
-
-extern INDEX ctGameTypeRadioTexts;
 extern void UpdateSplitLevel(INDEX iDummy);
 
 

@@ -11,6 +11,16 @@
 
 class CVideoOptionsMenu : public CGameMenu {
 public:
+	CMGTitle gm_mgTitle;
+	CMGTrigger gm_mgDisplayAPITrigger;
+	CMGTrigger gm_mgDisplayAdaptersTrigger;
+	CMGTrigger gm_mgFullScreenTrigger;
+	CMGTrigger gm_mgResolutionsTrigger;
+	CMGTrigger gm_mgDisplayPrefsTrigger;
+	CMGButton gm_mgVideoRendering;
+	CMGTrigger gm_mgBitsPerPixelTrigger;
+	CMGButton gm_mgApply;
+
 	void StartMenu(void);
 	void Initialize_t(void);
 };

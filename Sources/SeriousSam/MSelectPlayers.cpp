@@ -3,6 +3,7 @@
 #include "StdH.h"
 #include <Engine/CurrentVersion.h>
 #include "MenuPrinting.h"
+#include "MenuStuff.h"
 #include "MSelectPlayers.h"
 
 #define ADD_GADGET( gd, box, up, dn, lf, rt, txt) \
@@ -13,17 +14,6 @@
 	gd.mg_pmgRight = rt; \
 	gd.mg_strText = txt; \
 	gm_lhGadgets.AddTail(gd.mg_lnNode);
-
-#define TRIGGER_MG(mg, y, up, down, text, astr) \
-	mg.mg_pmgUp = &up; \
-	mg.mg_pmgDown = &down; \
-	mg.mg_boxOnScreen = BoxMediumRow(y); \
-	gm_lhGadgets.AddTail(mg.mg_lnNode); \
-	mg.mg_astrTexts = astr; \
-	mg.mg_ctTexts = sizeof(astr) / sizeof(astr[0]); \
-	mg.mg_iSelected = 0; \
-	mg.mg_strLabel = text; \
-	mg.mg_strValue = astr[0];
 
 extern CTString astrNoYes[2];
 extern CTString astrSplitScreenRadioTexts[4];

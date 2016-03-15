@@ -5,6 +5,9 @@
 #include "MenuPrinting.h"
 #include "MCustomizeKeyboard.h"
 
+extern void ControlsMenuOn();
+extern void ControlsMenuOff();
+
 
 void CCustomizeKeyboardMenu::FillListItems(void)
 {
@@ -81,9 +84,6 @@ void CCustomizeKeyboardMenu::Initialize_t(void)
 	gm_pmgListTop = &gm_mgKey[0];
 	gm_pmgListBottom = &gm_mgKey[KEYS_ON_SCREEN - 1];
 }
-
-extern void ControlsMenuOn();
-extern void ControlsMenuOff();
 
 void CCustomizeKeyboardMenu::StartMenu(void)
 {

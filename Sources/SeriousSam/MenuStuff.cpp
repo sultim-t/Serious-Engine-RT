@@ -141,3 +141,28 @@ BOOL IsMenuEnabled(const CTString &strMenuName)
 	BOOL(*pFunc)(const CTString &) = (BOOL(*)(const CTString &))pss->ss_pvValue;
 	return pFunc(strMenuName);
 }
+
+int qsort_CompareFileInfos_NameUp(const void *elem1, const void *elem2)
+{
+	const CFileInfo &fi1 = **(CFileInfo **)elem1;
+	const CFileInfo &fi2 = **(CFileInfo **)elem2;
+	return strcmp(fi1.fi_strName, fi2.fi_strName);
+}
+int qsort_CompareFileInfos_NameDn(const void *elem1, const void *elem2)
+{
+	const CFileInfo &fi1 = **(CFileInfo **)elem1;
+	const CFileInfo &fi2 = **(CFileInfo **)elem2;
+	return -strcmp(fi1.fi_strName, fi2.fi_strName);
+}
+int qsort_CompareFileInfos_FileUp(const void *elem1, const void *elem2)
+{
+	const CFileInfo &fi1 = **(CFileInfo **)elem1;
+	const CFileInfo &fi2 = **(CFileInfo **)elem2;
+	return strcmp(fi1.fi_fnFile, fi2.fi_fnFile);
+}
+int qsort_CompareFileInfos_FileDn(const void *elem1, const void *elem2)
+{
+	const CFileInfo &fi1 = **(CFileInfo **)elem1;
+	const CFileInfo &fi2 = **(CFileInfo **)elem2;
+	return -strcmp(fi1.fi_fnFile, fi2.fi_fnFile);
+}

@@ -6,6 +6,20 @@
   #pragma once
 #endif
 
+#include "FileInfo.h"
+
+#define TRIGGER_MG(mg, y, up, down, text, astr) \
+	mg.mg_pmgUp = &up; \
+	mg.mg_pmgDown = &down; \
+	mg.mg_boxOnScreen = BoxMediumRow(y); \
+	gm_lhGadgets.AddTail(mg.mg_lnNode); \
+	mg.mg_astrTexts = astr; \
+	mg.mg_ctTexts = sizeof(astr) / sizeof(astr[0]); \
+	mg.mg_iSelected = 0; \
+	mg.mg_strLabel = text; \
+	mg.mg_strValue = astr[0];
+
+
 extern INDEX ctGameTypeRadioTexts;
 
 extern CTString astrNoYes[2];
@@ -24,5 +38,10 @@ extern CTString astrSoundAPIRadioTexts[3];
 
 ULONG GetSpawnFlagsForGameType(INDEX iGameType);
 BOOL IsMenuEnabled(const CTString &strMenuName);
+
+int qsort_CompareFileInfos_NameUp(const void *elem1, const void *elem2);
+int qsort_CompareFileInfos_NameDn(const void *elem1, const void *elem2);
+int qsort_CompareFileInfos_FileUp(const void *elem1, const void *elem2);
+int qsort_CompareFileInfos_FileDn(const void *elem1, const void *elem2);
 
 #endif  /* include-once check. */

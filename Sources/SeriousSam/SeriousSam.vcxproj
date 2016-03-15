@@ -182,7 +182,9 @@ copy Release\$(TargetName).map $(SolutionDir)..\Bin\ &gt;nul </Command>
     <ClCompile Include="LCDDrawing.cpp" />
     <ClCompile Include="LevelInfo.cpp" />
     <ClCompile Include="MainWindow.cpp" />
+    <ClCompile Include="MAudioOptions.cpp" />
     <ClCompile Include="MConfirm.cpp" />
+    <ClCompile Include="MControls.cpp" />
     <ClCompile Include="MCustomizeAxis.cpp" />
     <ClCompile Include="MCustomizeKeyboard.cpp" />
     <ClCompile Include="MDisabled.cpp" />
@@ -228,6 +230,7 @@ copy Release\$(TargetName).map $(SolutionDir)..\Bin\ &gt;nul </Command>
     <ClCompile Include="MSplitScreen.cpp" />
     <ClCompile Include="MSplitStart.cpp" />
     <ClCompile Include="MVar.cpp" />
+    <ClCompile Include="MVideoOptions.cpp" />
     <ClCompile Include="SeriousSam.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">StdH.h</PrecompiledHeaderFile>
