@@ -67,7 +67,7 @@ extern CTextureObject *_ptoLogoODI;
 extern CTextureObject *_ptoLogoEAX;
 
 INDEX _iLocalPlayer = -1;
-BOOL  _bPlayerMenuFromSinglePlayer = FALSE;
+extern BOOL  _bPlayerMenuFromSinglePlayer = FALSE;
 
 
 GameMode _gmMenuGameMode = GM_NONE;
@@ -95,7 +95,7 @@ CListHead lhMenuEntities;
 // controls that are currently customized
 CTFileName _fnmControlsToCustomize = CTString("");
 
-static CTString _strLastPlayerAppearance;
+extern CTString _strLastPlayerAppearance = "";
 extern CTString sam_strNetworkSettings;
 
 // function to activate when level is chosen
@@ -113,6 +113,7 @@ void InitActionsForNetworkJoinMenu();
 void InitActionsForNetworkOpenMenu();
 void InitActionsForNetworkStartMenu();
 void InitActionsForOptionsMenu();
+void InitActionsForPlayerProfileMenu();
 void InitActionsForSelectPlayersMenu();
 void InitActionsForServersMenu();
 void InitActionsForSinglePlayerMenu();
@@ -202,7 +203,6 @@ static CTextureObject _toLogoMenuB;
 
 // -------------- All possible menu entities
 #define BIG_BUTTONS_CT 6
-#define SAVELOAD_BUTTONS_CT 14
 
 #define CHANGETRIGGERARRAY(ltbmg, astr) \
   ltbmg.mg_astrTexts = astr;\
@@ -246,35 +246,12 @@ CVarMenu gmVarMenu;
 
 // -------- Player profile menu
 CPlayerProfileMenu gmPlayerProfile;
-CMGTitle mgPlayerProfileTitle;
-CMGButton mgPlayerNoLabel;
-CMGButton mgPlayerNo[8];
-CMGButton mgPlayerNameLabel;
-CMGEdit mgPlayerName;
-CMGButton mgPlayerTeamLabel;
-CMGEdit mgPlayerTeam;
-CMGButton mgPlayerCustomizeControls;
-CMGTrigger mgPlayerCrosshair;
-CMGTrigger mgPlayerWeaponSelect;
-CMGTrigger mgPlayerWeaponHide;
-CMGTrigger mgPlayer3rdPerson;
-CMGTrigger mgPlayerQuotes;
-CMGTrigger mgPlayerAutoSave;
-CMGTrigger mgPlayerCompDoubleClick;
-CMGTrigger mgPlayerViewBobbing;
-CMGTrigger mgPlayerSharpTurning;
-CMGModel mgPlayerModel;
 
 // -------- Controls menu
 CControlsMenu gmControls;
 
 // -------- Load/Save menu
 CLoadSaveMenu gmLoadSaveMenu;
-CMGTitle mgLoadSaveTitle;
-CMGButton mgLoadSaveNotes;
-CMGFileButton amgLSButton[SAVELOAD_BUTTONS_CT];
-CMGArrow mgLSArrowUp;
-CMGArrow mgLSArrowDn;
 
 // -------- High-score menu
 CHighScoreMenu gmHighScoreMenu;
@@ -1224,7 +1201,7 @@ BOOL LSSaveDemo(const CTFileName &fnm)
 // save/load menu calling functions
 void StartPlayerModelLoadMenu(void)
 {
-  mgLoadSaveTitle.mg_strText = TRANS("CHOOSE MODEL");
+  gmLoadSaveMenu.gm_mgTitle.mg_strText = TRANS("CHOOSE MODEL");
   gmLoadSaveMenu.gm_bAllowThumbnails = TRUE;
   gmLoadSaveMenu.gm_iSortType = LSSORT_FILEUP;
   gmLoadSaveMenu.gm_bSave = FALSE;
@@ -1233,7 +1210,7 @@ void StartPlayerModelLoadMenu(void)
   gmLoadSaveMenu.gm_fnmSelected = _strLastPlayerAppearance;
   gmLoadSaveMenu.gm_fnmExt = CTString(".amc");
   gmLoadSaveMenu.gm_pAfterFileChosen = &LSLoadPlayerModel;
-  mgLoadSaveNotes.mg_strText = "";
+  gmLoadSaveMenu.gm_mgNotes.mg_strText = "";
 
   gmLoadSaveMenu.gm_pgmParentMenu = &gmPlayerProfile;
   ChangeToMenu( &gmLoadSaveMenu);
@@ -1241,7 +1218,7 @@ void StartPlayerModelLoadMenu(void)
 
 void StartControlsLoadMenu(void)
 {
-  mgLoadSaveTitle.mg_strText = TRANS("LOAD CONTROLS");
+  gmLoadSaveMenu.gm_mgTitle.mg_strText = TRANS("LOAD CONTROLS");
   gmLoadSaveMenu.gm_bAllowThumbnails = FALSE;
   gmLoadSaveMenu.gm_iSortType = LSSORT_FILEUP;
   gmLoadSaveMenu.gm_bSave = FALSE;
@@ -1250,7 +1227,7 @@ void StartControlsLoadMenu(void)
   gmLoadSaveMenu.gm_fnmSelected = CTString("");
   gmLoadSaveMenu.gm_fnmExt = CTString(".ctl");
   gmLoadSaveMenu.gm_pAfterFileChosen = &LSLoadControls;
-  mgLoadSaveNotes.mg_strText = "";
+  gmLoadSaveMenu.gm_mgNotes.mg_strText = "";
 
   gmLoadSaveMenu.gm_pgmParentMenu = &gmControls;
   ChangeToMenu( &gmLoadSaveMenu);
@@ -1258,7 +1235,7 @@ void StartControlsLoadMenu(void)
 
 void StartCustomLoadMenu(void)
 {
-  mgLoadSaveTitle.mg_strText = TRANS("ADVANCED OPTIONS");
+  gmLoadSaveMenu.gm_mgTitle.mg_strText = TRANS("ADVANCED OPTIONS");
   gmLoadSaveMenu.gm_bAllowThumbnails = FALSE;
   gmLoadSaveMenu.gm_iSortType = LSSORT_NAMEUP;
   gmLoadSaveMenu.gm_bSave = FALSE;
@@ -1267,7 +1244,7 @@ void StartCustomLoadMenu(void)
   gmLoadSaveMenu.gm_fnmSelected = CTString("");
   gmLoadSaveMenu.gm_fnmExt = CTString(".cfg");
   gmLoadSaveMenu.gm_pAfterFileChosen = &LSLoadCustom;
-  mgLoadSaveNotes.mg_strText = "";
+  gmLoadSaveMenu.gm_mgNotes.mg_strText = "";
 
   gmLoadSaveMenu.gm_pgmParentMenu = &gmOptionsMenu;
   ChangeToMenu( &gmLoadSaveMenu);
@@ -1275,7 +1252,7 @@ void StartCustomLoadMenu(void)
 
 void StartAddonsLoadMenu(void)
 {
-  mgLoadSaveTitle.mg_strText = TRANS("EXECUTE ADDON");
+  gmLoadSaveMenu.gm_mgTitle.mg_strText = TRANS("EXECUTE ADDON");
   gmLoadSaveMenu.gm_bAllowThumbnails = FALSE;
   gmLoadSaveMenu.gm_iSortType = LSSORT_NAMEUP;
   gmLoadSaveMenu.gm_bSave = FALSE;
@@ -1284,7 +1261,7 @@ void StartAddonsLoadMenu(void)
   gmLoadSaveMenu.gm_fnmSelected = CTString("");
   gmLoadSaveMenu.gm_fnmExt = CTString(".ini");
   gmLoadSaveMenu.gm_pAfterFileChosen = &LSLoadAddon;
-  mgLoadSaveNotes.mg_strText = "";
+  gmLoadSaveMenu.gm_mgNotes.mg_strText = "";
 
   gmLoadSaveMenu.gm_pgmParentMenu = &gmOptionsMenu;
   ChangeToMenu( &gmLoadSaveMenu);
@@ -1292,7 +1269,7 @@ void StartAddonsLoadMenu(void)
 
 void StartModsLoadMenu(void)
 {
-  mgLoadSaveTitle.mg_strText = TRANS("CHOOSE MOD");
+  gmLoadSaveMenu.gm_mgTitle.mg_strText = TRANS("CHOOSE MOD");
   gmLoadSaveMenu.gm_bAllowThumbnails = TRUE;
   gmLoadSaveMenu.gm_iSortType = LSSORT_NAMEUP;
   gmLoadSaveMenu.gm_bSave = FALSE;
@@ -1308,7 +1285,7 @@ void StartModsLoadMenu(void)
 
 void StartNetworkSettingsMenu(void)
 {
-  mgLoadSaveTitle.mg_strText = TRANS("CONNECTION SETTINGS");
+  gmLoadSaveMenu.gm_mgTitle.mg_strText = TRANS("CONNECTION SETTINGS");
   gmLoadSaveMenu.gm_bAllowThumbnails = FALSE;
   gmLoadSaveMenu.gm_iSortType = LSSORT_FILEUP;
   gmLoadSaveMenu.gm_bSave = FALSE;
@@ -1318,7 +1295,7 @@ void StartNetworkSettingsMenu(void)
   gmLoadSaveMenu.gm_fnmExt = CTString(".ini");
   gmLoadSaveMenu.gm_pAfterFileChosen = &LSLoadNetSettings;
   if (sam_strNetworkSettings=="") {
-    mgLoadSaveNotes.mg_strText = TRANS(
+    gmLoadSaveMenu.gm_mgNotes.mg_strText = TRANS(
       "Before joining a network game,\n"
       "you have to adjust your connection parameters.\n"
       "Choose one option from the list.\n"
@@ -1326,7 +1303,7 @@ void StartNetworkSettingsMenu(void)
       "these parameters again from the Options menu.\n"
       );
   } else {
-    mgLoadSaveNotes.mg_strText = "";
+    gmLoadSaveMenu.gm_mgNotes.mg_strText = "";
   }
 
   gmLoadSaveMenu.gm_pgmParentMenu = &gmOptionsMenu;
@@ -1336,12 +1313,12 @@ void StartNetworkSettingsMenu(void)
 void SetQuickLoadNotes(void)
 {
   if (_pShell->GetINDEX("gam_iQuickSaveSlots")<=8) {
-    mgLoadSaveNotes.mg_strText = TRANS(
+    gmLoadSaveMenu.gm_mgNotes.mg_strText = TRANS(
       "In-game QuickSave shortcuts:\n"
       "F6 - save a new QuickSave\n"
       "F9 - load the last QuickSave\n");
   } else {
-    mgLoadSaveNotes.mg_strText = "";
+    gmLoadSaveMenu.gm_mgNotes.mg_strText = "";
   }
 }
 
@@ -1349,7 +1326,7 @@ void StartSinglePlayerQuickLoadMenu(void)
 {
   _gmMenuGameMode = GM_SINGLE_PLAYER;
 
-  mgLoadSaveTitle.mg_strText = TRANS("QUICK LOAD");
+  gmLoadSaveMenu.gm_mgTitle.mg_strText = TRANS("QUICK LOAD");
   gmLoadSaveMenu.gm_bAllowThumbnails = TRUE;
   gmLoadSaveMenu.gm_iSortType = LSSORT_FILEDN;
   gmLoadSaveMenu.gm_bSave = FALSE;
@@ -1368,7 +1345,7 @@ void StartSinglePlayerLoadMenu(void)
 {
   _gmMenuGameMode = GM_SINGLE_PLAYER;
 
-  mgLoadSaveTitle.mg_strText = TRANS("LOAD");
+  gmLoadSaveMenu.gm_mgTitle.mg_strText = TRANS("LOAD");
   gmLoadSaveMenu.gm_bAllowThumbnails = TRUE;
   gmLoadSaveMenu.gm_iSortType = LSSORT_FILEDN;
   gmLoadSaveMenu.gm_bSave = FALSE;
@@ -1377,7 +1354,7 @@ void StartSinglePlayerLoadMenu(void)
   gmLoadSaveMenu.gm_fnmSelected = CTString("");
   gmLoadSaveMenu.gm_fnmExt = CTString(".sav");
   gmLoadSaveMenu.gm_pAfterFileChosen = &LSLoadSinglePlayer;
-  mgLoadSaveNotes.mg_strText = "";
+  gmLoadSaveMenu.gm_mgNotes.mg_strText = "";
 
   gmLoadSaveMenu.gm_pgmParentMenu = pgmCurrentMenu;
   ChangeToMenu( &gmLoadSaveMenu);
@@ -1391,7 +1368,7 @@ void StartSinglePlayerSaveMenu(void)
     return;
   }
   _gmMenuGameMode = GM_SINGLE_PLAYER;
-  mgLoadSaveTitle.mg_strText = TRANS("SAVE");
+  gmLoadSaveMenu.gm_mgTitle.mg_strText = TRANS("SAVE");
   gmLoadSaveMenu.gm_bAllowThumbnails = TRUE;
   gmLoadSaveMenu.gm_iSortType = LSSORT_FILEDN;
   gmLoadSaveMenu.gm_bSave = TRUE;
@@ -1401,7 +1378,7 @@ void StartSinglePlayerSaveMenu(void)
   gmLoadSaveMenu.gm_fnmBaseName = CTString("SaveGame");
   gmLoadSaveMenu.gm_fnmExt = CTString(".sav");
   gmLoadSaveMenu.gm_pAfterFileChosen = &LSSaveAnyGame;
-  mgLoadSaveNotes.mg_strText = "";
+  gmLoadSaveMenu.gm_mgNotes.mg_strText = "";
   gmLoadSaveMenu.gm_strSaveDes = _pGame->GetDefaultGameDescription(TRUE);
 
   gmLoadSaveMenu.gm_pgmParentMenu = pgmCurrentMenu;
@@ -1411,7 +1388,7 @@ void StartDemoLoadMenu(void)
 {
   _gmMenuGameMode = GM_DEMO;
 
-  mgLoadSaveTitle.mg_strText = TRANS("PLAY DEMO");
+  gmLoadSaveMenu.gm_mgTitle.mg_strText = TRANS("PLAY DEMO");
   gmLoadSaveMenu.gm_bAllowThumbnails = TRUE;
   gmLoadSaveMenu.gm_iSortType = LSSORT_FILEDN;
   gmLoadSaveMenu.gm_bSave = FALSE;
@@ -1420,7 +1397,7 @@ void StartDemoLoadMenu(void)
   gmLoadSaveMenu.gm_fnmSelected = CTString("");
   gmLoadSaveMenu.gm_fnmExt = CTString(".dem");
   gmLoadSaveMenu.gm_pAfterFileChosen = &LSLoadDemo;
-  mgLoadSaveNotes.mg_strText = "";
+  gmLoadSaveMenu.gm_mgNotes.mg_strText = "";
 
   gmLoadSaveMenu.gm_pgmParentMenu = pgmCurrentMenu;
   ChangeToMenu( &gmLoadSaveMenu);
@@ -1430,7 +1407,7 @@ void StartDemoSaveMenu(void)
   if( _gmRunningGameMode == GM_NONE) return;
   _gmMenuGameMode = GM_DEMO;
 
-  mgLoadSaveTitle.mg_strText = TRANS("RECORD DEMO");
+  gmLoadSaveMenu.gm_mgTitle.mg_strText = TRANS("RECORD DEMO");
   gmLoadSaveMenu.gm_bAllowThumbnails = TRUE;
   gmLoadSaveMenu.gm_iSortType = LSSORT_FILEUP;
   gmLoadSaveMenu.gm_bSave = TRUE;
@@ -1440,7 +1417,7 @@ void StartDemoSaveMenu(void)
   gmLoadSaveMenu.gm_fnmBaseName = CTString("Demo");
   gmLoadSaveMenu.gm_fnmExt = CTString(".dem");
   gmLoadSaveMenu.gm_pAfterFileChosen = &LSSaveDemo;
-  mgLoadSaveNotes.mg_strText = "";
+  gmLoadSaveMenu.gm_mgNotes.mg_strText = "";
   gmLoadSaveMenu.gm_strSaveDes = _pGame->GetDefaultGameDescription(FALSE);
 
   gmLoadSaveMenu.gm_pgmParentMenu = pgmCurrentMenu;
@@ -1451,7 +1428,7 @@ void StartNetworkQuickLoadMenu(void)
 {
   _gmMenuGameMode = GM_NETWORK;
 
-  mgLoadSaveTitle.mg_strText = TRANS("QUICK LOAD");
+  gmLoadSaveMenu.gm_mgTitle.mg_strText = TRANS("QUICK LOAD");
   gmLoadSaveMenu.gm_bAllowThumbnails = TRUE;
   gmLoadSaveMenu.gm_iSortType = LSSORT_FILEDN;
   gmLoadSaveMenu.gm_bSave = FALSE;
@@ -1470,7 +1447,7 @@ void StartNetworkLoadMenu(void)
 {
   _gmMenuGameMode = GM_NETWORK;
 
-  mgLoadSaveTitle.mg_strText = TRANS("LOAD");
+  gmLoadSaveMenu.gm_mgTitle.mg_strText = TRANS("LOAD");
   gmLoadSaveMenu.gm_bAllowThumbnails = TRUE;
   gmLoadSaveMenu.gm_iSortType = LSSORT_FILEDN;
   gmLoadSaveMenu.gm_bSave = FALSE;
@@ -1479,7 +1456,7 @@ void StartNetworkLoadMenu(void)
   gmLoadSaveMenu.gm_fnmSelected = CTString("");
   gmLoadSaveMenu.gm_fnmExt = CTString(".sav");
   gmLoadSaveMenu.gm_pAfterFileChosen = &LSLoadNetwork;
-  mgLoadSaveNotes.mg_strText = "";
+  gmLoadSaveMenu.gm_mgNotes.mg_strText = "";
   
   gmLoadSaveMenu.gm_pgmParentMenu = pgmCurrentMenu;
   ChangeToMenu( &gmLoadSaveMenu);
@@ -1490,7 +1467,7 @@ void StartNetworkSaveMenu(void)
   if( _gmRunningGameMode != GM_NETWORK) return;
   _gmMenuGameMode = GM_NETWORK;
 
-  mgLoadSaveTitle.mg_strText = TRANS("SAVE");
+  gmLoadSaveMenu.gm_mgTitle.mg_strText = TRANS("SAVE");
   gmLoadSaveMenu.gm_bAllowThumbnails = TRUE;
   gmLoadSaveMenu.gm_iSortType = LSSORT_FILEDN;
   gmLoadSaveMenu.gm_bSave = TRUE;
@@ -1500,7 +1477,7 @@ void StartNetworkSaveMenu(void)
   gmLoadSaveMenu.gm_fnmBaseName = CTString("SaveGame");
   gmLoadSaveMenu.gm_fnmExt = CTString(".sav");
   gmLoadSaveMenu.gm_pAfterFileChosen = &LSSaveAnyGame;
-  mgLoadSaveNotes.mg_strText = "";
+  gmLoadSaveMenu.gm_mgNotes.mg_strText = "";
   gmLoadSaveMenu.gm_strSaveDes = _pGame->GetDefaultGameDescription(TRUE);
   
   gmLoadSaveMenu.gm_pgmParentMenu = pgmCurrentMenu;
@@ -1511,7 +1488,7 @@ void StartSplitScreenQuickLoadMenu(void)
 {
   _gmMenuGameMode = GM_SPLIT_SCREEN;
 
-  mgLoadSaveTitle.mg_strText = TRANS("QUICK LOAD");
+  gmLoadSaveMenu.gm_mgTitle.mg_strText = TRANS("QUICK LOAD");
   gmLoadSaveMenu.gm_bAllowThumbnails = TRUE;
   gmLoadSaveMenu.gm_iSortType = LSSORT_FILEDN;
   gmLoadSaveMenu.gm_bSave = FALSE;
@@ -1530,7 +1507,7 @@ void StartSplitScreenLoadMenu(void)
 {
   _gmMenuGameMode = GM_SPLIT_SCREEN;
 
-  mgLoadSaveTitle.mg_strText = TRANS("LOAD");
+  gmLoadSaveMenu.gm_mgTitle.mg_strText = TRANS("LOAD");
   gmLoadSaveMenu.gm_bAllowThumbnails = TRUE;
   gmLoadSaveMenu.gm_iSortType = LSSORT_FILEDN;
   gmLoadSaveMenu.gm_bSave = FALSE;
@@ -1539,7 +1516,7 @@ void StartSplitScreenLoadMenu(void)
   gmLoadSaveMenu.gm_fnmSelected = CTString("");
   gmLoadSaveMenu.gm_fnmExt = CTString(".sav");
   gmLoadSaveMenu.gm_pAfterFileChosen = &LSLoadSplitScreen;
-  mgLoadSaveNotes.mg_strText = "";
+  gmLoadSaveMenu.gm_mgNotes.mg_strText = "";
   
   gmLoadSaveMenu.gm_pgmParentMenu = pgmCurrentMenu;
   ChangeToMenu( &gmLoadSaveMenu);
@@ -1549,7 +1526,7 @@ void StartSplitScreenSaveMenu(void)
   if( _gmRunningGameMode != GM_SPLIT_SCREEN) return;
   _gmMenuGameMode = GM_SPLIT_SCREEN;
 
-  mgLoadSaveTitle.mg_strText = TRANS("SAVE");
+  gmLoadSaveMenu.gm_mgTitle.mg_strText = TRANS("SAVE");
   gmLoadSaveMenu.gm_bAllowThumbnails = TRUE;
   gmLoadSaveMenu.gm_iSortType = LSSORT_FILEDN;
   gmLoadSaveMenu.gm_bSave = TRUE;
@@ -1559,7 +1536,7 @@ void StartSplitScreenSaveMenu(void)
   gmLoadSaveMenu.gm_fnmBaseName = CTString("SaveGame");
   gmLoadSaveMenu.gm_fnmExt = CTString(".sav");
   gmLoadSaveMenu.gm_pAfterFileChosen = &LSSaveAnyGame;
-  mgLoadSaveNotes.mg_strText = "";
+  gmLoadSaveMenu.gm_mgNotes.mg_strText = "";
   gmLoadSaveMenu.gm_strSaveDes = _pGame->GetDefaultGameDescription(TRUE);
   
   gmLoadSaveMenu.gm_pgmParentMenu = pgmCurrentMenu;
@@ -1973,7 +1950,8 @@ void InitializeMenus(void)
 
     gmPlayerProfile.Initialize_t();
     gmPlayerProfile.gm_strName="PlayerProfile";
-    gmPlayerProfile.gm_pmgSelectedByDefault = &mgPlayerName;
+	gmPlayerProfile.gm_pmgSelectedByDefault = &gmPlayerProfile.gm_mgNameField;
+	InitActionsForPlayerProfileMenu();
 
     gmControls.Initialize_t();
     gmControls.gm_strName="Controls";
@@ -1984,7 +1962,7 @@ void InitializeMenus(void)
     // Load/Save menu is called
     gmLoadSaveMenu.Initialize_t();
     gmLoadSaveMenu.gm_strName="LoadSave";
-    gmLoadSaveMenu.gm_pmgSelectedByDefault = &amgLSButton[0];
+	gmLoadSaveMenu.gm_pmgSelectedByDefault = &gmLoadSaveMenu.gm_amgButton[0];
 
     gmHighScoreMenu.Initialize_t();
     gmHighScoreMenu.gm_strName="HighScore";
@@ -2945,7 +2923,7 @@ BOOL CGameMenu::OnChar(MSG msg)
 
 // ------------------------ CConfirmMenu implementation
 void InitActionsForConfirmMenu() {
-	gmConfirmMenu.gm_mgConfirmLabel.mg_pActivatedFunction = &ConfirmYes;
+	gmConfirmMenu.gm_mgConfirmYes.mg_pActivatedFunction = &ConfirmYes;
 	gmConfirmMenu.gm_mgConfirmNo.mg_pActivatedFunction = &ConfirmNo;
 }
 
@@ -3123,276 +3101,27 @@ void ChangeSharpTurning(INDEX iNew)
 }
 
 // ------------------------ CPlayerProfileMenu implementation
-void CPlayerProfileMenu::Initialize_t(void)
+extern void PPOnPlayerSelect(void)
 {
-  // intialize player and controls menu
-  _bPlayerMenuFromSinglePlayer = FALSE;
-  mgPlayerProfileTitle.mg_boxOnScreen = BoxTitle();
-  mgPlayerProfileTitle.mg_strText = TRANS("PLAYER PROFILE");
-  gm_lhGadgets.AddTail( mgPlayerProfileTitle.mg_lnNode);
-
-  mgPlayerNoLabel.mg_strText = TRANS("PROFILE:");
-  mgPlayerNoLabel.mg_boxOnScreen = BoxMediumLeft(0.0f);
-  mgPlayerNoLabel.mg_bfsFontSize = BFS_MEDIUM;
-  mgPlayerNoLabel.mg_iCenterI = -1;
-  gm_lhGadgets.AddTail( mgPlayerNoLabel.mg_lnNode);
-
-#define ADD_SELECT_PLAYER_MG( index, mg, mgprev, mgnext, me)\
-  mg.mg_iIndex = index;\
-  mg.mg_bfsFontSize = BFS_MEDIUM;\
-  mg.mg_boxOnScreen = BoxNoUp(index);\
-  mg.mg_bRectangle = TRUE;\
-  mg.mg_pmgLeft = &mgprev;\
-  mg.mg_pmgRight = &mgnext;\
-  mg.mg_pmgUp = &mgPlayerCustomizeControls;\
-  mg.mg_pmgDown = &mgPlayerName;\
-  mg.mg_pActivatedFunction = &OnPlayerSelect;\
-  mg.mg_strText = #index;\
-  mg.mg_strTip = TRANS("select new currently active player");\
-  gm_lhGadgets.AddTail( mg.mg_lnNode);
-
-  ADD_SELECT_PLAYER_MG( 0, mgPlayerNo[0], mgPlayerNo[7], mgPlayerNo[1], mePlayerNo[0]);
-  ADD_SELECT_PLAYER_MG( 1, mgPlayerNo[1], mgPlayerNo[0], mgPlayerNo[2], mePlayerNo[1]);
-  ADD_SELECT_PLAYER_MG( 2, mgPlayerNo[2], mgPlayerNo[1], mgPlayerNo[3], mePlayerNo[2]);
-  ADD_SELECT_PLAYER_MG( 3, mgPlayerNo[3], mgPlayerNo[2], mgPlayerNo[4], mePlayerNo[3]);
-  ADD_SELECT_PLAYER_MG( 4, mgPlayerNo[4], mgPlayerNo[3], mgPlayerNo[5], mePlayerNo[4]);
-  ADD_SELECT_PLAYER_MG( 5, mgPlayerNo[5], mgPlayerNo[4], mgPlayerNo[6], mePlayerNo[5]);
-  ADD_SELECT_PLAYER_MG( 6, mgPlayerNo[6], mgPlayerNo[5], mgPlayerNo[7], mePlayerNo[6]);
-  ADD_SELECT_PLAYER_MG( 7, mgPlayerNo[7], mgPlayerNo[6], mgPlayerNo[0], mePlayerNo[7]);
-  mgPlayerNo[7].mg_pmgRight = &mgPlayerModel;
-  
-  mgPlayerNameLabel.mg_strText = TRANS("NAME:");
-  mgPlayerNameLabel.mg_boxOnScreen = BoxMediumLeft(1.25f);
-  mgPlayerNameLabel.mg_bfsFontSize = BFS_MEDIUM;
-  mgPlayerNameLabel.mg_iCenterI = -1;
-  gm_lhGadgets.AddTail( mgPlayerNameLabel.mg_lnNode);
-
-  // setup of player name button is done on start menu
-  mgPlayerName.mg_strText = "<???>";
-  mgPlayerName.mg_ctMaxStringLen = 25;
-  mgPlayerName.mg_boxOnScreen = BoxPlayerEdit(1.25);
-  mgPlayerName.mg_bfsFontSize = BFS_MEDIUM;
-  mgPlayerName.mg_iCenterI = -1;
-  mgPlayerName.mg_pmgUp = &mgPlayerNo[0];
-  mgPlayerName.mg_pmgDown = &mgPlayerTeam;
-  mgPlayerName.mg_pmgRight = &mgPlayerModel;
-  mgPlayerName.mg_strTip = TRANS("rename currently active player");
-  gm_lhGadgets.AddTail( mgPlayerName.mg_lnNode);
-  
-  mgPlayerTeamLabel.mg_strText = TRANS("TEAM:");
-  mgPlayerTeamLabel.mg_boxOnScreen = BoxMediumLeft(2.25f);
-  mgPlayerTeamLabel.mg_bfsFontSize = BFS_MEDIUM;
-  mgPlayerTeamLabel.mg_iCenterI = -1;
-  gm_lhGadgets.AddTail( mgPlayerTeamLabel.mg_lnNode);
-
-  // setup of player name button is done on start menu
-  mgPlayerTeam.mg_strText = "<???>";
-  mgPlayerName.mg_ctMaxStringLen = 25;
-  mgPlayerTeam.mg_boxOnScreen = BoxPlayerEdit(2.25f);
-  mgPlayerTeam.mg_bfsFontSize = BFS_MEDIUM;
-  mgPlayerTeam.mg_iCenterI = -1;
-  mgPlayerTeam.mg_pmgUp = &mgPlayerName;
-  mgPlayerTeam.mg_pmgDown = &mgPlayerCrosshair;
-  mgPlayerTeam.mg_pmgRight = &mgPlayerModel;
-  //mgPlayerTeam.mg_strTip = TRANS("teamplay is disabled in this version");
-  mgPlayerTeam.mg_strTip = TRANS("enter team name, if playing in team");
-  gm_lhGadgets.AddTail( mgPlayerTeam.mg_lnNode);
-
-  TRIGGER_MG(mgPlayerCrosshair, 4.0, mgPlayerTeam, mgPlayerWeaponSelect, TRANS("CROSSHAIR"), astrCrosshair);
-  mgPlayerCrosshair.mg_bVisual = TRUE;
-  mgPlayerCrosshair.mg_boxOnScreen = BoxPlayerSwitch(5.0f);
-  mgPlayerCrosshair.mg_iCenterI = -1;
-  mgPlayerCrosshair.mg_pOnTriggerChange = ChangeCrosshair;
-  TRIGGER_MG(mgPlayerWeaponSelect, 4.0, mgPlayerCrosshair, mgPlayerWeaponHide, TRANS("AUTO SELECT WEAPON"), astrWeapon);
-  mgPlayerWeaponSelect.mg_boxOnScreen = BoxPlayerSwitch(6.0f);
-  mgPlayerWeaponSelect.mg_iCenterI = -1;
-  mgPlayerWeaponSelect.mg_pOnTriggerChange = ChangeWeaponSelect;
-  TRIGGER_MG(mgPlayerWeaponHide, 4.0, mgPlayerWeaponSelect, mgPlayer3rdPerson, TRANS("HIDE WEAPON MODEL"), astrNoYes);
-  mgPlayerWeaponHide.mg_boxOnScreen = BoxPlayerSwitch(7.0f);
-  mgPlayerWeaponHide.mg_iCenterI = -1;
-  mgPlayerWeaponHide.mg_pOnTriggerChange = ChangeWeaponHide;
-  TRIGGER_MG(mgPlayer3rdPerson, 4.0, mgPlayerWeaponHide, mgPlayerQuotes, TRANS("PREFER 3RD PERSON VIEW"), astrNoYes);
-  mgPlayer3rdPerson.mg_boxOnScreen = BoxPlayerSwitch(8.0f);
-  mgPlayer3rdPerson.mg_iCenterI = -1;
-  mgPlayer3rdPerson.mg_pOnTriggerChange = Change3rdPerson;
-  TRIGGER_MG(mgPlayerQuotes, 4.0, mgPlayer3rdPerson, mgPlayerAutoSave, TRANS("VOICE QUOTES"), astrNoYes);
-  mgPlayerQuotes.mg_boxOnScreen = BoxPlayerSwitch(9.0f);
-  mgPlayerQuotes.mg_iCenterI = -1;
-  mgPlayerQuotes.mg_pOnTriggerChange = ChangeQuotes;
-  TRIGGER_MG(mgPlayerAutoSave, 4.0, mgPlayerQuotes, mgPlayerCompDoubleClick, TRANS("AUTO SAVE"), astrNoYes);
-  mgPlayerAutoSave.mg_boxOnScreen = BoxPlayerSwitch(10.0f);
-  mgPlayerAutoSave.mg_iCenterI = -1;
-  mgPlayerAutoSave.mg_pOnTriggerChange = ChangeAutoSave;
-  TRIGGER_MG(mgPlayerCompDoubleClick, 4.0, mgPlayerAutoSave, mgPlayerSharpTurning, TRANS("INVOKE COMPUTER"), astrComputerInvoke);
-  mgPlayerCompDoubleClick.mg_boxOnScreen = BoxPlayerSwitch(11.0f);
-  mgPlayerCompDoubleClick.mg_iCenterI = -1;
-  mgPlayerCompDoubleClick.mg_pOnTriggerChange = ChangeCompDoubleClick;
-  TRIGGER_MG(mgPlayerSharpTurning, 4.0, mgPlayerCompDoubleClick, mgPlayerViewBobbing, TRANS("SHARP TURNING"), astrNoYes);
-  mgPlayerSharpTurning.mg_boxOnScreen = BoxPlayerSwitch(12.0f);
-  mgPlayerSharpTurning.mg_iCenterI = -1;
-  mgPlayerSharpTurning.mg_pOnTriggerChange = ChangeSharpTurning;
-  TRIGGER_MG(mgPlayerViewBobbing, 4.0, mgPlayerSharpTurning, mgPlayerCustomizeControls, TRANS("VIEW BOBBING"), astrNoYes);
-  mgPlayerViewBobbing.mg_boxOnScreen = BoxPlayerSwitch(13.0f);
-  mgPlayerViewBobbing.mg_iCenterI = -1;
-  mgPlayerViewBobbing.mg_pOnTriggerChange = ChangeViewBobbing;
-
-  mgPlayerCustomizeControls.mg_strText = TRANS("CUSTOMIZE CONTROLS");
-  mgPlayerCustomizeControls.mg_boxOnScreen = BoxMediumLeft(14.5f);
-  mgPlayerCustomizeControls.mg_bfsFontSize = BFS_MEDIUM;
-  mgPlayerCustomizeControls.mg_iCenterI = -1;
-  mgPlayerCustomizeControls.mg_pmgUp = &mgPlayerViewBobbing;
-  mgPlayerCustomizeControls.mg_pActivatedFunction = &StartControlsMenuFromPlayer;
-  mgPlayerCustomizeControls.mg_pmgDown = &mgPlayerNo[0];
-  mgPlayerCustomizeControls.mg_pmgRight = &mgPlayerModel;
-  mgPlayerCustomizeControls.mg_strTip = TRANS("customize controls for this player");
-  gm_lhGadgets.AddTail( mgPlayerCustomizeControls.mg_lnNode);
-
-  mgPlayerModel.mg_boxOnScreen = BoxPlayerModel();
-  mgPlayerModel.mg_pmgLeft = &mgPlayerName;
-  mgPlayerModel.mg_pActivatedFunction = &StartPlayerModelLoadMenu;
-  mgPlayerModel.mg_pmgDown = &mgPlayerName;
-  mgPlayerModel.mg_pmgLeft = &mgPlayerName;
-  mgPlayerModel.mg_strTip = TRANS("change model for this player");
-  gm_lhGadgets.AddTail( mgPlayerModel.mg_lnNode);
+	ASSERT(_pmgLastActivatedGadget != NULL);
+	if (_pmgLastActivatedGadget->mg_bEnabled) {
+		gmPlayerProfile.SelectPlayer(((CMGButton *)_pmgLastActivatedGadget)->mg_iIndex);
+	}
 }
 
-INDEX CPlayerProfileMenu::ComboFromPlayer(INDEX iPlayer)
+void InitActionsForPlayerProfileMenu()
 {
-  return iPlayer;
-}
-
-INDEX CPlayerProfileMenu::PlayerFromCombo(INDEX iCombo)
-{
-  return iCombo;
-}
-
-void CPlayerProfileMenu::SelectPlayer(INDEX iPlayer)
-{
-  CPlayerCharacter &pc = _pGame->gm_apcPlayers[iPlayer];
-
-  for( INDEX iPl=0; iPl<8; iPl++)
-  {
-    mgPlayerNo[iPl].mg_bHighlighted = FALSE;
-  }
-
-  mgPlayerNo[iPlayer].mg_bHighlighted = TRUE;
-
-  iPlayer = Clamp(iPlayer, INDEX(0), INDEX(7));
-
-  if (_iLocalPlayer>=0 && _iLocalPlayer<4) {
-    _pGame->gm_aiMenuLocalPlayers[_iLocalPlayer] = iPlayer;
-  } else {
-    _pGame->gm_iSinglePlayer = iPlayer;
-  }
-  mgPlayerName.mg_pstrToChange = &pc.pc_strName;
-  mgPlayerName.SetText( *mgPlayerName.mg_pstrToChange);
-  mgPlayerTeam.mg_pstrToChange = &pc.pc_strTeam;
-  mgPlayerTeam.SetText( *mgPlayerTeam.mg_pstrToChange);
-
-  CPlayerSettings *pps = (CPlayerSettings *)pc.pc_aubAppearance;
-
-  mgPlayerCrosshair.mg_iSelected = pps->ps_iCrossHairType+1;
-  mgPlayerCrosshair.ApplyCurrentSelection();
-  mgPlayerWeaponSelect.mg_iSelected = pps->ps_iWeaponAutoSelect;
-  mgPlayerWeaponSelect.ApplyCurrentSelection();
-  mgPlayerWeaponHide.mg_iSelected = (pps->ps_ulFlags&PSF_HIDEWEAPON)?1:0;
-  mgPlayerWeaponHide.ApplyCurrentSelection();
-  mgPlayer3rdPerson.mg_iSelected = (pps->ps_ulFlags&PSF_PREFER3RDPERSON)?1:0;
-  mgPlayer3rdPerson.ApplyCurrentSelection();
-  mgPlayerQuotes.mg_iSelected = (pps->ps_ulFlags&PSF_NOQUOTES)?0:1;
-  mgPlayerQuotes.ApplyCurrentSelection();
-  mgPlayerAutoSave.mg_iSelected = (pps->ps_ulFlags&PSF_AUTOSAVE)?1:0;
-  mgPlayerAutoSave.ApplyCurrentSelection();
-  mgPlayerCompDoubleClick.mg_iSelected = (pps->ps_ulFlags&PSF_COMPSINGLECLICK)?0:1;
-  mgPlayerCompDoubleClick.ApplyCurrentSelection();
-  mgPlayerViewBobbing.mg_iSelected = (pps->ps_ulFlags&PSF_NOBOBBING)?0:1;
-  mgPlayerViewBobbing.ApplyCurrentSelection();
-  mgPlayerSharpTurning.mg_iSelected = (pps->ps_ulFlags&PSF_SHARPTURNING)?1:0;
-  mgPlayerSharpTurning.ApplyCurrentSelection();
-
-  // get function that will set player appearance
-  CShellSymbol *pss = _pShell->GetSymbol("SetPlayerAppearance", /*bDeclaredOnly=*/ TRUE);
-  // if none
-  if (pss==NULL) {
-    // no model
-    mgPlayerModel.mg_moModel.SetData(NULL);
-  // if there is some
-  } else {
-    // set the model
-    BOOL (*pFunc)(CModelObject *, CPlayerCharacter *, CTString &, BOOL) =
-      (BOOL (*)(CModelObject *, CPlayerCharacter *, CTString &, BOOL))pss->ss_pvValue;
-    CTString strName;
-    BOOL bSet;
-    if( _gmRunningGameMode!=GM_SINGLE_PLAYER && !_bPlayerMenuFromSinglePlayer) {
-      bSet = pFunc(&mgPlayerModel.mg_moModel, &pc, strName, TRUE);
-      mgPlayerModel.mg_strTip = TRANS("change model for this player");
-      mgPlayerModel.mg_bEnabled = TRUE;
-    } else {
-      // cannot change player appearance in single player mode
-      bSet = pFunc(&mgPlayerModel.mg_moModel, NULL, strName, TRUE);
-      mgPlayerModel.mg_strTip = TRANS("cannot change model for single-player game");
-      mgPlayerModel.mg_bEnabled = FALSE;
-    }
-    // ignore gender flags, if any
-    strName.RemovePrefix("#female#"); 
-    strName.RemovePrefix("#male#");
-    mgPlayerModel.mg_plModel = CPlacement3D(FLOAT3D(0.1f,-1.0f,-3.5f), ANGLE3D(150,0,0));
-    mgPlayerModel.mg_strText = strName;
-    CPlayerSettings *pps = (CPlayerSettings *)pc.pc_aubAppearance;
-    _strLastPlayerAppearance = pps->GetModelFilename();
-    try {
-      mgPlayerModel.mg_moFloor.SetData_t(CTFILENAME("Models\\Computer\\Floor.mdl"));
-      mgPlayerModel.mg_moFloor.mo_toTexture.SetData_t(CTFILENAME("Models\\Computer\\Floor.tex"));
-    } catch (char *strError) {
-      (void)strError;
-    }
-  }
-}
-
-
-void OnPlayerSelect(void)
-{
-  ASSERT( _pmgLastActivatedGadget != NULL);
-  if (_pmgLastActivatedGadget->mg_bEnabled) {
-    gmPlayerProfile.SelectPlayer( ((CMGButton *)_pmgLastActivatedGadget)->mg_iIndex);
-  }
-}
-
-void CPlayerProfileMenu::StartMenu(void)
-{
-  gmPlayerProfile.gm_pmgSelectedByDefault = &mgPlayerName;
-
-  if (_gmRunningGameMode==GM_NONE || _gmRunningGameMode==GM_DEMO) {
-    for(INDEX i=0; i<8; i++) {
-      mgPlayerNo[i].mg_bEnabled = TRUE;
-    }
-  } else {
-    for(INDEX i=0; i<8; i++) {
-      mgPlayerNo[i].mg_bEnabled = FALSE;
-    }
-    INDEX iFirstEnabled = 0;
-    {for(INDEX ilp=0; ilp<4; ilp++) {
-      CLocalPlayer &lp = _pGame->gm_lpLocalPlayers[ilp];
-      if (lp.lp_bActive) {
-        mgPlayerNo[lp.lp_iPlayer].mg_bEnabled = TRUE;
-        if (iFirstEnabled==0) {
-          iFirstEnabled = lp.lp_iPlayer;
-        }
-      }
-    }}
-    // backup to first player in case current player is disabled
-    if( !mgPlayerNo[*gm_piCurrentPlayer].mg_bEnabled) *gm_piCurrentPlayer = iFirstEnabled;
-  }
-  // done
-  SelectPlayer( *gm_piCurrentPlayer);
-  CGameMenu::StartMenu();
-}
-
-
-void CPlayerProfileMenu::EndMenu(void)
-{
-  _pGame->SavePlayersAndControls();
-  CGameMenu::EndMenu();
+	gmPlayerProfile.gm_mgCrosshair.mg_pOnTriggerChange = ChangeCrosshair;
+	gmPlayerProfile.gm_mgWeaponSelect.mg_pOnTriggerChange = ChangeWeaponSelect;
+	gmPlayerProfile.gm_mgWeaponHide.mg_pOnTriggerChange = ChangeWeaponHide;
+	gmPlayerProfile.gm_mg3rdPerson.mg_pOnTriggerChange = Change3rdPerson;
+	gmPlayerProfile.gm_mgQuotes.mg_pOnTriggerChange = ChangeQuotes;
+	gmPlayerProfile.gm_mgAutoSave.mg_pOnTriggerChange = ChangeAutoSave;
+	gmPlayerProfile.gm_mgCompDoubleClick.mg_pOnTriggerChange = ChangeCompDoubleClick;
+	gmPlayerProfile.gm_mgSharpTurning.mg_pOnTriggerChange = ChangeSharpTurning;
+	gmPlayerProfile.gm_mgViewBobbing.mg_pOnTriggerChange = ChangeViewBobbing;
+	gmPlayerProfile.gm_mgCustomizeControls.mg_pActivatedFunction = &StartControlsMenuFromPlayer;
+	gmPlayerProfile.gm_mgModel.mg_pActivatedFunction = &StartPlayerModelLoadMenu;
 }
 
 // ------------------------ CControlsMenu implementation
@@ -3401,218 +3130,6 @@ void InitActionsForControlsMenu()
 	gmControls.gm_mgButtons.mg_pActivatedFunction = &StartCustomizeKeyboardMenu;
 	gmControls.gm_mgAdvanced.mg_pActivatedFunction = &StartCustomizeAxisMenu;
 	gmControls.gm_mgPredefined.mg_pActivatedFunction = &StartControlsLoadMenu;
-}
-
-
-// ------------------------ CLoadSaveMenu implementation
-void CLoadSaveMenu::Initialize_t(void)
-{
-  gm_pgmNextMenu = NULL;
-
-  mgLoadSaveTitle.mg_boxOnScreen = BoxTitle();
-  gm_lhGadgets.AddTail( mgLoadSaveTitle.mg_lnNode);
-
-  mgLoadSaveNotes.mg_boxOnScreen = BoxMediumRow(10.0);
-  mgLoadSaveNotes.mg_bfsFontSize = BFS_MEDIUM;
-  mgLoadSaveNotes.mg_iCenterI = -1;
-  mgLoadSaveNotes.mg_bEnabled = FALSE;
-  mgLoadSaveNotes.mg_bLabel = TRUE;
-  gm_lhGadgets.AddTail( mgLoadSaveNotes.mg_lnNode);
-
-  for( INDEX iLabel=0; iLabel<SAVELOAD_BUTTONS_CT; iLabel++)
-  {
-    INDEX iPrev = (SAVELOAD_BUTTONS_CT+iLabel-1)%SAVELOAD_BUTTONS_CT;
-    INDEX iNext = (iLabel+1)%SAVELOAD_BUTTONS_CT;
-    // initialize label gadgets
-    amgLSButton[iLabel].mg_pmgUp = &amgLSButton[iPrev];
-    amgLSButton[iLabel].mg_pmgDown = &amgLSButton[iNext];
-    amgLSButton[iLabel].mg_boxOnScreen = BoxSaveLoad(iLabel);
-    amgLSButton[iLabel].mg_pActivatedFunction = NULL; // never called!
-    amgLSButton[iLabel].mg_iCenterI = -1;
-    gm_lhGadgets.AddTail( amgLSButton[iLabel].mg_lnNode);
-  }
-
-  gm_lhGadgets.AddTail( mgLSArrowUp.mg_lnNode);
-  gm_lhGadgets.AddTail( mgLSArrowDn.mg_lnNode);
-  mgLSArrowUp.mg_adDirection = AD_UP;
-  mgLSArrowDn.mg_adDirection = AD_DOWN;
-  mgLSArrowUp.mg_boxOnScreen = BoxArrow(AD_UP);
-  mgLSArrowDn.mg_boxOnScreen = BoxArrow(AD_DOWN);
-  mgLSArrowUp.mg_pmgRight = mgLSArrowUp.mg_pmgDown = &amgLSButton[0];
-  mgLSArrowDn.mg_pmgRight = mgLSArrowDn.mg_pmgUp =   &amgLSButton[SAVELOAD_BUTTONS_CT-1];
-
-  gm_ctListVisible = SAVELOAD_BUTTONS_CT;
-  gm_pmgArrowUp = &mgLSArrowUp;
-  gm_pmgArrowDn = &mgLSArrowDn;
-  gm_pmgListTop = &amgLSButton[0];
-  gm_pmgListBottom = &amgLSButton[SAVELOAD_BUTTONS_CT-1];
-}
-
-void CLoadSaveMenu::StartMenu(void)
-{
-  gm_bNoEscape = FALSE;
-
-  // delete all file infos
-  FORDELETELIST( CFileInfo, fi_lnNode, gm_lhFileInfos, itfi) {
-    delete &itfi.Current();
-  }
-
-  // list the directory
-  CDynamicStackArray<CTFileName> afnmDir;
-  MakeDirList(afnmDir, gm_fnmDirectory, "", 0);
-  gm_iLastFile = -1;
-
-  // for each file in the directory
-  for (INDEX i=0; i<afnmDir.Count(); i++) {
-    CTFileName fnm = afnmDir[i];
-  
-    // if it can be parsed
-    CTString strName;
-    if (ParseFile(fnm, strName)) {
-      // create new info for that file
-      CFileInfo *pfi = new CFileInfo;
-      pfi->fi_fnFile = fnm;
-      pfi->fi_strName = strName;
-      // add it to list
-      gm_lhFileInfos.AddTail(pfi->fi_lnNode);
-    }
-  }
-
-  // sort if needed
-  switch (gm_iSortType) {
-  default: ASSERT(FALSE);
-  case LSSORT_NONE: break;
-  case LSSORT_NAMEUP:
-    gm_lhFileInfos.Sort(qsort_CompareFileInfos_NameUp, offsetof(CFileInfo, fi_lnNode));
-    break;
-  case LSSORT_NAMEDN:
-    gm_lhFileInfos.Sort(qsort_CompareFileInfos_NameDn, offsetof(CFileInfo, fi_lnNode));
-    break;
-  case LSSORT_FILEUP:
-    gm_lhFileInfos.Sort(qsort_CompareFileInfos_FileUp, offsetof(CFileInfo, fi_lnNode));
-    break;
-  case LSSORT_FILEDN:
-    gm_lhFileInfos.Sort(qsort_CompareFileInfos_FileDn, offsetof(CFileInfo, fi_lnNode));
-    break;
-  }
-
-  // if saving
-  if (gm_bSave) {
-    // add one info as empty slot
-    CFileInfo *pfi = new CFileInfo;
-    CTString strNumber;
-    strNumber.PrintF("%04d", gm_iLastFile+1);
-    pfi->fi_fnFile = gm_fnmDirectory+gm_fnmBaseName+strNumber+gm_fnmExt;
-    pfi->fi_strName = EMPTYSLOTSTRING;
-    // add it to beginning
-    gm_lhFileInfos.AddHead(pfi->fi_lnNode);
-  }
-
-  // set default parameters for the list
-  gm_iListOffset = 0;
-  gm_ctListTotal = gm_lhFileInfos.Count();
-
-  // find which one should be selected
-  gm_iListWantedItem = 0;
-  if (gm_fnmSelected != "") {
-    INDEX i = 0;
-    FOREACHINLIST(CFileInfo, fi_lnNode, gm_lhFileInfos, itfi) {
-      CFileInfo &fi = *itfi;
-      if (fi.fi_fnFile==gm_fnmSelected) {
-        gm_iListWantedItem = i;
-        break;  
-      }
-      i++;
-    }
-  }
-
-  CGameMenu::StartMenu();
-}
-void CLoadSaveMenu::EndMenu(void)
-{
-  // delete all file infos
-  FORDELETELIST( CFileInfo, fi_lnNode, gm_lhFileInfos, itfi) {
-    delete &itfi.Current();
-  }
-  gm_pgmNextMenu = NULL;
-  CGameMenu::EndMenu();
-}
-
-void CLoadSaveMenu::FillListItems(void)
-{
-  // disable all items first
-  for(INDEX i=0; i<SAVELOAD_BUTTONS_CT; i++) {
-    amgLSButton[i].mg_bEnabled = FALSE;
-    amgLSButton[i].mg_strText = TRANS("<empty>");
-    amgLSButton[i].mg_strTip = "";
-    amgLSButton[i].mg_iInList = -2;
-  }
-
-  BOOL bHasFirst = FALSE;
-  BOOL bHasLast = FALSE;
-  INDEX ctLabels = gm_lhFileInfos.Count();
-  INDEX iLabel=0;
-  FOREACHINLIST(CFileInfo, fi_lnNode, gm_lhFileInfos, itfi) {
-    CFileInfo &fi = *itfi;
-    INDEX iInMenu = iLabel-gm_iListOffset;
-    if( (iLabel>=gm_iListOffset) && 
-        (iLabel<(gm_iListOffset+SAVELOAD_BUTTONS_CT)) )
-    {
-      bHasFirst|=(iLabel==0);
-      bHasLast |=(iLabel==ctLabels-1);
-      amgLSButton[iInMenu].mg_iInList = iLabel;
-      amgLSButton[iInMenu].mg_strDes  = fi.fi_strName;
-      amgLSButton[iInMenu].mg_fnm  = fi.fi_fnFile;
-      amgLSButton[iInMenu].mg_bEnabled = TRUE;
-      amgLSButton[iInMenu].RefreshText();
-      if (gm_bSave) {
-        if (!FileExistsForWriting(amgLSButton[iInMenu].mg_fnm)) {
-          amgLSButton[iInMenu].mg_strTip = TRANS("Enter - save in new slot");
-        } else {
-          amgLSButton[iInMenu].mg_strTip = TRANS("Enter - save here, F2 - rename, Del - delete");
-        }
-      } else if (gm_bManage) {
-        amgLSButton[iInMenu].mg_strTip = TRANS("Enter - load this, F2 - rename, Del - delete");
-      } else {
-        amgLSButton[iInMenu].mg_strTip = TRANS("Enter - load this");
-      }
-    }
-    iLabel++;
-  }
-
-  // enable/disable up/down arrows
-  mgLSArrowUp.mg_bEnabled = !bHasFirst && ctLabels>0;
-  mgLSArrowDn.mg_bEnabled = !bHasLast  && ctLabels>0;
-}
-
-// called to get info of a file from directory, or to skip it
-BOOL CLoadSaveMenu::ParseFile(const CTFileName &fnm, CTString &strName)
-{
-  if (fnm.FileExt()!=gm_fnmExt) {
-    return FALSE;
-  }
-  CTFileName fnSaveGameDescription = fnm.NoExt()+".des";
-  try {
-    strName.Load_t( fnSaveGameDescription);
-  } catch( char *strError) {
-    (void)strError;
-    strName = fnm.FileName();
-
-    if (fnm.FileExt()==".ctl") {
-      INDEX iCtl = -1;
-      strName.ScanF("Controls%d", &iCtl);
-      if (iCtl>=0 && iCtl<=7) {
-        strName.PrintF(TRANS("From player: %s"), _pGame->gm_apcPlayers[iCtl].GetNameForPrinting());
-      }
-    }
-  }
-
-  INDEX iFile = -1;
-  fnm.FileName().ScanF((const char*)(gm_fnmBaseName+"%d"), &iFile);
-
-  gm_iLastFile = Max(gm_iLastFile, iFile);
-
-  return TRUE;
 }
 
 // ------------------------ CCustomizeAxisMenu implementation

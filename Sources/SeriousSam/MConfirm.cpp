@@ -15,11 +15,11 @@ void CConfirmMenu::Initialize_t(void)
 	gm_mgConfirmLabel.mg_iCenterI = 0;
 	gm_mgConfirmLabel.mg_bfsFontSize = BFS_LARGE;
 
-	gm_mgConfirmLabel.mg_strText = TRANS("YES");
-	gm_lhGadgets.AddTail(gm_mgConfirmLabel.mg_lnNode);
-	gm_mgConfirmLabel.mg_boxOnScreen = BoxPopupYesLarge();
-	gm_mgConfirmLabel.mg_pActivatedFunction = NULL;
-	gm_mgConfirmLabel.mg_pmgLeft =
+	gm_mgConfirmYes.mg_strText = TRANS("YES");
+	gm_lhGadgets.AddTail(gm_mgConfirmYes.mg_lnNode);
+	gm_mgConfirmYes.mg_boxOnScreen = BoxPopupYesLarge();
+	gm_mgConfirmYes.mg_pActivatedFunction = NULL;
+	gm_mgConfirmYes.mg_pmgLeft =
 		gm_mgConfirmYes.mg_pmgRight = &gm_mgConfirmNo;
 	gm_mgConfirmYes.mg_iCenterI = 1;
 	gm_mgConfirmYes.mg_bfsFontSize = BFS_LARGE;
@@ -39,6 +39,7 @@ void CConfirmMenu::BeLarge(void)
 	gm_mgConfirmLabel.mg_bfsFontSize = BFS_LARGE;
 	gm_mgConfirmYes.mg_bfsFontSize = BFS_LARGE;
 	gm_mgConfirmNo.mg_bfsFontSize = BFS_LARGE;
+
 	gm_mgConfirmLabel.mg_iCenterI = 0;
 	gm_mgConfirmYes.mg_boxOnScreen = BoxPopupYesLarge();
 	gm_mgConfirmNo.mg_boxOnScreen = BoxPopupNoLarge();
@@ -49,6 +50,7 @@ void CConfirmMenu::BeSmall(void)
 	gm_mgConfirmLabel.mg_bfsFontSize = BFS_MEDIUM;
 	gm_mgConfirmYes.mg_bfsFontSize = BFS_MEDIUM;
 	gm_mgConfirmNo.mg_bfsFontSize = BFS_MEDIUM;
+
 	gm_mgConfirmLabel.mg_iCenterI = -1;
 	gm_mgConfirmYes.mg_boxOnScreen = BoxPopupYesSmall();
 	gm_mgConfirmNo.mg_boxOnScreen = BoxPopupNoSmall();

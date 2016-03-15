@@ -217,12 +217,14 @@ copy Release\$(TargetName).map $(SolutionDir)..\Bin\ &gt;nul </Command>
     <ClCompile Include="MHighScore.cpp" />
     <ClCompile Include="MInGame.cpp" />
     <ClCompile Include="MLevels.cpp" />
+    <ClCompile Include="MLoadSave.cpp" />
     <ClCompile Include="MMain.cpp" />
     <ClCompile Include="MNetwork.cpp" />
     <ClCompile Include="MNetworkJoin.cpp" />
     <ClCompile Include="MNetworkOpen.cpp" />
     <ClCompile Include="MNetworkStart.cpp" />
     <ClCompile Include="MOptions.cpp" />
+    <ClCompile Include="MPlayerProfile.cpp" />
     <ClCompile Include="MSelectPlayers.cpp" />
     <ClCompile Include="MServers.cpp" />
     <ClCompile Include="MSinglePlayer.cpp" />

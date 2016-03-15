@@ -7,6 +7,12 @@
 #endif
 
 #include "GameMenu.h"
+#include "MGArrow.h"
+#include "MGButton.h"
+#include "MGFileButton.h"
+#include "MGTitle.h"
+
+#define SAVELOAD_BUTTONS_CT 14
 
 
 class CLoadSaveMenu : public CGameMenu {
@@ -37,6 +43,12 @@ public:
 	// internal properties
 	CListHead gm_lhFileInfos;   // all file infos to list
 	INDEX gm_iLastFile;         // index of last saved file in numbered format
+
+	CMGTitle gm_mgTitle;
+	CMGButton gm_mgNotes;
+	CMGFileButton gm_amgButton[SAVELOAD_BUTTONS_CT];
+	CMGArrow gm_mgArrowUp;
+	CMGArrow gm_mgArrowDn;
 
 	// called to get info of a file from directory, or to skip it
 	BOOL ParseFile(const CTFileName &fnm, CTString &strName);

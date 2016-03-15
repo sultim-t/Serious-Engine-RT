@@ -7,11 +7,36 @@
 #endif
 
 #include "GameMenu.h"
+#include "MGButton.h"
+#include "MGEdit.h"
+#include "MGModel.h"
+#include "MGTrigger.h"
+#include "MGTitle.h"
 
 
 class CPlayerProfileMenu : public CGameMenu {
 public:
 	INDEX *gm_piCurrentPlayer;
+
+	CMGTitle gm_mgProfileTitle;
+	CMGButton gm_mgNoLabel;
+	CMGButton gm_mgNumber[8];
+	CMGButton gm_mgNameLabel;
+	CMGEdit gm_mgNameField;
+	CMGButton gm_mgTeamLabel;
+	CMGEdit gm_mgTeam;
+	CMGButton gm_mgCustomizeControls;
+	CMGTrigger gm_mgCrosshair;
+	CMGTrigger gm_mgWeaponSelect;
+	CMGTrigger gm_mgWeaponHide;
+	CMGTrigger gm_mg3rdPerson;
+	CMGTrigger gm_mgQuotes;
+	CMGTrigger gm_mgAutoSave;
+	CMGTrigger gm_mgCompDoubleClick;
+	CMGTrigger gm_mgViewBobbing;
+	CMGTrigger gm_mgSharpTurning;
+	CMGModel gm_mgModel;
+
 	void Initialize_t(void);
 	INDEX ComboFromPlayer(INDEX iPlayer);
 	INDEX PlayerFromCombo(INDEX iCombo);
