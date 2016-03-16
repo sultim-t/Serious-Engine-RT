@@ -58,7 +58,7 @@
     <OutDir>Debug\</OutDir>
     <IntDir>Debug\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir);$(SolutionDir)..\Tools.Win32\Libraries\DX8SDK\Include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)..\Tools.Win32\Libraries\DX8SDK\Include;$(ProjectDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\Bin\Debug;$(SolutionDir)..\Tools.Win32\Libraries\DX8SDK\Lib;$(LibraryPath)</LibraryPath>
     <GenerateManifest>true</GenerateManifest>
     <EmbedManifest>true</EmbedManifest>
@@ -67,7 +67,7 @@
     <OutDir>Release\</OutDir>
     <IntDir>Release\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir);$(SolutionDir)..\Tools.Win32\Libraries\DX8SDK\Include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)..\Tools.Win32\Libraries\DX8SDK\Include;$(ProjectDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\Bin;$(SolutionDir)..\Tools.Win32\Libraries\DX8SDK\Lib;$(LibraryPath)</LibraryPath>
     <GenerateManifest>true</GenerateManifest>
     <EmbedManifest>true</EmbedManifest>
@@ -178,7 +178,23 @@ copy Release\$(TargetName).map $(SolutionDir)..\Bin\ &gt;nul </Command>
   <ItemGroup>
     <ClCompile Include="CmdLine.cpp" />
     <ClCompile Include="Credits.cpp" />
+    <ClCompile Include="GameMenu.cpp" />
     <ClCompile Include="GLSettings.cpp" />
+    <ClCompile Include="GUI\Components\MenuGadget.cpp" />
+    <ClCompile Include="GUI\Components\MGArrow.cpp" />
+    <ClCompile Include="GUI\Components\MGButton.cpp" />
+    <ClCompile Include="GUI\Components\MGChangePlayer.cpp" />
+    <ClCompile Include="GUI\Components\MGEdit.cpp" />
+    <ClCompile Include="GUI\Components\MGFileButton.cpp" />
+    <ClCompile Include="GUI\Components\MGHighScore.cpp" />
+    <ClCompile Include="GUI\Components\MGKeyDefinition.cpp" />
+    <ClCompile Include="GUI\Components\MGLevelButton.cpp" />
+    <ClCompile Include="GUI\Components\MGModel.cpp" />
+    <ClCompile Include="GUI\Components\MGServerList.cpp" />
+    <ClCompile Include="GUI\Components\MGSlider.cpp" />
+    <ClCompile Include="GUI\Components\MGTitle.cpp" />
+    <ClCompile Include="GUI\Components\MGTrigger.cpp" />
+    <ClCompile Include="GUI\Components\MGVarButton.cpp" />
     <ClCompile Include="LCDDrawing.cpp" />
     <ClCompile Include="LevelInfo.cpp" />
     <ClCompile Include="MainWindow.cpp" />
@@ -194,26 +210,26 @@ copy Release\$(TargetName).map $(SolutionDir)..\Bin\ &gt;nul </Command>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">StdH.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="MenuGadget.cpp" />
     <ClCompile Include="MenuPrinting.cpp" />
+    <ClInclude Include="GUI\Components\MenuGadget.h" />
+    <ClInclude Include="GUI\Components\MGArrow.h" />
+    <ClInclude Include="GUI\Components\MGButton.h" />
+    <ClInclude Include="GUI\Components\MGChangePlayer.h" />
+    <ClInclude Include="GUI\Components\MGEdit.h" />
+    <ClInclude Include="GUI\Components\MGFileButton.h" />
+    <ClInclude Include="GUI\Components\MGHighScore.h" />
+    <ClInclude Include="GUI\Components\MGKeyDefinition.h" />
+    <ClInclude Include="GUI\Components\MGLevelButton.h" />
+    <ClInclude Include="GUI\Components\MGModel.h" />
+    <ClInclude Include="GUI\Components\MGServerList.h" />
+    <ClInclude Include="GUI\Components\MGSlider.h" />
+    <ClInclude Include="GUI\Components\MGTitle.h" />
+    <ClInclude Include="GUI\Components\MGTrigger.h" />
+    <ClInclude Include="GUI\Components\MGVarButton.h" />
     <ClInclude Include="MenuStuff.h">
       <FileType>CppCode</FileType>
     </ClInclude>
     <ClCompile Include="MenuStuff.cpp" />
-    <ClCompile Include="MGArrow.cpp" />
-    <ClCompile Include="MGButton.cpp" />
-    <ClCompile Include="MGChangePlayer.cpp" />
-    <ClCompile Include="MGEdit.cpp" />
-    <ClCompile Include="MGFileButton.cpp" />
-    <ClCompile Include="MGHighScore.cpp" />
-    <ClCompile Include="MGKeyDefinition.cpp" />
-    <ClCompile Include="MGLevelButton.cpp" />
-    <ClCompile Include="MGModel.cpp" />
-    <ClCompile Include="MGServerList.cpp" />
-    <ClCompile Include="MGSlider.cpp" />
-    <ClCompile Include="MGTitle.cpp" />
-    <ClCompile Include="MGTrigger.cpp" />
-    <ClCompile Include="MGVarButton.cpp" />
     <ClCompile Include="MHighScore.cpp" />
     <ClCompile Include="MInGame.cpp" />
     <ClCompile Include="MLevels.cpp" />
@@ -269,20 +285,6 @@ copy Release\$(TargetName).map $(SolutionDir)..\Bin\ &gt;nul </Command>
     <ClInclude Include="Menu.h" />
     <ClInclude Include="MenuGadget.h" />
     <ClInclude Include="MenuPrinting.h" />
-    <ClInclude Include="MGArrow.h" />
-    <ClInclude Include="MGButton.h" />
-    <ClInclude Include="MGChangePlayer.h" />
-    <ClInclude Include="MGEdit.h" />
-    <ClInclude Include="MGFileButton.h" />
-    <ClInclude Include="MGHighScore.h" />
-    <ClInclude Include="MGKeyDefinition.h" />
-    <ClInclude Include="MGLevelButton.h" />
-    <ClInclude Include="MGModel.h" />
-    <ClInclude Include="MGServerList.h" />
-    <ClInclude Include="MGSlider.h" />
-    <ClInclude Include="MGTitle.h" />
-    <ClInclude Include="MGTrigger.h" />
-    <ClInclude Include="MGVarButton.h" />
     <ClInclude Include="MHighScore.h" />
     <ClInclude Include="MInGame.h" />
     <ClInclude Include="MLevels.h" />

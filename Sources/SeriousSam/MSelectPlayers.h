@@ -7,10 +7,10 @@
 #endif
 
 #include "GameMenu.h"
-#include "MGButton.h"
-#include "MGChangePlayer.h"
-#include "MGTitle.h"
-#include "MGTrigger.h"
+#include "GUI/Components/MGButton.h"
+#include "GUI/Components/MGChangePlayer.h"
+#include "GUI/Components/MGTitle.h"
+#include "GUI/Components/MGTrigger.h"
 
 
 class CSelectPlayersMenu : public CGameMenu {

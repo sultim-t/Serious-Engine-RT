@@ -7,7 +7,7 @@
 #endif
 
 #include "GameMenu.h"
-#include "MGButton.h"
+#include "GUI/Components/MGButton.h"
 
 
 class CConfirmMenu : public CGameMenu {

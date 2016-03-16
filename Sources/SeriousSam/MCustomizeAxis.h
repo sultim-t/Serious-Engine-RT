@@ -7,9 +7,9 @@
 #endif
 
 #include "GameMenu.h"
-#include "MGSlider.h"
-#include "MGTitle.h"
-#include "MGTrigger.h"
+#include "GUI/Components/MGSlider.h"
+#include "GUI/Components/MGTitle.h"
+#include "GUI/Components/MGTrigger.h"
 
 
 class CCustomizeAxisMenu : public CGameMenu {

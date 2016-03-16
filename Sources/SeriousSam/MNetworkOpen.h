@@ -7,9 +7,10 @@
 #endif
 
 #include "GameMenu.h"
-#include "MGButton.h"
-#include "MGEdit.h"
-#include "MGTitle.h"
+#include "GUI/Components/MGButton.h"
+#include "GUI/Components/MGEdit.h"
+#include "GUI/Components/MGTitle.h"
+
 
 class CNetworkOpenMenu : public CGameMenu {
 public:

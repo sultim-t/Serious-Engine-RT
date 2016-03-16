@@ -142,6 +142,34 @@ BOOL IsMenuEnabled(const CTString &strMenuName)
 	return pFunc(strMenuName);
 }
 
+// initialize game type strings table
+void InitGameTypes(void)
+{
+	// get function that will provide us the info about gametype
+	CShellSymbol *pss = _pShell->GetSymbol("GetGameTypeNameSS", /*bDeclaredOnly=*/ TRUE);
+	// if none
+	if (pss == NULL) {
+		// error
+		astrGameTypeRadioTexts[0] = "<???>";
+		ctGameTypeRadioTexts = 1;
+		return;
+	}
+
+	// for each mode
+	for (ctGameTypeRadioTexts = 0; ctGameTypeRadioTexts<ARRAYCOUNT(astrGameTypeRadioTexts); ctGameTypeRadioTexts++) {
+		// get the text
+		CTString(*pFunc)(INDEX) = (CTString(*)(INDEX))pss->ss_pvValue;
+		CTString strMode = pFunc(ctGameTypeRadioTexts);
+		// if no mode modes
+		if (strMode == "") {
+			// stop
+			break;
+		}
+		// add that mode
+		astrGameTypeRadioTexts[ctGameTypeRadioTexts] = strMode;
+	}
+}
+
 int qsort_CompareFileInfos_NameUp(const void *elem1, const void *elem2)
 {
 	const CFileInfo &fi1 = **(CFileInfo **)elem1;

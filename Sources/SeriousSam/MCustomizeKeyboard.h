@@ -7,9 +7,9 @@
 #endif
 
 #include "GameMenu.h"
-#include "MGArrow.h"
-#include "MGKeyDefinition.h"
-#include "MGTitle.h"
+#include "GUI/Components/MGArrow.h"
+#include "GUI/Components/MGKeyDefinition.h"
+#include "GUI/Components/MGTitle.h"
 
 
 class CCustomizeKeyboardMenu : public CGameMenu {

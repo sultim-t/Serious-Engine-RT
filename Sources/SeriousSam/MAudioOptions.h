@@ -7,10 +7,10 @@
 #endif
 
 #include "GameMenu.h"
-#include "MGButton.h"
-#include "MGSlider.h"
-#include "MGTrigger.h"
-#include "MGTitle.h"
+#include "GUI/Components/MGButton.h"
+#include "GUI/Components/MGSlider.h"
+#include "GUI/Components/MGTrigger.h"
+#include "GUI/Components/MGTitle.h"
 
 
 class CAudioOptionsMenu : public CGameMenu {

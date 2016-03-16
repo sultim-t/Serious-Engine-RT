@@ -7,8 +7,8 @@
 #endif
 
 #include "GameMenu.h"
-#include "MGHighScore.h"
-#include "MGTitle.h"
+#include "GUI/Components/MGHighScore.h"
+#include "GUI/Components/MGTitle.h"
 
 
 class CHighScoreMenu : public CGameMenu {

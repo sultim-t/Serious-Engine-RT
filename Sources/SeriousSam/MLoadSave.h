@@ -7,10 +7,10 @@
 #endif
 
 #include "GameMenu.h"
-#include "MGArrow.h"
-#include "MGButton.h"
-#include "MGFileButton.h"
-#include "MGTitle.h"
+#include "GUI/Components/MGArrow.h"
+#include "GUI/Components/MGButton.h"
+#include "GUI/Components/MGFileButton.h"
+#include "GUI/Components/MGTitle.h"
 
 #define SAVELOAD_BUTTONS_CT 14
 

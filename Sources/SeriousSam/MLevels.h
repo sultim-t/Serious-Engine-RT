@@ -7,9 +7,10 @@
 #endif
 
 #include "GameMenu.h"
-#include "MGArrow.h"
-#include "MGLevelButton.h"
-#include "MGTitle.h"
+#include "GUI/Components/MGArrow.h"
+#include "GUI/Components/MGLevelButton.h"
+#include "GUI/Components/MGTitle.h"
+
 
 class CLevelsMenu : public CGameMenu {
 public:

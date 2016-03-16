@@ -7,10 +7,10 @@
 #endif
 
 #include "GameMenu.h"
-#include "MGArrow.h"
-#include "MGButton.h"
-#include "MGTitle.h"
-#include "MGVarButton.h"
+#include "GUI/Components/MGArrow.h"
+#include "GUI/Components/MGButton.h"
+#include "GUI/Components/MGTitle.h"
+#include "GUI/Components/MGVarButton.h"
 
 
 class CVarMenu : public CGameMenu {
