@@ -19,17 +19,23 @@
     <Filter Include="Texts">
       <UniqueIdentifier>{332d9393-d918-4caf-86b2-2e63c2cca9bd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Gadgets">
-      <UniqueIdentifier>{47ffb7e3-433b-480c-a22a-849524a5bd1e}</UniqueIdentifier>
+    <Filter Include="Header Files\GUI headers">
+      <UniqueIdentifier>{b1fe2cd0-889c-48dd-897c-cdbbdcb0a131}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Gadgets headers">
+    <Filter Include="Header Files\GUI headers\Gadgets headers">
       <UniqueIdentifier>{3bc65fe2-8c15-4ecd-bf59-de962bb42275}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Menus headers">
+    <Filter Include="Header Files\GUI headers\Menus headers">
       <UniqueIdentifier>{df54d6d1-39c3-4f26-93f8-116311f5a0eb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Menus">
+    <Filter Include="Source Files\GUI">
+      <UniqueIdentifier>{4c95322d-560a-4738-a631-e3e860b59560}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GUI\Menus">
       <UniqueIdentifier>{9a04e8a8-ecfc-42c3-bf28-fe3d8b49e626}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GUI\Gadgets">
+      <UniqueIdentifier>{47ffb7e3-433b-480c-a22a-849524a5bd1e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -51,9 +57,6 @@
     <ClCompile Include="MainWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MenuPrinting.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="SeriousSam.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -66,134 +69,137 @@
     <ClCompile Include="VarList.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MenuStuff.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MConfirm.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MMain.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="Menu.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MInGame.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MSinglePlayer.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MSinglePlayerNew.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MDisabled.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MLevels.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MVar.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MSplitStart.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MSplitScreen.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MNetworkOpen.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MNetworkJoin.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MNetwork.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MOptions.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MHighScore.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MCustomizeAxis.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MCustomizeKeyboard.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MSelectPlayers.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MNetworkStart.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MServers.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MControls.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MAudioOptions.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MVideoOptions.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MLoadSave.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="MPlayerProfile.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="GameMenu.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
     <ClCompile Include="GUI\Components\MGHighScore.cpp">
-      <Filter>Source Files\Gadgets</Filter>
+      <Filter>Source Files\GUI\Gadgets</Filter>
     </ClCompile>
     <ClCompile Include="GUI\Components\MGServerList.cpp">
-      <Filter>Source Files\Gadgets</Filter>
+      <Filter>Source Files\GUI\Gadgets</Filter>
     </ClCompile>
     <ClCompile Include="GUI\Components\MGButton.cpp">
-      <Filter>Source Files\Gadgets</Filter>
+      <Filter>Source Files\GUI\Gadgets</Filter>
     </ClCompile>
     <ClCompile Include="GUI\Components\MGFileButton.cpp">
-      <Filter>Source Files\Gadgets</Filter>
+      <Filter>Source Files\GUI\Gadgets</Filter>
     </ClCompile>
     <ClCompile Include="GUI\Components\MGKeyDefinition.cpp">
-      <Filter>Source Files\Gadgets</Filter>
+      <Filter>Source Files\GUI\Gadgets</Filter>
     </ClCompile>
     <ClCompile Include="GUI\Components\MGModel.cpp">
-      <Filter>Source Files\Gadgets</Filter>
+      <Filter>Source Files\GUI\Gadgets</Filter>
     </ClCompile>
     <ClCompile Include="GUI\Components\MGSlider.cpp">
-      <Filter>Source Files\Gadgets</Filter>
+      <Filter>Source Files\GUI\Gadgets</Filter>
     </ClCompile>
     <ClCompile Include="GUI\Components\MGTitle.cpp">
-      <Filter>Source Files\Gadgets</Filter>
+      <Filter>Source Files\GUI\Gadgets</Filter>
     </ClCompile>
     <ClCompile Include="GUI\Components\MGTrigger.cpp">
-      <Filter>Source Files\Gadgets</Filter>
+      <Filter>Source Files\GUI\Gadgets</Filter>
     </ClCompile>
     <ClCompile Include="GUI\Components\MGVarButton.cpp">
-      <Filter>Source Files\Gadgets</Filter>
+      <Filter>Source Files\GUI\Gadgets</Filter>
     </ClCompile>
     <ClCompile Include="GUI\Components\MenuGadget.cpp">
-      <Filter>Source Files\Gadgets</Filter>
+      <Filter>Source Files\GUI\Gadgets</Filter>
     </ClCompile>
     <ClCompile Include="GUI\Components\MGChangePlayer.cpp">
-      <Filter>Source Files\Gadgets</Filter>
+      <Filter>Source Files\GUI\Gadgets</Filter>
     </ClCompile>
     <ClCompile Include="GUI\Components\MGLevelButton.cpp">
-      <Filter>Source Files\Gadgets</Filter>
+      <Filter>Source Files\GUI\Gadgets</Filter>
     </ClCompile>
     <ClCompile Include="GUI\Components\MGArrow.cpp">
-      <Filter>Source Files\Gadgets</Filter>
+      <Filter>Source Files\GUI\Gadgets</Filter>
     </ClCompile>
     <ClCompile Include="GUI\Components\MGEdit.cpp">
-      <Filter>Source Files\Gadgets</Filter>
+      <Filter>Source Files\GUI\Gadgets</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\Menu.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MenuStuff.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\GameMenu.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MConfirm.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MPlayerProfile.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MOptions.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MLoadSave.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MVideoOptions.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MSelectPlayers.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MSplitStart.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MNetworkStart.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MCustomizeAxis.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MControls.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MAudioOptions.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MCustomizeKeyboard.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MServers.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MHighScore.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MNetwork.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MSplitScreen.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MNetworkJoin.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MNetworkOpen.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MVar.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MLevels.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MDisabled.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MSinglePlayerNew.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MSinglePlayer.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MInGame.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MMain.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MenuPrinting.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -218,9 +224,6 @@
     <ClInclude Include="MainWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MenuPrinting.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -236,149 +239,149 @@
     <ClInclude Include="VarList.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MenuGadget.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ArrowDir.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GameMenu.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MConfirm.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MMain.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Menu.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MInGame.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MSinglePlayer.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MCredits.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MDisabled.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MSinglePlayerNew.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MLevels.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MVar.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MServers.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MPlayerProfile.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MControls.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MLoadSave.h">
-      <Filter>Header Files\Menus headers</Filter>
     </ClInclude>
     <ClInclude Include="FileInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MHighScore.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MNetwork.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MNetworkStart.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MNetworkOpen.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MNetworkJoin.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MSplitScreen.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MSplitStart.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MSelectPlayers.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MOptions.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MVideoOptions.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MRenderingOptions.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MAudioOptions.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MCustomizeKeyboard.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MCustomizeAxis.h">
-      <Filter>Header Files\Menus headers</Filter>
-    </ClInclude>
-    <ClInclude Include="MenuStuff.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="GUI\Components\MGModel.h">
-      <Filter>Header Files\Gadgets headers</Filter>
+      <Filter>Header Files\GUI headers\Gadgets headers</Filter>
     </ClInclude>
     <ClInclude Include="GUI\Components\MGVarButton.h">
-      <Filter>Header Files\Gadgets headers</Filter>
+      <Filter>Header Files\GUI headers\Gadgets headers</Filter>
     </ClInclude>
     <ClInclude Include="GUI\Components\MGTrigger.h">
-      <Filter>Header Files\Gadgets headers</Filter>
+      <Filter>Header Files\GUI headers\Gadgets headers</Filter>
     </ClInclude>
     <ClInclude Include="GUI\Components\MGTitle.h">
-      <Filter>Header Files\Gadgets headers</Filter>
+      <Filter>Header Files\GUI headers\Gadgets headers</Filter>
     </ClInclude>
     <ClInclude Include="GUI\Components\MGSlider.h">
-      <Filter>Header Files\Gadgets headers</Filter>
+      <Filter>Header Files\GUI headers\Gadgets headers</Filter>
     </ClInclude>
     <ClInclude Include="GUI\Components\MGServerList.h">
-      <Filter>Header Files\Gadgets headers</Filter>
+      <Filter>Header Files\GUI headers\Gadgets headers</Filter>
     </ClInclude>
     <ClInclude Include="GUI\Components\MGLevelButton.h">
-      <Filter>Header Files\Gadgets headers</Filter>
+      <Filter>Header Files\GUI headers\Gadgets headers</Filter>
     </ClInclude>
     <ClInclude Include="GUI\Components\MGKeyDefinition.h">
-      <Filter>Header Files\Gadgets headers</Filter>
+      <Filter>Header Files\GUI headers\Gadgets headers</Filter>
     </ClInclude>
     <ClInclude Include="GUI\Components\MGHighScore.h">
-      <Filter>Header Files\Gadgets headers</Filter>
+      <Filter>Header Files\GUI headers\Gadgets headers</Filter>
     </ClInclude>
     <ClInclude Include="GUI\Components\MGEdit.h">
-      <Filter>Header Files\Gadgets headers</Filter>
+      <Filter>Header Files\GUI headers\Gadgets headers</Filter>
     </ClInclude>
     <ClInclude Include="GUI\Components\MGButton.h">
-      <Filter>Header Files\Gadgets headers</Filter>
+      <Filter>Header Files\GUI headers\Gadgets headers</Filter>
     </ClInclude>
     <ClInclude Include="GUI\Components\MGArrow.h">
-      <Filter>Header Files\Gadgets headers</Filter>
+      <Filter>Header Files\GUI headers\Gadgets headers</Filter>
     </ClInclude>
     <ClInclude Include="GUI\Components\MGFileButton.h">
-      <Filter>Header Files\Gadgets headers</Filter>
+      <Filter>Header Files\GUI headers\Gadgets headers</Filter>
     </ClInclude>
     <ClInclude Include="GUI\Components\MGChangePlayer.h">
-      <Filter>Header Files\Gadgets headers</Filter>
+      <Filter>Header Files\GUI headers\Gadgets headers</Filter>
     </ClInclude>
     <ClInclude Include="GUI\Components\MenuGadget.h">
-      <Filter>Header Files\Gadgets headers</Filter>
+      <Filter>Header Files\GUI headers\Gadgets headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MControls.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MInGame.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MLevels.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MNetwork.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MCustomizeKeyboard.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MDisabled.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MHighScore.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MLoadSave.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MMain.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MNetworkJoin.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MNetworkOpen.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MNetworkStart.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MOptions.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MPlayerProfile.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MSelectPlayers.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MServers.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MSinglePlayer.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MSplitStart.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MSplitScreen.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MSinglePlayerNew.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MVar.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MCustomizeAxis.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MConfirm.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MAudioOptions.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MenuStuff.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MVideoOptions.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\Menu.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MRenderingOptions.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MCredits.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\GameMenu.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MenuPrinting.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

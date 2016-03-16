@@ -6,12 +6,14 @@
   #pragma once
 #endif
 
+#include "MenuPrinting.h"
 
 #define DOING_NOTHING 0
 #define PRESS_KEY_WAITING 1
 #define RELEASE_RETURN_WAITING 2
 
 #define EMPTYSLOTSTRING TRANS("<save a new one>")
+
 
 class CMenuGadget {
 public:

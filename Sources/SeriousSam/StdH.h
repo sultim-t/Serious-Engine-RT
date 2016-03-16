@@ -23,4 +23,4 @@
 #define TECHTESTONLY 0
 
 #include "SeriousSam.h"
-#include "Menu.h"
+#include "GUI/Menus/Menu.h"
