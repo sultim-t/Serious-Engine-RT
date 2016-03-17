@@ -13,8 +13,8 @@ int iLastLine = -1;
   if (iLastLine==_iLinesCt || !_bTrackLineInformation){\
     yylval = yytext;                  \
   } else {                            \
-    char strLine[200];                \
-    sprintf(strLine, "\n#line %d \"%s\"\n", _iLinesCt, _strInputFileName);\
+    char strLine[512];                \
+    snprintf(strLine, 512, "\n#line %d \"%s\"\n", _iLinesCt, _strInputFileName);\
     yylval = SType(strLine)+yytext;  \
     iLastLine=_iLinesCt;             \
   }                                  \
@@ -128,8 +128,8 @@ EXP_FLT (({DIGIT}+("."({DIGIT}*)?)?)("E"|"e")("+"|"-")?{DIGIT}+)
 
  /* specially bracketed cpp blocks */
 "%{" {
-  char strLine[80];
-  sprintf(strLine, "#line %d \"%s\"\n", _iLinesCt, _strInputFileName );
+  char strLine[512];
+  snprintf(strLine, 512, "#line %d \"%s\"\n", _iLinesCt, _strInputFileName );
   _strCppBlock = strdup(strLine);
   BEGIN(CPPBLOCK);
 }
