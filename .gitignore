@@ -33,6 +33,7 @@
 *.bsc
 *.cnt
 *.exp
+*.idb
 *.ipch
 *.log
 *.map
@@ -75,4 +76,6 @@ Temp/Profile_CSG.txt
 *.gms
 Data/*.pri
 Data/*.bin
+Demos/*
+SaveGame/*
 Scripts/PersistentSymbols.ini
