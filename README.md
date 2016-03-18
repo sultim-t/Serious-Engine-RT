@@ -29,7 +29,7 @@ Building
 
 To build Serious Engine 1, you'll need Visual Studio 2013 or 2015, Professional or Community edition ( https://www.visualstudio.com/post-download-vs?sku=community ).
 
-Try to keep the path to the solution file as short as possible. Do not use spaces in the path.
+Do not use spaces in the path to the solution.
 
 Once you've installed Visual Studio and (optionally) DirectX8 SDK, you can build the engine solution (`/Sources/All.sln`). Press F7 or Build -> Build solution. The libraries and executables will be put into `\Bin\` directory (or `\Bin\Debug\` if you are using the Debug configuration).
 
@@ -62,7 +62,6 @@ And its working directory:
 Common problems
 ---------------
 
-In case if you are getting "fatal error C1083: Cannot open include file: 'Engine/Classes/BaseEvents.h'", or in case if ECC crashes during compilation of ES files in debug mode, make your solution path shorter. Paths longer than 31 symbols are known to cause problems in debug mode.
 Before starting the build process, make sure you have a "Temp" folder in your development directory. If it doesn't exist, create it.
 SeriousSkaStudio has some issues with MFC windows that can prevent the main window from being displayed properly.
 
