@@ -1185,7 +1185,7 @@ void JoinNetworkGame(void)
       _pNetwork->ga_strRequiredMod.ScanF("%250[^\\]\\%s", &strModName, &strModURL);
       _fnmModSelected = CTString(strModName);
       _strModURLSelected = strModURL;
-      if (_strModURLSelected="") {
+      if (_strModURLSelected == "") {
         _strModURLSelected = "http://www.croteam.com/mods/Old";
       }
       _strModServerSelected.PrintF("%s:%s", _pGame->gam_strJoinAddress, _pShell->GetValue("net_iPort"));

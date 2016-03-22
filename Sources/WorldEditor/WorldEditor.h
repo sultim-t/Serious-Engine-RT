@@ -582,7 +582,6 @@ inline BOOL CValuesForPrimitive::operator==(const CValuesForPrimitive &vfpToComp
     (vfp_plPrimitive == vfpToCompare.vfp_plPrimitive) &&
     (vfp_ttTriangularisationType == vfpToCompare.vfp_ttTriangularisationType) &&
     (vfp_bDummy == vfpToCompare.vfp_bDummy) &&
-    (vfp_ptPrimitiveType == vfpToCompare.vfp_ptPrimitiveType) &&
     (vfp_bAutoCreateMipBrushes == vfpToCompare.vfp_bAutoCreateMipBrushes) &&
     (vfp_colSectorsColor == vfpToCompare.vfp_colSectorsColor) &&
     (vfp_colPolygonsColor == vfpToCompare.vfp_colPolygonsColor) &&

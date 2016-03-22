@@ -694,7 +694,7 @@ void CMainFrame::OnCancelMode()
 {
 	// switches out of eventual direct screen mode
   CWorldEditorView *pwndView = (CWorldEditorView *)GetActiveView();
-  if (pwndView = NULL) {
+  if (pwndView != NULL) {
 	  // get the MDIChildFrame of active window
 	  CChildFrame *pfrChild = (CChildFrame *)pwndView->GetParentFrame();
     ASSERT(pfrChild!=NULL);
@@ -707,7 +707,7 @@ void CMainFrame::OnInitMenu(CMenu* pMenu)
 {
 	// switches out of eventual direct screen mode
   CWorldEditorView *pwndView = (CWorldEditorView *)GetActiveView();
-  if (pwndView = NULL) {
+  if (pwndView != NULL) {
 	  // get the MDIChildFrame of active window
 	  CChildFrame *pfrChild = (CChildFrame *)pwndView->GetParentFrame();
     ASSERT(pfrChild!=NULL);

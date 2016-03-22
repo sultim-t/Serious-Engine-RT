@@ -1851,8 +1851,8 @@ CEntity *CPropertyComboBar::GetSelectedEntityPtr(void)
   CPropertyID *ppidProperty = GetSelectedProperty();
   // if there is valid property selected
   if( (ppidProperty == NULL) || 
-      (ppidProperty->pid_eptType != CEntityProperty::EPT_ENTITYPTR) ||
-      (ppidProperty->pid_eptType != CEntityProperty::EPT_PARENT) )
+	 ((ppidProperty->pid_eptType != CEntityProperty::EPT_ENTITYPTR) &&
+	  (ppidProperty->pid_eptType != CEntityProperty::EPT_PARENT)) )
   {
     return NULL;
   }

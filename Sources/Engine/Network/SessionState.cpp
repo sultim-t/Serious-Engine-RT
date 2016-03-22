@@ -1188,7 +1188,7 @@ void CSessionState::ProcessGameStream(void)
       }
 
     // if it is not avaliable yet
-    } if (res==CNetworkStream::R_BLOCKNOTRECEIVEDYET) {
+    } else if (res==CNetworkStream::R_BLOCKNOTRECEIVEDYET) {
       // finish
       _pfNetworkProfile.StopTimer(CNetworkProfile::PTI_SESSIONSTATE_PROCESSGAMESTREAM);
       return;
