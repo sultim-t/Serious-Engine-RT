@@ -135,8 +135,8 @@ void CToolTipWnd::OnPaint()
   dc.SetTextColor( colInk);
   
   CDC *pDC = GetDC();
+  if (pDC == NULL) return;
   pDC->SelectObject( &theApp.m_FixedFont);
-  if( pDC == NULL) return;
   
   INDEX ctLines = GetLinesCount();
   for(INDEX iLine = 0; iLine<ctLines; iLine++)
