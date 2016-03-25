@@ -558,7 +558,7 @@ void CTerrain::SetShadowMapsSize(INDEX iShadowMapAspect, INDEX iShadingMapAspect
     tr_iShadowMapSizeAspect = -(FastLog2(tr_pixHeightMapWidth-1)-5);
   }
 
-  if(GetShadingMapWidth()<32 || GetShadingMapWidth()<32) {
+  if(GetShadingMapWidth()<32 || GetShadingMapHeight()<32) {
     tr_iShadingMapSizeAspect = 0;
   }
 
