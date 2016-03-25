@@ -9030,9 +9030,10 @@ void CWorldEditorView::OnPreviousMipBrush()
 {
   CMainFrame* pMainFrame = STATIC_DOWNCAST(CMainFrame, AfxGetMainWnd());
   CEntity *penBrush = pMainFrame->m_CSGDesitnationCombo.GetSelectedBrushEntity();
-  CBrush3D &brBrush = *penBrush->en_pbrBrush;
 
-  if (penBrush==NULL) return;
+  if (penBrush == NULL) return;
+
+  CBrush3D &brBrush = *penBrush->en_pbrBrush;
 
   // remember current time as time when last mip brushing option has been used
   _fLastMipBrushingOptionUsed = _pTimer->GetRealTimeTick();

@@ -413,12 +413,12 @@ void ExportMesh_modeler(int iFaceForward) {
 	char fnmOut[256];
 	char *strFileName;
 
-	_state = _meshEditOperations->state; 
-
 	if (_meshEditOperations == NULL) {
-		_msg->error("Error!","Error _meshEditOperations is NULL!");
+		_msg->error("Error!", "Error _meshEditOperations is NULL!");
 		return;
 	}
+
+	_state = _meshEditOperations->state; 
 
   _ctPntIDs = _meshEditOperations->pointCount(_state,OPLYR_FG,EDCOUNT_ALL);
 	_ctPolIDs = _meshEditOperations->polyCount(_state,OPLYR_FG,EDCOUNT_ALL);
@@ -438,6 +438,7 @@ void ExportMesh_modeler(int iFaceForward) {
 	_fpOutput = fopen(fnmOut, "w");
   if (_fpOutput==NULL) {
     msgbox_modeler(_xpanf, "Can't open file!");
+	return;
   }
 
   // write the mesh header

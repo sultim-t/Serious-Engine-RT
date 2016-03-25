@@ -851,7 +851,7 @@ static void ComputerOn(void)
   _ppenPlayer->GetStats(_strStatsDetails, CST_DETAIL, _ctTextCharsPerRow);
 
   // if end of level
-  if (_ppenPlayer!=NULL && _ppenPlayer->m_bEndOfLevel || _pNetwork->IsGameFinished()) {
+  if (_ppenPlayer->m_bEndOfLevel || _pNetwork->IsGameFinished()) {
     // select statistics
     _cmtWantedType = CMT_STATISTICS;
   // if not end of level
