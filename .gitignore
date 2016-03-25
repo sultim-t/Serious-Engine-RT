@@ -42,6 +42,7 @@ Debug/
 *.suo
 *.tlog
 *.ipch
+*.hm
 
 # Generated configuration files
 *.plr
