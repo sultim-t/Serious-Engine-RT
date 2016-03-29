@@ -106,6 +106,7 @@ void CMainMenu::Initialize_t(void)
 	gm_mgQuit.mg_pmgDown = &gm_mgSingle;
 	gm_mgQuit.mg_pActivatedFunction = NULL;
 }
+
 void CMainMenu::StartMenu(void)
 {
 	gm_mgSingle.mg_bEnabled = IsMenuEnabled("Single Player");

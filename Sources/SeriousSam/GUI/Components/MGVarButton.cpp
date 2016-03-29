@@ -17,14 +17,12 @@ BOOL CMGVarButton::IsSeparator(void)
 	return mg_pvsVar->vs_bSeparator;
 }
 
-
 BOOL CMGVarButton::IsEnabled(void)
 {
 	return(_gmRunningGameMode == GM_NONE
 		|| mg_pvsVar == NULL
 		|| mg_pvsVar->vs_bCanChangeInGame);
 }
-
 
 // return slider position on scren
 PIXaabbox2D CMGVarButton::GetSliderBox(void)
@@ -110,7 +108,6 @@ BOOL CMGVarButton::OnKeyDown(int iVKey)
 	// not handled
 	return CMenuGadget::OnKeyDown(iVKey);
 }
-
 
 void CMGVarButton::Render(CDrawPort *pdp)
 {

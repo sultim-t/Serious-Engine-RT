@@ -88,9 +88,6 @@ void CNetworkStartMenu::Initialize_t(void)
 	gm_mgStart.mg_strText = TRANS("START");
 	gm_lhGadgets.AddTail(gm_mgStart.mg_lnNode);
 	gm_mgStart.mg_pActivatedFunction = NULL;
-
-
-
 }
 
 void CNetworkStartMenu::StartMenu(void)

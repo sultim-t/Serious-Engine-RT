@@ -18,7 +18,6 @@ void CMGLevelButton::OnActivate(void)
 	_pAfterLevelChosen();
 }
 
-
 void CMGLevelButton::OnSetFocus(void)
 {
 	SetThumbnail(mg_fnmLevel);

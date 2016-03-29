@@ -130,6 +130,7 @@ void CLoadSaveMenu::StartMenu(void)
 
 	CGameMenu::StartMenu();
 }
+
 void CLoadSaveMenu::EndMenu(void)
 {
 	// delete all file infos
@@ -196,11 +197,11 @@ BOOL CLoadSaveMenu::ParseFile(const CTFileName &fnm, CTString &strName)
 	if (fnm.FileExt() != gm_fnmExt) {
 		return FALSE;
 	}
+
 	CTFileName fnSaveGameDescription = fnm.NoExt() + ".des";
 	try {
 		strName.Load_t(fnSaveGameDescription);
-	}
-	catch (char *strError) {
+	} catch (char *strError) {
 		(void)strError;
 		strName = fnm.FileName();
 

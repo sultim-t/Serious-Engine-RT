@@ -31,7 +31,6 @@ void PrintInBox(CDrawPort *pdp, PIX pixI, PIX pixJ, PIX pixSizeI, CTString str, 
 	pdp->PutText(str, pixI, pixJ, col);
 }
 
-
 CMGServerList::CMGServerList()
 {
 	mg_iSelected = 0;
@@ -285,7 +284,6 @@ static INDEX SliderPixToIndex(PIX pixOffset, INDEX iVisible, INDEX iTotal, PIXaa
 	return (iTotal*pixOffset) / pixFull;
 }
 
-
 static PIXaabbox2D GetSliderBox(INDEX iFirst, INDEX iVisible, INDEX iTotal,
 	PIXaabbox2D boxFull)
 {
@@ -306,6 +304,7 @@ PIXaabbox2D CMGServerList::GetScrollBarFullBox(void)
 {
 	return PIXaabbox2D(PIX2D(mg_pixSBMinI, mg_pixSBMinJ), PIX2D(mg_pixSBMaxI, mg_pixSBMaxJ));
 }
+
 PIXaabbox2D CMGServerList::GetScrollBarHandleBox(void)
 {
 	return GetSliderBox(mg_iFirstOnScreen, mg_ctOnScreen, _lhServers.Count(), GetScrollBarFullBox());
@@ -438,6 +437,7 @@ void CMGServerList::OnSetFocus(void)
 {
 	mg_bFocused = TRUE;
 }
+
 void CMGServerList::OnKillFocus(void)
 {
 	mg_bFocused = FALSE;

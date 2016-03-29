@@ -85,6 +85,7 @@ void CMenuGadget::Disappear(void)
 void CMenuGadget::Think(void)
 {
 }
+
 void CMenuGadget::OnMouseOver(PIX pixI, PIX pixJ)
 {
 }

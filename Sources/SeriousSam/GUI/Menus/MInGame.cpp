@@ -126,8 +126,7 @@ void CInGameMenu::StartMenu(void)
 		gm_mgLabel1.mg_strText.PrintF(TRANS("Player: %s"), pc.GetNameForPrinting());
 		gm_mgLabel2.mg_strText = "";
 
-	}
-	else {
+	} else {
 		if (_pNetwork->IsServer()) {
 
 			CTString strHost, strAddress;
@@ -142,8 +141,8 @@ void CInGameMenu::StartMenu(void)
 
 			gm_mgLabel1.mg_strText = TRANS("Address: ") + strHostName;
 			gm_mgLabel2.mg_strText = "";
-		}
-		else {
+
+		} else {
 
 			CTString strConfig;
 			strConfig = TRANS("<not adjusted>");

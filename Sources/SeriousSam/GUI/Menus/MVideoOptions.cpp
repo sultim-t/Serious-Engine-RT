@@ -62,7 +62,6 @@ void CVideoOptionsMenu::Initialize_t(void)
 	gm_mgApply.mg_pActivatedFunction = NULL;
 }
 
-
 void CVideoOptionsMenu::StartMenu(void)
 {
 	InitVideoOptionsButtons();

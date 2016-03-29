@@ -119,8 +119,7 @@ void CSinglePlayerMenu::StartMenu(void)
 		gm_mgPlayersAndControls.mg_boxOnScreen = BoxBigRow(6.0f);
 		gm_mgOptions.mg_boxOnScreen = BoxBigRow(7.0f);
 
-	}
-	else {
+	} else {
 		if (gm_mgTraining.mg_lnNode.IsLinked()) {
 			gm_mgTraining.mg_lnNode.Remove();
 		}

@@ -18,14 +18,12 @@ CMGEdit::CMGEdit(void)
 	Clear();
 }
 
-
 void CMGEdit::Clear(void)
 {
 	mg_iCursorPos = 0;
 	mg_bEditing = FALSE;
 	_bEditingString = FALSE;
 }
-
 
 void CMGEdit::OnActivate(void)
 {
@@ -112,7 +110,6 @@ BOOL CMGEdit::OnKeyDown(int iVKey)
 	return TRUE;
 }
 
-
 // char typed
 BOOL CMGEdit::OnChar(MSG msg)
 {
@@ -133,7 +130,6 @@ BOOL CMGEdit::OnChar(MSG msg)
 	// key is handled
 	return TRUE;
 }
-
 
 void CMGEdit::Render(CDrawPort *pdp)
 {
@@ -160,9 +156,11 @@ void CMGEdit::Render(CDrawPort *pdp)
 		CMGButton::Render(pdp);
 	}
 }
+
 void CMGEdit::OnStringChanged(void)
 {
 }
+
 void CMGEdit::OnStringCanceled(void)
 {
 }

@@ -72,7 +72,6 @@ BOOL CMGSlider::OnKeyDown(int iVKey)
 	return CMenuGadget::OnKeyDown(iVKey);
 }
 
-
 PIXaabbox2D CMGSlider::GetSliderBox(void)
 {
 	extern CDrawPort *pdp;
@@ -84,7 +83,6 @@ PIXaabbox2D CMGSlider::GetSliderBox(void)
 	if (sam_bWideScreen) pixJSize++;
 	return PIXaabbox2D(PIX2D(pixIR + 1, pixJ + 1), PIX2D(pixIR + pixISizeR - 2, pixJ + pixJSize - 2));
 }
-
 
 void CMGSlider::Render(CDrawPort *pdp)
 {

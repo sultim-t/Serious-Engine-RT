@@ -17,7 +17,6 @@ CMGKeyDefinition::CMGKeyDefinition(void)
 	mg_iState = DOING_NOTHING;
 }
 
-
 void CMGKeyDefinition::OnActivate(void)
 {
 	PlayMenuSound(_psdPress);
@@ -25,7 +24,6 @@ void CMGKeyDefinition::OnActivate(void)
 	SetBindingNames(/*bDefining=*/TRUE);
 	mg_iState = RELEASE_RETURN_WAITING;
 }
-
 
 BOOL CMGKeyDefinition::OnKeyDown(int iVKey)
 {

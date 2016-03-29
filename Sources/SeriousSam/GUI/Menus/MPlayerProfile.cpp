@@ -178,8 +178,7 @@ void CPlayerProfileMenu::SelectPlayer(INDEX iPlayer)
 
 	if (_iLocalPlayer >= 0 && _iLocalPlayer<4) {
 		_pGame->gm_aiMenuLocalPlayers[_iLocalPlayer] = iPlayer;
-	}
-	else {
+	} else {
 		_pGame->gm_iSinglePlayer = iPlayer;
 	}
 	gm_mgNameField.mg_pstrToChange = &pc.pc_strName;
@@ -215,8 +214,7 @@ void CPlayerProfileMenu::SelectPlayer(INDEX iPlayer)
 		// no model
 		gm_mgModel.mg_moModel.SetData(NULL);
 		// if there is some
-	}
-	else {
+	} else {
 		// set the model
 		BOOL(*pFunc)(CModelObject *, CPlayerCharacter *, CTString &, BOOL) =
 			(BOOL(*)(CModelObject *, CPlayerCharacter *, CTString &, BOOL))pss->ss_pvValue;
@@ -258,8 +256,7 @@ void CPlayerProfileMenu::StartMenu(void)
 		for (INDEX i = 0; i<8; i++) {
 			gm_mgNumber[i].mg_bEnabled = TRUE;
 		}
-	}
-	else {
+	} else {
 		for (INDEX i = 0; i<8; i++) {
 			gm_mgNumber[i].mg_bEnabled = FALSE;
 		}
@@ -280,7 +277,6 @@ void CPlayerProfileMenu::StartMenu(void)
 	SelectPlayer(*gm_piCurrentPlayer);
 	CGameMenu::StartMenu();
 }
-
 
 void CPlayerProfileMenu::EndMenu(void)
 {

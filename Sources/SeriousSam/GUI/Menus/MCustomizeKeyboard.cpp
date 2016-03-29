@@ -93,6 +93,7 @@ void CCustomizeKeyboardMenu::StartMenu(void)
 	gm_iListWantedItem = 0;
 	CGameMenu::StartMenu();
 }
+
 void CCustomizeKeyboardMenu::EndMenu(void)
 {
 	ControlsMenuOff();

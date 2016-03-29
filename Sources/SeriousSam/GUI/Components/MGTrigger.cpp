@@ -37,7 +37,6 @@ void CMGTrigger::ApplyCurrentSelection(void)
 	mg_strValue = mg_astrTexts[mg_iSelected];
 }
 
-
 void CMGTrigger::OnSetNextInList(int iVKey)
 {
 	if (mg_pPreTriggerChange != NULL) {
@@ -51,7 +50,6 @@ void CMGTrigger::OnSetNextInList(int iVKey)
 		(*mg_pOnTriggerChange)(mg_iSelected);
 	}
 }
-
 
 BOOL CMGTrigger::OnKeyDown(int iVKey)
 {
@@ -67,7 +65,6 @@ BOOL CMGTrigger::OnKeyDown(int iVKey)
 	// key is not handled
 	return FALSE;
 }
-
 
 void CMGTrigger::Render(CDrawPort *pdp)
 {

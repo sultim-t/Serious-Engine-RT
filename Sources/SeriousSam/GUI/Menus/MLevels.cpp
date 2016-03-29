@@ -77,8 +77,6 @@ void CLevelsMenu::FillListItems(void)
 	gm_mgArrowDn.mg_bEnabled = !bHasLast  && ctLabels>0;
 }
 
-
-
 void CLevelsMenu::StartMenu(void)
 {
 	// set default parameters for the list

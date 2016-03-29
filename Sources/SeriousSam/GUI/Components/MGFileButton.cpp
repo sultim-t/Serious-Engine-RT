@@ -120,6 +120,7 @@ void CMGFileButton::OnActivate(void)
 		mg_iState = FBS_SAVENAME;
 	}
 }
+
 BOOL CMGFileButton::OnKeyDown(int iVKey)
 {
 	if (mg_iState == FBS_NORMAL) {
