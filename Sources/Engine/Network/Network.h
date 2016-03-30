@@ -76,7 +76,8 @@ public:
   INDEX    ns_ctMaxPlayers; // max number of players
   CTString ns_strGameType;  // game type
   CTString ns_strMod;       // active mod
-  CTString ns_strVer;       // version
+  CTString ns_strVer;       // version 
+  
 public:
   void Copy(const CNetworkSession &nsOriginal);
 
