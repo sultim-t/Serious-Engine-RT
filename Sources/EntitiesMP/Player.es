@@ -1956,7 +1956,24 @@ functions:
     strKey.PrintF("ping_%d\x02%d\x03", iPlayer, INDEX(ceil(en_tmPing*1000.0f)));
     strOut+=strKey;
   };
-
+  
+  // provide info for MSLegacy enumeration
+  void GetMSLegacyPlayerInf( INDEX iPlayer, CTString &strOut)
+  {
+    CTString strKey;
+    strKey.PrintF("\\player_%d\\%s", iPlayer, (const char*)GetPlayerName());
+	  strOut+=strKey;
+    if (GetSP()->sp_bUseFrags) {
+      strKey.PrintF("\\frags_%d\\%d", iPlayer, m_psLevelStats.ps_iKills);
+	    strOut+=strKey;
+    } else {
+      strKey.PrintF("\\frags_%d\\%d", iPlayer, m_psLevelStats.ps_iScore);
+	    strOut+=strKey;
+    }
+    strKey.PrintF("\\ping_%d\\%d", iPlayer, INDEX(ceil(en_tmPing*1000.0f)));
+    strOut+=strKey;
+  };
+  
   // check if message is in inbox
   BOOL HasMessage( const CTFileName &fnmMessage)
   {

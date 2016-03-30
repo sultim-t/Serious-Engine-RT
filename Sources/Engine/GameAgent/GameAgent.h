@@ -20,6 +20,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #endif
 
 extern CTString ga_strServer;
+extern CTString ga_strMSLegacy;
+extern BOOL ga_bMSLegacy;
 
 /// Initialize GameAgent.
 extern void GameAgent_ServerInit(void);
@@ -36,6 +38,10 @@ extern void GameAgent_EnumTrigger(BOOL bInternet);
 extern void GameAgent_EnumUpdate(void);
 /// Cancel the GameAgent serverlist enumeration.
 extern void GameAgent_EnumCancel(void);
+///
+DWORD WINAPI _MS_Thread(LPVOID lpParam);
+///
+DWORD WINAPI _LocalNet_Thread(LPVOID lpParam);
 
 /// Server request structure. Primarily used for getting server pings.
 class CServerRequest {

@@ -115,7 +115,7 @@ extern CTString sam_strModName = TRANS("-   O P E N   S O U R C E   -");
 #if _SE_DEMO
   extern CTString sam_strFirstLevel = "Levels\\KarnakDemo.wld";
 #else
-  extern CTString sam_strFirstLevel = "Levels\\LevelsMP\\1_0_InTheLastEpisode.wld.wld";
+  extern CTString sam_strFirstLevel = "Levels\\LevelsMP\\1_0_InTheLastEpisode.wld";
 #endif
 extern CTString sam_strIntroLevel = "Levels\\LevelsMP\\Intro.wld";
 extern CTString sam_strGameName = "serioussamse";
@@ -514,8 +514,8 @@ BOOL Init( HINSTANCE hInstance, int nCmdShow, CTString strCmdLine)
   LoadAndForceTexture(_toLogoEAX,  _ptoLogoEAX,  CTFILENAME("Textures\\Logo\\LogoEAX.tex"));
 
   // !! NOTE !! Re-enable these to allow mod support.
-  //LoadStringVar(CTString("Data\\Var\\Sam_Version.var"), sam_strVersion);
-  //LoadStringVar(CTString("Data\\Var\\ModName.var"), sam_strModName);
+  LoadStringVar(CTString("Data\\Var\\Sam_Version.var"), sam_strVersion);
+  LoadStringVar(CTString("Data\\Var\\ModName.var"), sam_strModName);
   CPrintF(TRANS("Serious Sam version: %s\n"), sam_strVersion);
   CPrintF(TRANS("Active mod: %s\n"), sam_strModName);
   InitializeMenus();      
@@ -612,6 +612,7 @@ void End(void)
     pvpViewPort = NULL;
     pdpNormal   = NULL;
   }
+
   CloseMainWindow();
   MainWindow_End();
   DestroyMenus();
@@ -1199,15 +1200,37 @@ int SubMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int 
 
   _pInput->DisableInput();
   _pGame->StopGame();
+  
+  if (_fnmModToLoad!="") {
+  
+    char strCmd [64] = {0};
+	char strParam [128] = {0};
+	STARTUPINFOA cif;
+	ZeroMemory(&cif,sizeof(STARTUPINFOA));
+	PROCESS_INFORMATION pi;
+	
+	strcpy_s(strCmd,"SeriousSam.exe");
+	strcpy_s(strParam," +game ");
+	strcat_s(strParam,_fnmModToLoad.FileName());
+	if (_strModServerJoin!="") {
+	  strcat_s(strParam," +connect ");
+	  strcat_s(strParam,_strModServerJoin);
+	  strcat_s(strParam," +quickjoin");
+    }	
 
+	if (CreateProcessA(strCmd,strParam,NULL,NULL,FALSE,CREATE_DEFAULT_ERROR_MODE,NULL,NULL,&cif,&pi) == FALSE)
+	{
+	  MessageBox(0, L"error launching the Mod!\n", L"Serious Sam", MB_OK|MB_ICONERROR);		
+	}
+  }
   // invoke quit screen if needed
   if( _bQuitScreen && _fnmModToLoad=="") QuitScreenLoop();
-
+  
   End();
-
   return TRUE;
 }
 
+/*
 void CheckModReload(void)
 {
   if (_fnmModToLoad!="") {
@@ -1225,9 +1248,10 @@ void CheckModReload(void)
       argv[5] = "+quickjoin";
       argv[6] = NULL;
     }
+
     _execv(strCommand, argv);
   }
-}
+}*/
 
 void CheckTeaser(void)
 {
@@ -1254,8 +1278,8 @@ int PASCAL WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
   CTSTREAM_BEGIN {
     iResult = SubMain(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
   } CTSTREAM_END;
-
-  CheckModReload();
+  
+  //CheckModReload();
 
   CheckTeaser();
 

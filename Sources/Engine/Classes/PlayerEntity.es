@@ -111,7 +111,9 @@ functions:
 
   // provide info for GameAgent enumeration
   export virtual void GetGameAgentPlayerInfo( INDEX iPlayer, CTString &strOut) { };
-
+  // provide info for MSLegacy enumeration
+  export virtual void GetMSLegacyPlayerInf( INDEX iPlayer, CTString &strOut) { };
+  
   // create a checksum value for sync-check
   export void ChecksumForSync(ULONG &ulCRC, INDEX iExtensiveSyncCheck)
   {
