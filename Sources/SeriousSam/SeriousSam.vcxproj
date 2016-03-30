@@ -204,6 +204,7 @@ copy Release\$(TargetName).map $(SolutionDir)..\Bin\ &gt;nul </Command>
     <ClCompile Include="GUI\Menus\Menu.cpp" />
     <ClCompile Include="GUI\Menus\MenuPrinting.cpp" />
     <ClCompile Include="GUI\Menus\MenuStuff.cpp" />
+    <ClCompile Include="GUI\Menus\Menu_actions.cpp" />
     <ClCompile Include="GUI\Menus\MHighScore.cpp" />
     <ClCompile Include="GUI\Menus\MInGame.cpp" />
     <ClCompile Include="GUI\Menus\MLevels.cpp" />
@@ -252,6 +253,7 @@ copy Release\$(TargetName).map $(SolutionDir)..\Bin\ &gt;nul </Command>
     <ClInclude Include="GUI\Menus\Menu.h" />
     <ClInclude Include="GUI\Menus\MenuPrinting.h" />
     <ClInclude Include="GUI\Menus\MenuStuff.h" />
+    <ClInclude Include="GUI\Menus\Menu_starters.h" />
     <ClInclude Include="GUI\Menus\MHighScore.h" />
     <ClInclude Include="GUI\Menus\MInGame.h" />
     <ClInclude Include="GUI\Menus\MLevels.h" />
@@ -272,6 +274,7 @@ copy Release\$(TargetName).map $(SolutionDir)..\Bin\ &gt;nul </Command>
     <ClInclude Include="GUI\Menus\MSplitStart.h" />
     <ClInclude Include="GUI\Menus\MVar.h" />
     <ClInclude Include="GUI\Menus\MVideoOptions.h" />
+    <ClCompile Include="GUI\Menus\Menu_starters.cpp" />
     <ClCompile Include="SeriousSam.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">StdH.h</PrecompiledHeaderFile>

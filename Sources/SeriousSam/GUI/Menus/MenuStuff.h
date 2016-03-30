@@ -36,6 +36,8 @@ extern CTString astrBitsPerPixelRadioTexts[3];
 extern CTString astrFrequencyRadioTexts[4];
 extern CTString astrSoundAPIRadioTexts[3];
 
+extern PIX apixWidths[20][2];
+
 ULONG GetSpawnFlagsForGameType(INDEX iGameType);
 BOOL IsMenuEnabled(const CTString &strMenuName);
 void InitGameTypes(void);
@@ -44,5 +46,10 @@ int qsort_CompareFileInfos_NameUp(const void *elem1, const void *elem2);
 int qsort_CompareFileInfos_NameDn(const void *elem1, const void *elem2);
 int qsort_CompareFileInfos_FileUp(const void *elem1, const void *elem2);
 int qsort_CompareFileInfos_FileDn(const void *elem1, const void *elem2);
+
+INDEX APIToSwitch(enum GfxAPIType gat);
+enum GfxAPIType SwitchToAPI(INDEX i);
+INDEX DepthToSwitch(enum DisplayDepth dd);
+enum DisplayDepth SwitchToDepth(INDEX i);
 
 #endif  /* include-once check. */

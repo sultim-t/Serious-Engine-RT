@@ -24,6 +24,29 @@ extern CTString astrWeapon[] = {
 	RADIOTRANS("Only if stronger"),
 };
 
+extern PIX apixWidths[][2] = {
+	320, 240,
+	400, 300,
+	512, 384,
+	640, 240,
+	640, 480,
+	720, 540,
+	800, 300,
+	800, 600,
+	960, 720,
+	1024, 384,
+	1024, 768,
+	1152, 864,
+	1280, 480,
+	1280, 960,
+	1600, 600,
+	1600, 1200,
+	1920, 720,
+	1920, 1440,
+	2048, 786,
+	2048, 1536,
+};
+
 extern CTString astrCrosshair[] = {
 	"",
 	"Textures\\Interface\\Crosshairs\\Crosshair1.tex",
@@ -196,4 +219,46 @@ int qsort_CompareFileInfos_FileDn(const void *elem1, const void *elem2)
 	const CFileInfo &fi1 = **(CFileInfo **)elem1;
 	const CFileInfo &fi2 = **(CFileInfo **)elem2;
 	return -strcmp(fi1.fi_fnFile, fi2.fi_fnFile);
+}
+
+INDEX APIToSwitch(enum GfxAPIType gat)
+{
+	switch (gat) {
+	case GAT_OGL: return 0;
+#ifdef SE1_D3D
+	case GAT_D3D: return 1;
+#endif // SE1_D3D
+	default: ASSERT(FALSE); return 0;
+	}
+}
+
+enum GfxAPIType SwitchToAPI(INDEX i)
+{
+	switch (i) {
+	case 0: return GAT_OGL;
+#ifdef SE1_D3D
+	case 1: return GAT_D3D;
+#endif // SE1_D3D
+	default: ASSERT(FALSE); return GAT_OGL;
+	}
+}
+
+INDEX DepthToSwitch(enum DisplayDepth dd)
+{
+	switch (dd) {
+	case DD_DEFAULT: return 0;
+	case DD_16BIT: return 1;
+	case DD_32BIT: return 2;
+	default: ASSERT(FALSE); return 0;
+	}
+}
+
+enum DisplayDepth SwitchToDepth(INDEX i)
+{
+	switch (i) {
+	case 0: return DD_DEFAULT;
+	case 1: return DD_16BIT;
+	case 2: return DD_32BIT;
+	default: ASSERT(FALSE); return DD_DEFAULT;
+	}
 }

@@ -201,6 +201,12 @@
     <ClCompile Include="GUI\Menus\MenuPrinting.cpp">
       <Filter>Source Files\GUI\Menus</Filter>
     </ClCompile>
+    <ClCompile Include="GUI\Menus\Menu_starters.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\Menu_actions.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CDCheck.h">
@@ -381,6 +387,9 @@
       <Filter>Header Files\GUI headers\Menus headers</Filter>
     </ClInclude>
     <ClInclude Include="GUI\Menus\MenuPrinting.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\Menu_starters.h">
       <Filter>Header Files\GUI headers\Menus headers</Filter>
     </ClInclude>
   </ItemGroup>
