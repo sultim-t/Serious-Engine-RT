@@ -201,13 +201,16 @@
     <ClCompile Include="GUI\Menus\MenuPrinting.cpp">
       <Filter>Source Files\GUI\Menus</Filter>
     </ClCompile>
-    <ClCompile Include="GUI\Menus\Menu_starters.cpp">
-      <Filter>Source Files\GUI\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="GUI\Menus\Menu_actions.cpp">
-      <Filter>Source Files\GUI\Menus</Filter>
-    </ClCompile>
     <ClCompile Include="GUI\Menus\MenuManager.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MenuStarters.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MenuStartersAF.cpp">
+      <Filter>Source Files\GUI\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\Menus\MenuActions.cpp">
       <Filter>Source Files\GUI\Menus</Filter>
     </ClCompile>
   </ItemGroup>
@@ -392,10 +395,16 @@
     <ClInclude Include="GUI\Menus\MenuPrinting.h">
       <Filter>Header Files\GUI headers\Menus headers</Filter>
     </ClInclude>
-    <ClInclude Include="GUI\Menus\Menu_starters.h">
+    <ClInclude Include="GUI\Menus\MenuManager.h">
       <Filter>Header Files\GUI headers\Menus headers</Filter>
     </ClInclude>
-    <ClInclude Include="GUI\Menus\MenuManager.h">
+    <ClInclude Include="GUI\Menus\MenuStarters.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MenuStartersAF.h">
+      <Filter>Header Files\GUI headers\Menus headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\Menus\MenuActions.h">
       <Filter>Header Files\GUI headers\Menus headers</Filter>
     </ClInclude>
   </ItemGroup>

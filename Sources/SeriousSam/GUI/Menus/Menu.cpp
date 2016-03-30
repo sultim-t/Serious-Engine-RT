@@ -15,23 +15,9 @@
 #include "FileInfo.h"
 #include "MenuManager.h"
 
-#include "GUI/Components/MGArrow.h"
-#include "GUI/Components/MGButton.h"
-#include "GUI/Components/MGChangePlayer.h"
-#include "GUI/Components/MGEdit.h"
-#include "GUI/Components/MGFileButton.h"
-#include "GUI/Components/MGHighScore.h"
-#include "GUI/Components/MGKeyDefinition.h"
-#include "GUI/Components/MGLevelButton.h"
-#include "GUI/Components/MGModel.h"
-#include "GUI/Components/MGServerList.h"
-#include "GUI/Components/MGSlider.h"
-#include "GUI/Components/MGTitle.h"
-#include "GUI/Components/MGTrigger.h"
-#include "GUI/Components/MGVarButton.h"
-
+#include "MenuActions.h"
 #include "MenuStuff.h"
-#include "Menu_starters.h"
+#include "MenuStarters.h"
 
 // macros for translating radio button text arrays
 #define TRANSLATERADIOARRAY(array) TranslateRadioTexts(array, ARRAYCOUNT(array))
@@ -68,26 +54,7 @@ extern CTString sam_strNetworkSettings;
 void (*_pAfterLevelChosen)(void);
 
 // functions for init actions
-void InitActionsForAudioOptionsMenu();
-void InitActionsForConfirmMenu();
-void InitActionsForControlsMenu();
-void InitActionsForCustomizeAxisMenu();
-void InitActionsForMainMenu();
-void InitActionsForInGameMenu();
-void InitActionsForNetworkMenu();
-void InitActionsForNetworkJoinMenu();
-void InitActionsForNetworkOpenMenu();
-void InitActionsForNetworkStartMenu();
-void InitActionsForOptionsMenu();
-void InitActionsForPlayerProfileMenu();
-void InitActionsForSelectPlayersMenu();
-void InitActionsForServersMenu();
-void InitActionsForSinglePlayerMenu();
-void InitActionsForSinglePlayerNewMenu();
-void InitActionsForSplitScreenMenu();
-void InitActionsForSplitStartMenu();
-void InitActionsForVideoOptionsMenu();
-void InitActionsForVarMenu();
+
 
 void FixupBackButton(CGameMenu *pgm);
 
