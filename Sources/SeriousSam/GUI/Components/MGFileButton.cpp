@@ -5,6 +5,7 @@
 #include <Engine/CurrentVersion.h>
 #include <GameMP/LCDDrawing.h>
 #include "MGFileButton.h"
+#include "GUI/Menus/MenuManager.h"
 
 extern CSoundData *_psdPress;
 
@@ -57,9 +58,9 @@ void CMGFileButton::DoSave(void)
 
 void CMGFileButton::SaveYes(void)
 {
-	ASSERT(gmLoadSaveMenu.gm_bSave);
+	ASSERT(_pGUIM->gmLoadSaveMenu.gm_bSave);
 	// call saving function
-	BOOL bSucceeded = gmLoadSaveMenu.gm_pAfterFileChosen(mg_fnm);
+	BOOL bSucceeded = _pGUIM->gmLoadSaveMenu.gm_pAfterFileChosen(mg_fnm);
 	// if saved
 	if (bSucceeded) {
 		// save the description too
@@ -69,17 +70,17 @@ void CMGFileButton::SaveYes(void)
 
 void CMGFileButton::DoLoad(void)
 {
-	ASSERT(!gmLoadSaveMenu.gm_bSave);
+	ASSERT(!_pGUIM->gmLoadSaveMenu.gm_bSave);
 	// if no file
 	if (!FileExists(mg_fnm)) {
 		// do nothing
 		return;
 	}
-	if (gmLoadSaveMenu.gm_pgmNextMenu != NULL) {
-		gmLoadSaveMenu.gm_pgmParentMenu = gmLoadSaveMenu.gm_pgmNextMenu;
+	if (_pGUIM->gmLoadSaveMenu.gm_pgmNextMenu != NULL) {
+		_pGUIM->gmLoadSaveMenu.gm_pgmParentMenu = _pGUIM->gmLoadSaveMenu.gm_pgmNextMenu;
 	}
 	// call loading function
-	BOOL bSucceeded = gmLoadSaveMenu.gm_pAfterFileChosen(mg_fnm);
+	BOOL bSucceeded = _pGUIM->gmLoadSaveMenu.gm_pAfterFileChosen(mg_fnm);
 	ASSERT(bSucceeded);
 }
 
@@ -101,7 +102,7 @@ void CMGFileButton::OnActivate(void)
 	IFeel_PlayEffect("Menu_press");
 
 	// if loading
-	if (!gmLoadSaveMenu.gm_bSave) {
+	if (!_pGUIM->gmLoadSaveMenu.gm_bSave) {
 		// load now
 		DoLoad();
 		// if saving
@@ -109,7 +110,7 @@ void CMGFileButton::OnActivate(void)
 	else {
 		// switch to editing mode
 		BOOL bWasEmpty = mg_strText == EMPTYSLOTSTRING;
-		mg_strDes = gmLoadSaveMenu.gm_strSaveDes;
+		mg_strDes = _pGUIM->gmLoadSaveMenu.gm_strSaveDes;
 		RefreshText();
 		_strOrgDescription = _strTmpDescription = mg_strText;
 		if (bWasEmpty) {
@@ -124,7 +125,7 @@ void CMGFileButton::OnActivate(void)
 BOOL CMGFileButton::OnKeyDown(int iVKey)
 {
 	if (mg_iState == FBS_NORMAL) {
-		if (gmLoadSaveMenu.gm_bSave || gmLoadSaveMenu.gm_bManage) {
+		if (_pGUIM->gmLoadSaveMenu.gm_bSave || _pGUIM->gmLoadSaveMenu.gm_bManage) {
 			if (iVKey == VK_F2) {
 				if (FileExistsForWriting(mg_fnm)) {
 					// switch to renaming mode
@@ -143,8 +144,8 @@ BOOL CMGFileButton::OnKeyDown(int iVKey)
 					RemoveFile(mg_fnm.NoExt() + ".des");
 					RemoveFile(mg_fnm.NoExt() + "Tbn.tex");
 					// refresh menu
-					gmLoadSaveMenu.EndMenu();
-					gmLoadSaveMenu.StartMenu();
+					_pGUIM->gmLoadSaveMenu.EndMenu();
+					_pGUIM->gmLoadSaveMenu.StartMenu();
 					OnSetFocus();
 				}
 				return TRUE;
@@ -167,10 +168,9 @@ void CMGFileButton::OnSetFocus(void)
 {
 	mg_iState = FBS_NORMAL;
 
-	if (gmLoadSaveMenu.gm_bAllowThumbnails && mg_bEnabled) {
+	if (_pGUIM->gmLoadSaveMenu.gm_bAllowThumbnails && mg_bEnabled) {
 		SetThumbnail(mg_fnm);
-	}
-	else {
+	} else {
 		ClearThumbnail();
 	}
 	pgmCurrentMenu->KillAllFocuses();
@@ -201,8 +201,8 @@ void CMGFileButton::OnStringChanged(void)
 		mg_strDes = _strTmpDescription + "\n" + mg_strInfo;
 		SaveDescription();
 		// refresh menu
-		gmLoadSaveMenu.EndMenu();
-		gmLoadSaveMenu.StartMenu();
+		_pGUIM->gmLoadSaveMenu.EndMenu();
+		_pGUIM->gmLoadSaveMenu.StartMenu();
 		OnSetFocus();
 	}
 }

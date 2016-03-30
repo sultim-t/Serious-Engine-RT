@@ -5,6 +5,7 @@
 #include "MenuPrinting.h"
 #include "MenuStuff.h"
 #include "MPlayerProfile.h"
+#include "GUI/Menus/MenuManager.h"
 
 #define ADD_SELECT_PLAYER_MG( index, mg, mgprev, mgnext, me)\
 	mg.mg_iIndex = index; \
@@ -190,20 +191,28 @@ void CPlayerProfileMenu::SelectPlayer(INDEX iPlayer)
 
 	gm_mgCrosshair.mg_iSelected = pps->ps_iCrossHairType + 1;
 	gm_mgCrosshair.ApplyCurrentSelection();
+
 	gm_mgWeaponSelect.mg_iSelected = pps->ps_iWeaponAutoSelect;
 	gm_mgWeaponSelect.ApplyCurrentSelection();
+
 	gm_mgWeaponHide.mg_iSelected = (pps->ps_ulFlags&PSF_HIDEWEAPON) ? 1 : 0;
 	gm_mgWeaponHide.ApplyCurrentSelection();
+
 	gm_mg3rdPerson.mg_iSelected = (pps->ps_ulFlags&PSF_PREFER3RDPERSON) ? 1 : 0;
 	gm_mg3rdPerson.ApplyCurrentSelection();
+
 	gm_mgQuotes.mg_iSelected = (pps->ps_ulFlags&PSF_NOQUOTES) ? 0 : 1;
 	gm_mgQuotes.ApplyCurrentSelection();
+
 	gm_mgAutoSave.mg_iSelected = (pps->ps_ulFlags&PSF_AUTOSAVE) ? 1 : 0;
 	gm_mgAutoSave.ApplyCurrentSelection();
+
 	gm_mgCompDoubleClick.mg_iSelected = (pps->ps_ulFlags&PSF_COMPSINGLECLICK) ? 0 : 1;
 	gm_mgCompDoubleClick.ApplyCurrentSelection();
+
 	gm_mgViewBobbing.mg_iSelected = (pps->ps_ulFlags&PSF_NOBOBBING) ? 0 : 1;
 	gm_mgViewBobbing.ApplyCurrentSelection();
+
 	gm_mgSharpTurning.mg_iSelected = (pps->ps_ulFlags&PSF_SHARPTURNING) ? 1 : 0;
 	gm_mgSharpTurning.ApplyCurrentSelection();
 
@@ -250,7 +259,7 @@ void CPlayerProfileMenu::SelectPlayer(INDEX iPlayer)
 
 void CPlayerProfileMenu::StartMenu(void)
 {
-	gmPlayerProfile.gm_pmgSelectedByDefault = &gm_mgNameField;
+	_pGUIM->gmPlayerProfile.gm_pmgSelectedByDefault = &gm_mgNameField;
 
 	if (_gmRunningGameMode == GM_NONE || _gmRunningGameMode == GM_DEMO) {
 		for (INDEX i = 0; i<8; i++) {

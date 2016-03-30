@@ -23,6 +23,8 @@ CMGButton::CMGButton(void)
 	mg_iCursorPos = -1;
 	mg_bRectangle = FALSE;
 	mg_bMental = FALSE;
+	mg_bEditing = FALSE;
+	mg_bHighlighted = FALSE;
 }
 
 
@@ -120,8 +122,7 @@ void CMGButton::Render(CDrawPort *pdp)
 
 		pdp->PutTextR(mg_strLabel, pixIL, pixJ, col);
 		pdp->PutText(mg_strText, pixIR, pixJ, col);
-	}
-	else {
+	} else {
 		CTString str = mg_strText;
 		if (pdp->dp_FontData->fd_bFixedWidth) {
 			str = str.Undecorated();
@@ -131,8 +132,7 @@ void CMGButton::Render(CDrawPort *pdp)
 				str.TrimRight(iCursor);
 				str.TrimLeft(iMaxLen);
 				iCursor = iMaxLen;
-			}
-			else {
+			} else {
 				str.TrimRight(iMaxLen);
 			}
 		}

@@ -33,9 +33,6 @@ extern void PlayMenuSound(CSoundData *psd);
 
 extern CListHead _lhServers;
 
-extern class CPlayerProfileMenu gmPlayerProfile;
-extern class CSelectPlayersMenu gmSelectPlayersMenu;
-extern class CCustomizeAxisMenu gmCustomizeAxisMenu;
 extern INDEX _iLocalPlayer;
 
 enum GameMode {
@@ -56,8 +53,6 @@ extern CGameMenu *pgmCurrentMenu;
 #include "MLoadSave.h"
 #include "MPlayerProfile.h"
 #include "MSelectPlayers.h"
-
-extern CLoadSaveMenu gmLoadSaveMenu;
 
 
 #endif  /* include-once check. */

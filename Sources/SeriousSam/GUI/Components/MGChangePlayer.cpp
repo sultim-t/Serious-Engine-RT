@@ -5,6 +5,7 @@
 #include <Engine/CurrentVersion.h>
 #include <GameMP/LCDDrawing.h>
 #include "MGChangePlayer.h"
+#include "GUI/Menus/MenuManager.h"
 
 extern CSoundData *_psdPress;
 
@@ -16,11 +17,11 @@ void CMGChangePlayer::OnActivate(void)
 	_iLocalPlayer = mg_iLocalPlayer;
 	if (_pGame->gm_aiMenuLocalPlayers[mg_iLocalPlayer] < 0)
 		_pGame->gm_aiMenuLocalPlayers[mg_iLocalPlayer] = 0;
-	gmPlayerProfile.gm_piCurrentPlayer = &_pGame->gm_aiMenuLocalPlayers[mg_iLocalPlayer];
-	gmPlayerProfile.gm_pgmParentMenu = &gmSelectPlayersMenu;
+	_pGUIM->gmPlayerProfile.gm_piCurrentPlayer = &_pGame->gm_aiMenuLocalPlayers[mg_iLocalPlayer];
+	_pGUIM->gmPlayerProfile.gm_pgmParentMenu = &_pGUIM->gmSelectPlayersMenu;
 	extern BOOL _bPlayerMenuFromSinglePlayer;
 	_bPlayerMenuFromSinglePlayer = FALSE;
-	ChangeToMenu(&gmPlayerProfile);
+	ChangeToMenu(&_pGUIM->gmPlayerProfile);
 }
 
 void CMGChangePlayer::SetPlayerText(void)

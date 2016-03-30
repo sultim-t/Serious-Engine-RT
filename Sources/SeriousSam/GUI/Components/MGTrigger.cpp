@@ -26,6 +26,7 @@ INDEX GetNewLoopValue(int iVKey, INDEX iCurrent, INDEX ctMembers)
 
 CMGTrigger::CMGTrigger(void)
 {
+	mg_pPreTriggerChange = NULL;
 	mg_pOnTriggerChange = NULL;
 	mg_iCenterI = 0;
 	mg_bVisual = FALSE;

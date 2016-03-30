@@ -102,7 +102,7 @@ extern CTString sam_strModName = TRANS("-   O P E N   S O U R C E   -");
 #if _SE_DEMO
   extern CTString sam_strFirstLevel = "Levels\\KarnakDemo.wld";
 #else
-  extern CTString sam_strFirstLevel = "Levels\\LevelsMP\\1_0_InTheLastEpisode.wld.wld";
+  extern CTString sam_strFirstLevel = "Levels\\LevelsMP\\1_0_InTheLastEpisode.wld";
 #endif
 extern CTString sam_strIntroLevel = "Levels\\LevelsMP\\Intro.wld";
 extern CTString sam_strGameName = "serioussamse";
