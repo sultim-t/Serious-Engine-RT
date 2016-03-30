@@ -3,10 +3,8 @@
 #include "StdH.h"
 #include <Engine/CurrentVersion.h>
 #include "MenuPrinting.h"
+#include "MenuStuff.h"
 #include "MCustomizeKeyboard.h"
-
-extern void ControlsMenuOn();
-extern void ControlsMenuOff();
 
 
 void CCustomizeKeyboardMenu::FillListItems(void)

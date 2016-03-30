@@ -6,9 +6,6 @@
 #include "MenuStuff.h"
 #include "MCustomizeAxis.h"
 
-extern void ControlsMenuOn();
-extern void ControlsMenuOff();
-
 
 void CCustomizeAxisMenu::Initialize_t(void)
 {

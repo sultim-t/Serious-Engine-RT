@@ -6,8 +6,6 @@
 #include "MenuStuff.h"
 #include "MControls.h"
 
-extern void ControlsMenuOn();
-extern void ControlsMenuOff();
 extern CTFileName _fnmControlsToCustomize;
 
 

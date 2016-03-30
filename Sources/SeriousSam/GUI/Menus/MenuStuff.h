@@ -52,4 +52,7 @@ enum GfxAPIType SwitchToAPI(INDEX i);
 INDEX DepthToSwitch(enum DisplayDepth dd);
 enum DisplayDepth SwitchToDepth(INDEX i);
 
+void ControlsMenuOn();
+void ControlsMenuOff();
+
 #endif  /* include-once check. */

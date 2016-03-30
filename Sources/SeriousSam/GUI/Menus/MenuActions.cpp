@@ -108,9 +108,16 @@ void ExitConfirm(void)
 	ChangeToMenu(&_pGUIM->gmConfirmMenu);
 }
 
+void StopCurrentGame(void)
+{
+	_pGame->StopGame();
+	_gmRunningGameMode = GM_NONE;
+	StopMenus(TRUE);
+	StartMenus("");
+}
+
 void StopConfirm(void)
 {
-	extern void StopCurrentGame(void);
 	_pConfimedYes = &StopCurrentGame;
 	_pConfimedNo = NULL;
 	_pGUIM->gmConfirmMenu.gm_mgConfirmLabel.mg_strText = TRANS("ARE YOU SERIOUS?");
@@ -1063,22 +1070,6 @@ void InitActionsForNetworkStartMenu()
 	_pGUIM->gmNetworkStartMenu.gm_mgGameOptions.mg_pActivatedFunction = &StartGameOptionsFromNetwork;
 	_pGUIM->gmNetworkStartMenu.gm_mgStart.mg_pActivatedFunction = &StartSelectPlayersMenuFromNetwork;
 }
-
-//
-#define ADD_GADGET( gd, box, up, dn, lf, rt, txt) \
-	gd.mg_boxOnScreen = box; \
-	gd.mg_pmgUp = up; \
-	gd.mg_pmgDown = dn; \
-	gd.mg_pmgLeft = lf; \
-	gd.mg_pmgRight = rt; \
-	gd.mg_strText = txt; \
-	gm_lhGadgets.AddTail(gd.mg_lnNode);
-
-#define SET_CHGPLR( gd, iplayer, bnone, bauto, pmgit) \
-	gd.mg_pmgInfoTable = pmgit; \
-	gd.mg_bResetToNone = bnone; \
-	gd.mg_bAutomatic = bauto; \
-	gd.mg_iLocalPlayer = iplayer;
 
 // ------------------------ CSelectPlayersMenu implementation
 #define CMENU _pGUIM->gmSelectPlayersMenu

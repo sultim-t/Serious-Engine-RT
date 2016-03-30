@@ -8,6 +8,7 @@
 #include "MenuManager.h"
 #include "MenuStartersAF.h"
 #include "MenuStarters.h"
+#include "MenuStuff.h"
 
 CTFileName _fnDemoToPlay;
 CTFileName _fnGameToLoad;
@@ -93,9 +94,6 @@ BOOL LSLoadPlayerModel(const CTFileName &fnm)
 	MenuGoToParent();
 	return TRUE;
 }
-
-extern void ControlsMenuOn();
-extern void ControlsMenuOff();
 
 BOOL LSLoadControls(const CTFileName &fnm)
 {

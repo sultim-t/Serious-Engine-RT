@@ -44,8 +44,6 @@ void OnPlayerSelect(void);
 TIME _tmMenuLastTickDone = -1;
 // all possible menu entities
 CListHead lhMenuEntities;
-// controls that are currently customized
-CTFileName _fnmControlsToCustomize = CTString("");
 
 extern CTString _strLastPlayerAppearance = "";
 extern CTString sam_strNetworkSettings;
@@ -55,33 +53,7 @@ void (*_pAfterLevelChosen)(void);
 
 // functions for init actions
 
-
 void FixupBackButton(CGameMenu *pgm);
-
-extern void ControlsMenuOn()
-{
-  _pGame->SavePlayersAndControls();
-  try {
-    _pGame->gm_ctrlControlsExtra.Load_t(_fnmControlsToCustomize);
-  } catch( char *strError) {
-    WarningMessage(strError);
-  }
-}
-
-extern void ControlsMenuOff()
-{
-  try {
-    if (_pGame->gm_ctrlControlsExtra.ctrl_lhButtonActions.Count()>0) {
-      _pGame->gm_ctrlControlsExtra.Save_t(_fnmControlsToCustomize);
-    }
-  } catch( char *strError) {
-    FatalError(strError);
-  }
-  FORDELETELIST( CButtonAction, ba_lnNode, _pGame->gm_ctrlControlsExtra.ctrl_lhButtonActions, itAct) {
-    delete &itAct.Current();
-  }
-  _pGame->LoadPlayersAndControls();
-}
 
 // mouse cursor position
 extern PIX _pixCursorPosI = 0;
@@ -244,31 +216,10 @@ void StopMenus( BOOL bGoToRoot /*=TRUE*/)
   }
 }
 
-
 BOOL IsMenusInRoot(void)
 {
   return pgmCurrentMenu == NULL || pgmCurrentMenu == &_pGUIM->gmMainMenu || pgmCurrentMenu == &_pGUIM->gmInGameMenu;
 }
-
-// ---------------------- When activated functions
-void StopCurrentGame(void)
-{
-  _pGame->StopGame();
-  _gmRunningGameMode=GM_NONE;
-  StopMenus(TRUE);
-  StartMenus("");
-}
-
-void DisabledFunction(void)
-{
-  _pGUIM->gmDisabledFunction.gm_pgmParentMenu = pgmCurrentMenu;
-  _pGUIM->gmDisabledFunction.gm_mgButton.mg_strText = TRANS("The feature is not available in this version!");
-  _pGUIM->gmDisabledFunction.gm_mgTitle.mg_strText = TRANS("DISABLED");
-  ChangeToMenu(&_pGUIM->gmDisabledFunction);
-}
-
-extern void InitVideoOptionsButtons(void);
-extern void UpdateVideoOptionsButtons(INDEX i);
 
 // ------------------------ Global menu function implementation
 void InitializeMenus(void)
@@ -484,7 +435,6 @@ void InitializeMenus(void)
     FatalError( strError);
   }
 }
-
 
 void DestroyMenus( void)
 {

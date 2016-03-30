@@ -63,5 +63,6 @@ void StartAddonsLoadMenu(void);
 void StartModsLoadMenu(void);
 void StartNetworkSettingsMenu(void);
 void StartSinglePlayerMenu(void);
+void DisabledFunction(void);
 
 #endif  /* include-once check. */

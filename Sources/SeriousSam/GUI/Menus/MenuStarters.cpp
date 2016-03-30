@@ -483,14 +483,18 @@ void StartSplitScreenGame(void)
 	}
 }
 
+#define CMENU _pGUIM->gmSelectPlayersMenu
+
 void StartSelectPlayersMenuFromSplit(void)
 {
-	_pGUIM->gmSelectPlayersMenu.gm_bAllowDedicated = FALSE;
-	_pGUIM->gmSelectPlayersMenu.gm_bAllowObserving = FALSE;
-	_pGUIM->gmSelectPlayersMenu.gm_mgStart.mg_pActivatedFunction = &StartSplitScreenGame;
-	_pGUIM->gmSelectPlayersMenu.gm_pgmParentMenu = &_pGUIM->gmSplitStartMenu;
-	ChangeToMenu(&_pGUIM->gmSelectPlayersMenu);
+	CMENU.gm_bAllowDedicated = FALSE;
+	CMENU.gm_bAllowObserving = FALSE;
+	CMENU.gm_mgStart.mg_pActivatedFunction = &StartSplitScreenGame;
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmSplitStartMenu;
+	ChangeToMenu(&CMENU);
 }
+
+#undef CMENU
 
 void StartNetworkGame(void)
 {
@@ -522,14 +526,18 @@ void StartNetworkGame(void)
 	}
 }
 
+#define CMENU _pGUIM->gmSelectPlayersMenu
+
 void StartSelectPlayersMenuFromNetwork(void)
 {
-	_pGUIM->gmSelectPlayersMenu.gm_bAllowDedicated = TRUE;
-	_pGUIM->gmSelectPlayersMenu.gm_bAllowObserving = TRUE;
-	_pGUIM->gmSelectPlayersMenu.gm_mgStart.mg_pActivatedFunction = &StartNetworkGame;
-	_pGUIM->gmSelectPlayersMenu.gm_pgmParentMenu = &_pGUIM->gmNetworkStartMenu;
-	ChangeToMenu(&_pGUIM->gmSelectPlayersMenu);
+	CMENU.gm_bAllowDedicated = TRUE;
+	CMENU.gm_bAllowObserving = TRUE;
+	CMENU.gm_mgStart.mg_pActivatedFunction = &StartNetworkGame;
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmNetworkStartMenu;
+	ChangeToMenu(&CMENU);
 }
+
+#undef CMENU
 
 void JoinNetworkGame(void)
 {
@@ -566,38 +574,42 @@ void JoinNetworkGame(void)
 	}
 }
 
+#define CMENU _pGUIM->gmSelectPlayersMenu
+
 void StartSelectPlayersMenuFromOpen(void)
 {
-	_pGUIM->gmSelectPlayersMenu.gm_bAllowDedicated = FALSE;
-	_pGUIM->gmSelectPlayersMenu.gm_bAllowObserving = TRUE;
-	_pGUIM->gmSelectPlayersMenu.gm_mgStart.mg_pActivatedFunction = &JoinNetworkGame;
-	_pGUIM->gmSelectPlayersMenu.gm_pgmParentMenu = &_pGUIM->gmNetworkOpenMenu;
-	ChangeToMenu(&_pGUIM->gmSelectPlayersMenu);
+	CMENU.gm_bAllowDedicated = FALSE;
+	CMENU.gm_bAllowObserving = TRUE;
+	CMENU.gm_mgStart.mg_pActivatedFunction = &JoinNetworkGame;
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmNetworkOpenMenu;
+	ChangeToMenu(&CMENU);
 
 	/*if (sam_strNetworkSettings=="")*/ {
 		void StartNetworkSettingsMenu(void);
 		StartNetworkSettingsMenu();
 		_pGUIM->gmLoadSaveMenu.gm_bNoEscape = TRUE;
 		_pGUIM->gmLoadSaveMenu.gm_pgmParentMenu = &_pGUIM->gmNetworkOpenMenu;
-		_pGUIM->gmLoadSaveMenu.gm_pgmNextMenu = &_pGUIM->gmSelectPlayersMenu;
+		_pGUIM->gmLoadSaveMenu.gm_pgmNextMenu = &CMENU;
 	}
 }
 void StartSelectPlayersMenuFromServers(void)
 {
-	_pGUIM->gmSelectPlayersMenu.gm_bAllowDedicated = FALSE;
-	_pGUIM->gmSelectPlayersMenu.gm_bAllowObserving = TRUE;
-	_pGUIM->gmSelectPlayersMenu.gm_mgStart.mg_pActivatedFunction = &JoinNetworkGame;
-	_pGUIM->gmSelectPlayersMenu.gm_pgmParentMenu = &_pGUIM->gmServersMenu;
-	ChangeToMenu(&_pGUIM->gmSelectPlayersMenu);
+	CMENU.gm_bAllowDedicated = FALSE;
+	CMENU.gm_bAllowObserving = TRUE;
+	CMENU.gm_mgStart.mg_pActivatedFunction = &JoinNetworkGame;
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmServersMenu;
+	ChangeToMenu(&CMENU);
 
 	/*if (sam_strNetworkSettings=="")*/ {
 		void StartNetworkSettingsMenu(void);
 		StartNetworkSettingsMenu();
 		_pGUIM->gmLoadSaveMenu.gm_bNoEscape = TRUE;
 		_pGUIM->gmLoadSaveMenu.gm_pgmParentMenu = &_pGUIM->gmServersMenu;
-		_pGUIM->gmLoadSaveMenu.gm_pgmNextMenu = &_pGUIM->gmSelectPlayersMenu;
+		_pGUIM->gmLoadSaveMenu.gm_pgmNextMenu = &CMENU;
 	}
 }
+
+#undef CMENU
 
 void StartSelectServerLAN(void)
 {
@@ -777,3 +789,11 @@ void StartNetworkSettingsMenu(void)
 }
 
 #undef CMENU
+
+void DisabledFunction(void)
+{
+	_pGUIM->gmDisabledFunction.gm_pgmParentMenu = pgmCurrentMenu;
+	_pGUIM->gmDisabledFunction.gm_mgButton.mg_strText = TRANS("The feature is not available in this version!");
+	_pGUIM->gmDisabledFunction.gm_mgTitle.mg_strText = TRANS("DISABLED");
+	ChangeToMenu(&_pGUIM->gmDisabledFunction);
+}
