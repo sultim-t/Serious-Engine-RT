@@ -99,8 +99,6 @@ static void SizeToResolution(PIX pixSizeI, PIX pixSizeJ, INDEX &iRes)
 }
 
 // ------------------------ CConfirmMenu implementation
-#define CMENU _pGUIM->gmConfirmMenu
-
 CTFileName _fnmModSelected;
 CTString _strModURLSelected;
 CTString _strModServerSelected;
@@ -113,12 +111,14 @@ void ExitGame(void)
 
 void ExitConfirm(void)
 {
+	CConfirmMenu &gmCurrent = _pGUIM->gmConfirmMenu;
+
 	_pConfimedYes = &ExitGame;
 	_pConfimedNo = NULL;
-	CMENU.gm_mgConfirmLabel.mg_strText = TRANS("ARE YOU SERIOUS?");
-	CMENU.gm_pgmParentMenu = pgmCurrentMenu;
-	CMENU.BeLarge();
-	ChangeToMenu(&CMENU);
+	gmCurrent.gm_mgConfirmLabel.mg_strText = TRANS("ARE YOU SERIOUS?");
+	gmCurrent.gm_pgmParentMenu = pgmCurrentMenu;
+	gmCurrent.BeLarge();
+	ChangeToMenu(&gmCurrent);
 }
 
 void StopCurrentGame(void)
@@ -131,12 +131,14 @@ void StopCurrentGame(void)
 
 void StopConfirm(void)
 {
+	CConfirmMenu &gmCurrent = _pGUIM->gmConfirmMenu;
+
 	_pConfimedYes = &StopCurrentGame;
 	_pConfimedNo = NULL;
-	CMENU.gm_mgConfirmLabel.mg_strText = TRANS("ARE YOU SERIOUS?");
-	CMENU.gm_pgmParentMenu = pgmCurrentMenu;
-	CMENU.BeLarge();
-	ChangeToMenu(&CMENU);
+	gmCurrent.gm_mgConfirmLabel.mg_strText = TRANS("ARE YOU SERIOUS?");
+	gmCurrent.gm_pgmParentMenu = pgmCurrentMenu;
+	gmCurrent.BeLarge();
+	ChangeToMenu(&gmCurrent);
 }
 
 void ModLoadYes(void)
@@ -155,6 +157,8 @@ void ModConnect(void)
 
 extern void ModConnectConfirm(void)
 {
+	CConfirmMenu &gmCurrent = _pGUIM->gmConfirmMenu;
+
 	if (_fnmModSelected == " ") {
 		_fnmModSelected = CTString("SeriousSam");
 	}
@@ -171,21 +175,23 @@ extern void ModConnectConfirm(void)
 	CPrintF(TRANS("Server is running a different MOD (%s).\nYou need to reload to connect.\n"), _fnmModSelected);
 	_pConfimedYes = &ModConnect;
 	_pConfimedNo = NULL;
-	CMENU.gm_mgConfirmLabel.mg_strText = TRANS("CHANGE THE MOD?");
-	CMENU.gm_pgmParentMenu = pgmCurrentMenu;
-	CMENU.BeLarge();
-	ChangeToMenu(&CMENU);
+	gmCurrent.gm_mgConfirmLabel.mg_strText = TRANS("CHANGE THE MOD?");
+	gmCurrent.gm_pgmParentMenu = pgmCurrentMenu;
+	gmCurrent.BeLarge();
+	ChangeToMenu(&gmCurrent);
 }
 
 void SaveConfirm(void)
 {
+	CConfirmMenu &gmCurrent = _pGUIM->gmConfirmMenu;
+
 	extern void OnFileSaveOK(void);
 	_pConfimedYes = &OnFileSaveOK;
 	_pConfimedNo = NULL;
-	CMENU.gm_mgConfirmLabel.mg_strText = TRANS("OVERWRITE?");
-	CMENU.gm_pgmParentMenu = pgmCurrentMenu;
-	CMENU.BeLarge();
-	ChangeToMenu(&CMENU);
+	gmCurrent.gm_mgConfirmLabel.mg_strText = TRANS("OVERWRITE?");
+	gmCurrent.gm_pgmParentMenu = pgmCurrentMenu;
+	gmCurrent.BeLarge();
+	ChangeToMenu(&gmCurrent);
 }
 
 void ExitAndSpawnExplorer(void)
@@ -198,53 +204,47 @@ void ExitAndSpawnExplorer(void)
 
 void ModNotInstalled(void)
 {
+	CConfirmMenu &gmCurrent = _pGUIM->gmConfirmMenu;
+
 	_pConfimedYes = &ExitAndSpawnExplorer;
 	_pConfimedNo = NULL;
-	CMENU.gm_mgConfirmLabel.mg_strText.PrintF(
+	gmCurrent.gm_mgConfirmLabel.mg_strText.PrintF(
 		TRANS("You don't have MOD '%s' installed.\nDo you want to visit its web site?"), (const char*)_fnmModSelected);
-	CMENU.gm_pgmParentMenu = pgmCurrentMenu;
-	CMENU.BeSmall();
-	ChangeToMenu(&CMENU);
+	gmCurrent.gm_pgmParentMenu = pgmCurrentMenu;
+	gmCurrent.BeSmall();
+	ChangeToMenu(&gmCurrent);
 }
 
 
 extern void ModConfirm(void)
 {
+	CConfirmMenu &gmCurrent = _pGUIM->gmConfirmMenu;
+
 	_pConfimedYes = &ModLoadYes;
 	_pConfimedNo = NULL;
-	CMENU.gm_mgConfirmLabel.mg_strText = TRANS("LOAD THIS MOD?");
-	CMENU.gm_pgmParentMenu = &_pGUIM->gmLoadSaveMenu;
-	CMENU.BeLarge();
-	ChangeToMenu(&CMENU);
+	gmCurrent.gm_mgConfirmLabel.mg_strText = TRANS("LOAD THIS MOD?");
+	gmCurrent.gm_pgmParentMenu = &_pGUIM->gmLoadSaveMenu;
+	gmCurrent.BeLarge();
+	ChangeToMenu(&gmCurrent);
 }
 
 void VideoConfirm(void)
 {
+	CConfirmMenu &gmCurrent = _pGUIM->gmConfirmMenu;
+
 	// FIXUP: keyboard focus lost when going from full screen to window mode
 	// due to WM_MOUSEMOVE being sent
 	_bMouseUsedLast = FALSE;
-	_pmgUnderCursor = CMENU.gm_pmgSelectedByDefault;
+	_pmgUnderCursor = gmCurrent.gm_pmgSelectedByDefault;
 
 	_pConfimedYes = NULL;
 	void RevertVideoSettings(void);
 	_pConfimedNo = RevertVideoSettings;
 
-	CMENU.gm_mgConfirmLabel.mg_strText = TRANS("KEEP THIS SETTING?");
-	CMENU.gm_pgmParentMenu = pgmCurrentMenu;
-	CMENU.BeLarge();
-	ChangeToMenu(&CMENU);
-}
-
-void CDConfirm(void(*pOk)(void))
-{
-	_pConfimedYes = pOk;
-	_pConfimedNo = NULL;
-	CMENU.gm_mgConfirmLabel.mg_strText = TRANS("PLEASE INSERT GAME CD?");
-	if (pgmCurrentMenu != &CMENU) {
-		CMENU.gm_pgmParentMenu = pgmCurrentMenu;
-		CMENU.BeLarge();
-		ChangeToMenu(&CMENU);
-	}
+	gmCurrent.gm_mgConfirmLabel.mg_strText = TRANS("KEEP THIS SETTING?");
+	gmCurrent.gm_pgmParentMenu = pgmCurrentMenu;
+	gmCurrent.BeLarge();
+	ChangeToMenu(&gmCurrent);
 }
 
 void ConfirmYes(void)
@@ -266,27 +266,25 @@ void ConfirmNo(void)
 }
 
 void InitActionsForConfirmMenu() {
-	CMENU.gm_mgConfirmYes.mg_pActivatedFunction = &ConfirmYes;
-	CMENU.gm_mgConfirmNo.mg_pActivatedFunction = &ConfirmNo;
-}
+	CConfirmMenu &gmCurrent = _pGUIM->gmConfirmMenu;
 
-#undef CMENU
+	gmCurrent.gm_mgConfirmYes.mg_pActivatedFunction = &ConfirmYes;
+	gmCurrent.gm_mgConfirmNo.mg_pActivatedFunction = &ConfirmNo;
+}
 
 // ------------------------ CMainMenu implementation
-#define CMENU _pGUIM->gmMainMenu
-
 void InitActionsForMainMenu() {
-	CMENU.gm_mgSingle.mg_pActivatedFunction = &StartSinglePlayerMenu;
-	CMENU.gm_mgNetwork.mg_pActivatedFunction = StartNetworkMenu;
-	CMENU.gm_mgSplitScreen.mg_pActivatedFunction = &StartSplitScreenMenu;
-	CMENU.gm_mgDemo.mg_pActivatedFunction = &StartDemoLoadMenu;
-	CMENU.gm_mgMods.mg_pActivatedFunction = &StartModsLoadMenu;
-	CMENU.gm_mgHighScore.mg_pActivatedFunction = &StartHighScoreMenu;
-	CMENU.gm_mgOptions.mg_pActivatedFunction = &StartOptionsMenu;
-	CMENU.gm_mgQuit.mg_pActivatedFunction = &ExitConfirm;
-}
+	CMainMenu &gmCurrent = _pGUIM->gmMainMenu;
 
-#undef CMENU
+	gmCurrent.gm_mgSingle.mg_pActivatedFunction = &StartSinglePlayerMenu;
+	gmCurrent.gm_mgNetwork.mg_pActivatedFunction = StartNetworkMenu;
+	gmCurrent.gm_mgSplitScreen.mg_pActivatedFunction = &StartSplitScreenMenu;
+	gmCurrent.gm_mgDemo.mg_pActivatedFunction = &StartDemoLoadMenu;
+	gmCurrent.gm_mgMods.mg_pActivatedFunction = &StartModsLoadMenu;
+	gmCurrent.gm_mgHighScore.mg_pActivatedFunction = &StartHighScoreMenu;
+	gmCurrent.gm_mgOptions.mg_pActivatedFunction = &StartOptionsMenu;
+	gmCurrent.gm_mgQuit.mg_pActivatedFunction = &ExitConfirm;
+}
 
 // ------------------------ CInGameMenu implementation
 // start load/save menus depending on type of game running
@@ -303,35 +301,36 @@ void StopRecordingDemo(void)
 	SetDemoStartStopRecText();
 }
 
-#define CMENU _pGUIM->gmInGameMenu
+void InitActionsForInGameMenu()
+{
+	CInGameMenu &gmCurrent = _pGUIM->gmInGameMenu;
 
-void InitActionsForInGameMenu() {
-
-	CMENU.gm_mgQuickLoad.mg_pActivatedFunction = &StartCurrentQuickLoadMenu;
-	CMENU.gm_mgQuickSave.mg_pActivatedFunction = &QuickSaveFromMenu;
-	CMENU.gm_mgLoad.mg_pActivatedFunction = &StartCurrentLoadMenu;
-	CMENU.gm_mgSave.mg_pActivatedFunction = &StartCurrentSaveMenu;
-	CMENU.gm_mgHighScore.mg_pActivatedFunction = &StartHighScoreMenu;
-	CMENU.gm_mgOptions.mg_pActivatedFunction = &StartOptionsMenu;
-	CMENU.gm_mgStop.mg_pActivatedFunction = &StopConfirm;
-	CMENU.gm_mgQuit.mg_pActivatedFunction = &ExitConfirm;
+	gmCurrent.gm_mgQuickLoad.mg_pActivatedFunction = &StartCurrentQuickLoadMenu;
+	gmCurrent.gm_mgQuickSave.mg_pActivatedFunction = &QuickSaveFromMenu;
+	gmCurrent.gm_mgLoad.mg_pActivatedFunction = &StartCurrentLoadMenu;
+	gmCurrent.gm_mgSave.mg_pActivatedFunction = &StartCurrentSaveMenu;
+	gmCurrent.gm_mgHighScore.mg_pActivatedFunction = &StartHighScoreMenu;
+	gmCurrent.gm_mgOptions.mg_pActivatedFunction = &StartOptionsMenu;
+	gmCurrent.gm_mgStop.mg_pActivatedFunction = &StopConfirm;
+	gmCurrent.gm_mgQuit.mg_pActivatedFunction = &ExitConfirm;
 }
 
 extern void SetDemoStartStopRecText(void)
 {
+	CInGameMenu &gmCurrent = _pGUIM->gmInGameMenu;
+
 	if (_pNetwork->IsRecordingDemo())
 	{
-		CMENU.gm_mgDemoRec.SetText(TRANS("STOP RECORDING"));
-		CMENU.gm_mgDemoRec.mg_strTip = TRANS("stop current recording");
-		CMENU.gm_mgDemoRec.mg_pActivatedFunction = &StopRecordingDemo;
+		gmCurrent.gm_mgDemoRec.SetText(TRANS("STOP RECORDING"));
+		gmCurrent.gm_mgDemoRec.mg_strTip = TRANS("stop current recording");
+		gmCurrent.gm_mgDemoRec.mg_pActivatedFunction = &StopRecordingDemo;
 	} else {
-		CMENU.gm_mgDemoRec.SetText(TRANS("RECORD DEMO"));
-		CMENU.gm_mgDemoRec.mg_strTip = TRANS("start recording current game");
-		CMENU.gm_mgDemoRec.mg_pActivatedFunction = &StartDemoSaveMenu;
+		gmCurrent.gm_mgDemoRec.SetText(TRANS("RECORD DEMO"));
+		gmCurrent.gm_mgDemoRec.mg_strTip = TRANS("start recording current game");
+		gmCurrent.gm_mgDemoRec.mg_pActivatedFunction = &StartDemoSaveMenu;
 	}
 }
 
-#undef CMENU
 
 // ------------------------ CSinglePlayerMenu implementation
 void StartSinglePlayerGame_Normal(void);
@@ -351,20 +350,19 @@ void StartTraining(void)
 	ChangeToMenu(&_pGUIM->gmSinglePlayerNewMenu);
 }
 
-#define CMENU _pGUIM->gmSinglePlayerMenu
+void InitActionsForSinglePlayerMenu()
+{
+	CSinglePlayerMenu &gmCurrent = _pGUIM->gmSinglePlayerMenu;
 
-void InitActionsForSinglePlayerMenu() {
-	CMENU.gm_mgNewGame.mg_pActivatedFunction = &StartSinglePlayerNewMenu;
-	CMENU.gm_mgCustom.mg_pActivatedFunction = &StartSelectLevelFromSingle;
-	CMENU.gm_mgQuickLoad.mg_pActivatedFunction = &StartSinglePlayerQuickLoadMenu;
-	CMENU.gm_mgLoad.mg_pActivatedFunction = &StartSinglePlayerLoadMenu;
-	CMENU.gm_mgTraining.mg_pActivatedFunction = &StartTraining;
-	CMENU.gm_mgTechTest.mg_pActivatedFunction = &StartTechTest;
-	CMENU.gm_mgPlayersAndControls.mg_pActivatedFunction = &StartChangePlayerMenuFromSinglePlayer;
-	CMENU.gm_mgOptions.mg_pActivatedFunction = &StartSinglePlayerGameOptions;
+	gmCurrent.gm_mgNewGame.mg_pActivatedFunction = &StartSinglePlayerNewMenu;
+	gmCurrent.gm_mgCustom.mg_pActivatedFunction = &StartSelectLevelFromSingle;
+	gmCurrent.gm_mgQuickLoad.mg_pActivatedFunction = &StartSinglePlayerQuickLoadMenu;
+	gmCurrent.gm_mgLoad.mg_pActivatedFunction = &StartSinglePlayerLoadMenu;
+	gmCurrent.gm_mgTraining.mg_pActivatedFunction = &StartTraining;
+	gmCurrent.gm_mgTechTest.mg_pActivatedFunction = &StartTechTest;
+	gmCurrent.gm_mgPlayersAndControls.mg_pActivatedFunction = &StartChangePlayerMenuFromSinglePlayer;
+	gmCurrent.gm_mgOptions.mg_pActivatedFunction = &StartSinglePlayerGameOptions;
 }
-
-#undef CMENU
 
 // ------------------------ CSinglePlayerNewMenu implementation
 void StartSinglePlayerGame(void)
@@ -431,40 +429,35 @@ void StartSinglePlayerGame_Mental(void)
 	StartSinglePlayerGame();
 }
 
-
-#define CMENU _pGUIM->gmSinglePlayerNewMenu
-
 void InitActionsForSinglePlayerNewMenu() {
-	CMENU.gm_mgTourist.mg_pActivatedFunction = &StartSinglePlayerGame_Tourist;
-	CMENU.gm_mgEasy.mg_pActivatedFunction = &StartSinglePlayerGame_Easy;
-	CMENU.gm_mgMedium.mg_pActivatedFunction = &StartSinglePlayerGame_Normal;
-	CMENU.gm_mgHard.mg_pActivatedFunction = &StartSinglePlayerGame_Hard;
-	CMENU.gm_mgSerious.mg_pActivatedFunction = &StartSinglePlayerGame_Serious;
-	CMENU.gm_mgMental.mg_pActivatedFunction = &StartSinglePlayerGame_Mental;
+	CSinglePlayerNewMenu &gmCurrent = _pGUIM->gmSinglePlayerNewMenu;
+
+	gmCurrent.gm_mgTourist.mg_pActivatedFunction = &StartSinglePlayerGame_Tourist;
+	gmCurrent.gm_mgEasy.mg_pActivatedFunction = &StartSinglePlayerGame_Easy;
+	gmCurrent.gm_mgMedium.mg_pActivatedFunction = &StartSinglePlayerGame_Normal;
+	gmCurrent.gm_mgHard.mg_pActivatedFunction = &StartSinglePlayerGame_Hard;
+	gmCurrent.gm_mgSerious.mg_pActivatedFunction = &StartSinglePlayerGame_Serious;
+	gmCurrent.gm_mgMental.mg_pActivatedFunction = &StartSinglePlayerGame_Mental;
 }
 
-#undef CMENU
-
 // ------------------------ CPlayerProfileMenu implementation
-#define CMENU _pGUIM->gmPlayerProfile
-
 void ChangeCrosshair(INDEX iNew)
 {
-	INDEX iPlayer = *CMENU.gm_piCurrentPlayer;
+	INDEX iPlayer = *_pGUIM->gmPlayerProfile.gm_piCurrentPlayer;
 	CPlayerSettings *pps = (CPlayerSettings *)_pGame->gm_apcPlayers[iPlayer].pc_aubAppearance;
 	pps->ps_iCrossHairType = iNew - 1;
 }
 
 void ChangeWeaponSelect(INDEX iNew)
 {
-	INDEX iPlayer = *CMENU.gm_piCurrentPlayer;
+	INDEX iPlayer = *_pGUIM->gmPlayerProfile.gm_piCurrentPlayer;
 	CPlayerSettings *pps = (CPlayerSettings *)_pGame->gm_apcPlayers[iPlayer].pc_aubAppearance;
 	pps->ps_iWeaponAutoSelect = iNew;
 }
 
 void ChangeWeaponHide(INDEX iNew)
 {
-	INDEX iPlayer = *CMENU.gm_piCurrentPlayer;
+	INDEX iPlayer = *_pGUIM->gmPlayerProfile.gm_piCurrentPlayer;
 	CPlayerSettings *pps = (CPlayerSettings *)_pGame->gm_apcPlayers[iPlayer].pc_aubAppearance;
 	if (iNew) {
 		pps->ps_ulFlags |= PSF_HIDEWEAPON;
@@ -475,7 +468,7 @@ void ChangeWeaponHide(INDEX iNew)
 
 void Change3rdPerson(INDEX iNew)
 {
-	INDEX iPlayer = *CMENU.gm_piCurrentPlayer;
+	INDEX iPlayer = *_pGUIM->gmPlayerProfile.gm_piCurrentPlayer;
 	CPlayerSettings *pps = (CPlayerSettings *)_pGame->gm_apcPlayers[iPlayer].pc_aubAppearance;
 	if (iNew) {
 		pps->ps_ulFlags |= PSF_PREFER3RDPERSON;
@@ -486,7 +479,7 @@ void Change3rdPerson(INDEX iNew)
 
 void ChangeQuotes(INDEX iNew)
 {
-	INDEX iPlayer = *CMENU.gm_piCurrentPlayer;
+	INDEX iPlayer = *_pGUIM->gmPlayerProfile.gm_piCurrentPlayer;
 	CPlayerSettings *pps = (CPlayerSettings *)_pGame->gm_apcPlayers[iPlayer].pc_aubAppearance;
 	if (iNew) {
 		pps->ps_ulFlags &= ~PSF_NOQUOTES;
@@ -497,7 +490,7 @@ void ChangeQuotes(INDEX iNew)
 
 void ChangeAutoSave(INDEX iNew)
 {
-	INDEX iPlayer = *CMENU.gm_piCurrentPlayer;
+	INDEX iPlayer = *_pGUIM->gmPlayerProfile.gm_piCurrentPlayer;
 	CPlayerSettings *pps = (CPlayerSettings *)_pGame->gm_apcPlayers[iPlayer].pc_aubAppearance;
 	if (iNew) {
 		pps->ps_ulFlags |= PSF_AUTOSAVE;
@@ -508,7 +501,7 @@ void ChangeAutoSave(INDEX iNew)
 
 void ChangeCompDoubleClick(INDEX iNew)
 {
-	INDEX iPlayer = *CMENU.gm_piCurrentPlayer;
+	INDEX iPlayer = *_pGUIM->gmPlayerProfile.gm_piCurrentPlayer;
 	CPlayerSettings *pps = (CPlayerSettings *)_pGame->gm_apcPlayers[iPlayer].pc_aubAppearance;
 	if (iNew) {
 		pps->ps_ulFlags &= ~PSF_COMPSINGLECLICK;
@@ -519,7 +512,7 @@ void ChangeCompDoubleClick(INDEX iNew)
 
 void ChangeViewBobbing(INDEX iNew)
 {
-	INDEX iPlayer = *CMENU.gm_piCurrentPlayer;
+	INDEX iPlayer = *_pGUIM->gmPlayerProfile.gm_piCurrentPlayer;
 	CPlayerSettings *pps = (CPlayerSettings *)_pGame->gm_apcPlayers[iPlayer].pc_aubAppearance;
 	if (iNew) {
 		pps->ps_ulFlags &= ~PSF_NOBOBBING;
@@ -530,7 +523,7 @@ void ChangeViewBobbing(INDEX iNew)
 
 void ChangeSharpTurning(INDEX iNew)
 {
-	INDEX iPlayer = *CMENU.gm_piCurrentPlayer;
+	INDEX iPlayer = *_pGUIM->gmPlayerProfile.gm_piCurrentPlayer;
 	CPlayerSettings *pps = (CPlayerSettings *)_pGame->gm_apcPlayers[iPlayer].pc_aubAppearance;
 	if (iNew) {
 		pps->ps_ulFlags |= PSF_SHARPTURNING;
@@ -549,67 +542,62 @@ extern void PPOnPlayerSelect(void)
 
 void InitActionsForPlayerProfileMenu()
 {
-	CMENU.gm_mgCrosshair.mg_pOnTriggerChange = ChangeCrosshair;
-	CMENU.gm_mgWeaponSelect.mg_pOnTriggerChange = ChangeWeaponSelect;
-	CMENU.gm_mgWeaponHide.mg_pOnTriggerChange = ChangeWeaponHide;
-	CMENU.gm_mg3rdPerson.mg_pOnTriggerChange = Change3rdPerson;
-	CMENU.gm_mgQuotes.mg_pOnTriggerChange = ChangeQuotes;
-	CMENU.gm_mgAutoSave.mg_pOnTriggerChange = ChangeAutoSave;
-	CMENU.gm_mgCompDoubleClick.mg_pOnTriggerChange = ChangeCompDoubleClick;
-	CMENU.gm_mgSharpTurning.mg_pOnTriggerChange = ChangeSharpTurning;
-	CMENU.gm_mgViewBobbing.mg_pOnTriggerChange = ChangeViewBobbing;
-	CMENU.gm_mgCustomizeControls.mg_pActivatedFunction = &StartControlsMenuFromPlayer;
-	CMENU.gm_mgModel.mg_pActivatedFunction = &StartPlayerModelLoadMenu;
-}
+	CPlayerProfileMenu &gmCurrent = _pGUIM->gmPlayerProfile;
 
-#undef CMENU
+	gmCurrent.gm_mgCrosshair.mg_pOnTriggerChange = ChangeCrosshair;
+	gmCurrent.gm_mgWeaponSelect.mg_pOnTriggerChange = ChangeWeaponSelect;
+	gmCurrent.gm_mgWeaponHide.mg_pOnTriggerChange = ChangeWeaponHide;
+	gmCurrent.gm_mg3rdPerson.mg_pOnTriggerChange = Change3rdPerson;
+	gmCurrent.gm_mgQuotes.mg_pOnTriggerChange = ChangeQuotes;
+	gmCurrent.gm_mgAutoSave.mg_pOnTriggerChange = ChangeAutoSave;
+	gmCurrent.gm_mgCompDoubleClick.mg_pOnTriggerChange = ChangeCompDoubleClick;
+	gmCurrent.gm_mgSharpTurning.mg_pOnTriggerChange = ChangeSharpTurning;
+	gmCurrent.gm_mgViewBobbing.mg_pOnTriggerChange = ChangeViewBobbing;
+	gmCurrent.gm_mgCustomizeControls.mg_pActivatedFunction = &StartControlsMenuFromPlayer;
+	gmCurrent.gm_mgModel.mg_pActivatedFunction = &StartPlayerModelLoadMenu;
+}
 
 // ------------------------ CControlsMenu implementation
-#define CMENU _pGUIM->gmControls
-
 void InitActionsForControlsMenu()
 {
-	CMENU.gm_mgButtons.mg_pActivatedFunction = &StartCustomizeKeyboardMenu;
-	CMENU.gm_mgAdvanced.mg_pActivatedFunction = &StartCustomizeAxisMenu;
-	CMENU.gm_mgPredefined.mg_pActivatedFunction = &StartControlsLoadMenu;
+	CControlsMenu &gmCurrent = _pGUIM->gmControls;
+
+	gmCurrent.gm_mgButtons.mg_pActivatedFunction = &StartCustomizeKeyboardMenu;
+	gmCurrent.gm_mgAdvanced.mg_pActivatedFunction = &StartCustomizeAxisMenu;
+	gmCurrent.gm_mgPredefined.mg_pActivatedFunction = &StartControlsLoadMenu;
 }
 
-#undef CMENU
-
 // ------------------------ CCustomizeAxisMenu implementation
-#define CMENU _pGUIM->gmCustomizeAxisMenu
-
 void PreChangeAxis(INDEX iDummy)
 {
-	CMENU.ApplyActionSettings();
+	_pGUIM->gmCustomizeAxisMenu.ApplyActionSettings();
 }
 
 void PostChangeAxis(INDEX iDummy)
 {
-	CMENU.ObtainActionSettings();
+	_pGUIM->gmCustomizeAxisMenu.ObtainActionSettings();
 }
 
-void InitActionsForCustomizeAxisMenu() {
-	CMENU.gm_mgActionTrigger.mg_pPreTriggerChange = PreChangeAxis;
-	CMENU.gm_mgActionTrigger.mg_pOnTriggerChange = PostChangeAxis;
-}
+void InitActionsForCustomizeAxisMenu()
+{
+	CCustomizeAxisMenu &gmCurrent = _pGUIM->gmCustomizeAxisMenu;
 
-#undef CMENU
+	gmCurrent.gm_mgActionTrigger.mg_pPreTriggerChange = PreChangeAxis;
+	gmCurrent.gm_mgActionTrigger.mg_pOnTriggerChange = PostChangeAxis;
+}
 
 // ------------------------ COptionsMenu implementation
-#define CMENU _pGUIM->gmOptionsMenu
-
 void InitActionsForOptionsMenu()
 {
-	CMENU.gm_mgVideoOptions.mg_pActivatedFunction = &StartVideoOptionsMenu;
-	CMENU.gm_mgAudioOptions.mg_pActivatedFunction = &StartAudioOptionsMenu;
-	CMENU.gm_mgPlayerProfileOptions.mg_pActivatedFunction = &StartChangePlayerMenuFromOptions;
-	CMENU.gm_mgNetworkOptions.mg_pActivatedFunction = &StartNetworkSettingsMenu;
-	CMENU.gm_mgCustomOptions.mg_pActivatedFunction = &StartCustomLoadMenu;
-	CMENU.gm_mgAddonOptions.mg_pActivatedFunction = &StartAddonsLoadMenu;
-}
+	COptionsMenu &gmCurrent = _pGUIM->gmOptionsMenu;
 
-#undef CMENU
+	gmCurrent.gm_mgVideoOptions.mg_pActivatedFunction = &StartVideoOptionsMenu;
+	gmCurrent.gm_mgAudioOptions.mg_pActivatedFunction = &StartAudioOptionsMenu;
+	gmCurrent.gm_mgPlayerProfileOptions.mg_pActivatedFunction = &StartChangePlayerMenuFromOptions;
+	gmCurrent.gm_mgNetworkOptions.mg_pActivatedFunction = &StartNetworkSettingsMenu;
+	gmCurrent.gm_mgCustomOptions.mg_pActivatedFunction = &StartCustomLoadMenu;
+	gmCurrent.gm_mgAddonOptions.mg_pActivatedFunction = &StartAddonsLoadMenu;
+}
 
 // ------------------------ CVideoOptionsMenu implementation
 static INDEX sam_old_bFullScreenActive;
@@ -620,11 +608,10 @@ static INDEX sam_old_iDisplayAdapter;
 static INDEX sam_old_iGfxAPI;
 static INDEX sam_old_iVideoSetup;  // 0==speed, 1==normal, 2==quality, 3==custom
 
-
-#define CMENU _pGUIM->gmVideoOptionsMenu
-
 static void FillResolutionsList(void)
 {
+	CVideoOptionsMenu &gmCurrent = _pGUIM->gmVideoOptionsMenu;
+
 	// free resolutions
 	if (_astrResolutionTexts != NULL) {
 		delete[] _astrResolutionTexts;
@@ -635,7 +622,7 @@ static void FillResolutionsList(void)
 	_ctResolutions = 0;
 
 	// if window
-	if (CMENU.gm_mgFullScreenTrigger.mg_iSelected == 0) {
+	if (gmCurrent.gm_mgFullScreenTrigger.mg_iSelected == 0) {
 		// always has fixed resolutions, but not greater than desktop
 
 		_ctResolutions = ARRAYCOUNT(apixWidths);
@@ -653,7 +640,7 @@ static void FillResolutionsList(void)
 	} else {
 		// get resolutions list from engine
 		CDisplayMode *pdm = _pGfx->EnumDisplayModes(_ctResolutions,
-			SwitchToAPI(CMENU.gm_mgDisplayAPITrigger.mg_iSelected), CMENU.gm_mgDisplayAdaptersTrigger.mg_iSelected);
+			SwitchToAPI(gmCurrent.gm_mgDisplayAPITrigger.mg_iSelected), gmCurrent.gm_mgDisplayAdaptersTrigger.mg_iSelected);
 		// allocate that much
 		_astrResolutionTexts = new CTString[_ctResolutions];
 		_admResolutionModes = new CDisplayMode[_ctResolutions];
@@ -663,29 +650,36 @@ static void FillResolutionsList(void)
 			SetResolutionInList(iRes, pdm[iRes].dm_pixSizeI, pdm[iRes].dm_pixSizeJ);
 		}
 	}
-	CMENU.gm_mgResolutionsTrigger.mg_astrTexts = _astrResolutionTexts;
-	CMENU.gm_mgResolutionsTrigger.mg_ctTexts = _ctResolutions;
+
+	gmCurrent.gm_mgResolutionsTrigger.mg_astrTexts = _astrResolutionTexts;
+	gmCurrent.gm_mgResolutionsTrigger.mg_ctTexts = _ctResolutions;
 }
 
 static void FillAdaptersList(void)
 {
+	CVideoOptionsMenu &gmCurrent = _pGUIM->gmVideoOptionsMenu;
+
 	if (_astrAdapterTexts != NULL) {
 		delete[] _astrAdapterTexts;
 	}
+
 	_ctAdapters = 0;
 
-	INDEX iApi = SwitchToAPI(CMENU.gm_mgDisplayAPITrigger.mg_iSelected);
+	INDEX iApi = SwitchToAPI(gmCurrent.gm_mgDisplayAPITrigger.mg_iSelected);
 	_ctAdapters = _pGfx->gl_gaAPI[iApi].ga_ctAdapters;
 	_astrAdapterTexts = new CTString[_ctAdapters];
 	for (INDEX iAdapter = 0; iAdapter<_ctAdapters; iAdapter++) {
 		_astrAdapterTexts[iAdapter] = _pGfx->gl_gaAPI[iApi].ga_adaAdapter[iAdapter].da_strRenderer;
 	}
-	CMENU.gm_mgDisplayAdaptersTrigger.mg_astrTexts = _astrAdapterTexts;
-	CMENU.gm_mgDisplayAdaptersTrigger.mg_ctTexts = _ctAdapters;
+
+	gmCurrent.gm_mgDisplayAdaptersTrigger.mg_astrTexts = _astrAdapterTexts;
+	gmCurrent.gm_mgDisplayAdaptersTrigger.mg_ctTexts = _ctAdapters;
 }
 
 extern void UpdateVideoOptionsButtons(INDEX iSelected)
 {
+	CVideoOptionsMenu &gmCurrent = _pGUIM->gmVideoOptionsMenu;
+
 	const BOOL _bVideoOptionsChanged = (iSelected != -1);
 
 	const BOOL bOGLEnabled = _pGfx->HasAPI(GAT_OGL);
@@ -695,84 +689,89 @@ extern void UpdateVideoOptionsButtons(INDEX iSelected)
 #else // 
 	ASSERT(bOGLEnabled);
 #endif // SE1_D3D
-	CDisplayAdapter &da = _pGfx->gl_gaAPI[SwitchToAPI(CMENU.gm_mgDisplayAPITrigger.mg_iSelected)]
-		.ga_adaAdapter[CMENU.gm_mgDisplayAdaptersTrigger.mg_iSelected];
+
+	CDisplayAdapter &da = _pGfx->gl_gaAPI[SwitchToAPI(gmCurrent.gm_mgDisplayAPITrigger.mg_iSelected)]
+		.ga_adaAdapter[gmCurrent.gm_mgDisplayAdaptersTrigger.mg_iSelected];
 
 	// number of available preferences is higher if video setup is custom
-	CMENU.gm_mgDisplayPrefsTrigger.mg_ctTexts = 3;
-	if (sam_iVideoSetup == 3) CMENU.gm_mgDisplayPrefsTrigger.mg_ctTexts++;
+	gmCurrent.gm_mgDisplayPrefsTrigger.mg_ctTexts = 3;
+	if (sam_iVideoSetup == 3) gmCurrent.gm_mgDisplayPrefsTrigger.mg_ctTexts++;
 
 	// enumerate adapters
 	FillAdaptersList();
 
 	// show or hide buttons
-	CMENU.gm_mgDisplayAPITrigger.mg_bEnabled = bOGLEnabled
+	gmCurrent.gm_mgDisplayAPITrigger.mg_bEnabled = bOGLEnabled
 #ifdef SE1_D3D
 		&& bD3DEnabled
 #endif // SE1_D3D
 		;
-	CMENU.gm_mgDisplayAdaptersTrigger.mg_bEnabled = _ctAdapters>1;
-	CMENU.gm_mgApply.mg_bEnabled = _bVideoOptionsChanged;
+	gmCurrent.gm_mgDisplayAdaptersTrigger.mg_bEnabled = _ctAdapters>1;
+	gmCurrent.gm_mgApply.mg_bEnabled = _bVideoOptionsChanged;
 	// determine which should be visible
 
-	CMENU.gm_mgFullScreenTrigger.mg_bEnabled = TRUE;
+	gmCurrent.gm_mgFullScreenTrigger.mg_bEnabled = TRUE;
 	if (da.da_ulFlags&DAF_FULLSCREENONLY) {
-		CMENU.gm_mgFullScreenTrigger.mg_bEnabled = FALSE;
-		CMENU.gm_mgFullScreenTrigger.mg_iSelected = 1;
-		CMENU.gm_mgFullScreenTrigger.ApplyCurrentSelection();
+		gmCurrent.gm_mgFullScreenTrigger.mg_bEnabled = FALSE;
+		gmCurrent.gm_mgFullScreenTrigger.mg_iSelected = 1;
+		gmCurrent.gm_mgFullScreenTrigger.ApplyCurrentSelection();
 	}
 
-	CMENU.gm_mgBitsPerPixelTrigger.mg_bEnabled = TRUE;
-	if (CMENU.gm_mgFullScreenTrigger.mg_iSelected == 0) {
-		CMENU.gm_mgBitsPerPixelTrigger.mg_bEnabled = FALSE;
-		CMENU.gm_mgBitsPerPixelTrigger.mg_iSelected = DepthToSwitch(DD_DEFAULT);
-		CMENU.gm_mgBitsPerPixelTrigger.ApplyCurrentSelection();
+	gmCurrent.gm_mgBitsPerPixelTrigger.mg_bEnabled = TRUE;
+	if (gmCurrent.gm_mgFullScreenTrigger.mg_iSelected == 0) {
+		gmCurrent.gm_mgBitsPerPixelTrigger.mg_bEnabled = FALSE;
+		gmCurrent.gm_mgBitsPerPixelTrigger.mg_iSelected = DepthToSwitch(DD_DEFAULT);
+		gmCurrent.gm_mgBitsPerPixelTrigger.ApplyCurrentSelection();
 	} else if (da.da_ulFlags&DAF_16BITONLY) {
-		CMENU.gm_mgBitsPerPixelTrigger.mg_bEnabled = FALSE;
-		CMENU.gm_mgBitsPerPixelTrigger.mg_iSelected = DepthToSwitch(DD_16BIT);
-		CMENU.gm_mgBitsPerPixelTrigger.ApplyCurrentSelection();
+		gmCurrent.gm_mgBitsPerPixelTrigger.mg_bEnabled = FALSE;
+		gmCurrent.gm_mgBitsPerPixelTrigger.mg_iSelected = DepthToSwitch(DD_16BIT);
+		gmCurrent.gm_mgBitsPerPixelTrigger.ApplyCurrentSelection();
 	}
 
 	// remember current selected resolution
 	PIX pixSizeI, pixSizeJ;
-	ResolutionToSize(CMENU.gm_mgResolutionsTrigger.mg_iSelected, pixSizeI, pixSizeJ);
+	ResolutionToSize(gmCurrent.gm_mgResolutionsTrigger.mg_iSelected, pixSizeI, pixSizeJ);
 
 	// select same resolution again if possible
 	FillResolutionsList();
-	SizeToResolution(pixSizeI, pixSizeJ, CMENU.gm_mgResolutionsTrigger.mg_iSelected);
+	SizeToResolution(pixSizeI, pixSizeJ, gmCurrent.gm_mgResolutionsTrigger.mg_iSelected);
 
 	// apply adapter and resolutions
-	CMENU.gm_mgDisplayAdaptersTrigger.ApplyCurrentSelection();
-	CMENU.gm_mgResolutionsTrigger.ApplyCurrentSelection();
+	gmCurrent.gm_mgDisplayAdaptersTrigger.ApplyCurrentSelection();
+	gmCurrent.gm_mgResolutionsTrigger.ApplyCurrentSelection();
 }
-
 
 extern void InitVideoOptionsButtons(void)
 {
+	CVideoOptionsMenu &gmCurrent = _pGUIM->gmVideoOptionsMenu;
+
 	if (sam_bFullScreenActive) {
-		CMENU.gm_mgFullScreenTrigger.mg_iSelected = 1;
+		gmCurrent.gm_mgFullScreenTrigger.mg_iSelected = 1;
 	} else {
-		CMENU.gm_mgFullScreenTrigger.mg_iSelected = 0;
+		gmCurrent.gm_mgFullScreenTrigger.mg_iSelected = 0;
 	}
 
-	CMENU.gm_mgDisplayAPITrigger.mg_iSelected = APIToSwitch((GfxAPIType)(INDEX)sam_iGfxAPI);
-	CMENU.gm_mgDisplayAdaptersTrigger.mg_iSelected = sam_iDisplayAdapter;
-	CMENU.gm_mgBitsPerPixelTrigger.mg_iSelected = DepthToSwitch((enum DisplayDepth)(INDEX)sam_iDisplayDepth);
+	gmCurrent.gm_mgDisplayAPITrigger.mg_iSelected = APIToSwitch((GfxAPIType)(INDEX)sam_iGfxAPI);
+	gmCurrent.gm_mgDisplayAdaptersTrigger.mg_iSelected = sam_iDisplayAdapter;
+	gmCurrent.gm_mgBitsPerPixelTrigger.mg_iSelected = DepthToSwitch((enum DisplayDepth)(INDEX)sam_iDisplayDepth);
 
 	FillResolutionsList();
-	SizeToResolution(sam_iScreenSizeI, sam_iScreenSizeJ, CMENU.gm_mgResolutionsTrigger.mg_iSelected);
-	CMENU.gm_mgDisplayPrefsTrigger.mg_iSelected = Clamp(int(sam_iVideoSetup), 0, 3);
+	SizeToResolution(sam_iScreenSizeI, sam_iScreenSizeJ, gmCurrent.gm_mgResolutionsTrigger.mg_iSelected);
+	gmCurrent.gm_mgDisplayPrefsTrigger.mg_iSelected = Clamp(int(sam_iVideoSetup), 0, 3);
 
-	CMENU.gm_mgFullScreenTrigger.ApplyCurrentSelection();
-	CMENU.gm_mgDisplayPrefsTrigger.ApplyCurrentSelection();
-	CMENU.gm_mgDisplayAPITrigger.ApplyCurrentSelection();
-	CMENU.gm_mgDisplayAdaptersTrigger.ApplyCurrentSelection();
-	CMENU.gm_mgResolutionsTrigger.ApplyCurrentSelection();
-	CMENU.gm_mgBitsPerPixelTrigger.ApplyCurrentSelection();
+	gmCurrent.gm_mgFullScreenTrigger.ApplyCurrentSelection();
+	gmCurrent.gm_mgDisplayPrefsTrigger.ApplyCurrentSelection();
+	gmCurrent.gm_mgDisplayAPITrigger.ApplyCurrentSelection();
+	gmCurrent.gm_mgDisplayAdaptersTrigger.ApplyCurrentSelection();
+	gmCurrent.gm_mgResolutionsTrigger.ApplyCurrentSelection();
+	gmCurrent.gm_mgBitsPerPixelTrigger.ApplyCurrentSelection();
 }
 
 void ApplyVideoOptions(void)
 {
+	CVideoOptionsMenu &gmCurrent = _pGUIM->gmVideoOptionsMenu;
+
+	// Remember old video settings
 	sam_old_bFullScreenActive = sam_bFullScreenActive;
 	sam_old_iScreenSizeI = sam_iScreenSizeI;
 	sam_old_iScreenSizeJ = sam_iScreenSizeJ;
@@ -781,17 +780,17 @@ void ApplyVideoOptions(void)
 	sam_old_iGfxAPI = sam_iGfxAPI;
 	sam_old_iVideoSetup = sam_iVideoSetup;
 
-	BOOL bFullScreenMode = CMENU.gm_mgFullScreenTrigger.mg_iSelected == 1;
+	BOOL bFullScreenMode = gmCurrent.gm_mgFullScreenTrigger.mg_iSelected == 1;
 	PIX pixWindowSizeI, pixWindowSizeJ;
-	ResolutionToSize(CMENU.gm_mgResolutionsTrigger.mg_iSelected, pixWindowSizeI, pixWindowSizeJ);
-	enum GfxAPIType gat = SwitchToAPI(CMENU.gm_mgDisplayAPITrigger.mg_iSelected);
-	enum DisplayDepth dd = SwitchToDepth(CMENU.gm_mgBitsPerPixelTrigger.mg_iSelected);
-	const INDEX iAdapter = CMENU.gm_mgDisplayAdaptersTrigger.mg_iSelected;
+	ResolutionToSize(gmCurrent.gm_mgResolutionsTrigger.mg_iSelected, pixWindowSizeI, pixWindowSizeJ);
+	enum GfxAPIType gat = SwitchToAPI(gmCurrent.gm_mgDisplayAPITrigger.mg_iSelected);
+	enum DisplayDepth dd = SwitchToDepth(gmCurrent.gm_mgBitsPerPixelTrigger.mg_iSelected);
+	const INDEX iAdapter = gmCurrent.gm_mgDisplayAdaptersTrigger.mg_iSelected;
 
 	// setup preferences
 	extern INDEX _iLastPreferences;
 	if (sam_iVideoSetup == 3) _iLastPreferences = 3;
-	sam_iVideoSetup = CMENU.gm_mgDisplayPrefsTrigger.mg_iSelected;
+	sam_iVideoSetup = gmCurrent.gm_mgDisplayPrefsTrigger.mg_iSelected;
 
 	// force fullscreen mode if needed
 	CDisplayAdapter &da = _pGfx->gl_gaAPI[gat].ga_adaAdapter[iAdapter];
@@ -833,59 +832,61 @@ void RevertVideoSettings(void)
 
 void InitActionsForVideoOptionsMenu()
 {
-	CMENU.gm_mgDisplayPrefsTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
-	CMENU.gm_mgDisplayAPITrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
-	CMENU.gm_mgDisplayAdaptersTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
-	CMENU.gm_mgFullScreenTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
-	CMENU.gm_mgResolutionsTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
-	CMENU.gm_mgBitsPerPixelTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
-	CMENU.gm_mgVideoRendering.mg_pActivatedFunction = &StartRenderingOptionsMenu;
-	CMENU.gm_mgApply.mg_pActivatedFunction = &ApplyVideoOptions;
+	CVideoOptionsMenu &gmCurrent = _pGUIM->gmVideoOptionsMenu;
+
+	gmCurrent.gm_mgDisplayPrefsTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
+	gmCurrent.gm_mgDisplayAPITrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
+	gmCurrent.gm_mgDisplayAdaptersTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
+	gmCurrent.gm_mgFullScreenTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
+	gmCurrent.gm_mgResolutionsTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
+	gmCurrent.gm_mgBitsPerPixelTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
+	gmCurrent.gm_mgVideoRendering.mg_pActivatedFunction = &StartRenderingOptionsMenu;
+	gmCurrent.gm_mgApply.mg_pActivatedFunction = &ApplyVideoOptions;
 }
 
-#undef CMENU
-
 // ------------------------ CAudioOptionsMenu implementation
-#define CMENU _pGUIM->gmAudioOptionsMenu
-
 extern void RefreshSoundFormat(void)
 {
+	CAudioOptionsMenu &gmCurrent = _pGUIM->gmAudioOptionsMenu;
+
 	switch (_pSound->GetFormat())
 	{
-		case CSoundLibrary::SF_NONE:     {CMENU.gm_mgFrequencyTrigger.mg_iSelected = 0; break; }
-		case CSoundLibrary::SF_11025_16: {CMENU.gm_mgFrequencyTrigger.mg_iSelected = 1; break; }
-		case CSoundLibrary::SF_22050_16: {CMENU.gm_mgFrequencyTrigger.mg_iSelected = 2; break; }
-		case CSoundLibrary::SF_44100_16: {CMENU.gm_mgFrequencyTrigger.mg_iSelected = 3; break; }
-		default:                          CMENU.gm_mgFrequencyTrigger.mg_iSelected = 0;
+		case CSoundLibrary::SF_NONE:     {gmCurrent.gm_mgFrequencyTrigger.mg_iSelected = 0; break; }
+		case CSoundLibrary::SF_11025_16: {gmCurrent.gm_mgFrequencyTrigger.mg_iSelected = 1; break; }
+		case CSoundLibrary::SF_22050_16: {gmCurrent.gm_mgFrequencyTrigger.mg_iSelected = 2; break; }
+		case CSoundLibrary::SF_44100_16: {gmCurrent.gm_mgFrequencyTrigger.mg_iSelected = 3; break; }
+		default:                          gmCurrent.gm_mgFrequencyTrigger.mg_iSelected = 0;
 	}
 
-	CMENU.gm_mgAudioAutoTrigger.mg_iSelected = Clamp(sam_bAutoAdjustAudio, 0, 1);
-	CMENU.gm_mgAudioAPITrigger.mg_iSelected = Clamp(_pShell->GetINDEX("snd_iInterface"), 0L, 2L);
+	gmCurrent.gm_mgAudioAutoTrigger.mg_iSelected = Clamp(sam_bAutoAdjustAudio, 0, 1);
+	gmCurrent.gm_mgAudioAPITrigger.mg_iSelected = Clamp(_pShell->GetINDEX("snd_iInterface"), 0L, 2L);
 
-	CMENU.gm_mgWaveVolume.mg_iMinPos = 0;
-	CMENU.gm_mgWaveVolume.mg_iMaxPos = VOLUME_STEPS;
-	CMENU.gm_mgWaveVolume.mg_iCurPos = (INDEX)(_pShell->GetFLOAT("snd_fSoundVolume")*VOLUME_STEPS + 0.5f);
-	CMENU.gm_mgWaveVolume.ApplyCurrentPosition();
+	gmCurrent.gm_mgWaveVolume.mg_iMinPos = 0;
+	gmCurrent.gm_mgWaveVolume.mg_iMaxPos = VOLUME_STEPS;
+	gmCurrent.gm_mgWaveVolume.mg_iCurPos = (INDEX)(_pShell->GetFLOAT("snd_fSoundVolume")*VOLUME_STEPS + 0.5f);
+	gmCurrent.gm_mgWaveVolume.ApplyCurrentPosition();
 
-	CMENU.gm_mgMPEGVolume.mg_iMinPos = 0;
-	CMENU.gm_mgMPEGVolume.mg_iMaxPos = VOLUME_STEPS;
-	CMENU.gm_mgMPEGVolume.mg_iCurPos = (INDEX)(_pShell->GetFLOAT("snd_fMusicVolume")*VOLUME_STEPS + 0.5f);
-	CMENU.gm_mgMPEGVolume.ApplyCurrentPosition();
+	gmCurrent.gm_mgMPEGVolume.mg_iMinPos = 0;
+	gmCurrent.gm_mgMPEGVolume.mg_iMaxPos = VOLUME_STEPS;
+	gmCurrent.gm_mgMPEGVolume.mg_iCurPos = (INDEX)(_pShell->GetFLOAT("snd_fMusicVolume")*VOLUME_STEPS + 0.5f);
+	gmCurrent.gm_mgMPEGVolume.ApplyCurrentPosition();
 
-	CMENU.gm_mgAudioAutoTrigger.ApplyCurrentSelection();
-	CMENU.gm_mgAudioAPITrigger.ApplyCurrentSelection();
-	CMENU.gm_mgFrequencyTrigger.ApplyCurrentSelection();
+	gmCurrent.gm_mgAudioAutoTrigger.ApplyCurrentSelection();
+	gmCurrent.gm_mgAudioAPITrigger.ApplyCurrentSelection();
+	gmCurrent.gm_mgFrequencyTrigger.ApplyCurrentSelection();
 }
 
 void ApplyAudioOptions(void)
 {
-	sam_bAutoAdjustAudio = CMENU.gm_mgAudioAutoTrigger.mg_iSelected;
+	CAudioOptionsMenu &gmCurrent = _pGUIM->gmAudioOptionsMenu;
+
+	sam_bAutoAdjustAudio = gmCurrent.gm_mgAudioAutoTrigger.mg_iSelected;
 	if (sam_bAutoAdjustAudio) {
 		_pShell->Execute("include \"Scripts\\Addons\\SFX-AutoAdjust.ini\"");
 	} else {
-		_pShell->SetINDEX("snd_iInterface", CMENU.gm_mgAudioAPITrigger.mg_iSelected);
+		_pShell->SetINDEX("snd_iInterface", gmCurrent.gm_mgAudioAPITrigger.mg_iSelected);
 
-		switch (CMENU.gm_mgFrequencyTrigger.mg_iSelected)
+		switch (gmCurrent.gm_mgFrequencyTrigger.mg_iSelected)
 		{
 			case 0: {_pSound->SetFormat(CSoundLibrary::SF_NONE); break; }
 			case 1: {_pSound->SetFormat(CSoundLibrary::SF_11025_16); break; }
@@ -906,21 +907,27 @@ static void OnWaveVolumeChange(INDEX iCurPos)
 
 void WaveSliderChange(void)
 {
-	CMENU.gm_mgWaveVolume.mg_iCurPos -= 5;
-	CMENU.gm_mgWaveVolume.ApplyCurrentPosition();
+	CAudioOptionsMenu &gmCurrent = _pGUIM->gmAudioOptionsMenu;
+
+	gmCurrent.gm_mgWaveVolume.mg_iCurPos -= 5;
+	gmCurrent.gm_mgWaveVolume.ApplyCurrentPosition();
 }
 
 void FrequencyTriggerChange(INDEX iDummy)
 {
+	CAudioOptionsMenu &gmCurrent = _pGUIM->gmAudioOptionsMenu;
+
 	sam_bAutoAdjustAudio = 0;
-	CMENU.gm_mgAudioAutoTrigger.mg_iSelected = 0;
-	CMENU.gm_mgAudioAutoTrigger.ApplyCurrentSelection();
+	gmCurrent.gm_mgAudioAutoTrigger.mg_iSelected = 0;
+	gmCurrent.gm_mgAudioAutoTrigger.ApplyCurrentSelection();
 }
 
 void MPEGSliderChange(void)
 {
-	CMENU.gm_mgMPEGVolume.mg_iCurPos -= 5;
-	CMENU.gm_mgMPEGVolume.ApplyCurrentPosition();
+	CAudioOptionsMenu &gmCurrent = _pGUIM->gmAudioOptionsMenu;
+
+	gmCurrent.gm_mgMPEGVolume.mg_iCurPos -= 5;
+	gmCurrent.gm_mgMPEGVolume.ApplyCurrentPosition();
 }
 
 static void OnMPEGVolumeChange(INDEX iCurPos)
@@ -930,51 +937,45 @@ static void OnMPEGVolumeChange(INDEX iCurPos)
 
 void InitActionsForAudioOptionsMenu()
 {
-	CMENU.gm_mgFrequencyTrigger.mg_pOnTriggerChange = FrequencyTriggerChange;
-	CMENU.gm_mgWaveVolume.mg_pOnSliderChange = &OnWaveVolumeChange;
-	CMENU.gm_mgWaveVolume.mg_pActivatedFunction = WaveSliderChange;
-	CMENU.gm_mgMPEGVolume.mg_pOnSliderChange = &OnMPEGVolumeChange;
-	CMENU.gm_mgMPEGVolume.mg_pActivatedFunction = MPEGSliderChange;
-	CMENU.gm_mgApply.mg_pActivatedFunction = &ApplyAudioOptions;
+	CAudioOptionsMenu &gmCurrent = _pGUIM->gmAudioOptionsMenu;
+
+	gmCurrent.gm_mgFrequencyTrigger.mg_pOnTriggerChange = FrequencyTriggerChange;
+	gmCurrent.gm_mgWaveVolume.mg_pOnSliderChange = &OnWaveVolumeChange;
+	gmCurrent.gm_mgWaveVolume.mg_pActivatedFunction = WaveSliderChange;
+	gmCurrent.gm_mgMPEGVolume.mg_pOnSliderChange = &OnMPEGVolumeChange;
+	gmCurrent.gm_mgMPEGVolume.mg_pActivatedFunction = MPEGSliderChange;
+	gmCurrent.gm_mgApply.mg_pActivatedFunction = &ApplyAudioOptions;
 }
 
-#undef CMENU
-
 // ------------------------ CVarMenu implementation
-#define CMENU _pGUIM->gmVarMenu
-
 void VarApply(void)
 {
+	CVarMenu &gmCurrent = _pGUIM->gmVarMenu;
+
 	FlushVarSettings(TRUE);
-	CMENU.EndMenu();
-	CMENU.StartMenu();
+	gmCurrent.EndMenu();
+	gmCurrent.StartMenu();
 }
 
 void InitActionsForVarMenu() {
-	CMENU.gm_mgApply.mg_pActivatedFunction = &VarApply;
+	_pGUIM->gmVarMenu.gm_mgApply.mg_pActivatedFunction = &VarApply;
 }
-
-#undef CMENU
 
 // ------------------------ CServersMenu implementation
-extern void RefreshServerList(void)
-{
-	_pNetwork->EnumSessions(_pGUIM->gmServersMenu.m_bInternet);
-}
 
-void RefreshServerListManually(void)
-{
-	ChangeToMenu(&_pGUIM->gmServersMenu); // this refreshes the list and sets focuses
-}
+extern CMGButton mgServerColumn[7];
+extern CMGEdit mgServerFilter[7];
 
 void SortByColumn(int i)
 {
-	if (_pGUIM->gmServersMenu.gm_mgList.mg_iSort == i) {
-		_pGUIM->gmServersMenu.gm_mgList.mg_bSortDown = !_pGUIM->gmServersMenu.gm_mgList.mg_bSortDown;
+	CServersMenu &gmCurrent = _pGUIM->gmServersMenu;
+
+	if (gmCurrent.gm_mgList.mg_iSort == i) {
+		gmCurrent.gm_mgList.mg_bSortDown = !gmCurrent.gm_mgList.mg_bSortDown;
 	} else {
-		_pGUIM->gmServersMenu.gm_mgList.mg_bSortDown = FALSE;
+		gmCurrent.gm_mgList.mg_bSortDown = FALSE;
 	}
-	_pGUIM->gmServersMenu.gm_mgList.mg_iSort = i;
+	gmCurrent.gm_mgList.mg_iSort = i;
 }
 
 void SortByServer(void) { SortByColumn(0); }
@@ -985,8 +986,15 @@ void SortByGame(void)   { SortByColumn(4); }
 void SortByMod(void)    { SortByColumn(5); }
 void SortByVer(void)    { SortByColumn(6); }
 
-extern CMGButton mgServerColumn[7];
-extern CMGEdit mgServerFilter[7];
+extern void RefreshServerList(void)
+{
+	_pNetwork->EnumSessions(_pGUIM->gmServersMenu.m_bInternet);
+}
+
+void RefreshServerListManually(void)
+{
+	ChangeToMenu(&_pGUIM->gmServersMenu); // this refreshes the list and sets focuses
+}
 
 void InitActionsForServersMenu() {
 	_pGUIM->gmServersMenu.gm_mgRefresh.mg_pActivatedFunction = &RefreshServerList;
@@ -1001,29 +1009,25 @@ void InitActionsForServersMenu() {
 }
 
 // ------------------------ CNetworkMenu implementation
-#define CMENU _pGUIM->gmNetworkMenu
-
 void InitActionsForNetworkMenu()
 {
-	CMENU.gm_mgJoin.mg_pActivatedFunction = &StartNetworkJoinMenu;
-	CMENU.gm_mgStart.mg_pActivatedFunction = &StartNetworkStartMenu;
-	CMENU.gm_mgQuickLoad.mg_pActivatedFunction = &StartNetworkQuickLoadMenu;
-	CMENU.gm_mgLoad.mg_pActivatedFunction = &StartNetworkLoadMenu;
-}
+	CNetworkMenu &gmCurrent = _pGUIM->gmNetworkMenu;
 
-#undef CMENU
+	gmCurrent.gm_mgJoin.mg_pActivatedFunction = &StartNetworkJoinMenu;
+	gmCurrent.gm_mgStart.mg_pActivatedFunction = &StartNetworkStartMenu;
+	gmCurrent.gm_mgQuickLoad.mg_pActivatedFunction = &StartNetworkQuickLoadMenu;
+	gmCurrent.gm_mgLoad.mg_pActivatedFunction = &StartNetworkLoadMenu;
+}
 
 // ------------------------ CNetworkJoinMenu implementation
-#define CMENU _pGUIM->gmNetworkJoinMenu
-
 void InitActionsForNetworkJoinMenu()
 {
-	CMENU.gm_mgLAN.mg_pActivatedFunction = &StartSelectServerLAN;
-	CMENU.gm_mgNET.mg_pActivatedFunction = &StartSelectServerNET;
-	CMENU.gm_mgOpen.mg_pActivatedFunction = &StartNetworkOpenMenu;
-}
+	CNetworkJoinMenu &gmCurrent = _pGUIM->gmNetworkJoinMenu;
 
-#undef CMENU
+	gmCurrent.gm_mgLAN.mg_pActivatedFunction = &StartSelectServerLAN;
+	gmCurrent.gm_mgNET.mg_pActivatedFunction = &StartSelectServerNET;
+	gmCurrent.gm_mgOpen.mg_pActivatedFunction = &StartNetworkOpenMenu;
+}
 
 // ------------------------ CNetworkStartMenu implementation
 extern void UpdateNetworkLevel(INDEX iDummy)
@@ -1041,8 +1045,6 @@ void InitActionsForNetworkStartMenu()
 }
 
 // ------------------------ CSelectPlayersMenu implementation
-#define CMENU _pGUIM->gmSelectPlayersMenu
-
 INDEX FindUnusedPlayer(void)
 {
 	INDEX *ai = _pGame->gm_aiMenuLocalPlayers;
@@ -1065,44 +1067,46 @@ INDEX FindUnusedPlayer(void)
 
 extern void SelectPlayersFillMenu(void)
 {
+	CSelectPlayersMenu &gmCurrent = _pGUIM->gmSelectPlayersMenu;
+
 	INDEX *ai = _pGame->gm_aiMenuLocalPlayers;
 
-	CMENU.gm_mgPlayer0Change.mg_iLocalPlayer = 0;
-	CMENU.gm_mgPlayer1Change.mg_iLocalPlayer = 1;
-	CMENU.gm_mgPlayer2Change.mg_iLocalPlayer = 2;
-	CMENU.gm_mgPlayer3Change.mg_iLocalPlayer = 3;
+	gmCurrent.gm_mgPlayer0Change.mg_iLocalPlayer = 0;
+	gmCurrent.gm_mgPlayer1Change.mg_iLocalPlayer = 1;
+	gmCurrent.gm_mgPlayer2Change.mg_iLocalPlayer = 2;
+	gmCurrent.gm_mgPlayer3Change.mg_iLocalPlayer = 3;
 
-	if (CMENU.gm_bAllowDedicated && _pGame->gm_MenuSplitScreenCfg == CGame::SSC_DEDICATED) {
-		CMENU.gm_mgDedicated.mg_iSelected = 1;
+	if (gmCurrent.gm_bAllowDedicated && _pGame->gm_MenuSplitScreenCfg == CGame::SSC_DEDICATED) {
+		gmCurrent.gm_mgDedicated.mg_iSelected = 1;
 	} else {
-		CMENU.gm_mgDedicated.mg_iSelected = 0;
+		gmCurrent.gm_mgDedicated.mg_iSelected = 0;
 	}
 
-	CMENU.gm_mgDedicated.ApplyCurrentSelection();
+	gmCurrent.gm_mgDedicated.ApplyCurrentSelection();
 
-	if (CMENU.gm_bAllowObserving && _pGame->gm_MenuSplitScreenCfg == CGame::SSC_OBSERVER) {
-		CMENU.gm_mgObserver.mg_iSelected = 1;
+	if (gmCurrent.gm_bAllowObserving && _pGame->gm_MenuSplitScreenCfg == CGame::SSC_OBSERVER) {
+		gmCurrent.gm_mgObserver.mg_iSelected = 1;
 	} else {
-		CMENU.gm_mgObserver.mg_iSelected = 0;
+		gmCurrent.gm_mgObserver.mg_iSelected = 0;
 	}
 
-	CMENU.gm_mgObserver.ApplyCurrentSelection();
+	gmCurrent.gm_mgObserver.ApplyCurrentSelection();
 
 	if (_pGame->gm_MenuSplitScreenCfg >= CGame::SSC_PLAY1) {
-		CMENU.gm_mgSplitScreenCfg.mg_iSelected = _pGame->gm_MenuSplitScreenCfg;
-		CMENU.gm_mgSplitScreenCfg.ApplyCurrentSelection();
+		gmCurrent.gm_mgSplitScreenCfg.mg_iSelected = _pGame->gm_MenuSplitScreenCfg;
+		gmCurrent.gm_mgSplitScreenCfg.ApplyCurrentSelection();
 	}
 
-	BOOL bHasDedicated = CMENU.gm_bAllowDedicated;
-	BOOL bHasObserver = CMENU.gm_bAllowObserving;
+	BOOL bHasDedicated = gmCurrent.gm_bAllowDedicated;
+	BOOL bHasObserver = gmCurrent.gm_bAllowObserving;
 	BOOL bHasPlayers = TRUE;
 
-	if (bHasDedicated && CMENU.gm_mgDedicated.mg_iSelected) {
+	if (bHasDedicated && gmCurrent.gm_mgDedicated.mg_iSelected) {
 		bHasObserver = FALSE;
 		bHasPlayers = FALSE;
 	}
 
-	if (bHasObserver && CMENU.gm_mgObserver.mg_iSelected) {
+	if (bHasObserver && gmCurrent.gm_mgObserver.mg_iSelected) {
 		bHasPlayers = FALSE;
 	}
 
@@ -1111,17 +1115,17 @@ extern void SelectPlayersFillMenu(void)
 	INDEX i = 0;
 
 	if (bHasDedicated) {
-		CMENU.gm_mgDedicated.Appear();
-		apmg[i++] = &CMENU.gm_mgDedicated;
+		gmCurrent.gm_mgDedicated.Appear();
+		apmg[i++] = &gmCurrent.gm_mgDedicated;
 	} else {
-		CMENU.gm_mgDedicated.Disappear();
+		gmCurrent.gm_mgDedicated.Disappear();
 	}
 
 	if (bHasObserver) {
-		CMENU.gm_mgObserver.Appear();
-		apmg[i++] = &CMENU.gm_mgObserver;
+		gmCurrent.gm_mgObserver.Appear();
+		apmg[i++] = &gmCurrent.gm_mgObserver;
 	} else {
-		CMENU.gm_mgObserver.Disappear();
+		gmCurrent.gm_mgObserver.Disappear();
 	}
 
 	for (INDEX iLocal = 0; iLocal<4; iLocal++) {
@@ -1135,32 +1139,32 @@ extern void SelectPlayersFillMenu(void)
 		}
 	}
 
-	CMENU.gm_mgPlayer0Change.Disappear();
-	CMENU.gm_mgPlayer1Change.Disappear();
-	CMENU.gm_mgPlayer2Change.Disappear();
-	CMENU.gm_mgPlayer3Change.Disappear();
+	gmCurrent.gm_mgPlayer0Change.Disappear();
+	gmCurrent.gm_mgPlayer1Change.Disappear();
+	gmCurrent.gm_mgPlayer2Change.Disappear();
+	gmCurrent.gm_mgPlayer3Change.Disappear();
 
 	if (bHasPlayers) {
-		CMENU.gm_mgSplitScreenCfg.Appear();
-		apmg[i++] = &CMENU.gm_mgSplitScreenCfg;
-		CMENU.gm_mgPlayer0Change.Appear();
-		apmg[i++] = &CMENU.gm_mgPlayer0Change;
-		if (CMENU.gm_mgSplitScreenCfg.mg_iSelected >= 1) {
-			CMENU.gm_mgPlayer1Change.Appear();
-			apmg[i++] = &CMENU.gm_mgPlayer1Change;
+		gmCurrent.gm_mgSplitScreenCfg.Appear();
+		apmg[i++] = &gmCurrent.gm_mgSplitScreenCfg;
+		gmCurrent.gm_mgPlayer0Change.Appear();
+		apmg[i++] = &gmCurrent.gm_mgPlayer0Change;
+		if (gmCurrent.gm_mgSplitScreenCfg.mg_iSelected >= 1) {
+			gmCurrent.gm_mgPlayer1Change.Appear();
+			apmg[i++] = &gmCurrent.gm_mgPlayer1Change;
 		}
-		if (CMENU.gm_mgSplitScreenCfg.mg_iSelected >= 2) {
-			CMENU.gm_mgPlayer2Change.Appear();
-			apmg[i++] = &CMENU.gm_mgPlayer2Change;
+		if (gmCurrent.gm_mgSplitScreenCfg.mg_iSelected >= 2) {
+			gmCurrent.gm_mgPlayer2Change.Appear();
+			apmg[i++] = &gmCurrent.gm_mgPlayer2Change;
 		}
-		if (CMENU.gm_mgSplitScreenCfg.mg_iSelected >= 3) {
-			CMENU.gm_mgPlayer3Change.Appear();
-			apmg[i++] = &CMENU.gm_mgPlayer3Change;
+		if (gmCurrent.gm_mgSplitScreenCfg.mg_iSelected >= 3) {
+			gmCurrent.gm_mgPlayer3Change.Appear();
+			apmg[i++] = &gmCurrent.gm_mgPlayer3Change;
 		}
 	} else {
-		CMENU.gm_mgSplitScreenCfg.Disappear();
+		gmCurrent.gm_mgSplitScreenCfg.Disappear();
 	}
-	apmg[i++] = &CMENU.gm_mgStart;
+	apmg[i++] = &gmCurrent.gm_mgStart;
 
 	// relink
 	for (INDEX img = 0; img<8; img++) {
@@ -1183,31 +1187,33 @@ extern void SelectPlayersFillMenu(void)
 		apmg[img]->mg_pmgDown = apmg[imgSucc];
 	}
 
-	CMENU.gm_mgPlayer0Change.SetPlayerText();
-	CMENU.gm_mgPlayer1Change.SetPlayerText();
-	CMENU.gm_mgPlayer2Change.SetPlayerText();
-	CMENU.gm_mgPlayer3Change.SetPlayerText();
+	gmCurrent.gm_mgPlayer0Change.SetPlayerText();
+	gmCurrent.gm_mgPlayer1Change.SetPlayerText();
+	gmCurrent.gm_mgPlayer2Change.SetPlayerText();
+	gmCurrent.gm_mgPlayer3Change.SetPlayerText();
 
-	if (bHasPlayers && CMENU.gm_mgSplitScreenCfg.mg_iSelected >= 1) {
-		CMENU.gm_mgNotes.mg_strText = TRANS("Make sure you set different controls for each player!");
+	if (bHasPlayers && gmCurrent.gm_mgSplitScreenCfg.mg_iSelected >= 1) {
+		gmCurrent.gm_mgNotes.mg_strText = TRANS("Make sure you set different controls for each player!");
 	} else {
-		CMENU.gm_mgNotes.mg_strText = "";
+		gmCurrent.gm_mgNotes.mg_strText = "";
 	}
 }
 
 extern void SelectPlayersApplyMenu(void)
 {
-	if (CMENU.gm_bAllowDedicated && CMENU.gm_mgDedicated.mg_iSelected) {
+	CSelectPlayersMenu &gmCurrent = _pGUIM->gmSelectPlayersMenu;
+
+	if (gmCurrent.gm_bAllowDedicated && gmCurrent.gm_mgDedicated.mg_iSelected) {
 		_pGame->gm_MenuSplitScreenCfg = CGame::SSC_DEDICATED;
 		return;
 	}
 
-	if (CMENU.gm_bAllowObserving && CMENU.gm_mgObserver.mg_iSelected) {
+	if (gmCurrent.gm_bAllowObserving && gmCurrent.gm_mgObserver.mg_iSelected) {
 		_pGame->gm_MenuSplitScreenCfg = CGame::SSC_OBSERVER;
 		return;
 	}
 
-	_pGame->gm_MenuSplitScreenCfg = (enum CGame::SplitScreenCfg) CMENU.gm_mgSplitScreenCfg.mg_iSelected;
+	_pGame->gm_MenuSplitScreenCfg = (enum CGame::SplitScreenCfg) gmCurrent.gm_mgSplitScreenCfg.mg_iSelected;
 }
 
 void UpdateSelectPlayers(INDEX i)
@@ -1218,12 +1224,12 @@ void UpdateSelectPlayers(INDEX i)
 
 void InitActionsForSelectPlayersMenu()
 {
-	CMENU.gm_mgDedicated.mg_pOnTriggerChange = UpdateSelectPlayers;
-	CMENU.gm_mgObserver.mg_pOnTriggerChange = UpdateSelectPlayers;
-	CMENU.gm_mgSplitScreenCfg.mg_pOnTriggerChange = UpdateSelectPlayers;
-}
+	CSelectPlayersMenu &gmCurrent = _pGUIM->gmSelectPlayersMenu;
 
-#undef CMENU
+	gmCurrent.gm_mgDedicated.mg_pOnTriggerChange = UpdateSelectPlayers;
+	gmCurrent.gm_mgObserver.mg_pOnTriggerChange = UpdateSelectPlayers;
+	gmCurrent.gm_mgSplitScreenCfg.mg_pOnTriggerChange = UpdateSelectPlayers;
+}
 
 // ------------------------ CNetworkOpenMenu implementation
 void InitActionsForNetworkOpenMenu()
@@ -1232,32 +1238,30 @@ void InitActionsForNetworkOpenMenu()
 }
 
 // ------------------------ CSplitScreenMenu implementation
-#define CMENU _pGUIM->gmSplitScreenMenu
-
 void InitActionsForSplitScreenMenu()
 {
-	CMENU.gm_mgStart.mg_pActivatedFunction = &StartSplitStartMenu;
-	CMENU.gm_mgQuickLoad.mg_pActivatedFunction = &StartSplitScreenQuickLoadMenu;
-	CMENU.gm_mgLoad.mg_pActivatedFunction = &StartSplitScreenLoadMenu;
+	CSplitScreenMenu &gmCurrent = _pGUIM->gmSplitScreenMenu;
+
+	gmCurrent.gm_mgStart.mg_pActivatedFunction = &StartSplitStartMenu;
+	gmCurrent.gm_mgQuickLoad.mg_pActivatedFunction = &StartSplitScreenQuickLoadMenu;
+	gmCurrent.gm_mgLoad.mg_pActivatedFunction = &StartSplitScreenLoadMenu;
 }
 
-#undef CMENU
-
 // ------------------------ CSplitStartMenu implementation
-#define CMENU _pGUIM->gmSplitStartMenu
-
 void InitActionsForSplitStartMenu()
 {
-	CMENU.gm_mgLevel.mg_pActivatedFunction = &StartSelectLevelFromSplit;
-	CMENU.gm_mgOptions.mg_pActivatedFunction = &StartGameOptionsFromSplitScreen;
-	CMENU.gm_mgStart.mg_pActivatedFunction = &StartSelectPlayersMenuFromSplit;
+	CSplitStartMenu &gmCurrent = _pGUIM->gmSplitStartMenu;
+
+	gmCurrent.gm_mgLevel.mg_pActivatedFunction = &StartSelectLevelFromSplit;
+	gmCurrent.gm_mgOptions.mg_pActivatedFunction = &StartGameOptionsFromSplitScreen;
+	gmCurrent.gm_mgStart.mg_pActivatedFunction = &StartSelectPlayersMenuFromSplit;
 }
 
 extern void UpdateSplitLevel(INDEX iDummy)
 {
-	ValidateLevelForFlags(_pGame->gam_strCustomLevel,
-		GetSpawnFlagsForGameType(CMENU.gm_mgGameType.mg_iSelected));
-	CMENU.gm_mgLevel.mg_strText = FindLevelByFileName(_pGame->gam_strCustomLevel).li_strName;
-}
+	CSplitStartMenu &gmCurrent = _pGUIM->gmSplitStartMenu;
 
-#undef CMENU
+	ValidateLevelForFlags(_pGame->gam_strCustomLevel,
+		GetSpawnFlagsForGameType(gmCurrent.gm_mgGameType.mg_iSelected));
+	gmCurrent.gm_mgLevel.mg_strText = FindLevelByFileName(_pGame->gam_strCustomLevel).li_strName;
+}
