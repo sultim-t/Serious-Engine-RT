@@ -33,8 +33,5 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <EntitiesMP/Player.h>
 #undef DECL_DLL
 
-#define TECHTESTONLY 0
-
 #include "SeriousSam.h"
-#include "Menu.h"
-#include "MenuGadgets.h"
+#include "GUI/Menus/Menu.h"
