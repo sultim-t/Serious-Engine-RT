@@ -44,6 +44,9 @@ void CConfirmMenu::Initialize_t(void)
 		gm_mgConfirmNo.mg_pmgRight = &gm_mgConfirmYes;
 	gm_mgConfirmNo.mg_iCenterI = -1;
 	gm_mgConfirmNo.mg_bfsFontSize = BFS_LARGE;
+
+	_pConfimedYes = NULL;
+	_pConfimedNo = NULL;
 }
 
 void CConfirmMenu::BeLarge(void)

@@ -28,6 +28,9 @@ public:
 	CMGButton gm_mgConfirmYes;
 	CMGButton gm_mgConfirmNo;
 
+	void(*_pConfimedYes)(void) = NULL;
+	void(*_pConfimedNo)(void) = NULL;
+
 	void Initialize_t(void);
 	// return TRUE if handled
 	BOOL OnKeyDown(int iVKey);

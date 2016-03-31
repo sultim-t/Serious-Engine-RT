@@ -22,26 +22,23 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "LevelInfo.h"
 #include "VarList.h"
 
-#define VOLUME_STEPS  50
+ENGINE_API extern INDEX snd_iFormat;
+extern BOOL _bMouseUsedLast;
 
 extern CMenuGadget *_pmgLastActivatedGadget;
 extern CMenuGadget *_pmgUnderCursor;
 
-// functions to activate when user chose 'yes/no' on confirmation
-void(*_pConfimedYes)(void) = NULL;
-void(*_pConfimedNo)(void) = NULL;
+static INDEX         _ctAdapters = 0;
+static CTString     * _astrAdapterTexts = NULL;
+static INDEX         _ctResolutions = 0;
+static CTString     * _astrResolutionTexts = NULL;
+static CDisplayMode *_admResolutionModes = NULL;
 
-INDEX         _ctAdapters = 0;
-CTString     * _astrAdapterTexts = NULL;
-INDEX         _ctResolutions = 0;
-CTString     * _astrResolutionTexts = NULL;
-CDisplayMode *_admResolutionModes = NULL;
+#define VOLUME_STEPS  50
 
-extern BOOL _bMouseUsedLast;
-ENGINE_API extern INDEX snd_iFormat;
 
 // make description for a given resolution
-CTString GetResolutionDescription(CDisplayMode &dm)
+static CTString GetResolutionDescription(CDisplayMode &dm)
 {
 	CTString str;
 	// if dual head
@@ -58,7 +55,7 @@ CTString GetResolutionDescription(CDisplayMode &dm)
 }
 
 // make description for a given resolution
-void SetResolutionInList(INDEX iRes, PIX pixSizeI, PIX pixSizeJ)
+static void SetResolutionInList(INDEX iRes, PIX pixSizeI, PIX pixSizeJ)
 {
 	ASSERT(iRes >= 0 && iRes<_ctResolutions);
 
@@ -103,25 +100,25 @@ CTFileName _fnmModSelected;
 CTString _strModURLSelected;
 CTString _strModServerSelected;
 
-void ExitGame(void)
+static void ExitGame(void)
 {
 	_bRunning = FALSE;
 	_bQuitScreen = TRUE;
 }
 
-void ExitConfirm(void)
+static void ExitConfirm(void)
 {
 	CConfirmMenu &gmCurrent = _pGUIM->gmConfirmMenu;
 
-	_pConfimedYes = &ExitGame;
-	_pConfimedNo = NULL;
+	gmCurrent._pConfimedYes = &ExitGame;
+	gmCurrent._pConfimedNo = NULL;
 	gmCurrent.gm_mgConfirmLabel.mg_strText = TRANS("ARE YOU SERIOUS?");
 	gmCurrent.gm_pgmParentMenu = pgmCurrentMenu;
 	gmCurrent.BeLarge();
 	ChangeToMenu(&gmCurrent);
 }
 
-void StopCurrentGame(void)
+static void StopCurrentGame(void)
 {
 	_pGame->StopGame();
 	_gmRunningGameMode = GM_NONE;
@@ -129,25 +126,25 @@ void StopCurrentGame(void)
 	StartMenus("");
 }
 
-void StopConfirm(void)
+static void StopConfirm(void)
 {
 	CConfirmMenu &gmCurrent = _pGUIM->gmConfirmMenu;
 
-	_pConfimedYes = &StopCurrentGame;
-	_pConfimedNo = NULL;
+	gmCurrent._pConfimedYes = &StopCurrentGame;
+	gmCurrent._pConfimedNo = NULL;
 	gmCurrent.gm_mgConfirmLabel.mg_strText = TRANS("ARE YOU SERIOUS?");
 	gmCurrent.gm_pgmParentMenu = pgmCurrentMenu;
 	gmCurrent.BeLarge();
 	ChangeToMenu(&gmCurrent);
 }
 
-void ModLoadYes(void)
+static void ModLoadYes(void)
 {
 	extern CTFileName _fnmModToLoad;
 	_fnmModToLoad = _fnmModSelected;
 }
 
-void ModConnect(void)
+static void ModConnect(void)
 {
 	extern CTFileName _fnmModToLoad;
 	extern CTString _strModServerJoin;
@@ -162,6 +159,7 @@ extern void ModConnectConfirm(void)
 	if (_fnmModSelected == " ") {
 		_fnmModSelected = CTString("SeriousSam");
 	}
+
 	CTFileName fnmModPath = "Mods\\" + _fnmModSelected + "\\";
 	if (!FileExists(fnmModPath + "BaseWriteInclude.lst")
 		&& !FileExists(fnmModPath + "BaseWriteExclude.lst")
@@ -173,8 +171,8 @@ extern void ModConnectConfirm(void)
 	}
 
 	CPrintF(TRANS("Server is running a different MOD (%s).\nYou need to reload to connect.\n"), _fnmModSelected);
-	_pConfimedYes = &ModConnect;
-	_pConfimedNo = NULL;
+	gmCurrent._pConfimedYes = &ModConnect;
+	gmCurrent._pConfimedNo = NULL;
 	gmCurrent.gm_mgConfirmLabel.mg_strText = TRANS("CHANGE THE MOD?");
 	gmCurrent.gm_pgmParentMenu = pgmCurrentMenu;
 	gmCurrent.BeLarge();
@@ -186,8 +184,8 @@ void SaveConfirm(void)
 	CConfirmMenu &gmCurrent = _pGUIM->gmConfirmMenu;
 
 	extern void OnFileSaveOK(void);
-	_pConfimedYes = &OnFileSaveOK;
-	_pConfimedNo = NULL;
+	gmCurrent._pConfimedYes = &OnFileSaveOK;
+	gmCurrent._pConfimedNo = NULL;
 	gmCurrent.gm_mgConfirmLabel.mg_strText = TRANS("OVERWRITE?");
 	gmCurrent.gm_pgmParentMenu = pgmCurrentMenu;
 	gmCurrent.BeLarge();
@@ -206,8 +204,8 @@ void ModNotInstalled(void)
 {
 	CConfirmMenu &gmCurrent = _pGUIM->gmConfirmMenu;
 
-	_pConfimedYes = &ExitAndSpawnExplorer;
-	_pConfimedNo = NULL;
+	gmCurrent._pConfimedYes = &ExitAndSpawnExplorer;
+	gmCurrent._pConfimedNo = NULL;
 	gmCurrent.gm_mgConfirmLabel.mg_strText.PrintF(
 		TRANS("You don't have MOD '%s' installed.\nDo you want to visit its web site?"), (const char*)_fnmModSelected);
 	gmCurrent.gm_pgmParentMenu = pgmCurrentMenu;
@@ -220,13 +218,15 @@ extern void ModConfirm(void)
 {
 	CConfirmMenu &gmCurrent = _pGUIM->gmConfirmMenu;
 
-	_pConfimedYes = &ModLoadYes;
-	_pConfimedNo = NULL;
+	gmCurrent._pConfimedYes = &ModLoadYes;
+	gmCurrent._pConfimedNo = NULL;
 	gmCurrent.gm_mgConfirmLabel.mg_strText = TRANS("LOAD THIS MOD?");
 	gmCurrent.gm_pgmParentMenu = &_pGUIM->gmLoadSaveMenu;
 	gmCurrent.BeLarge();
 	ChangeToMenu(&gmCurrent);
 }
+
+static void RevertVideoSettings(void);
 
 void VideoConfirm(void)
 {
@@ -237,9 +237,8 @@ void VideoConfirm(void)
 	_bMouseUsedLast = FALSE;
 	_pmgUnderCursor = gmCurrent.gm_pmgSelectedByDefault;
 
-	_pConfimedYes = NULL;
-	void RevertVideoSettings(void);
-	_pConfimedNo = RevertVideoSettings;
+	gmCurrent._pConfimedYes = NULL;
+	gmCurrent._pConfimedNo = RevertVideoSettings;
 
 	gmCurrent.gm_mgConfirmLabel.mg_strText = TRANS("KEEP THIS SETTING?");
 	gmCurrent.gm_pgmParentMenu = pgmCurrentMenu;
@@ -247,19 +246,23 @@ void VideoConfirm(void)
 	ChangeToMenu(&gmCurrent);
 }
 
-void ConfirmYes(void)
+static void ConfirmYes(void)
 {
-	if (_pConfimedYes != NULL) {
-		_pConfimedYes();
+	CConfirmMenu &gmCurrent = _pGUIM->gmConfirmMenu;
+
+	if (gmCurrent._pConfimedYes != NULL) {
+		gmCurrent._pConfimedYes();
 	}
 	void MenuGoToParent(void);
 	MenuGoToParent();
 }
 
-void ConfirmNo(void)
+static void ConfirmNo(void)
 {
-	if (_pConfimedNo != NULL) {
-		_pConfimedNo();
+	CConfirmMenu &gmCurrent = _pGUIM->gmConfirmMenu;
+
+	if (gmCurrent._pConfimedNo != NULL) {
+		gmCurrent._pConfimedNo();
 	}
 	void MenuGoToParent(void);
 	MenuGoToParent();
@@ -288,13 +291,13 @@ void InitActionsForMainMenu() {
 
 // ------------------------ CInGameMenu implementation
 // start load/save menus depending on type of game running
-void QuickSaveFromMenu()
+static void QuickSaveFromMenu()
 {
 	_pShell->SetINDEX("gam_bQuickSave", 2); // force save with reporting
 	StopMenus(TRUE);
 }
 
-void StopRecordingDemo(void)
+static void StopRecordingDemo(void)
 {
 	_pNetwork->StopDemoRec();
 	void SetDemoStartStopRecText(void);
@@ -333,19 +336,20 @@ extern void SetDemoStartStopRecText(void)
 
 
 // ------------------------ CSinglePlayerMenu implementation
-void StartSinglePlayerGame_Normal(void);
-void StartTechTest(void)
+extern CTString sam_strTechTestLevel;
+extern CTString sam_strTrainingLevel;
+
+static void StartSinglePlayerGame_Normal(void);
+static void StartTechTest(void)
 {
 	_pGUIM->gmSinglePlayerNewMenu.gm_pgmParentMenu = &_pGUIM->gmSinglePlayerMenu;
-	extern CTString sam_strTechTestLevel;
 	_pGame->gam_strCustomLevel = sam_strTechTestLevel;
 	StartSinglePlayerGame_Normal();
 }
 
-void StartTraining(void)
+static void StartTraining(void)
 {
 	_pGUIM->gmSinglePlayerNewMenu.gm_pgmParentMenu = &_pGUIM->gmSinglePlayerMenu;
-	extern CTString sam_strTrainingLevel;
 	_pGame->gam_strCustomLevel = sam_strTrainingLevel;
 	ChangeToMenu(&_pGUIM->gmSinglePlayerNewMenu);
 }
@@ -387,42 +391,42 @@ void StartSinglePlayerGame(void)
 	}
 }
 
-void StartSinglePlayerGame_Tourist(void)
+static void StartSinglePlayerGame_Tourist(void)
 {
 	_pShell->SetINDEX("gam_iStartDifficulty", CSessionProperties::GD_TOURIST);
 	_pShell->SetINDEX("gam_iStartMode", CSessionProperties::GM_COOPERATIVE);
 	StartSinglePlayerGame();
 }
 
-void StartSinglePlayerGame_Easy(void)
+static void StartSinglePlayerGame_Easy(void)
 {
 	_pShell->SetINDEX("gam_iStartDifficulty", CSessionProperties::GD_EASY);
 	_pShell->SetINDEX("gam_iStartMode", CSessionProperties::GM_COOPERATIVE);
 	StartSinglePlayerGame();
 }
 
-void StartSinglePlayerGame_Normal(void)
+static void StartSinglePlayerGame_Normal(void)
 {
 	_pShell->SetINDEX("gam_iStartDifficulty", CSessionProperties::GD_NORMAL);
 	_pShell->SetINDEX("gam_iStartMode", CSessionProperties::GM_COOPERATIVE);
 	StartSinglePlayerGame();
 }
 
-void StartSinglePlayerGame_Hard(void)
+static void StartSinglePlayerGame_Hard(void)
 {
 	_pShell->SetINDEX("gam_iStartDifficulty", CSessionProperties::GD_HARD);
 	_pShell->SetINDEX("gam_iStartMode", CSessionProperties::GM_COOPERATIVE);
 	StartSinglePlayerGame();
 }
 
-void StartSinglePlayerGame_Serious(void)
+static void StartSinglePlayerGame_Serious(void)
 {
 	_pShell->SetINDEX("gam_iStartDifficulty", CSessionProperties::GD_EXTREME);
 	_pShell->SetINDEX("gam_iStartMode", CSessionProperties::GM_COOPERATIVE);
 	StartSinglePlayerGame();
 }
 
-void StartSinglePlayerGame_Mental(void)
+static void StartSinglePlayerGame_Mental(void)
 {
 	_pShell->SetINDEX("gam_iStartDifficulty", CSessionProperties::GD_EXTREME + 1);
 	_pShell->SetINDEX("gam_iStartMode", CSessionProperties::GM_COOPERATIVE);
@@ -441,21 +445,21 @@ void InitActionsForSinglePlayerNewMenu() {
 }
 
 // ------------------------ CPlayerProfileMenu implementation
-void ChangeCrosshair(INDEX iNew)
+static void ChangeCrosshair(INDEX iNew)
 {
 	INDEX iPlayer = *_pGUIM->gmPlayerProfile.gm_piCurrentPlayer;
 	CPlayerSettings *pps = (CPlayerSettings *)_pGame->gm_apcPlayers[iPlayer].pc_aubAppearance;
 	pps->ps_iCrossHairType = iNew - 1;
 }
 
-void ChangeWeaponSelect(INDEX iNew)
+static void ChangeWeaponSelect(INDEX iNew)
 {
 	INDEX iPlayer = *_pGUIM->gmPlayerProfile.gm_piCurrentPlayer;
 	CPlayerSettings *pps = (CPlayerSettings *)_pGame->gm_apcPlayers[iPlayer].pc_aubAppearance;
 	pps->ps_iWeaponAutoSelect = iNew;
 }
 
-void ChangeWeaponHide(INDEX iNew)
+static void ChangeWeaponHide(INDEX iNew)
 {
 	INDEX iPlayer = *_pGUIM->gmPlayerProfile.gm_piCurrentPlayer;
 	CPlayerSettings *pps = (CPlayerSettings *)_pGame->gm_apcPlayers[iPlayer].pc_aubAppearance;
@@ -466,7 +470,7 @@ void ChangeWeaponHide(INDEX iNew)
 	}
 }
 
-void Change3rdPerson(INDEX iNew)
+static void Change3rdPerson(INDEX iNew)
 {
 	INDEX iPlayer = *_pGUIM->gmPlayerProfile.gm_piCurrentPlayer;
 	CPlayerSettings *pps = (CPlayerSettings *)_pGame->gm_apcPlayers[iPlayer].pc_aubAppearance;
@@ -477,7 +481,7 @@ void Change3rdPerson(INDEX iNew)
 	}
 }
 
-void ChangeQuotes(INDEX iNew)
+static void ChangeQuotes(INDEX iNew)
 {
 	INDEX iPlayer = *_pGUIM->gmPlayerProfile.gm_piCurrentPlayer;
 	CPlayerSettings *pps = (CPlayerSettings *)_pGame->gm_apcPlayers[iPlayer].pc_aubAppearance;
@@ -488,7 +492,7 @@ void ChangeQuotes(INDEX iNew)
 	}
 }
 
-void ChangeAutoSave(INDEX iNew)
+static void ChangeAutoSave(INDEX iNew)
 {
 	INDEX iPlayer = *_pGUIM->gmPlayerProfile.gm_piCurrentPlayer;
 	CPlayerSettings *pps = (CPlayerSettings *)_pGame->gm_apcPlayers[iPlayer].pc_aubAppearance;
@@ -499,7 +503,7 @@ void ChangeAutoSave(INDEX iNew)
 	}
 }
 
-void ChangeCompDoubleClick(INDEX iNew)
+static void ChangeCompDoubleClick(INDEX iNew)
 {
 	INDEX iPlayer = *_pGUIM->gmPlayerProfile.gm_piCurrentPlayer;
 	CPlayerSettings *pps = (CPlayerSettings *)_pGame->gm_apcPlayers[iPlayer].pc_aubAppearance;
@@ -510,7 +514,7 @@ void ChangeCompDoubleClick(INDEX iNew)
 	}
 }
 
-void ChangeViewBobbing(INDEX iNew)
+static void ChangeViewBobbing(INDEX iNew)
 {
 	INDEX iPlayer = *_pGUIM->gmPlayerProfile.gm_piCurrentPlayer;
 	CPlayerSettings *pps = (CPlayerSettings *)_pGame->gm_apcPlayers[iPlayer].pc_aubAppearance;
@@ -521,7 +525,7 @@ void ChangeViewBobbing(INDEX iNew)
 	}
 }
 
-void ChangeSharpTurning(INDEX iNew)
+static void ChangeSharpTurning(INDEX iNew)
 {
 	INDEX iPlayer = *_pGUIM->gmPlayerProfile.gm_piCurrentPlayer;
 	CPlayerSettings *pps = (CPlayerSettings *)_pGame->gm_apcPlayers[iPlayer].pc_aubAppearance;
@@ -767,7 +771,7 @@ extern void InitVideoOptionsButtons(void)
 	gmCurrent.gm_mgBitsPerPixelTrigger.ApplyCurrentSelection();
 }
 
-void ApplyVideoOptions(void)
+static void ApplyVideoOptions(void)
 {
 	CVideoOptionsMenu &gmCurrent = _pGUIM->gmVideoOptionsMenu;
 
@@ -810,7 +814,7 @@ void ApplyVideoOptions(void)
 	if (bFullScreenMode) VideoConfirm();
 }
 
-void RevertVideoSettings(void)
+static void RevertVideoSettings(void)
 {
 	// restore previous variables
 	sam_bFullScreenActive = sam_old_bFullScreenActive;
@@ -876,7 +880,7 @@ extern void RefreshSoundFormat(void)
 	gmCurrent.gm_mgFrequencyTrigger.ApplyCurrentSelection();
 }
 
-void ApplyAudioOptions(void)
+static void ApplyAudioOptions(void)
 {
 	CAudioOptionsMenu &gmCurrent = _pGUIM->gmAudioOptionsMenu;
 
@@ -905,7 +909,7 @@ static void OnWaveVolumeChange(INDEX iCurPos)
 	_pShell->SetFLOAT("snd_fSoundVolume", iCurPos / FLOAT(VOLUME_STEPS));
 }
 
-void WaveSliderChange(void)
+static void WaveSliderChange(void)
 {
 	CAudioOptionsMenu &gmCurrent = _pGUIM->gmAudioOptionsMenu;
 
@@ -913,7 +917,7 @@ void WaveSliderChange(void)
 	gmCurrent.gm_mgWaveVolume.ApplyCurrentPosition();
 }
 
-void FrequencyTriggerChange(INDEX iDummy)
+static void FrequencyTriggerChange(INDEX iDummy)
 {
 	CAudioOptionsMenu &gmCurrent = _pGUIM->gmAudioOptionsMenu;
 
@@ -922,7 +926,7 @@ void FrequencyTriggerChange(INDEX iDummy)
 	gmCurrent.gm_mgAudioAutoTrigger.ApplyCurrentSelection();
 }
 
-void MPEGSliderChange(void)
+static void MPEGSliderChange(void)
 {
 	CAudioOptionsMenu &gmCurrent = _pGUIM->gmAudioOptionsMenu;
 
@@ -948,7 +952,7 @@ void InitActionsForAudioOptionsMenu()
 }
 
 // ------------------------ CVarMenu implementation
-void VarApply(void)
+static void VarApply(void)
 {
 	CVarMenu &gmCurrent = _pGUIM->gmVarMenu;
 
@@ -966,7 +970,7 @@ void InitActionsForVarMenu() {
 extern CMGButton mgServerColumn[7];
 extern CMGEdit mgServerFilter[7];
 
-void SortByColumn(int i)
+static void SortByColumn(int i)
 {
 	CServersMenu &gmCurrent = _pGUIM->gmServersMenu;
 
@@ -978,13 +982,13 @@ void SortByColumn(int i)
 	gmCurrent.gm_mgList.mg_iSort = i;
 }
 
-void SortByServer(void) { SortByColumn(0); }
-void SortByMap(void)    { SortByColumn(1); }
-void SortByPing(void)   { SortByColumn(2); }
-void SortByPlayers(void){ SortByColumn(3); }
-void SortByGame(void)   { SortByColumn(4); }
-void SortByMod(void)    { SortByColumn(5); }
-void SortByVer(void)    { SortByColumn(6); }
+static void SortByServer(void) { SortByColumn(0); }
+static void SortByMap(void)    { SortByColumn(1); }
+static void SortByPing(void)   { SortByColumn(2); }
+static void SortByPlayers(void){ SortByColumn(3); }
+static void SortByGame(void)   { SortByColumn(4); }
+static void SortByMod(void)    { SortByColumn(5); }
+static void SortByVer(void)    { SortByColumn(6); }
 
 extern void RefreshServerList(void)
 {
@@ -1039,13 +1043,15 @@ extern void UpdateNetworkLevel(INDEX iDummy)
 
 void InitActionsForNetworkStartMenu()
 {
-	_pGUIM->gmNetworkStartMenu.gm_mgLevel.mg_pActivatedFunction = &StartSelectLevelFromNetwork;
-	_pGUIM->gmNetworkStartMenu.gm_mgGameOptions.mg_pActivatedFunction = &StartGameOptionsFromNetwork;
-	_pGUIM->gmNetworkStartMenu.gm_mgStart.mg_pActivatedFunction = &StartSelectPlayersMenuFromNetwork;
+	CNetworkStartMenu &gmCurrent = _pGUIM->gmNetworkStartMenu;
+
+	gmCurrent.gm_mgLevel.mg_pActivatedFunction = &StartSelectLevelFromNetwork;
+	gmCurrent.gm_mgGameOptions.mg_pActivatedFunction = &StartGameOptionsFromNetwork;
+	gmCurrent.gm_mgStart.mg_pActivatedFunction = &StartSelectPlayersMenuFromNetwork;
 }
 
 // ------------------------ CSelectPlayersMenu implementation
-INDEX FindUnusedPlayer(void)
+static INDEX FindUnusedPlayer(void)
 {
 	INDEX *ai = _pGame->gm_aiMenuLocalPlayers;
 	INDEX iPlayer = 0;
@@ -1216,7 +1222,7 @@ extern void SelectPlayersApplyMenu(void)
 	_pGame->gm_MenuSplitScreenCfg = (enum CGame::SplitScreenCfg) gmCurrent.gm_mgSplitScreenCfg.mg_iSelected;
 }
 
-void UpdateSelectPlayers(INDEX i)
+static void UpdateSelectPlayers(INDEX i)
 {
 	SelectPlayersApplyMenu();
 	SelectPlayersFillMenu();
