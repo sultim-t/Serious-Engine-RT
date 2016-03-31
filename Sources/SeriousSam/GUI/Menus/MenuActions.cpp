@@ -37,7 +37,6 @@ INDEX         _ctResolutions = 0;
 CTString     * _astrResolutionTexts = NULL;
 CDisplayMode *_admResolutionModes = NULL;
 
-extern BOOL _bMouseRight = FALSE;
 extern BOOL _bMouseUsedLast;
 ENGINE_API extern INDEX snd_iFormat;
 
@@ -281,11 +280,7 @@ void InitActionsForMainMenu() {
 	CMENU.gm_mgNetwork.mg_pActivatedFunction = StartNetworkMenu;
 	CMENU.gm_mgSplitScreen.mg_pActivatedFunction = &StartSplitScreenMenu;
 	CMENU.gm_mgDemo.mg_pActivatedFunction = &StartDemoLoadMenu;
-#if TECHTESTONLY
-	CMENU.gm_mgMods.mg_pActivatedFunction = &DisabledFunction;
-#else
 	CMENU.gm_mgMods.mg_pActivatedFunction = &StartModsLoadMenu;
-#endif
 	CMENU.gm_mgHighScore.mg_pActivatedFunction = &StartHighScoreMenu;
 	CMENU.gm_mgOptions.mg_pActivatedFunction = &StartOptionsMenu;
 	CMENU.gm_mgQuit.mg_pActivatedFunction = &ExitConfirm;
@@ -318,11 +313,7 @@ void InitActionsForInGameMenu() {
 	CMENU.gm_mgSave.mg_pActivatedFunction = &StartCurrentSaveMenu;
 	CMENU.gm_mgHighScore.mg_pActivatedFunction = &StartHighScoreMenu;
 	CMENU.gm_mgOptions.mg_pActivatedFunction = &StartOptionsMenu;
-#if TECHTESTONLY
-	CMENU.gm_mgStop.mg_pActivatedFunction = &ExitConfirm;
-#else
 	CMENU.gm_mgStop.mg_pActivatedFunction = &StopConfirm;
-#endif
 	CMENU.gm_mgQuit.mg_pActivatedFunction = &ExitConfirm;
 }
 
@@ -364,11 +355,7 @@ void StartTraining(void)
 
 void InitActionsForSinglePlayerMenu() {
 	CMENU.gm_mgNewGame.mg_pActivatedFunction = &StartSinglePlayerNewMenu;
-#if _SE_DEMO || TECHTESTONLY
-	CMENU.gm_mgCustom.mg_pActivatedFunction = &DisabledFunction;
-#else
 	CMENU.gm_mgCustom.mg_pActivatedFunction = &StartSelectLevelFromSingle;
-#endif
 	CMENU.gm_mgQuickLoad.mg_pActivatedFunction = &StartSinglePlayerQuickLoadMenu;
 	CMENU.gm_mgLoad.mg_pActivatedFunction = &StartSinglePlayerLoadMenu;
 	CMENU.gm_mgTraining.mg_pActivatedFunction = &StartTraining;
@@ -727,12 +714,14 @@ extern void UpdateVideoOptionsButtons(INDEX iSelected)
 	CMENU.gm_mgDisplayAdaptersTrigger.mg_bEnabled = _ctAdapters>1;
 	CMENU.gm_mgApply.mg_bEnabled = _bVideoOptionsChanged;
 	// determine which should be visible
+
 	CMENU.gm_mgFullScreenTrigger.mg_bEnabled = TRUE;
 	if (da.da_ulFlags&DAF_FULLSCREENONLY) {
 		CMENU.gm_mgFullScreenTrigger.mg_bEnabled = FALSE;
 		CMENU.gm_mgFullScreenTrigger.mg_iSelected = 1;
 		CMENU.gm_mgFullScreenTrigger.ApplyCurrentSelection();
 	}
+
 	CMENU.gm_mgBitsPerPixelTrigger.mg_bEnabled = TRUE;
 	if (CMENU.gm_mgFullScreenTrigger.mg_iSelected == 0) {
 		CMENU.gm_mgBitsPerPixelTrigger.mg_bEnabled = FALSE;
@@ -917,11 +906,7 @@ static void OnWaveVolumeChange(INDEX iCurPos)
 
 void WaveSliderChange(void)
 {
-	if (_bMouseRight) {
-		CMENU.gm_mgWaveVolume.mg_iCurPos += 5;
-	} else {
-		CMENU.gm_mgWaveVolume.mg_iCurPos -= 5;
-	}
+	CMENU.gm_mgWaveVolume.mg_iCurPos -= 5;
 	CMENU.gm_mgWaveVolume.ApplyCurrentPosition();
 }
 
@@ -934,11 +919,7 @@ void FrequencyTriggerChange(INDEX iDummy)
 
 void MPEGSliderChange(void)
 {
-	if (_bMouseRight) {
-		CMENU.gm_mgMPEGVolume.mg_iCurPos += 5;
-	} else {
-		CMENU.gm_mgMPEGVolume.mg_iCurPos -= 5;
-	}
+	CMENU.gm_mgMPEGVolume.mg_iCurPos -= 5;
 	CMENU.gm_mgMPEGVolume.ApplyCurrentPosition();
 }
 
