@@ -21,33 +21,33 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 void CMGArrow::Render(CDrawPort *pdp)
 {
-	SetFontMedium(pdp);
+  SetFontMedium(pdp);
 
-	PIXaabbox2D box = FloatBoxToPixBox(pdp, mg_boxOnScreen);
-	COLOR col = GetCurrentColor();
+  PIXaabbox2D box = FloatBoxToPixBox(pdp, mg_boxOnScreen);
+  COLOR col = GetCurrentColor();
 
-	CTString str;
-	if (mg_adDirection == AD_NONE) {
-		str = "???";
-	} else if (mg_adDirection == AD_UP) {
-		str = TRANS("Page Up");
-	} else if (mg_adDirection == AD_DOWN) {
-		str = TRANS("Page Down");
-	} else {
-		ASSERT(FALSE);
-	}
+  CTString str;
+  if (mg_adDirection == AD_NONE) {
+    str = "???";
+  } else if (mg_adDirection == AD_UP) {
+    str = TRANS("Page Up");
+  } else if (mg_adDirection == AD_DOWN) {
+    str = TRANS("Page Down");
+  } else {
+    ASSERT(FALSE);
+  }
 
-	PIX pixI = box.Min()(1);
-	PIX pixJ = box.Min()(2);
-	pdp->PutText(str, pixI, pixJ, col);
+  PIX pixI = box.Min()(1);
+  PIX pixJ = box.Min()(2);
+  pdp->PutText(str, pixI, pixJ, col);
 }
 
 void CMGArrow::OnActivate(void)
 {
-	if (mg_adDirection == AD_UP) {
-		pgmCurrentMenu->ScrollList(-3);
-	}
-	else if (mg_adDirection == AD_DOWN) {
-		pgmCurrentMenu->ScrollList(+3);
-	}
+  if (mg_adDirection == AD_UP) {
+    pgmCurrentMenu->ScrollList(-3);
+  }
+  else if (mg_adDirection == AD_DOWN) {
+    pgmCurrentMenu->ScrollList(+3);
+  }
 }

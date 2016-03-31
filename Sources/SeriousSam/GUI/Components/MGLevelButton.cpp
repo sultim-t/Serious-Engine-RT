@@ -23,15 +23,15 @@ extern CSoundData *_psdPress;
 
 void CMGLevelButton::OnActivate(void)
 {
-	PlayMenuSound(_psdPress);
-	IFeel_PlayEffect("Menu_press");
-	_pGame->gam_strCustomLevel = mg_fnmLevel;
-	extern void(*_pAfterLevelChosen)(void);
-	_pAfterLevelChosen();
+  PlayMenuSound(_psdPress);
+  IFeel_PlayEffect("Menu_press");
+  _pGame->gam_strCustomLevel = mg_fnmLevel;
+  extern void(*_pAfterLevelChosen)(void);
+  _pAfterLevelChosen();
 }
 
 void CMGLevelButton::OnSetFocus(void)
 {
-	SetThumbnail(mg_fnmLevel);
-	CMGButton::OnSetFocus();
+  SetThumbnail(mg_fnmLevel);
+  CMGButton::OnSetFocus();
 }

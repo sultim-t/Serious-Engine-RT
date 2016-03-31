@@ -24,7 +24,7 @@ static BITMAP _bmSplashMask;
 static HWND hwnd = NULL;
 
 static long FAR PASCAL SplashWindowProc( HWND hWnd, UINT message, 
-			    WPARAM wParam, LPARAM lParam )
+          WPARAM wParam, LPARAM lParam )
 {
   switch( message ) {
   case WM_PAINT: {
@@ -68,8 +68,8 @@ void ShowSplashScreen(HINSTANCE hInstance)
     return;
   }
 
-	int iScreenX = ::GetSystemMetrics(SM_CXSCREEN);	// screen size
-	int iScreenY = ::GetSystemMetrics(SM_CYSCREEN);
+  int iScreenX = ::GetSystemMetrics(SM_CXSCREEN);	// screen size
+  int iScreenY = ::GetSystemMetrics(SM_CYSCREEN);
 
   WNDCLASSA wc;
   wc.style = CS_HREDRAW | CS_VREDRAW;
@@ -88,20 +88,20 @@ void ShowSplashScreen(HINSTANCE hInstance)
    * create a window
    */
   hwnd = CreateWindowExA(
-	  WS_EX_TRANSPARENT|WS_EX_TOOLWINDOW,
-	  NAME,
-	  "SeriousSam loading...",   // title
+    WS_EX_TRANSPARENT|WS_EX_TOOLWINDOW,
+    NAME,
+    "SeriousSam loading...",   // title
     WS_POPUP,
-	  iScreenX/2-_bmSplash.bmWidth/2,
-	  iScreenY/2-_bmSplash.bmHeight/2,
-	  _bmSplash.bmWidth,_bmSplash.bmHeight,  // window size
-	  NULL,
-	  NULL,
-	  hInstance,
-	  NULL);
+    iScreenX/2-_bmSplash.bmWidth/2,
+    iScreenY/2-_bmSplash.bmHeight/2,
+    _bmSplash.bmWidth,_bmSplash.bmHeight,  // window size
+    NULL,
+    NULL,
+    hInstance,
+    NULL);
 
   if(!hwnd) {
-	  return;
+    return;
   }
  
   ShowWindow( hwnd, SW_SHOW);

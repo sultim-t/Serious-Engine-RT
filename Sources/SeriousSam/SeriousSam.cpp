@@ -600,7 +600,7 @@ void End(void)
 
   // destroy the main window and its canvas
   if (pvpViewPort!=NULL) {
- 	  _pGfx->DestroyWindowCanvas( pvpViewPort);
+    _pGfx->DestroyWindowCanvas( pvpViewPort);
     pvpViewPort = NULL;
     pdpNormal   = NULL;
   }
@@ -1109,7 +1109,7 @@ int SubMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int 
           // teleport player
           TeleportPlayer(msg.lParam);
           // restore
-    	    PostMessage(NULL, WM_SYSCOMMAND, SC_RESTORE, 0);
+          PostMessage(NULL, WM_SYSCOMMAND, SC_RESTORE, 0);
         }
       }
 
@@ -1240,7 +1240,7 @@ void CheckBrowser(void)
 
 
 int PASCAL WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
-			LPSTR lpCmdLine, int nCmdShow)
+      LPSTR lpCmdLine, int nCmdShow)
 {
   int iResult;
   CTSTREAM_BEGIN {
@@ -1273,7 +1273,7 @@ BOOL TryToSetDisplayMode( enum GfxAPIType eGfxAPI, INDEX iAdapter, PIX pixSizeI,
   // destroy canvas if existing
   _pGame->DisableLoadingHook();
   if( pvpViewPort!=NULL) {
- 	  _pGfx->DestroyWindowCanvas( pvpViewPort);
+    _pGfx->DestroyWindowCanvas( pvpViewPort);
     pvpViewPort = NULL;
     pdpNormal = NULL;
   }
@@ -1305,7 +1305,7 @@ BOOL TryToSetDisplayMode( enum GfxAPIType eGfxAPI, INDEX iAdapter, PIX pixSizeI,
     // create canvas
     ASSERT( pvpViewPort==NULL);
     ASSERT( pdpNormal==NULL);
- 	  _pGfx->CreateWindowCanvas( _hwndMain, &pvpViewPort, &pdpNormal);
+    _pGfx->CreateWindowCanvas( _hwndMain, &pvpViewPort, &pdpNormal);
 
     // erase context of both buffers (for the sake of wide-screen)
     pdp = pdpNormal;
@@ -1344,7 +1344,7 @@ BOOL TryToSetDisplayMode( enum GfxAPIType eGfxAPI, INDEX iAdapter, PIX pixSizeI,
       // destroy canvas if existing
       if( pvpViewPort!=NULL) {
         _pGame->DisableLoadingHook();
- 	      _pGfx->DestroyWindowCanvas( pvpViewPort);
+        _pGfx->DestroyWindowCanvas( pvpViewPort);
         pvpViewPort = NULL;
         pdpNormal = NULL;
       }
@@ -1355,7 +1355,7 @@ BOOL TryToSetDisplayMode( enum GfxAPIType eGfxAPI, INDEX iAdapter, PIX pixSizeI,
     }
 
     // remember new settings
-	  sam_bFullScreenActive = bFullScreenMode;
+    sam_bFullScreenActive = bFullScreenMode;
     sam_iScreenSizeI = pixSizeI;
     sam_iScreenSizeJ = pixSizeJ;
     sam_iDisplayDepth = eColorDepth;

@@ -72,7 +72,7 @@ void InitGLSettings(void)
   {
     strmFile.Open_t( CTString("Scripts\\GLSettings\\GLSettings.lst"), CTStream::OM_READ);
     INDEX iIndex = 0;
-	  do
+    do
     {
       achrLine    [0] = 0;
       achrRenderer[0] = 0;
@@ -89,7 +89,7 @@ void InitGLSettings(void)
       se.se_fnmScript      = CTString(achrScript);
       _lhSettings.AddTail( se.se_lnNode);
     }
-  	while( !strmFile.AtEOF());
+    while( !strmFile.AtEOF());
   }
 
   // ignore errors

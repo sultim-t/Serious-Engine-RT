@@ -20,16 +20,16 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 void CHighScoreMenu::Initialize_t(void)
 {
-	gm_mgHScore.mg_boxOnScreen = FLOATaabbox2D(FLOAT2D(0, 0), FLOAT2D(1, 0.5));
-	gm_lhGadgets.AddTail(gm_mgHScore.mg_lnNode);
+  gm_mgHScore.mg_boxOnScreen = FLOATaabbox2D(FLOAT2D(0, 0), FLOAT2D(1, 0.5));
+  gm_lhGadgets.AddTail(gm_mgHScore.mg_lnNode);
 
-	gm_mgTitle.mg_strText = TRANS("HIGH SCORE TABLE");
-	gm_mgTitle.mg_boxOnScreen = BoxTitle();
-	gm_lhGadgets.AddTail(gm_mgTitle.mg_lnNode);
+  gm_mgTitle.mg_strText = TRANS("HIGH SCORE TABLE");
+  gm_mgTitle.mg_boxOnScreen = BoxTitle();
+  gm_lhGadgets.AddTail(gm_mgTitle.mg_lnNode);
 }
 
 void CHighScoreMenu::StartMenu(void)
 {
-	gm_pgmParentMenu = pgmCurrentMenu;
-	CGameMenu::StartMenu();
+  gm_pgmParentMenu = pgmCurrentMenu;
+  CGameMenu::StartMenu();
 }

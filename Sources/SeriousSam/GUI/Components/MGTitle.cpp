@@ -21,11 +21,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 void CMGTitle::Render(CDrawPort *pdp)
 {
-	SetFontTitle(pdp);
+  SetFontTitle(pdp);
 
-	PIXaabbox2D box = FloatBoxToPixBox(pdp, mg_boxOnScreen);
-	PIX pixI = box.Center()(1);
-	PIX pixJ = box.Min()(2);
+  PIXaabbox2D box = FloatBoxToPixBox(pdp, mg_boxOnScreen);
+  PIX pixI = box.Center()(1);
+  PIX pixJ = box.Min()(2);
 
-	pdp->PutTextC(mg_strText, pixI, pixJ, LCDGetColor(C_WHITE | CT_OPAQUE, "title"));
+  pdp->PutTextC(mg_strText, pixI, pixJ, LCDGetColor(C_WHITE | CT_OPAQUE, "title"));
 }
