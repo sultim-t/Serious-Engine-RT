@@ -24,9 +24,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CMGArrow : public CMGButton {
 public:
-	enum ArrowDir mg_adDirection;
-	void Render(CDrawPort *pdp);
-	void OnActivate(void);
+  enum ArrowDir mg_adDirection;
+  void Render(CDrawPort *pdp);
+  void OnActivate(void);
 };
 
 #endif  /* include-once check. */

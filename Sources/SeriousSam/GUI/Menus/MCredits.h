@@ -23,7 +23,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CCreditsMenu : public CGameMenu {
 public:
-	void Initialize_t(void);
+  void Initialize_t(void);
 };
 
 #endif  /* include-once check. */

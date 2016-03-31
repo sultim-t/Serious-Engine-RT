@@ -27,16 +27,16 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CAudioOptionsMenu : public CGameMenu {
 public:
-	CMGTitle gm_mgTitle;
-	CMGTrigger gm_mgAudioAutoTrigger;
-	CMGTrigger gm_mgAudioAPITrigger;
-	CMGTrigger gm_mgFrequencyTrigger;
-	CMGSlider gm_mgWaveVolume;
-	CMGSlider gm_mgMPEGVolume;
-	CMGButton gm_mgApply;
+  CMGTitle gm_mgTitle;
+  CMGTrigger gm_mgAudioAutoTrigger;
+  CMGTrigger gm_mgAudioAPITrigger;
+  CMGTrigger gm_mgFrequencyTrigger;
+  CMGSlider gm_mgWaveVolume;
+  CMGSlider gm_mgMPEGVolume;
+  CMGButton gm_mgApply;
 
-	void StartMenu(void);
-	void Initialize_t(void);
+  void StartMenu(void);
+  void Initialize_t(void);
 };
 
 #endif  /* include-once check. */

@@ -23,10 +23,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CMGLevelButton : public CMGButton {
 public:
-	CTFileName mg_fnmLevel;
+  CTFileName mg_fnmLevel;
 
-	void OnActivate(void);
-	void OnSetFocus(void);
+  void OnActivate(void);
+  void OnSetFocus(void);
 };
 
 #endif  /* include-once check. */

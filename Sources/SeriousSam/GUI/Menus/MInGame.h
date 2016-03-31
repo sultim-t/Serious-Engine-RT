@@ -25,21 +25,21 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CInGameMenu : public CGameMenu {
 public:
-	CMGTitle gm_mgTitle;
-	CMGButton gm_mgLabel1;
-	CMGButton gm_mgLabel2;
-	CMGButton gm_mgQuickLoad;
-	CMGButton gm_mgQuickSave;
-	CMGButton gm_mgLoad;
-	CMGButton gm_mgSave;
-	CMGButton gm_mgDemoRec;
-	CMGButton gm_mgHighScore;
-	CMGButton gm_mgOptions;
-	CMGButton gm_mgStop;
-	CMGButton gm_mgQuit;
+  CMGTitle gm_mgTitle;
+  CMGButton gm_mgLabel1;
+  CMGButton gm_mgLabel2;
+  CMGButton gm_mgQuickLoad;
+  CMGButton gm_mgQuickSave;
+  CMGButton gm_mgLoad;
+  CMGButton gm_mgSave;
+  CMGButton gm_mgDemoRec;
+  CMGButton gm_mgHighScore;
+  CMGButton gm_mgOptions;
+  CMGButton gm_mgStop;
+  CMGButton gm_mgQuit;
 
-	void Initialize_t(void);
-	void StartMenu(void);
+  void Initialize_t(void);
+  void StartMenu(void);
 };
 
 #endif  /* include-once check. */

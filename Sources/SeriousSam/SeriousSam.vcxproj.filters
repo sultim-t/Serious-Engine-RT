@@ -215,9 +215,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CDCheck.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="CmdLine.h">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -23,18 +23,20 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CMGEdit : public CMGButton {
 public:
-	INDEX mg_ctMaxStringLen;
-	CTString *mg_pstrToChange;
-	CMGEdit(void);
-	// return TRUE if handled
-	BOOL OnKeyDown(int iVKey);
-	BOOL OnChar(MSG msg);
-	void Clear(void);
-	void OnActivate(void);
-	void OnKillFocus(void);
-	void Render(CDrawPort *pdp);
-	virtual void OnStringChanged(void);
-	virtual void OnStringCanceled(void);
+  INDEX mg_ctMaxStringLen;
+  CTString *mg_pstrToChange;
+
+  CMGEdit(void);
+
+  // return TRUE if handled
+  BOOL OnKeyDown(int iVKey);
+  BOOL OnChar(MSG msg);
+  void Clear(void);
+  void OnActivate(void);
+  void OnKillFocus(void);
+  void Render(CDrawPort *pdp);
+  virtual void OnStringChanged(void);
+  virtual void OnStringCanceled(void);
 };
 
 #endif  /* include-once check. */

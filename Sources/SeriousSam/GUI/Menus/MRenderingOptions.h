@@ -23,8 +23,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CRenderingOptionsMenu : public CGameMenu {
 public:
-	void StartMenu(void);
-	void EndMenu(void);
-	void Initialize_t(void);
+  void StartMenu(void);
+  void EndMenu(void);
+  void Initialize_t(void);
 };
 #endif  /* include-once check. */

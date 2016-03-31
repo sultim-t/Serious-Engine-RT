@@ -23,8 +23,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CMGTitle : public CMenuGadget {
 public:
-	CTString mg_strText;
-	void Render(CDrawPort *pdp);
+  CTString mg_strText;
+  void Render(CDrawPort *pdp);
 };
 
 #endif  /* include-once check. */

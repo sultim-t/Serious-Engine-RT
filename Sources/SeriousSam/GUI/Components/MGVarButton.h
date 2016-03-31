@@ -23,12 +23,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CMGVarButton : public CMGButton {
 public:
-	class CVarSetting *mg_pvsVar;
-	PIXaabbox2D GetSliderBox(void);
-	BOOL OnKeyDown(int iVKey);
-	void Render(CDrawPort *pdp);
-	BOOL IsSeparator(void);
-	BOOL IsEnabled(void);
+  class CVarSetting *mg_pvsVar;
+  PIXaabbox2D GetSliderBox(void);
+  BOOL OnKeyDown(int iVKey);
+  void Render(CDrawPort *pdp);
+  BOOL IsSeparator(void);
+  BOOL IsEnabled(void);
 };
 
 #endif  /* include-once check. */

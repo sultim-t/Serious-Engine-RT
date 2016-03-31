@@ -25,12 +25,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CNetworkJoinMenu : public CGameMenu {
 public:
-	CMGTitle  gm_mgTitle;
-	CMGButton gm_mgLAN;
-	CMGButton gm_mgNET;
-	CMGButton gm_mgOpen;
+  CMGTitle  gm_mgTitle;
+  CMGButton gm_mgLAN;
+  CMGButton gm_mgNET;
+  CMGButton gm_mgOpen;
 
-	void Initialize_t(void);
+  void Initialize_t(void);
 };
 
 #endif  /* include-once check. */

@@ -25,11 +25,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CHighScoreMenu : public CGameMenu {
 public:
-	CMGTitle gm_mgTitle;
-	CMGHighScore gm_mgHScore;
+  CMGTitle gm_mgTitle;
+  CMGHighScore gm_mgHScore;
 
-	void Initialize_t(void);
-	void StartMenu(void);
+  void Initialize_t(void);
+  void StartMenu(void);
 };
 
 #endif  /* include-once check. */

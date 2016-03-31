@@ -23,19 +23,19 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CMGSlider : public CMGButton {
 public:
-	FLOAT mg_fFactor;
-	INDEX mg_iMinPos;
-	INDEX mg_iMaxPos;
-	INDEX mg_iCurPos;
+  FLOAT mg_fFactor;
+  INDEX mg_iMinPos;
+  INDEX mg_iMaxPos;
+  INDEX mg_iCurPos;
 
-	CMGSlider();
-	void ApplyCurrentPosition(void);
-	void ApplyGivenPosition(INDEX iMin, INDEX iMax, INDEX iCur);
-	// return TRUE if handled
-	virtual BOOL OnKeyDown(int iVKey);
-	void(*mg_pOnSliderChange)(INDEX iCurPos);
-	PIXaabbox2D GetSliderBox(void);
-	void Render(CDrawPort *pdp);
+  CMGSlider();
+  void ApplyCurrentPosition(void);
+  void ApplyGivenPosition(INDEX iMin, INDEX iMax, INDEX iCur);
+  // return TRUE if handled
+  virtual BOOL OnKeyDown(int iVKey);
+  void(*mg_pOnSliderChange)(INDEX iCurPos);
+  PIXaabbox2D GetSliderBox(void);
+  void Render(CDrawPort *pdp);
 };
 
 #endif  /* include-once check. */

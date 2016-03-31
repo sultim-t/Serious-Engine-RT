@@ -96,6 +96,9 @@ static void SizeToResolution(PIX pixSizeI, PIX pixSizeJ, INDEX &iRes)
 }
 
 // ------------------------ CConfirmMenu implementation
+extern CTFileName _fnmModToLoad;
+extern CTString _strModServerJoin;
+
 CTFileName _fnmModSelected;
 CTString _strModURLSelected;
 CTString _strModServerSelected;
@@ -140,14 +143,11 @@ static void StopConfirm(void)
 
 static void ModLoadYes(void)
 {
-	extern CTFileName _fnmModToLoad;
 	_fnmModToLoad = _fnmModSelected;
 }
 
 static void ModConnect(void)
 {
-	extern CTFileName _fnmModToLoad;
-	extern CTString _strModServerJoin;
 	_fnmModToLoad = _fnmModSelected;
 	_strModServerJoin = _strModServerSelected;
 }
@@ -212,7 +212,6 @@ void ModNotInstalled(void)
 	gmCurrent.BeSmall();
 	ChangeToMenu(&gmCurrent);
 }
-
 
 extern void ModConfirm(void)
 {
@@ -333,7 +332,6 @@ extern void SetDemoStartStopRecText(void)
 		gmCurrent.gm_mgDemoRec.mg_pActivatedFunction = &StartDemoSaveMenu;
 	}
 }
-
 
 // ------------------------ CSinglePlayerMenu implementation
 extern CTString sam_strTechTestLevel;

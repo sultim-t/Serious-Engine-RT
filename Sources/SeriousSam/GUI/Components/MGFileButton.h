@@ -26,30 +26,31 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define FBS_RENAME    2 // renaming existing file
 class CMGFileButton : public CMGEdit {
 public:
-	CMGFileButton(void);
-	CTFileName mg_fnm;
-	CTString mg_strDes;   // entire description goes here
-	CTString mg_strInfo;  // info part of text to print above the gadget tip
-	INDEX mg_iState;
-	// refresh current text from description
-	void RefreshText(void);
-	// save description to disk
-	void SaveDescription(void);
-	void SaveYes(void);
-	void DoSave(void);
-	void DoLoad(void);
-	void StartEdit(void);
+  CMGFileButton(void);
+  CTFileName mg_fnm;
+  CTString mg_strDes;   // entire description goes here
+  CTString mg_strInfo;  // info part of text to print above the gadget tip
+  INDEX mg_iState;
 
-	// return TRUE if handled
-	BOOL OnKeyDown(int iVKey);
-	void OnActivate(void);
-	void OnSetFocus(void);
-	void OnKillFocus(void);
+  // refresh current text from description
+  void RefreshText(void);
+  // save description to disk
+  void SaveDescription(void);
+  void SaveYes(void);
+  void DoSave(void);
+  void DoLoad(void);
+  void StartEdit(void);
 
-	// overrides from edit gadget
-	void OnStringChanged(void);
-	void OnStringCanceled(void);
-	void Render(CDrawPort *pdp);
+  // return TRUE if handled
+  BOOL OnKeyDown(int iVKey);
+  void OnActivate(void);
+  void OnSetFocus(void);
+  void OnKillFocus(void);
+
+  // overrides from edit gadget
+  void OnStringChanged(void);
+  void OnStringCanceled(void);
+  void Render(CDrawPort *pdp);
 };
 
 #endif  /* include-once check. */

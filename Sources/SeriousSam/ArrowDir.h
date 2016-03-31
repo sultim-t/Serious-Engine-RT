@@ -20,11 +20,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 
 enum ArrowDir {
-	AD_NONE,
-	AD_UP,
-	AD_DOWN,
-	AD_LEFT,
-	AD_RIGHT,
+  AD_NONE,
+  AD_UP,
+  AD_DOWN,
+  AD_LEFT,
+  AD_RIGHT,
 };
 
 #endif  /* include-once check. */

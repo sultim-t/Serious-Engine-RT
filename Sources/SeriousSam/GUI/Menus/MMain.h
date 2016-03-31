@@ -24,19 +24,19 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CMainMenu : public CGameMenu {
 public:
-	CMGButton gm_mgVersionLabel;
-	CMGButton gm_mgModLabel;
-	CMGButton gm_mgSingle;
-	CMGButton gm_mgNetwork;
-	CMGButton gm_mgSplitScreen;
-	CMGButton gm_mgDemo;
-	CMGButton gm_mgMods;
-	CMGButton gm_mgHighScore;
-	CMGButton gm_mgOptions;
-	CMGButton gm_mgQuit;
+  CMGButton gm_mgVersionLabel;
+  CMGButton gm_mgModLabel;
+  CMGButton gm_mgSingle;
+  CMGButton gm_mgNetwork;
+  CMGButton gm_mgSplitScreen;
+  CMGButton gm_mgDemo;
+  CMGButton gm_mgMods;
+  CMGButton gm_mgHighScore;
+  CMGButton gm_mgOptions;
+  CMGButton gm_mgQuit;
 
-	void Initialize_t(void);
-	void StartMenu(void);
+  void Initialize_t(void);
+  void StartMenu(void);
 };
 
 #endif  /* include-once check. */

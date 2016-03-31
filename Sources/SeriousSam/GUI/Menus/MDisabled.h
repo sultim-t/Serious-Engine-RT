@@ -25,10 +25,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CDisabledMenu : public CGameMenu {
 public:
-	CMGTitle gm_mgTitle;
-	CMGButton gm_mgButton;
+  CMGTitle gm_mgTitle;
+  CMGButton gm_mgButton;
 
-	void Initialize_t(void);
+  void Initialize_t(void);
 };
 
 #endif  /* include-once check. */

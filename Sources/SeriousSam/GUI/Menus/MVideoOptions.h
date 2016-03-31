@@ -23,18 +23,18 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CVideoOptionsMenu : public CGameMenu {
 public:
-	CMGTitle gm_mgTitle;
-	CMGTrigger gm_mgDisplayAPITrigger;
-	CMGTrigger gm_mgDisplayAdaptersTrigger;
-	CMGTrigger gm_mgFullScreenTrigger;
-	CMGTrigger gm_mgResolutionsTrigger;
-	CMGTrigger gm_mgDisplayPrefsTrigger;
-	CMGButton gm_mgVideoRendering;
-	CMGTrigger gm_mgBitsPerPixelTrigger;
-	CMGButton gm_mgApply;
+  CMGTitle gm_mgTitle;
+  CMGTrigger gm_mgDisplayAPITrigger;
+  CMGTrigger gm_mgDisplayAdaptersTrigger;
+  CMGTrigger gm_mgFullScreenTrigger;
+  CMGTrigger gm_mgResolutionsTrigger;
+  CMGTrigger gm_mgDisplayPrefsTrigger;
+  CMGButton gm_mgVideoRendering;
+  CMGTrigger gm_mgBitsPerPixelTrigger;
+  CMGButton gm_mgApply;
 
-	void StartMenu(void);
-	void Initialize_t(void);
+  void StartMenu(void);
+  void Initialize_t(void);
 };
 
 #endif  /* include-once check. */

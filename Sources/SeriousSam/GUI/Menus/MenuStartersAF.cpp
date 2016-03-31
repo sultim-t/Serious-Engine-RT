@@ -22,8 +22,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "MenuStarters.h"
 #include "MenuStuff.h"
 
-CTFileName _fnDemoToPlay;
-CTFileName _fnGameToLoad;
+static CTFileName _fnDemoToPlay;
+static CTFileName _fnGameToLoad;
 
 extern CTString sam_strNetworkSettings;
 

@@ -297,7 +297,6 @@ copy Release\$(TargetName).map $(SolutionDir)..\Bin\ &gt;nul </Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArrowDir.h" />
-    <ClInclude Include="CDCheck.h" />
     <ClInclude Include="CmdLine.h" />
     <ClInclude Include="Credits.h" />
     <ClInclude Include="FileInfo.h" />

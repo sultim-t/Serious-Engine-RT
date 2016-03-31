@@ -26,16 +26,16 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CSplitStartMenu : public CGameMenu {
 public:
-	CMGTitle gm_mgTitle;
-	CMGTrigger gm_mgGameType;
-	CMGTrigger gm_mgDifficulty;
-	CMGButton gm_mgLevel;
-	CMGButton gm_mgOptions;
-	CMGButton gm_mgStart;
+  CMGTitle gm_mgTitle;
+  CMGTrigger gm_mgGameType;
+  CMGTrigger gm_mgDifficulty;
+  CMGButton gm_mgLevel;
+  CMGButton gm_mgOptions;
+  CMGButton gm_mgStart;
 
-	void Initialize_t(void);
-	void StartMenu(void);
-	void EndMenu(void);
+  void Initialize_t(void);
+  void StartMenu(void);
+  void EndMenu(void);
 };
 
 #endif  /* include-once check. */

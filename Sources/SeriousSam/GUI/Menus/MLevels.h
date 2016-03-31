@@ -26,14 +26,14 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CLevelsMenu : public CGameMenu {
 public:
-	CMGTitle gm_mgTitle;
-	CMGLevelButton gm_mgManualLevel[LEVELS_ON_SCREEN];
-	CMGArrow gm_mgArrowUp;
-	CMGArrow gm_mgArrowDn;
+  CMGTitle gm_mgTitle;
+  CMGLevelButton gm_mgManualLevel[LEVELS_ON_SCREEN];
+  CMGArrow gm_mgArrowUp;
+  CMGArrow gm_mgArrowDn;
 
-	void Initialize_t(void);
-	void FillListItems(void);
-	void StartMenu(void);
+  void Initialize_t(void);
+  void FillListItems(void);
+  void StartMenu(void);
 };
 
 #endif  /* include-once check. */

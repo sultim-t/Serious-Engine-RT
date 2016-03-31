@@ -23,24 +23,24 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CMGTrigger : public CMenuGadget {
 public:
-	CTString mg_strLabel;
-	CTString mg_strValue;
-	CTString *mg_astrTexts;
-	INDEX mg_ctTexts;
-	INDEX mg_iSelected;
-	INDEX mg_iCenterI;
-	BOOL mg_bVisual;
+  CTString mg_strLabel;
+  CTString mg_strValue;
+  CTString *mg_astrTexts;
+  INDEX mg_ctTexts;
+  INDEX mg_iSelected;
+  INDEX mg_iCenterI;
+  BOOL mg_bVisual;
 
-	CMGTrigger(void);
+  CMGTrigger(void);
 
-	void ApplyCurrentSelection(void);
-	void OnSetNextInList(int iVKey);
-	void(*mg_pPreTriggerChange)(INDEX iCurrentlySelected);
-	void(*mg_pOnTriggerChange)(INDEX iCurrentlySelected);
+  void ApplyCurrentSelection(void);
+  void OnSetNextInList(int iVKey);
+  void(*mg_pPreTriggerChange)(INDEX iCurrentlySelected);
+  void(*mg_pOnTriggerChange)(INDEX iCurrentlySelected);
 
-	// return TRUE if handled
-	BOOL OnKeyDown(int iVKey);
-	void Render(CDrawPort *pdp);
+  // return TRUE if handled
+  BOOL OnKeyDown(int iVKey);
+  void Render(CDrawPort *pdp);
 };
 
 #endif  /* include-once check. */

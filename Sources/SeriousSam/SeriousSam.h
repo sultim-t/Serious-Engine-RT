@@ -13,7 +13,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
 #define APPLICATION_NAME "SeriousSam"
-#include "CDCheck.h"
 
 extern HINSTANCE _hInstance;
 extern BOOL _bRunning, _bQuitScreen;

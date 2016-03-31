@@ -23,10 +23,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CMGChangePlayer : public CMGButton {
 public:
-	INDEX mg_iLocalPlayer;
+  INDEX mg_iLocalPlayer;
 
-	void SetPlayerText(void);
-	void OnActivate(void);
+  void SetPlayerText(void);
+  void OnActivate(void);
 };
 
 #endif  /* include-once check. */

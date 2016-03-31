@@ -25,19 +25,19 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CSinglePlayerMenu : public CGameMenu {
 public:
-	CMGTitle gm_mgTitle;
-	CMGButton gm_mgPlayerLabel;
-	CMGButton gm_mgNewGame;
-	CMGButton gm_mgCustom;
-	CMGButton gm_mgQuickLoad;
-	CMGButton gm_mgLoad;
-	CMGButton gm_mgTraining;
-	CMGButton gm_mgTechTest;
-	CMGButton gm_mgPlayersAndControls;
-	CMGButton gm_mgOptions;
+  CMGTitle gm_mgTitle;
+  CMGButton gm_mgPlayerLabel;
+  CMGButton gm_mgNewGame;
+  CMGButton gm_mgCustom;
+  CMGButton gm_mgQuickLoad;
+  CMGButton gm_mgLoad;
+  CMGButton gm_mgTraining;
+  CMGButton gm_mgTechTest;
+  CMGButton gm_mgPlayersAndControls;
+  CMGButton gm_mgOptions;
 
-	void Initialize_t(void);
-	void StartMenu(void);
+  void Initialize_t(void);
+  void StartMenu(void);
 };
 
 #endif  /* include-once check. */

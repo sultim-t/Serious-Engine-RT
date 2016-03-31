@@ -26,18 +26,18 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CNetworkOpenMenu : public CGameMenu {
 public:
-	CTString gm_strPort;
+  CTString gm_strPort;
 
-	CMGTitle gm_mgTitle;
-	CMGButton gm_mgAddressLabel;
-	CMGEdit gm_mgAddress;
-	CMGButton gm_mgPortLabel;
-	CMGEdit gm_mgPort;
-	CMGButton gm_mgJoin;
+  CMGTitle gm_mgTitle;
+  CMGButton gm_mgAddressLabel;
+  CMGEdit gm_mgAddress;
+  CMGButton gm_mgPortLabel;
+  CMGEdit gm_mgPort;
+  CMGButton gm_mgJoin;
 
-	void Initialize_t(void);
-	void StartMenu(void);
-	void EndMenu(void);
+  void Initialize_t(void);
+  void StartMenu(void);
+  void EndMenu(void);
 };
 
 #endif  /* include-once check. */

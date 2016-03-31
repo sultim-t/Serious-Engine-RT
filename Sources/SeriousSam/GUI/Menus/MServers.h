@@ -27,15 +27,15 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CServersMenu : public CGameMenu {
 public:
-	BOOL m_bInternet;
+  BOOL m_bInternet;
 
-	CMGTitle gm_mgTitle;
-	CMGServerList gm_mgList;
-	CMGButton gm_mgRefresh;
+  CMGTitle gm_mgTitle;
+  CMGServerList gm_mgList;
+  CMGButton gm_mgRefresh;
 
-	void Initialize_t(void);
-	void StartMenu(void);
-	void Think(void);
+  void Initialize_t(void);
+  void StartMenu(void);
+  void Think(void);
 };
 
 #endif  /* include-once check. */

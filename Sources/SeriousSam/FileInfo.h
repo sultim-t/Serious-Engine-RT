@@ -21,9 +21,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CFileInfo {
 public:
-	CListNode fi_lnNode;
-	CTFileName fi_fnFile;
-	CTString fi_strName;
+  CListNode fi_lnNode;
+  CTFileName fi_fnFile;
+  CTString fi_strName;
 };
 
 

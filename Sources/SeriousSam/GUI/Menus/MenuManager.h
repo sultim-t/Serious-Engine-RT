@@ -15,7 +15,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #ifndef SE_INCL_MENUMANAGER_H
 #define SE_INCL_MENUMANAGER_H
 #ifdef PRAGMA_ONCE
-#pragma once
+  #pragma once
 #endif
 
 #include "MAudioOptions.h"
@@ -46,31 +46,31 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CMenuManager {
 public:
-	CConfirmMenu gmConfirmMenu;
-	CMainMenu gmMainMenu;
-	CInGameMenu gmInGameMenu;
-	CSinglePlayerMenu gmSinglePlayerMenu;
-	CSinglePlayerNewMenu gmSinglePlayerNewMenu;
-	CDisabledMenu gmDisabledFunction;
-	CLevelsMenu gmLevelsMenu;
-	CVarMenu gmVarMenu;
-	CPlayerProfileMenu gmPlayerProfile;
-	CControlsMenu gmControls;
-	CLoadSaveMenu gmLoadSaveMenu;
-	CHighScoreMenu gmHighScoreMenu;
-	CCustomizeKeyboardMenu gmCustomizeKeyboardMenu;
-	CServersMenu gmServersMenu;
-	CCustomizeAxisMenu gmCustomizeAxisMenu;
-	COptionsMenu gmOptionsMenu;
-	CVideoOptionsMenu gmVideoOptionsMenu;
-	CAudioOptionsMenu gmAudioOptionsMenu;
-	CNetworkMenu gmNetworkMenu;
-	CNetworkJoinMenu gmNetworkJoinMenu;
-	CNetworkStartMenu gmNetworkStartMenu;
-	CNetworkOpenMenu gmNetworkOpenMenu;
-	CSplitScreenMenu gmSplitScreenMenu;
-	CSplitStartMenu gmSplitStartMenu;
-	CSelectPlayersMenu gmSelectPlayersMenu;
+  CConfirmMenu gmConfirmMenu;
+  CMainMenu gmMainMenu;
+  CInGameMenu gmInGameMenu;
+  CSinglePlayerMenu gmSinglePlayerMenu;
+  CSinglePlayerNewMenu gmSinglePlayerNewMenu;
+  CDisabledMenu gmDisabledFunction;
+  CLevelsMenu gmLevelsMenu;
+  CVarMenu gmVarMenu;
+  CPlayerProfileMenu gmPlayerProfile;
+  CControlsMenu gmControls;
+  CLoadSaveMenu gmLoadSaveMenu;
+  CHighScoreMenu gmHighScoreMenu;
+  CCustomizeKeyboardMenu gmCustomizeKeyboardMenu;
+  CServersMenu gmServersMenu;
+  CCustomizeAxisMenu gmCustomizeAxisMenu;
+  COptionsMenu gmOptionsMenu;
+  CVideoOptionsMenu gmVideoOptionsMenu;
+  CAudioOptionsMenu gmAudioOptionsMenu;
+  CNetworkMenu gmNetworkMenu;
+  CNetworkJoinMenu gmNetworkJoinMenu;
+  CNetworkStartMenu gmNetworkStartMenu;
+  CNetworkOpenMenu gmNetworkOpenMenu;
+  CSplitScreenMenu gmSplitScreenMenu;
+  CSplitStartMenu gmSplitStartMenu;
+  CSelectPlayersMenu gmSelectPlayersMenu;
 };
 
 extern CMenuManager *_pGUIM; // TODO: Make singleton!

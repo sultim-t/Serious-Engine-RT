@@ -23,13 +23,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 class CMGModel : public CMGButton {
 public:
-	CModelObject mg_moModel;
-	CModelObject mg_moFloor;
-	CPlacement3D mg_plModel;
-	BOOL mg_fFloorY;
+  CModelObject mg_moModel;
+  CModelObject mg_moFloor;
+  CPlacement3D mg_plModel;
+  BOOL mg_fFloorY;
 
-	CMGModel(void);
-	void Render(CDrawPort *pdp);
+  CMGModel(void);
+  void Render(CDrawPort *pdp);
 };
 
 #endif  /* include-once check. */
