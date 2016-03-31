@@ -128,11 +128,11 @@ TIME _tmLastHeartbeat = 0;
 CDynamicStackArray<CServerRequest> ga_asrRequests;
 
 //extern CTString ga_strServer = "master1.croteam.org";
-CTString ga_strServer = "master1.42amsterdam.net";
+extern CTString ga_strServer = "master1.42amsterdam.net";
 //extern CTString ga_strMSLegacy = "master1.croteam.org";
-CTString ga_strMSLegacy = "42amsterdam.net";
+extern CTString ga_strMSLegacy = "42amsterdam.net";
 
-BOOL ga_bMSLegacy = TRUE;
+extern BOOL ga_bMSLegacy = TRUE;
 //BOOL ga_bMSLegacy = FALSE;
 
 void _uninitWinsock();
