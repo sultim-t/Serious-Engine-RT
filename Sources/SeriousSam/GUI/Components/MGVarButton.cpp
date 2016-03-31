@@ -141,9 +141,7 @@ void CMGVarButton::Render(CDrawPort *pdp)
 		COLOR col = LCDGetColor(C_WHITE | 255, "separator");
 		CTString strText = mg_pvsVar->vs_strName;
 		pdp->PutTextC(strText, pixIC, pixJ, col);
-	}
-	else if (mg_pvsVar->Validate())
-	{
+	} else if (mg_pvsVar->Validate()) {
 		// check whether the variable is disabled
 		if (mg_pvsVar->vs_strFilter != "") mg_bEnabled = _pShell->GetINDEX(mg_pvsVar->vs_strFilter);
 		COLOR col = GetCurrentColor();
@@ -160,13 +158,13 @@ void CMGVarButton::Render(CDrawPort *pdp)
 				PIX pixJSize = box.Size()(2);
 				LCDDrawBox(0, -1, PIXaabbox2D(PIX2D(pixIR, pixJ + 1), PIX2D(pixIR + pixISize - 4, pixJ + pixJSize - 6)),
 					LCDGetColor(C_GREEN | 255, "slider box"));
+
 				// draw filled part of slider
 				if (mg_pvsVar->vs_iSlider == 1) {
 					// fill slider
 					FLOAT fFactor = (FLOAT)(mg_pvsVar->vs_iValue + 1) / mg_pvsVar->vs_ctValues;
 					pdp->Fill(pixIR + 1, pixJ + 2, (pixISize - 6)*fFactor, pixJSize - 9, col);
-				}
-				else {
+				} else {
 					// ratio slider
 					ASSERT(mg_pvsVar->vs_iSlider == 2);
 					FLOAT fUnitWidth = (FLOAT)(pixISize - 5) / mg_pvsVar->vs_ctValues;

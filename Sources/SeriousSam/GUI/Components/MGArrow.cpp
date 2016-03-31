@@ -29,16 +29,14 @@ void CMGArrow::Render(CDrawPort *pdp)
 	CTString str;
 	if (mg_adDirection == AD_NONE) {
 		str = "???";
-	}
-	else if (mg_adDirection == AD_UP) {
+	} else if (mg_adDirection == AD_UP) {
 		str = TRANS("Page Up");
-	}
-	else if (mg_adDirection == AD_DOWN) {
+	} else if (mg_adDirection == AD_DOWN) {
 		str = TRANS("Page Down");
-	}
-	else {
+	} else {
 		ASSERT(FALSE);
 	}
+
 	PIX pixI = box.Min()(1);
 	PIX pixJ = box.Min()(2);
 	pdp->PutText(str, pixI, pixJ, col);

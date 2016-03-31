@@ -42,8 +42,7 @@ void CMGFileButton::SaveDescription(void)
 	CTFileName fnFileNameDescription = mg_fnm.NoExt() + ".des";
 	try {
 		mg_strDes.Save_t(fnFileNameDescription);
-	}
-	catch (char *strError) {
+	} catch (char *strError) {
 		CPrintF("%s\n", strError);
 	}
 }
@@ -62,8 +61,7 @@ void CMGFileButton::DoSave(void)
 		_pmgFileToSave = this;
 		extern void SaveConfirm(void);
 		SaveConfirm();
-	}
-	else {
+	} else {
 		SaveYes();
 	}
 }
@@ -118,16 +116,17 @@ void CMGFileButton::OnActivate(void)
 		// load now
 		DoLoad();
 		// if saving
-	}
-	else {
+	} else {
 		// switch to editing mode
 		BOOL bWasEmpty = mg_strText == EMPTYSLOTSTRING;
 		mg_strDes = _pGUIM->gmLoadSaveMenu.gm_strSaveDes;
 		RefreshText();
 		_strOrgDescription = _strTmpDescription = mg_strText;
+
 		if (bWasEmpty) {
 			_strOrgDescription = EMPTYSLOTSTRING;
 		}
+
 		mg_pstrToChange = &_strTmpDescription;
 		StartEdit();
 		mg_iState = FBS_SAVENAME;
@@ -148,8 +147,8 @@ BOOL CMGFileButton::OnKeyDown(int iVKey)
 					mg_iState = FBS_RENAME;
 				}
 				return TRUE;
-			}
-			else if (iVKey == VK_DELETE) {
+
+			} else if (iVKey == VK_DELETE) {
 				if (FileExistsForWriting(mg_fnm)) {
 					// delete the file, its description and thumbnail
 					RemoveFile(mg_fnm);
@@ -164,8 +163,7 @@ BOOL CMGFileButton::OnKeyDown(int iVKey)
 			}
 		}
 		return CMenuGadget::OnKeyDown(iVKey);
-	}
-	else {
+	} else {
 		// go out of editing mode
 		if (mg_bEditing) {
 			if (iVKey == VK_UP || iVKey == VK_DOWN) {
@@ -185,6 +183,7 @@ void CMGFileButton::OnSetFocus(void)
 	} else {
 		ClearThumbnail();
 	}
+
 	pgmCurrentMenu->KillAllFocuses();
 	CMGButton::OnSetFocus();
 }
@@ -195,6 +194,7 @@ void CMGFileButton::OnKillFocus(void)
 	if (mg_bEditing) {
 		OnKeyDown(VK_ESCAPE);
 	}
+
 	CMGEdit::OnKillFocus();
 }
 
@@ -206,9 +206,8 @@ void CMGFileButton::OnStringChanged(void)
 		// do the save
 		mg_strDes = _strTmpDescription + "\n" + mg_strInfo;
 		DoSave();
-		// if renaming
-	}
-	else if (mg_iState == FBS_RENAME) {
+	// if renaming
+	} else if (mg_iState == FBS_RENAME) {
 		// do the rename
 		mg_strDes = _strTmpDescription + "\n" + mg_strInfo;
 		SaveDescription();

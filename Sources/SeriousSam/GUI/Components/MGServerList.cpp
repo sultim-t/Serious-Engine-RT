@@ -67,8 +67,7 @@ void CMGServerList::AdjustFirstOnScreen(void)
 
 	if (mg_iSelected<mg_iFirstOnScreen) {
 		mg_iFirstOnScreen = ClampUp(mg_iSelected, ClampDn(ctSessions - mg_ctOnScreen - 1L, 0L));
-	}
-	else if (mg_iSelected >= mg_iFirstOnScreen + mg_ctOnScreen) {
+	} else if (mg_iSelected >= mg_iFirstOnScreen + mg_ctOnScreen) {
 		mg_iFirstOnScreen = ClampDn(mg_iSelected - mg_ctOnScreen + 1L, 0L);
 	}
 }
@@ -104,11 +103,11 @@ extern CMGEdit mgServerFilter[7];
 
 void SortAndFilterServers(void)
 {
-	{ FORDELETELIST(CNetworkSession, ns_lnNode, _lhServers, itns) {
+	{FORDELETELIST(CNetworkSession, ns_lnNode, _lhServers, itns) {
 		delete &*itns;
-	} }
-	{
-	FOREACHINLIST(CNetworkSession, ns_lnNode, _pNetwork->ga_lhEnumeratedSessions, itns) {
+	}}
+
+	{FOREACHINLIST(CNetworkSession, ns_lnNode, _pNetwork->ga_lhEnumeratedSessions, itns) {
 		CNetworkSession &ns = *itns;
 		extern CTString _strServerFilter[7];
 		if (_strServerFilter[0] != "" && !ns.ns_strSession.Matches("*" + _strServerFilter[0] + "*")) continue;
@@ -245,8 +244,7 @@ void CMGServerList::Render(CDrawPort *pdp)
 			PrintInBox(pdp, apixSeparatorI[0] + pixCharSizeI, pixListTopJ + pixCharSizeJ + pixLineSize + 1, apixSeparatorI[1] - apixSeparatorI[0],
 				TRANS("searching..."), colItem);
 		}
-	}
-	else {
+	} else {
 		FOREACHINLIST(CNetworkSession, ns_lnNode, _lhServers, itns) {
 			CNetworkSession &ns = *itns;
 
@@ -352,8 +350,7 @@ void CMGServerList::OnMouseOver(PIX pixI, PIX pixJ)
 			AdjustFirstOnScreen();
 			mg_pixMouseDrag = -1;
 		}
-	}
-	else if (bInSlider) {
+	} else if (bInSlider) {
 		mg_pixMouseDrag = pixJ;
 	}
 }

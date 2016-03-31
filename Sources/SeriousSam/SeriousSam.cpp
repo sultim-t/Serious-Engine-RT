@@ -1364,10 +1364,8 @@ BOOL TryToSetDisplayMode( enum GfxAPIType eGfxAPI, INDEX iAdapter, PIX pixSizeI,
 
     // report success
     return TRUE;
-  }
-
   // if couldn't set new mode
-  else {
+  } else {
     // close the application window
     CloseMainWindow();
     // report failure

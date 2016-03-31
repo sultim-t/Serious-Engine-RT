@@ -27,10 +27,8 @@ INDEX GetNewLoopValue(int iVKey, INDEX iCurrent, INDEX ctMembers)
 	if (iVKey == VK_RETURN || iVKey == VK_LBUTTON || iVKey == VK_RIGHT)
 	{
 		return iNext;
-	}
 	// left arrow and backspace sets prev text
-	else if ((iVKey == VK_BACK || iVKey == VK_RBUTTON) || (iVKey == VK_LEFT))
-	{
+	} else if ((iVKey == VK_BACK || iVKey == VK_RBUTTON) || (iVKey == VK_LEFT)) {
 		return iPrev;
 	}
 	return iCurrent;
@@ -94,16 +92,15 @@ void CMGTrigger::Render(CDrawPort *pdp)
 		if (mg_bVisual) {
 			strValue = TRANS("none");
 		}
+
 		if (mg_iCenterI == -1) {
 			pdp->PutText(mg_strLabel, box.Min()(1), pixJ, col);
 			pdp->PutTextR(strValue, box.Max()(1), pixJ, col);
-		}
-		else {
+		} else {
 			pdp->PutTextR(mg_strLabel, pixIL, pixJ, col);
 			pdp->PutText(strValue, pixIR, pixJ, col);
 		}
-	}
-	else {
+	} else {
 		CTString strLabel = mg_strLabel + ": ";
 		pdp->PutText(strLabel, box.Min()(1), pixJ, col);
 		CTextureObject to;
@@ -116,8 +113,7 @@ void CMGTrigger::Render(CDrawPort *pdp)
 			pdp->PutTexture(&to, PIXaabbox2D(
 				PIX2D(pixCX - pixSize / 2, pixCY - pixSize / 2),
 				PIX2D(pixCX - pixSize / 2 + pixSize, pixCY - pixSize / 2 + pixSize)), C_WHITE | 255);
-		}
-		catch (char *strError) {
+		} catch (char *strError) {
 			CPrintF("%s\n", strError);
 		}
 		to.SetData(NULL);

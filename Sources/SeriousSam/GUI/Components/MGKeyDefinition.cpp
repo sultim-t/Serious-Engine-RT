@@ -79,9 +79,8 @@ void CMGKeyDefinition::SetBindingNames(BOOL bDefining)
 				if (bKey1Bound && !bKey2Bound) {
 					// put question mark for second key
 					mg_strBinding = strKey1 + TRANS(" or ") + "?";
-					// otherwise
-				}
-				else {
+				// otherwise
+				} else {
 					// put question mark only
 					mg_strBinding = "?";
 				}
@@ -92,9 +91,8 @@ void CMGKeyDefinition::SetBindingNames(BOOL bDefining)
 				if (bKey2Bound) {
 					// add both
 					mg_strBinding = strKey1 + TRANS(" or ") + strKey2;
-					// if second key is undefined
-				}
-				else {
+				// if second key is undefined
+				} else {
 					// display only first one
 					mg_strBinding = strKey1;
 				}
@@ -139,15 +137,13 @@ void CMGKeyDefinition::DefineKey(INDEX iDik)
 				ba.ba_iFirstKey = iDik;
 				// clear second key
 				ba.ba_iSecondKey = KID_NONE;
-				// if only first key bound
-			}
-			else {
+			// if only first key bound
+			} else {
 				// bind second key
 				ba.ba_iSecondKey = iDik;
 			}
 			// if it is not this one
-		}
-		else {
+		} else {
 			// clear bindings that contain this key
 			if (ba.ba_iFirstKey == iDik) {
 				ba.ba_iFirstKey = KID_NONE;
@@ -195,8 +191,7 @@ void CMGKeyDefinition::Think(void)
 					// define the new key
 					DefineKey(iDik);
 					// if escape pressed
-				}
-				else {
+				} else {
 					// undefine the key
 					DefineKey(KID_NONE);
 				}

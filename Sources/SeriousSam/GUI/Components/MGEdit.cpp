@@ -74,8 +74,7 @@ static void Key_BackDel(CTString &str, INDEX &iPos, BOOL bShift, BOOL bRight)
 		if (bShift) {
 			// delete to end of line
 			str.TrimRight(iPos);
-		}
-		else {
+		} else {
 			// delete only one char
 			str.DeleteChar(iPos);
 		}
@@ -85,8 +84,7 @@ static void Key_BackDel(CTString &str, INDEX &iPos, BOOL bShift, BOOL bRight)
 			// delete to start of line
 			str.TrimLeft(ctChars - iPos);
 			iPos = 0;
-		}
-		else {
+		} else {
 			// delete only one char
 			str.DeleteChar(iPos - 1);
 			iPos--;
@@ -147,24 +145,21 @@ void CMGEdit::Render(CDrawPort *pdp)
 {
 	if (mg_bEditing) {
 		mg_iTextMode = -1;
-	}
-	else if (mg_bFocused) {
+	} else if (mg_bFocused) {
 		mg_iTextMode = 0;
-	}
-	else {
+	} else {
 		mg_iTextMode = 1;
 	}
+
 	if (mg_strText == "" && !mg_bEditing) {
 		if (mg_bfsFontSize == BFS_SMALL) {
 			mg_strText = "*";
-		}
-		else {
+		} else {
 			mg_strText = TRANS("<none>");
 		}
 		CMGButton::Render(pdp);
 		mg_strText = "";
-	}
-	else {
+	} else {
 		CMGButton::Render(pdp);
 	}
 }

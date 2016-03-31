@@ -62,11 +62,9 @@ void CMGButton::Render(CDrawPort *pdp)
 {
 	if (mg_bfsFontSize == BFS_LARGE) {
 		SetFontBig(pdp);
-	}
-	else if (mg_bfsFontSize == BFS_MEDIUM) {
+	} else if (mg_bfsFontSize == BFS_MEDIUM) {
 		SetFontMedium(pdp);
-	}
-	else {
+	} else {
 		ASSERT(mg_bfsFontSize == BFS_SMALL);
 		SetFontSmall(pdp);
 	}
@@ -159,6 +157,7 @@ void CMGButton::Render(CDrawPort *pdp)
 		if (mg_strLabel != "") {
 			pixX += box.Size()(1)*0.55f;
 		}
+
 		PIX pixY = box.Min()(2);
 		if (!pdp->dp_FontData->fd_bFixedWidth) {
 			pixY -= pdp->dp_fTextScaling * 2;

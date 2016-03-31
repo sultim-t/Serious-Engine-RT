@@ -94,8 +94,7 @@ void CMGHighScore::Render(CDrawPort *pdp)
 		}}
 		if (iRow == 0) {
 			pixJ += pdp->GetHeight()*0.06f;
-		}
-		else {
+		} else {
 			pixJ += pdp->GetHeight()*0.04f;
 		}
 	}}

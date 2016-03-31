@@ -60,14 +60,12 @@ BOOL CMGSlider::OnKeyDown(int iVKey)
 		ApplyCurrentPosition();
 		return TRUE;
 		// if scrolling right
-	}
-	else if ((iVKey == VK_RETURN || iVKey == VK_RIGHT) && mg_iCurPos<mg_iMaxPos) {
+	} else if ((iVKey == VK_RETURN || iVKey == VK_RIGHT) && mg_iCurPos<mg_iMaxPos) {
 		mg_iCurPos++;
 		ApplyCurrentPosition();
 		return TRUE;
 		// if lmb pressed
-	}
-	else if (iVKey == VK_LBUTTON) {
+	} else if (iVKey == VK_LBUTTON) {
 		// get position of slider box on screen
 		PIXaabbox2D boxSlider = GetSliderBox();
 		// if mouse is within

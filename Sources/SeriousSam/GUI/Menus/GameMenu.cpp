@@ -324,9 +324,8 @@ void CGameMenu::StartMenu(void)
 			if (itmg->mg_iInList == -2) {
 				// hide it
 				itmg->mg_bVisible = FALSE;
-				// if in list
-			}
-			else if (itmg->mg_iInList >= 0) {
+			// if in list
+			} else if (itmg->mg_iInList >= 0) {
 				// show it
 				itmg->mg_bVisible = TRUE;
 			}
