@@ -47,9 +47,6 @@ GameMode _gmMenuGameMode = GM_NONE;
 GameMode _gmRunningGameMode = GM_NONE;
 CListHead _lhServers;
 
-
-extern BOOL IsCDInDrive(void);
-
 void OnPlayerSelect(void);
 
 // last tick done

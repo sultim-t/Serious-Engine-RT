@@ -33,6 +33,7 @@ extern CTFileName _fnmModSelected;
 extern CTString _strModURLSelected;
 extern CTString _strModServerSelected;
 
+
 void StartVideoOptionsMenu(void)
 {
 	ChangeToMenu(&_pGUIM->gmVideoOptionsMenu);
@@ -104,7 +105,464 @@ void StartSinglePlayerNewMenu(void)
 	ChangeToMenu(&_pGUIM->gmSinglePlayerNewMenu);
 }
 
+// game options var settings
+void StartVarGameOptions(void)
+{
+	_pGUIM->gmVarMenu.gm_mgTitle.mg_strText = TRANS("GAME OPTIONS");
+	_pGUIM->gmVarMenu.gm_fnmMenuCFG = CTFILENAME("Scripts\\Menu\\GameOptions.cfg");
+	ChangeToMenu(&_pGUIM->gmVarMenu);
+}
+
+void StartSinglePlayerGameOptions(void)
+{
+	_pGUIM->gmVarMenu.gm_mgTitle.mg_strText = TRANS("GAME OPTIONS");
+	_pGUIM->gmVarMenu.gm_fnmMenuCFG = CTFILENAME("Scripts\\Menu\\SPOptions.cfg");
+	ChangeToMenu(&_pGUIM->gmVarMenu);
+	_pGUIM->gmVarMenu.gm_pgmParentMenu = &_pGUIM->gmSinglePlayerMenu;
+}
+
+void StartGameOptionsFromNetwork(void)
+{
+	StartVarGameOptions();
+	_pGUIM->gmVarMenu.gm_pgmParentMenu = &_pGUIM->gmNetworkStartMenu;
+}
+
+void StartGameOptionsFromSplitScreen(void)
+{
+	StartVarGameOptions();
+	_pGUIM->gmVarMenu.gm_pgmParentMenu = &_pGUIM->gmSplitStartMenu;
+}
+
+// rendering options var settings
+void StartRenderingOptionsMenu(void)
+{
+	_pGUIM->gmVarMenu.gm_mgTitle.mg_strText = TRANS("RENDERING OPTIONS");
+	_pGUIM->gmVarMenu.gm_fnmMenuCFG = CTFILENAME("Scripts\\Menu\\RenderingOptions.cfg");
+	_pGUIM->gmVarMenu.gm_pgmParentMenu = &_pGUIM->gmVideoOptionsMenu;
+	ChangeToMenu(&_pGUIM->gmVarMenu);
+}
+
+void StartCustomizeKeyboardMenu(void)
+{
+	ChangeToMenu(&_pGUIM->gmCustomizeKeyboardMenu);
+}
+
+void StartCustomizeAxisMenu(void)
+{
+	ChangeToMenu(&_pGUIM->gmCustomizeAxisMenu);
+}
+
+void StartOptionsMenu(void)
+{
+	_pGUIM->gmOptionsMenu.gm_pgmParentMenu = pgmCurrentMenu;
+	ChangeToMenu(&_pGUIM->gmOptionsMenu);
+}
+
+void StartCurrentLoadMenu()
+{
+	if (_gmRunningGameMode == GM_NETWORK) {
+		void StartNetworkLoadMenu(void);
+		StartNetworkLoadMenu();
+	} else if (_gmRunningGameMode == GM_SPLIT_SCREEN) {
+		void StartSplitScreenLoadMenu(void);
+		StartSplitScreenLoadMenu();
+	} else {
+		void StartSinglePlayerLoadMenu(void);
+		StartSinglePlayerLoadMenu();
+	}
+}
+
+void StartCurrentSaveMenu()
+{
+	if (_gmRunningGameMode == GM_NETWORK) {
+		void StartNetworkSaveMenu(void);
+		StartNetworkSaveMenu();
+	} else if (_gmRunningGameMode == GM_SPLIT_SCREEN) {
+		void StartSplitScreenSaveMenu(void);
+		StartSplitScreenSaveMenu();
+	} else {
+		void StartSinglePlayerSaveMenu(void);
+		StartSinglePlayerSaveMenu();
+	}
+}
+
+void StartCurrentQuickLoadMenu()
+{
+	if (_gmRunningGameMode == GM_NETWORK) {
+		void StartNetworkQuickLoadMenu(void);
+		StartNetworkQuickLoadMenu();
+	} else if (_gmRunningGameMode == GM_SPLIT_SCREEN) {
+		void StartSplitScreenQuickLoadMenu(void);
+		StartSplitScreenQuickLoadMenu();
+	} else {
+		void StartSinglePlayerQuickLoadMenu(void);
+		StartSinglePlayerQuickLoadMenu();
+	}
+}
+
+void StartChangePlayerMenuFromOptions(void)
+{
+	_bPlayerMenuFromSinglePlayer = FALSE;
+	_pGUIM->gmPlayerProfile.gm_piCurrentPlayer = &_pGame->gm_iSinglePlayer;
+	_pGUIM->gmPlayerProfile.gm_pgmParentMenu = &_pGUIM->gmOptionsMenu;
+	ChangeToMenu(&_pGUIM->gmPlayerProfile);
+}
+
+void StartChangePlayerMenuFromSinglePlayer(void)
+{
+	_iLocalPlayer = -1;
+	_bPlayerMenuFromSinglePlayer = TRUE;
+	_pGUIM->gmPlayerProfile.gm_piCurrentPlayer = &_pGame->gm_iSinglePlayer;
+	_pGUIM->gmPlayerProfile.gm_pgmParentMenu = &_pGUIM->gmSinglePlayerMenu;
+	ChangeToMenu(&_pGUIM->gmPlayerProfile);
+}
+
+void StartControlsMenuFromPlayer(void)
+{
+	_pGUIM->gmControls.gm_pgmParentMenu = &_pGUIM->gmPlayerProfile;
+	ChangeToMenu(&_pGUIM->gmControls);
+}
+
+void StartControlsMenuFromOptions(void)
+{
+	_pGUIM->gmControls.gm_pgmParentMenu = &_pGUIM->gmOptionsMenu;
+	ChangeToMenu(&_pGUIM->gmControls);
+}
+
+void StartHighScoreMenu(void)
+{
+	_pGUIM->gmHighScoreMenu.gm_pgmParentMenu = pgmCurrentMenu;
+	ChangeToMenu(&_pGUIM->gmHighScoreMenu);
+}
+
+void StartSplitScreenGame(void)
+{
+	//  _pGame->gm_MenuSplitScreenCfg = (enum CGame::SplitScreenCfg) mgSplitScreenCfg.mg_iSelected;
+	_pGame->gm_StartSplitScreenCfg = _pGame->gm_MenuSplitScreenCfg;
+
+	_pGame->gm_aiStartLocalPlayers[0] = _pGame->gm_aiMenuLocalPlayers[0];
+	_pGame->gm_aiStartLocalPlayers[1] = _pGame->gm_aiMenuLocalPlayers[1];
+	_pGame->gm_aiStartLocalPlayers[2] = _pGame->gm_aiMenuLocalPlayers[2];
+	_pGame->gm_aiStartLocalPlayers[3] = _pGame->gm_aiMenuLocalPlayers[3];
+
+	CTFileName fnWorld = _pGame->gam_strCustomLevel;
+
+	_pGame->gm_strNetworkProvider = "Local";
+	CUniversalSessionProperties sp;
+	_pGame->SetMultiPlayerSession(sp);
+	if (_pGame->NewGame(fnWorld.FileName(), fnWorld, sp))
+	{
+		StopMenus();
+		_gmRunningGameMode = GM_SPLIT_SCREEN;
+	} else {
+		_gmRunningGameMode = GM_NONE;
+	}
+}
+
+void StartNetworkGame(void)
+{
+	//  _pGame->gm_MenuSplitScreenCfg = (enum CGame::SplitScreenCfg) mgSplitScreenCfg.mg_iSelected;
+	_pGame->gm_StartSplitScreenCfg = _pGame->gm_MenuSplitScreenCfg;
+
+	_pGame->gm_aiStartLocalPlayers[0] = _pGame->gm_aiMenuLocalPlayers[0];
+	_pGame->gm_aiStartLocalPlayers[1] = _pGame->gm_aiMenuLocalPlayers[1];
+	_pGame->gm_aiStartLocalPlayers[2] = _pGame->gm_aiMenuLocalPlayers[2];
+	_pGame->gm_aiStartLocalPlayers[3] = _pGame->gm_aiMenuLocalPlayers[3];
+
+	CTFileName fnWorld = _pGame->gam_strCustomLevel;
+
+	_pGame->gm_strNetworkProvider = "TCP/IP Server";
+	CUniversalSessionProperties sp;
+	_pGame->SetMultiPlayerSession(sp);
+	if (_pGame->NewGame(_pGame->gam_strSessionName, fnWorld, sp))
+	{
+		StopMenus();
+		_gmRunningGameMode = GM_NETWORK;
+		// if starting a dedicated server
+		if (_pGame->gm_MenuSplitScreenCfg == CGame::SSC_DEDICATED) {
+			// pull down the console
+			extern INDEX sam_bToggleConsole;
+			sam_bToggleConsole = TRUE;
+		}
+	} else {
+		_gmRunningGameMode = GM_NONE;
+	}
+}
+
+void JoinNetworkGame(void)
+{
+	//  _pGame->gm_MenuSplitScreenCfg = (enum CGame::SplitScreenCfg) mgSplitScreenCfg.mg_iSelected;
+	_pGame->gm_StartSplitScreenCfg = _pGame->gm_MenuSplitScreenCfg;
+
+	_pGame->gm_aiStartLocalPlayers[0] = _pGame->gm_aiMenuLocalPlayers[0];
+	_pGame->gm_aiStartLocalPlayers[1] = _pGame->gm_aiMenuLocalPlayers[1];
+	_pGame->gm_aiStartLocalPlayers[2] = _pGame->gm_aiMenuLocalPlayers[2];
+	_pGame->gm_aiStartLocalPlayers[3] = _pGame->gm_aiMenuLocalPlayers[3];
+
+	_pGame->gm_strNetworkProvider = "TCP/IP Client";
+	if (_pGame->JoinGame(CNetworkSession(_pGame->gam_strJoinAddress)))
+	{
+		StopMenus();
+		_gmRunningGameMode = GM_NETWORK;
+	} else {
+		if (_pNetwork->ga_strRequiredMod != "") {
+			extern CTFileName _fnmModToLoad;
+			extern CTString _strModServerJoin;
+			char strModName[256] = { 0 };
+			char strModURL[256] = { 0 };
+			_pNetwork->ga_strRequiredMod.ScanF("%250[^\\]\\%s", &strModName, &strModURL);
+			_fnmModSelected = CTString(strModName);
+			_strModURLSelected = strModURL;
+			if (_strModURLSelected = "") {
+				_strModURLSelected = "http://www.croteam.com/mods/Old";
+			}
+			_strModServerSelected.PrintF("%s:%s", _pGame->gam_strJoinAddress, _pShell->GetValue("net_iPort"));
+			extern void ModConnectConfirm(void);
+			ModConnectConfirm();
+		}
+		_gmRunningGameMode = GM_NONE;
+	}
+}
+
+// -------- Servers Menu Functions
+#define CMENU _pGUIM->gmServersMenu
+
+void StartSelectServerLAN(void)
+{
+	CMENU.m_bInternet = FALSE;
+	ChangeToMenu(&CMENU);
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmNetworkJoinMenu;
+}
+
+void StartSelectServerNET(void)
+{
+	CMENU.m_bInternet = TRUE;
+	ChangeToMenu(&CMENU);
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmNetworkJoinMenu;
+}
+
+#undef CMENU
+
+// -------- Levels Menu Functions
+#define CMENU _pGUIM->gmLevelsMenu
+
+void StartSelectLevelFromSingle(void)
+{
+	FilterLevels(GetSpawnFlagsForGameType(-1));
+	_pAfterLevelChosen = StartSinglePlayerNewMenuCustom;
+	ChangeToMenu(&CMENU);
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmSinglePlayerMenu;
+}
+
+void StartSelectLevelFromSplit(void)
+{
+	FilterLevels(GetSpawnFlagsForGameType(_pGUIM->gmSplitStartMenu.gm_mgGameType.mg_iSelected));
+	void StartSplitStartMenu(void);
+	_pAfterLevelChosen = StartSplitStartMenu;
+	ChangeToMenu(&CMENU);
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmSplitStartMenu;
+}
+
+void StartSelectLevelFromNetwork(void)
+{
+	FilterLevels(GetSpawnFlagsForGameType(_pGUIM->gmNetworkStartMenu.gm_mgGameType.mg_iSelected));
+	void StartNetworkStartMenu(void);
+	_pAfterLevelChosen = StartNetworkStartMenu;
+	ChangeToMenu(&CMENU);
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmNetworkStartMenu;
+}
+
+#undef CMENU
+
+// -------- Players Selection Menu Functions
+#define CMENU _pGUIM->gmSelectPlayersMenu
+
+void StartSelectPlayersMenuFromSplit(void)
+{
+	CMENU.gm_bAllowDedicated = FALSE;
+	CMENU.gm_bAllowObserving = FALSE;
+	CMENU.gm_mgStart.mg_pActivatedFunction = &StartSplitScreenGame;
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmSplitStartMenu;
+	ChangeToMenu(&CMENU);
+}
+
+void StartSelectPlayersMenuFromNetwork(void)
+{
+	CMENU.gm_bAllowDedicated = TRUE;
+	CMENU.gm_bAllowObserving = TRUE;
+	CMENU.gm_mgStart.mg_pActivatedFunction = &StartNetworkGame;
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmNetworkStartMenu;
+	ChangeToMenu(&CMENU);
+}
+
+void StartSelectPlayersMenuFromNetworkLoad(void)
+{
+	CMENU.gm_bAllowDedicated = FALSE;
+	CMENU.gm_bAllowObserving = TRUE;
+	CMENU.gm_mgStart.mg_pActivatedFunction = &StartNetworkLoadGame;
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmLoadSaveMenu;
+	ChangeToMenu(&CMENU);
+}
+
+void StartSelectPlayersMenuFromSplitScreenLoad(void)
+{
+	CMENU.gm_bAllowDedicated = FALSE;
+	CMENU.gm_bAllowObserving = FALSE;
+	CMENU.gm_mgStart.mg_pActivatedFunction = &StartSplitScreenGameLoad;
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmLoadSaveMenu;
+	ChangeToMenu(&CMENU);
+}
+
+void StartSelectPlayersMenuFromOpen(void)
+{
+	CMENU.gm_bAllowDedicated = FALSE;
+	CMENU.gm_bAllowObserving = TRUE;
+	CMENU.gm_mgStart.mg_pActivatedFunction = &JoinNetworkGame;
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmNetworkOpenMenu;
+	ChangeToMenu(&CMENU);
+
+	/*if (sam_strNetworkSettings=="")*/ {
+		void StartNetworkSettingsMenu(void);
+		StartNetworkSettingsMenu();
+		_pGUIM->gmLoadSaveMenu.gm_bNoEscape = TRUE;
+		_pGUIM->gmLoadSaveMenu.gm_pgmParentMenu = &_pGUIM->gmNetworkOpenMenu;
+		_pGUIM->gmLoadSaveMenu.gm_pgmNextMenu = &CMENU;
+	}
+}
+
+void StartSelectPlayersMenuFromServers(void)
+{
+	CMENU.gm_bAllowDedicated = FALSE;
+	CMENU.gm_bAllowObserving = TRUE;
+	CMENU.gm_mgStart.mg_pActivatedFunction = &JoinNetworkGame;
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmServersMenu;
+	ChangeToMenu(&CMENU);
+
+	/*if (sam_strNetworkSettings=="")*/ {
+		void StartNetworkSettingsMenu(void);
+		StartNetworkSettingsMenu();
+		_pGUIM->gmLoadSaveMenu.gm_bNoEscape = TRUE;
+		_pGUIM->gmLoadSaveMenu.gm_pgmParentMenu = &_pGUIM->gmServersMenu;
+		_pGUIM->gmLoadSaveMenu.gm_pgmNextMenu = &CMENU;
+	}
+}
+
+#undef CMENU
+
+// -------- Save/Load Menu Calling Functions
 #define CMENU _pGUIM->gmLoadSaveMenu
+
+void StartPlayerModelLoadMenu(void)
+{
+	CMENU.gm_mgTitle.mg_strText = TRANS("CHOOSE MODEL");
+	CMENU.gm_bAllowThumbnails = TRUE;
+	CMENU.gm_iSortType = LSSORT_FILEUP;
+	CMENU.gm_bSave = FALSE;
+	CMENU.gm_bManage = FALSE;
+	CMENU.gm_fnmDirectory = CTString("Models\\Player\\");
+	CMENU.gm_fnmSelected = _strLastPlayerAppearance;
+	CMENU.gm_fnmExt = CTString(".amc");
+	CMENU.gm_pAfterFileChosen = &LSLoadPlayerModel;
+	CMENU.gm_mgNotes.mg_strText = "";
+
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmPlayerProfile;
+	ChangeToMenu(&CMENU);
+}
+
+void StartControlsLoadMenu(void)
+{
+	CMENU.gm_mgTitle.mg_strText = TRANS("LOAD CONTROLS");
+	CMENU.gm_bAllowThumbnails = FALSE;
+	CMENU.gm_iSortType = LSSORT_FILEUP;
+	CMENU.gm_bSave = FALSE;
+	CMENU.gm_bManage = FALSE;
+	CMENU.gm_fnmDirectory = CTString("Controls\\");
+	CMENU.gm_fnmSelected = CTString("");
+	CMENU.gm_fnmExt = CTString(".ctl");
+	CMENU.gm_pAfterFileChosen = &LSLoadControls;
+	CMENU.gm_mgNotes.mg_strText = "";
+
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmControls;
+	ChangeToMenu(&CMENU);
+}
+
+void StartCustomLoadMenu(void)
+{
+	CMENU.gm_mgTitle.mg_strText = TRANS("ADVANCED OPTIONS");
+	CMENU.gm_bAllowThumbnails = FALSE;
+	CMENU.gm_iSortType = LSSORT_NAMEUP;
+	CMENU.gm_bSave = FALSE;
+	CMENU.gm_bManage = FALSE;
+	CMENU.gm_fnmDirectory = CTString("Scripts\\CustomOptions\\");
+	CMENU.gm_fnmSelected = CTString("");
+	CMENU.gm_fnmExt = CTString(".cfg");
+	CMENU.gm_pAfterFileChosen = &LSLoadCustom;
+	CMENU.gm_mgNotes.mg_strText = "";
+
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmOptionsMenu;
+	ChangeToMenu(&CMENU);
+}
+
+void StartAddonsLoadMenu(void)
+{
+	CMENU.gm_mgTitle.mg_strText = TRANS("EXECUTE ADDON");
+	CMENU.gm_bAllowThumbnails = FALSE;
+	CMENU.gm_iSortType = LSSORT_NAMEUP;
+	CMENU.gm_bSave = FALSE;
+	CMENU.gm_bManage = FALSE;
+	CMENU.gm_fnmDirectory = CTString("Scripts\\Addons\\");
+	CMENU.gm_fnmSelected = CTString("");
+	CMENU.gm_fnmExt = CTString(".ini");
+	CMENU.gm_pAfterFileChosen = &LSLoadAddon;
+	CMENU.gm_mgNotes.mg_strText = "";
+
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmOptionsMenu;
+	ChangeToMenu(&CMENU);
+}
+
+void StartModsLoadMenu(void)
+{
+	CMENU.gm_mgTitle.mg_strText = TRANS("CHOOSE MOD");
+	CMENU.gm_bAllowThumbnails = TRUE;
+	CMENU.gm_iSortType = LSSORT_NAMEUP;
+	CMENU.gm_bSave = FALSE;
+	CMENU.gm_bManage = FALSE;
+	CMENU.gm_fnmDirectory = CTString("Mods\\");
+	CMENU.gm_fnmSelected = CTString("");
+	CMENU.gm_fnmExt = CTString(".des");
+	CMENU.gm_pAfterFileChosen = &LSLoadMod;
+
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmMainMenu;
+	ChangeToMenu(&CMENU);
+}
+
+void StartNetworkSettingsMenu(void)
+{
+	CMENU.gm_mgTitle.mg_strText = TRANS("CONNECTION SETTINGS");
+	CMENU.gm_bAllowThumbnails = FALSE;
+	CMENU.gm_iSortType = LSSORT_FILEUP;
+	CMENU.gm_bSave = FALSE;
+	CMENU.gm_bManage = FALSE;
+	CMENU.gm_fnmDirectory = CTString("Scripts\\NetSettings\\");
+	CMENU.gm_fnmSelected = sam_strNetworkSettings;
+	CMENU.gm_fnmExt = CTString(".ini");
+	CMENU.gm_pAfterFileChosen = &LSLoadNetSettings;
+	if (sam_strNetworkSettings == "") {
+		CMENU.gm_mgNotes.mg_strText = TRANS(
+			"Before joining a network game,\n"
+			"you have to adjust your connection parameters.\n"
+			"Choose one option from the list.\n"
+			"If you have problems with connection, you can adjust\n"
+			"these parameters again from the Options menu.\n"
+			);
+	} else {
+		CMENU.gm_mgNotes.mg_strText = "";
+	}
+
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmOptionsMenu;
+	ChangeToMenu(&CMENU);
+}
+
 
 void StartSinglePlayerQuickLoadMenu(void)
 {
@@ -333,475 +791,7 @@ void StartSplitScreenSaveMenu(void)
 
 #undef CMENU
 
-// game options var settings
-void StartVarGameOptions(void)
-{
-	_pGUIM->gmVarMenu.gm_mgTitle.mg_strText = TRANS("GAME OPTIONS");
-	_pGUIM->gmVarMenu.gm_fnmMenuCFG = CTFILENAME("Scripts\\Menu\\GameOptions.cfg");
-	ChangeToMenu(&_pGUIM->gmVarMenu);
-}
-
-void StartSinglePlayerGameOptions(void)
-{
-	_pGUIM->gmVarMenu.gm_mgTitle.mg_strText = TRANS("GAME OPTIONS");
-	_pGUIM->gmVarMenu.gm_fnmMenuCFG = CTFILENAME("Scripts\\Menu\\SPOptions.cfg");
-	ChangeToMenu(&_pGUIM->gmVarMenu);
-	_pGUIM->gmVarMenu.gm_pgmParentMenu = &_pGUIM->gmSinglePlayerMenu;
-}
-
-void StartGameOptionsFromNetwork(void)
-{
-	StartVarGameOptions();
-	_pGUIM->gmVarMenu.gm_pgmParentMenu = &_pGUIM->gmNetworkStartMenu;
-}
-
-void StartGameOptionsFromSplitScreen(void)
-{
-	StartVarGameOptions();
-	_pGUIM->gmVarMenu.gm_pgmParentMenu = &_pGUIM->gmSplitStartMenu;
-}
-
-// rendering options var settings
-void StartRenderingOptionsMenu(void)
-{
-	_pGUIM->gmVarMenu.gm_mgTitle.mg_strText = TRANS("RENDERING OPTIONS");
-	_pGUIM->gmVarMenu.gm_fnmMenuCFG = CTFILENAME("Scripts\\Menu\\RenderingOptions.cfg");
-	_pGUIM->gmVarMenu.gm_pgmParentMenu = &_pGUIM->gmVideoOptionsMenu;
-	ChangeToMenu(&_pGUIM->gmVarMenu);
-}
-
-void StartCustomizeKeyboardMenu(void)
-{
-	ChangeToMenu(&_pGUIM->gmCustomizeKeyboardMenu);
-}
-
-void StartCustomizeAxisMenu(void)
-{
-	ChangeToMenu(&_pGUIM->gmCustomizeAxisMenu);
-}
-
-void StartOptionsMenu(void)
-{
-	_pGUIM->gmOptionsMenu.gm_pgmParentMenu = pgmCurrentMenu;
-	ChangeToMenu(&_pGUIM->gmOptionsMenu);
-}
-
-void StartCurrentLoadMenu()
-{
-	if (_gmRunningGameMode == GM_NETWORK) {
-		void StartNetworkLoadMenu(void);
-		StartNetworkLoadMenu();
-	} else if (_gmRunningGameMode == GM_SPLIT_SCREEN) {
-		void StartSplitScreenLoadMenu(void);
-		StartSplitScreenLoadMenu();
-	} else {
-		void StartSinglePlayerLoadMenu(void);
-		StartSinglePlayerLoadMenu();
-	}
-}
-
-void StartCurrentSaveMenu()
-{
-	if (_gmRunningGameMode == GM_NETWORK) {
-		void StartNetworkSaveMenu(void);
-		StartNetworkSaveMenu();
-	} else if (_gmRunningGameMode == GM_SPLIT_SCREEN) {
-		void StartSplitScreenSaveMenu(void);
-		StartSplitScreenSaveMenu();
-	} else {
-		void StartSinglePlayerSaveMenu(void);
-		StartSinglePlayerSaveMenu();
-	}
-}
-
-void StartCurrentQuickLoadMenu()
-{
-	if (_gmRunningGameMode == GM_NETWORK) {
-		void StartNetworkQuickLoadMenu(void);
-		StartNetworkQuickLoadMenu();
-	} else if (_gmRunningGameMode == GM_SPLIT_SCREEN) {
-		void StartSplitScreenQuickLoadMenu(void);
-		StartSplitScreenQuickLoadMenu();
-	} else {
-		void StartSinglePlayerQuickLoadMenu(void);
-		StartSinglePlayerQuickLoadMenu();
-	}
-}
-
-void StartChangePlayerMenuFromOptions(void)
-{
-	_bPlayerMenuFromSinglePlayer = FALSE;
-	_pGUIM->gmPlayerProfile.gm_piCurrentPlayer = &_pGame->gm_iSinglePlayer;
-	_pGUIM->gmPlayerProfile.gm_pgmParentMenu = &_pGUIM->gmOptionsMenu;
-	ChangeToMenu(&_pGUIM->gmPlayerProfile);
-}
-
-void StartChangePlayerMenuFromSinglePlayer(void)
-{
-	_iLocalPlayer = -1;
-	_bPlayerMenuFromSinglePlayer = TRUE;
-	_pGUIM->gmPlayerProfile.gm_piCurrentPlayer = &_pGame->gm_iSinglePlayer;
-	_pGUIM->gmPlayerProfile.gm_pgmParentMenu = &_pGUIM->gmSinglePlayerMenu;
-	ChangeToMenu(&_pGUIM->gmPlayerProfile);
-}
-
-void StartControlsMenuFromPlayer(void)
-{
-	_pGUIM->gmControls.gm_pgmParentMenu = &_pGUIM->gmPlayerProfile;
-	ChangeToMenu(&_pGUIM->gmControls);
-}
-
-void StartControlsMenuFromOptions(void)
-{
-	_pGUIM->gmControls.gm_pgmParentMenu = &_pGUIM->gmOptionsMenu;
-	ChangeToMenu(&_pGUIM->gmControls);
-}
-
-void StartSelectLevelFromSingle(void)
-{
-	FilterLevels(GetSpawnFlagsForGameType(-1));
-	_pAfterLevelChosen = StartSinglePlayerNewMenuCustom;
-	ChangeToMenu(&_pGUIM->gmLevelsMenu);
-	_pGUIM->gmLevelsMenu.gm_pgmParentMenu = &_pGUIM->gmSinglePlayerMenu;
-}
-
-void StartHighScoreMenu(void)
-{
-	_pGUIM->gmHighScoreMenu.gm_pgmParentMenu = pgmCurrentMenu;
-	ChangeToMenu(&_pGUIM->gmHighScoreMenu);
-}
-
-void StartSplitScreenGame(void)
-{
-	//  _pGame->gm_MenuSplitScreenCfg = (enum CGame::SplitScreenCfg) mgSplitScreenCfg.mg_iSelected;
-	_pGame->gm_StartSplitScreenCfg = _pGame->gm_MenuSplitScreenCfg;
-
-	_pGame->gm_aiStartLocalPlayers[0] = _pGame->gm_aiMenuLocalPlayers[0];
-	_pGame->gm_aiStartLocalPlayers[1] = _pGame->gm_aiMenuLocalPlayers[1];
-	_pGame->gm_aiStartLocalPlayers[2] = _pGame->gm_aiMenuLocalPlayers[2];
-	_pGame->gm_aiStartLocalPlayers[3] = _pGame->gm_aiMenuLocalPlayers[3];
-
-	CTFileName fnWorld = _pGame->gam_strCustomLevel;
-
-	_pGame->gm_strNetworkProvider = "Local";
-	CUniversalSessionProperties sp;
-	_pGame->SetMultiPlayerSession(sp);
-	if (_pGame->NewGame(fnWorld.FileName(), fnWorld, sp))
-	{
-		StopMenus();
-		_gmRunningGameMode = GM_SPLIT_SCREEN;
-	} else {
-		_gmRunningGameMode = GM_NONE;
-	}
-}
-
-#define CMENU _pGUIM->gmSelectPlayersMenu
-
-void StartSelectPlayersMenuFromSplit(void)
-{
-	CMENU.gm_bAllowDedicated = FALSE;
-	CMENU.gm_bAllowObserving = FALSE;
-	CMENU.gm_mgStart.mg_pActivatedFunction = &StartSplitScreenGame;
-	CMENU.gm_pgmParentMenu = &_pGUIM->gmSplitStartMenu;
-	ChangeToMenu(&CMENU);
-}
-
-#undef CMENU
-
-void StartNetworkGame(void)
-{
-	//  _pGame->gm_MenuSplitScreenCfg = (enum CGame::SplitScreenCfg) mgSplitScreenCfg.mg_iSelected;
-	_pGame->gm_StartSplitScreenCfg = _pGame->gm_MenuSplitScreenCfg;
-
-	_pGame->gm_aiStartLocalPlayers[0] = _pGame->gm_aiMenuLocalPlayers[0];
-	_pGame->gm_aiStartLocalPlayers[1] = _pGame->gm_aiMenuLocalPlayers[1];
-	_pGame->gm_aiStartLocalPlayers[2] = _pGame->gm_aiMenuLocalPlayers[2];
-	_pGame->gm_aiStartLocalPlayers[3] = _pGame->gm_aiMenuLocalPlayers[3];
-
-	CTFileName fnWorld = _pGame->gam_strCustomLevel;
-
-	_pGame->gm_strNetworkProvider = "TCP/IP Server";
-	CUniversalSessionProperties sp;
-	_pGame->SetMultiPlayerSession(sp);
-	if (_pGame->NewGame(_pGame->gam_strSessionName, fnWorld, sp))
-	{
-		StopMenus();
-		_gmRunningGameMode = GM_NETWORK;
-		// if starting a dedicated server
-		if (_pGame->gm_MenuSplitScreenCfg == CGame::SSC_DEDICATED) {
-			// pull down the console
-			extern INDEX sam_bToggleConsole;
-			sam_bToggleConsole = TRUE;
-		}
-	} else {
-		_gmRunningGameMode = GM_NONE;
-	}
-}
-
-#define CMENU _pGUIM->gmSelectPlayersMenu
-
-void StartSelectPlayersMenuFromNetwork(void)
-{
-	CMENU.gm_bAllowDedicated = TRUE;
-	CMENU.gm_bAllowObserving = TRUE;
-	CMENU.gm_mgStart.mg_pActivatedFunction = &StartNetworkGame;
-	CMENU.gm_pgmParentMenu = &_pGUIM->gmNetworkStartMenu;
-	ChangeToMenu(&CMENU);
-}
-
-#undef CMENU
-
-void JoinNetworkGame(void)
-{
-	//  _pGame->gm_MenuSplitScreenCfg = (enum CGame::SplitScreenCfg) mgSplitScreenCfg.mg_iSelected;
-	_pGame->gm_StartSplitScreenCfg = _pGame->gm_MenuSplitScreenCfg;
-
-	_pGame->gm_aiStartLocalPlayers[0] = _pGame->gm_aiMenuLocalPlayers[0];
-	_pGame->gm_aiStartLocalPlayers[1] = _pGame->gm_aiMenuLocalPlayers[1];
-	_pGame->gm_aiStartLocalPlayers[2] = _pGame->gm_aiMenuLocalPlayers[2];
-	_pGame->gm_aiStartLocalPlayers[3] = _pGame->gm_aiMenuLocalPlayers[3];
-
-	_pGame->gm_strNetworkProvider = "TCP/IP Client";
-	if (_pGame->JoinGame(CNetworkSession(_pGame->gam_strJoinAddress)))
-	{
-		StopMenus();
-		_gmRunningGameMode = GM_NETWORK;
-	} else {
-		if (_pNetwork->ga_strRequiredMod != "") {
-			extern CTFileName _fnmModToLoad;
-			extern CTString _strModServerJoin;
-			char strModName[256] = { 0 };
-			char strModURL[256] = { 0 };
-			_pNetwork->ga_strRequiredMod.ScanF("%250[^\\]\\%s", &strModName, &strModURL);
-			_fnmModSelected = CTString(strModName);
-			_strModURLSelected = strModURL;
-			if (_strModURLSelected = "") {
-				_strModURLSelected = "http://www.croteam.com/mods/Old";
-			}
-			_strModServerSelected.PrintF("%s:%s", _pGame->gam_strJoinAddress, _pShell->GetValue("net_iPort"));
-			extern void ModConnectConfirm(void);
-			ModConnectConfirm();
-		}
-		_gmRunningGameMode = GM_NONE;
-	}
-}
-
-#define CMENU _pGUIM->gmSelectPlayersMenu
-
-void StartSelectPlayersMenuFromOpen(void)
-{
-	CMENU.gm_bAllowDedicated = FALSE;
-	CMENU.gm_bAllowObserving = TRUE;
-	CMENU.gm_mgStart.mg_pActivatedFunction = &JoinNetworkGame;
-	CMENU.gm_pgmParentMenu = &_pGUIM->gmNetworkOpenMenu;
-	ChangeToMenu(&CMENU);
-
-	/*if (sam_strNetworkSettings=="")*/ {
-		void StartNetworkSettingsMenu(void);
-		StartNetworkSettingsMenu();
-		_pGUIM->gmLoadSaveMenu.gm_bNoEscape = TRUE;
-		_pGUIM->gmLoadSaveMenu.gm_pgmParentMenu = &_pGUIM->gmNetworkOpenMenu;
-		_pGUIM->gmLoadSaveMenu.gm_pgmNextMenu = &CMENU;
-	}
-}
-void StartSelectPlayersMenuFromServers(void)
-{
-	CMENU.gm_bAllowDedicated = FALSE;
-	CMENU.gm_bAllowObserving = TRUE;
-	CMENU.gm_mgStart.mg_pActivatedFunction = &JoinNetworkGame;
-	CMENU.gm_pgmParentMenu = &_pGUIM->gmServersMenu;
-	ChangeToMenu(&CMENU);
-
-	/*if (sam_strNetworkSettings=="")*/ {
-		void StartNetworkSettingsMenu(void);
-		StartNetworkSettingsMenu();
-		_pGUIM->gmLoadSaveMenu.gm_bNoEscape = TRUE;
-		_pGUIM->gmLoadSaveMenu.gm_pgmParentMenu = &_pGUIM->gmServersMenu;
-		_pGUIM->gmLoadSaveMenu.gm_pgmNextMenu = &CMENU;
-	}
-}
-
-#undef CMENU
-
-void StartSelectServerLAN(void)
-{
-	_pGUIM->gmServersMenu.m_bInternet = FALSE;
-	ChangeToMenu(&_pGUIM->gmServersMenu);
-	_pGUIM->gmServersMenu.gm_pgmParentMenu = &_pGUIM->gmNetworkJoinMenu;
-}
-
-void StartSelectServerNET(void)
-{
-	_pGUIM->gmServersMenu.m_bInternet = TRUE;
-	ChangeToMenu(&_pGUIM->gmServersMenu);
-	_pGUIM->gmServersMenu.gm_pgmParentMenu = &_pGUIM->gmNetworkJoinMenu;
-}
-
-void StartSelectLevelFromSplit(void)
-{
-	FilterLevels(GetSpawnFlagsForGameType(_pGUIM->gmSplitStartMenu.gm_mgGameType.mg_iSelected));
-	void StartSplitStartMenu(void);
-	_pAfterLevelChosen = StartSplitStartMenu;
-	ChangeToMenu(&_pGUIM->gmLevelsMenu);
-	_pGUIM->gmLevelsMenu.gm_pgmParentMenu = &_pGUIM->gmSplitStartMenu;
-}
-
-void StartSelectLevelFromNetwork(void)
-{
-	FilterLevels(GetSpawnFlagsForGameType(_pGUIM->gmNetworkStartMenu.gm_mgGameType.mg_iSelected));
-	void StartNetworkStartMenu(void);
-	_pAfterLevelChosen = StartNetworkStartMenu;
-	ChangeToMenu(&_pGUIM->gmLevelsMenu);
-	_pGUIM->gmLevelsMenu.gm_pgmParentMenu = &_pGUIM->gmNetworkStartMenu;
-}
-
-#define CMENU _pGUIM->gmSelectPlayersMenu
-
-void StartSelectPlayersMenuFromSplitScreen(void)
-{
-	CMENU.gm_bAllowDedicated = FALSE;
-	CMENU.gm_bAllowObserving = FALSE;
-	//CMENU.gm_mgStart.mg_pActivatedFunction = &StartSplitScreenGame;
-	CMENU.gm_pgmParentMenu = &_pGUIM->gmSplitScreenMenu;
-	ChangeToMenu(&CMENU);
-}
-
-void StartSelectPlayersMenuFromNetworkLoad(void)
-{
-	CMENU.gm_bAllowDedicated = FALSE;
-	CMENU.gm_bAllowObserving = TRUE;
-	CMENU.gm_mgStart.mg_pActivatedFunction = &StartNetworkLoadGame;
-	CMENU.gm_pgmParentMenu = &_pGUIM->gmLoadSaveMenu;
-	ChangeToMenu(&CMENU);
-}
-
-void StartSelectPlayersMenuFromSplitScreenLoad(void)
-{
-	CMENU.gm_bAllowDedicated = FALSE;
-	CMENU.gm_bAllowObserving = FALSE;
-	CMENU.gm_mgStart.mg_pActivatedFunction = &StartSplitScreenGameLoad;
-	CMENU.gm_pgmParentMenu = &_pGUIM->gmLoadSaveMenu;
-	ChangeToMenu(&CMENU);
-}
-
-#undef CMENU
-
-// save/load menu calling functions
-#define CMENU _pGUIM->gmLoadSaveMenu
-
-void StartPlayerModelLoadMenu(void)
-{
-	CMENU.gm_mgTitle.mg_strText = TRANS("CHOOSE MODEL");
-	CMENU.gm_bAllowThumbnails = TRUE;
-	CMENU.gm_iSortType = LSSORT_FILEUP;
-	CMENU.gm_bSave = FALSE;
-	CMENU.gm_bManage = FALSE;
-	CMENU.gm_fnmDirectory = CTString("Models\\Player\\");
-	CMENU.gm_fnmSelected = _strLastPlayerAppearance;
-	CMENU.gm_fnmExt = CTString(".amc");
-	CMENU.gm_pAfterFileChosen = &LSLoadPlayerModel;
-	CMENU.gm_mgNotes.mg_strText = "";
-
-	CMENU.gm_pgmParentMenu = &_pGUIM->gmPlayerProfile;
-	ChangeToMenu(&CMENU);
-}
-
-void StartControlsLoadMenu(void)
-{
-	CMENU.gm_mgTitle.mg_strText = TRANS("LOAD CONTROLS");
-	CMENU.gm_bAllowThumbnails = FALSE;
-	CMENU.gm_iSortType = LSSORT_FILEUP;
-	CMENU.gm_bSave = FALSE;
-	CMENU.gm_bManage = FALSE;
-	CMENU.gm_fnmDirectory = CTString("Controls\\");
-	CMENU.gm_fnmSelected = CTString("");
-	CMENU.gm_fnmExt = CTString(".ctl");
-	CMENU.gm_pAfterFileChosen = &LSLoadControls;
-	CMENU.gm_mgNotes.mg_strText = "";
-
-	CMENU.gm_pgmParentMenu = &_pGUIM->gmControls;
-	ChangeToMenu(&CMENU);
-}
-
-void StartCustomLoadMenu(void)
-{
-	CMENU.gm_mgTitle.mg_strText = TRANS("ADVANCED OPTIONS");
-	CMENU.gm_bAllowThumbnails = FALSE;
-	CMENU.gm_iSortType = LSSORT_NAMEUP;
-	CMENU.gm_bSave = FALSE;
-	CMENU.gm_bManage = FALSE;
-	CMENU.gm_fnmDirectory = CTString("Scripts\\CustomOptions\\");
-	CMENU.gm_fnmSelected = CTString("");
-	CMENU.gm_fnmExt = CTString(".cfg");
-	CMENU.gm_pAfterFileChosen = &LSLoadCustom;
-	CMENU.gm_mgNotes.mg_strText = "";
-
-	CMENU.gm_pgmParentMenu = &_pGUIM->gmOptionsMenu;
-	ChangeToMenu(&CMENU);
-}
-
-void StartAddonsLoadMenu(void)
-{
-	CMENU.gm_mgTitle.mg_strText = TRANS("EXECUTE ADDON");
-	CMENU.gm_bAllowThumbnails = FALSE;
-	CMENU.gm_iSortType = LSSORT_NAMEUP;
-	CMENU.gm_bSave = FALSE;
-	CMENU.gm_bManage = FALSE;
-	CMENU.gm_fnmDirectory = CTString("Scripts\\Addons\\");
-	CMENU.gm_fnmSelected = CTString("");
-	CMENU.gm_fnmExt = CTString(".ini");
-	CMENU.gm_pAfterFileChosen = &LSLoadAddon;
-	CMENU.gm_mgNotes.mg_strText = "";
-
-	CMENU.gm_pgmParentMenu = &_pGUIM->gmOptionsMenu;
-	ChangeToMenu(&CMENU);
-}
-
-void StartModsLoadMenu(void)
-{
-	CMENU.gm_mgTitle.mg_strText = TRANS("CHOOSE MOD");
-	CMENU.gm_bAllowThumbnails = TRUE;
-	CMENU.gm_iSortType = LSSORT_NAMEUP;
-	CMENU.gm_bSave = FALSE;
-	CMENU.gm_bManage = FALSE;
-	CMENU.gm_fnmDirectory = CTString("Mods\\");
-	CMENU.gm_fnmSelected = CTString("");
-	CMENU.gm_fnmExt = CTString(".des");
-	CMENU.gm_pAfterFileChosen = &LSLoadMod;
-
-	CMENU.gm_pgmParentMenu = &_pGUIM->gmMainMenu;
-	ChangeToMenu(&CMENU);
-}
-
-void StartNetworkSettingsMenu(void)
-{
-	CMENU.gm_mgTitle.mg_strText = TRANS("CONNECTION SETTINGS");
-	CMENU.gm_bAllowThumbnails = FALSE;
-	CMENU.gm_iSortType = LSSORT_FILEUP;
-	CMENU.gm_bSave = FALSE;
-	CMENU.gm_bManage = FALSE;
-	CMENU.gm_fnmDirectory = CTString("Scripts\\NetSettings\\");
-	CMENU.gm_fnmSelected = sam_strNetworkSettings;
-	CMENU.gm_fnmExt = CTString(".ini");
-	CMENU.gm_pAfterFileChosen = &LSLoadNetSettings;
-	if (sam_strNetworkSettings == "") {
-		CMENU.gm_mgNotes.mg_strText = TRANS(
-			"Before joining a network game,\n"
-			"you have to adjust your connection parameters.\n"
-			"Choose one option from the list.\n"
-			"If you have problems with connection, you can adjust\n"
-			"these parameters again from the Options menu.\n"
-			);
-	} else {
-		CMENU.gm_mgNotes.mg_strText = "";
-	}
-
-	CMENU.gm_pgmParentMenu = &_pGUIM->gmOptionsMenu;
-	ChangeToMenu(&CMENU);
-}
-
-#undef CMENU
-
+// -------- Disabled Menu Calling Function
 void DisabledFunction(void)
 {
 	_pGUIM->gmDisabledFunction.gm_pgmParentMenu = pgmCurrentMenu;

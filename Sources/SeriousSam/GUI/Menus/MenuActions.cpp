@@ -100,6 +100,8 @@ static void SizeToResolution(PIX pixSizeI, PIX pixSizeJ, INDEX &iRes)
 }
 
 // ------------------------ CConfirmMenu implementation
+#define CMENU _pGUIM->gmConfirmMenu
+
 CTFileName _fnmModSelected;
 CTString _strModURLSelected;
 CTString _strModServerSelected;
@@ -114,10 +116,10 @@ void ExitConfirm(void)
 {
 	_pConfimedYes = &ExitGame;
 	_pConfimedNo = NULL;
-	_pGUIM->gmConfirmMenu.gm_mgConfirmLabel.mg_strText = TRANS("ARE YOU SERIOUS?");
-	_pGUIM->gmConfirmMenu.gm_pgmParentMenu = pgmCurrentMenu;
-	_pGUIM->gmConfirmMenu.BeLarge();
-	ChangeToMenu(&_pGUIM->gmConfirmMenu);
+	CMENU.gm_mgConfirmLabel.mg_strText = TRANS("ARE YOU SERIOUS?");
+	CMENU.gm_pgmParentMenu = pgmCurrentMenu;
+	CMENU.BeLarge();
+	ChangeToMenu(&CMENU);
 }
 
 void StopCurrentGame(void)
@@ -132,10 +134,10 @@ void StopConfirm(void)
 {
 	_pConfimedYes = &StopCurrentGame;
 	_pConfimedNo = NULL;
-	_pGUIM->gmConfirmMenu.gm_mgConfirmLabel.mg_strText = TRANS("ARE YOU SERIOUS?");
-	_pGUIM->gmConfirmMenu.gm_pgmParentMenu = pgmCurrentMenu;
-	_pGUIM->gmConfirmMenu.BeLarge();
-	ChangeToMenu(&_pGUIM->gmConfirmMenu);
+	CMENU.gm_mgConfirmLabel.mg_strText = TRANS("ARE YOU SERIOUS?");
+	CMENU.gm_pgmParentMenu = pgmCurrentMenu;
+	CMENU.BeLarge();
+	ChangeToMenu(&CMENU);
 }
 
 void ModLoadYes(void)
@@ -170,10 +172,10 @@ extern void ModConnectConfirm(void)
 	CPrintF(TRANS("Server is running a different MOD (%s).\nYou need to reload to connect.\n"), _fnmModSelected);
 	_pConfimedYes = &ModConnect;
 	_pConfimedNo = NULL;
-	_pGUIM->gmConfirmMenu.gm_mgConfirmLabel.mg_strText = TRANS("CHANGE THE MOD?");
-	_pGUIM->gmConfirmMenu.gm_pgmParentMenu = pgmCurrentMenu;
-	_pGUIM->gmConfirmMenu.BeLarge();
-	ChangeToMenu(&_pGUIM->gmConfirmMenu);
+	CMENU.gm_mgConfirmLabel.mg_strText = TRANS("CHANGE THE MOD?");
+	CMENU.gm_pgmParentMenu = pgmCurrentMenu;
+	CMENU.BeLarge();
+	ChangeToMenu(&CMENU);
 }
 
 void SaveConfirm(void)
@@ -181,10 +183,10 @@ void SaveConfirm(void)
 	extern void OnFileSaveOK(void);
 	_pConfimedYes = &OnFileSaveOK;
 	_pConfimedNo = NULL;
-	_pGUIM->gmConfirmMenu.gm_mgConfirmLabel.mg_strText = TRANS("OVERWRITE?");
-	_pGUIM->gmConfirmMenu.gm_pgmParentMenu = pgmCurrentMenu;
-	_pGUIM->gmConfirmMenu.BeLarge();
-	ChangeToMenu(&_pGUIM->gmConfirmMenu);
+	CMENU.gm_mgConfirmLabel.mg_strText = TRANS("OVERWRITE?");
+	CMENU.gm_pgmParentMenu = pgmCurrentMenu;
+	CMENU.BeLarge();
+	ChangeToMenu(&CMENU);
 }
 
 void ExitAndSpawnExplorer(void)
@@ -199,20 +201,11 @@ void ModNotInstalled(void)
 {
 	_pConfimedYes = &ExitAndSpawnExplorer;
 	_pConfimedNo = NULL;
-	_pGUIM->gmConfirmMenu.gm_mgConfirmLabel.mg_strText.PrintF(
+	CMENU.gm_mgConfirmLabel.mg_strText.PrintF(
 		TRANS("You don't have MOD '%s' installed.\nDo you want to visit its web site?"), (const char*)_fnmModSelected);
-	_pGUIM->gmConfirmMenu.gm_pgmParentMenu = pgmCurrentMenu;
-	_pGUIM->gmConfirmMenu.BeSmall();
-	ChangeToMenu(&_pGUIM->gmConfirmMenu);
-
-	/*
-	gmDisabledFunction.gm_pgmParentMenu = pgmCurrentMenu;
-	mgDisabledMenuButton.mg_strText.PrintF(
-	TRANS("You don't have MOD '%s' installed.\nPlease visit Croteam website for updates."), _fnmModSelected);
-	mgDisabledTitle.mg_strText = TRANS("MOD REQUIRED");
-	_strModURLSelected
-	ChangeToMenu( &gmDisabledFunction);
-	*/
+	CMENU.gm_pgmParentMenu = pgmCurrentMenu;
+	CMENU.BeSmall();
+	ChangeToMenu(&CMENU);
 }
 
 
@@ -220,10 +213,10 @@ extern void ModConfirm(void)
 {
 	_pConfimedYes = &ModLoadYes;
 	_pConfimedNo = NULL;
-	_pGUIM->gmConfirmMenu.gm_mgConfirmLabel.mg_strText = TRANS("LOAD THIS MOD?");
-	_pGUIM->gmConfirmMenu.gm_pgmParentMenu = &_pGUIM->gmLoadSaveMenu;
-	_pGUIM->gmConfirmMenu.BeLarge();
-	ChangeToMenu(&_pGUIM->gmConfirmMenu);
+	CMENU.gm_mgConfirmLabel.mg_strText = TRANS("LOAD THIS MOD?");
+	CMENU.gm_pgmParentMenu = &_pGUIM->gmLoadSaveMenu;
+	CMENU.BeLarge();
+	ChangeToMenu(&CMENU);
 }
 
 void VideoConfirm(void)
@@ -231,27 +224,27 @@ void VideoConfirm(void)
 	// FIXUP: keyboard focus lost when going from full screen to window mode
 	// due to WM_MOUSEMOVE being sent
 	_bMouseUsedLast = FALSE;
-	_pmgUnderCursor = _pGUIM->gmConfirmMenu.gm_pmgSelectedByDefault;
+	_pmgUnderCursor = CMENU.gm_pmgSelectedByDefault;
 
 	_pConfimedYes = NULL;
 	void RevertVideoSettings(void);
 	_pConfimedNo = RevertVideoSettings;
 
-	_pGUIM->gmConfirmMenu.gm_mgConfirmLabel.mg_strText = TRANS("KEEP THIS SETTING?");
-	_pGUIM->gmConfirmMenu.gm_pgmParentMenu = pgmCurrentMenu;
-	_pGUIM->gmConfirmMenu.BeLarge();
-	ChangeToMenu(&_pGUIM->gmConfirmMenu);
+	CMENU.gm_mgConfirmLabel.mg_strText = TRANS("KEEP THIS SETTING?");
+	CMENU.gm_pgmParentMenu = pgmCurrentMenu;
+	CMENU.BeLarge();
+	ChangeToMenu(&CMENU);
 }
 
 void CDConfirm(void(*pOk)(void))
 {
 	_pConfimedYes = pOk;
 	_pConfimedNo = NULL;
-	_pGUIM->gmConfirmMenu.gm_mgConfirmLabel.mg_strText = TRANS("PLEASE INSERT GAME CD?");
-	if (pgmCurrentMenu != &_pGUIM->gmConfirmMenu) {
-		_pGUIM->gmConfirmMenu.gm_pgmParentMenu = pgmCurrentMenu;
-		_pGUIM->gmConfirmMenu.BeLarge();
-		ChangeToMenu(&_pGUIM->gmConfirmMenu);
+	CMENU.gm_mgConfirmLabel.mg_strText = TRANS("PLEASE INSERT GAME CD?");
+	if (pgmCurrentMenu != &CMENU) {
+		CMENU.gm_pgmParentMenu = pgmCurrentMenu;
+		CMENU.BeLarge();
+		ChangeToMenu(&CMENU);
 	}
 }
 
@@ -274,19 +267,11 @@ void ConfirmNo(void)
 }
 
 void InitActionsForConfirmMenu() {
-	_pGUIM->gmConfirmMenu.gm_mgConfirmYes.mg_pActivatedFunction = &ConfirmYes;
-	_pGUIM->gmConfirmMenu.gm_mgConfirmNo.mg_pActivatedFunction = &ConfirmNo;
+	CMENU.gm_mgConfirmYes.mg_pActivatedFunction = &ConfirmYes;
+	CMENU.gm_mgConfirmNo.mg_pActivatedFunction = &ConfirmNo;
 }
 
-// return TRUE if handled
-BOOL CConfirmMenu::OnKeyDown(int iVKey)
-{
-	if (iVKey == VK_ESCAPE || iVKey == VK_RBUTTON) {
-		ConfirmNo();
-		return TRUE;
-	}
-	return CGameMenu::OnKeyDown(iVKey);
-}
+#undef CMENU
 
 // ------------------------ CMainMenu implementation
 #define CMENU _pGUIM->gmMainMenu
@@ -348,9 +333,7 @@ extern void SetDemoStartStopRecText(void)
 		CMENU.gm_mgDemoRec.SetText(TRANS("STOP RECORDING"));
 		CMENU.gm_mgDemoRec.mg_strTip = TRANS("stop current recording");
 		CMENU.gm_mgDemoRec.mg_pActivatedFunction = &StopRecordingDemo;
-	}
-	else
-	{
+	} else {
 		CMENU.gm_mgDemoRec.SetText(TRANS("RECORD DEMO"));
 		CMENU.gm_mgDemoRec.mg_strTip = TRANS("start recording current game");
 		CMENU.gm_mgDemoRec.mg_pActivatedFunction = &StartDemoSaveMenu;
@@ -399,12 +382,6 @@ void InitActionsForSinglePlayerMenu() {
 // ------------------------ CSinglePlayerNewMenu implementation
 void StartSinglePlayerGame(void)
 {
-	/*  if (!IsCDInDrive()) {
-	CDConfirm(StartSinglePlayerGame);
-	return;
-	}
-	*/
-
 	_pGame->gm_StartSplitScreenCfg = CGame::SSC_PLAY1;
 
 	_pGame->gm_aiStartLocalPlayers[0] = _pGame->gm_iSinglePlayer;
@@ -420,8 +397,7 @@ void StartSinglePlayerGame(void)
 	{
 		StopMenus();
 		_gmRunningGameMode = GM_SINGLE_PLAYER;
-	}
-	else {
+	} else {
 		_gmRunningGameMode = GM_NONE;
 	}
 }
@@ -998,6 +974,7 @@ void InitActionsForVarMenu() {
 }
 
 #undef CMENU
+
 // ------------------------ CServersMenu implementation
 extern void RefreshServerList(void)
 {
@@ -1013,8 +990,7 @@ void SortByColumn(int i)
 {
 	if (_pGUIM->gmServersMenu.gm_mgList.mg_iSort == i) {
 		_pGUIM->gmServersMenu.gm_mgList.mg_bSortDown = !_pGUIM->gmServersMenu.gm_mgList.mg_bSortDown;
-	}
-	else {
+	} else {
 		_pGUIM->gmServersMenu.gm_mgList.mg_bSortDown = FALSE;
 	}
 	_pGUIM->gmServersMenu.gm_mgList.mg_iSort = i;
@@ -1233,8 +1209,7 @@ extern void SelectPlayersFillMenu(void)
 
 	if (bHasPlayers && CMENU.gm_mgSplitScreenCfg.mg_iSelected >= 1) {
 		CMENU.gm_mgNotes.mg_strText = TRANS("Make sure you set different controls for each player!");
-	}
-	else {
+	} else {
 		CMENU.gm_mgNotes.mg_strText = "";
 	}
 }

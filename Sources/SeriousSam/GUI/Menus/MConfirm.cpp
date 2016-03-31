@@ -67,3 +67,13 @@ void CConfirmMenu::BeSmall(void)
 	gm_mgConfirmYes.mg_boxOnScreen = BoxPopupYesSmall();
 	gm_mgConfirmNo.mg_boxOnScreen = BoxPopupNoSmall();
 }
+
+// return TRUE if handled
+BOOL CConfirmMenu::OnKeyDown(int iVKey)
+{
+	if ((iVKey == VK_ESCAPE || iVKey == VK_RBUTTON) && gm_mgConfirmNo.mg_pActivatedFunction != NULL) {
+		gm_mgConfirmNo.OnActivate();
+		return TRUE;
+	}
+	return CGameMenu::OnKeyDown(iVKey);
+}
