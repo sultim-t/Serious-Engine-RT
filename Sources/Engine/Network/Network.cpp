@@ -886,9 +886,9 @@ void CNetworkLibrary::Init(const CTString &strGameID)
 
   _pShell->DeclareSymbol("persistent user INDEX wed_bUseGenericTextureReplacement;", &wed_bUseGenericTextureReplacement);
 
-  _pShell->DeclareSymbol("user CTString ga_strServer;", &ga_strServer);
-  _pShell->DeclareSymbol("user CTString ga_strMSLegacy;", &ga_strMSLegacy);
-  _pShell->DeclareSymbol("user INDEX ga_bMSLegacy;", &ga_bMSLegacy);
+  _pShell->DeclareSymbol("persistent user CTString ga_strServer;", &ga_strServer);
+  _pShell->DeclareSymbol("persistent user CTString ga_strMSLegacy;", &ga_strMSLegacy);
+  _pShell->DeclareSymbol("persistent user INDEX ga_bMSLegacy;", &ga_bMSLegacy);
 
   _pShell->DeclareSymbol("INDEX pwoCurrentWorld;", &_pwoCurrentWorld);
 }

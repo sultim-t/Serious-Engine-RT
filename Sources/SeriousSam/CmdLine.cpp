@@ -113,12 +113,6 @@ void ParseCommandLine(CTString strCmd)
       cmd_bQuickJoin = TRUE;
     } else if (strWord=="+game") {
       CTString strMod = GetNextParam();
-#if _SE_DEMO
-      if (strMod!="SeriousSam" && strMod!="Warped") {
-        FatalError(TRANS("This MOD is not allowed in demo version!"));
-        return;
-      }
-#endif
       if (strMod!="SeriousSam") { // (we ignore default mod - always use base dir in that case)
         _fnmMod = "Mods\\"+strMod+"\\";
       }

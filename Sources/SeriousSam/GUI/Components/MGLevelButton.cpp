@@ -13,4 +13,26 @@ You should have received a copy of the GNU General Public License along
 with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
-#define CD_CHECK 1
+#include "StdH.h"
+#include <Engine/Base/KeyNames.h>
+#include <Engine/CurrentVersion.h>
+#include <GameMP/LCDDrawing.h>
+#include "MGLevelButton.h"
+
+extern CSoundData *_psdPress;
+
+
+void CMGLevelButton::OnActivate(void)
+{
+  PlayMenuSound(_psdPress);
+  IFeel_PlayEffect("Menu_press");
+  _pGame->gam_strCustomLevel = mg_fnmLevel;
+  extern void(*_pAfterLevelChosen)(void);
+  _pAfterLevelChosen();
+}
+
+void CMGLevelButton::OnSetFocus(void)
+{
+  SetThumbnail(mg_fnmLevel);
+  CMGButton::OnSetFocus();
+}

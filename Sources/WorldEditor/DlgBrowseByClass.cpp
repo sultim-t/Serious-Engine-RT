@@ -236,7 +236,7 @@ CTString GetItemValue(CEntity *pen, INDEX iColumn, INDEX &iFormat)
   case COLUMN_INDEX:
   {
     INDEX iIndex=dcEntities.GetIndex(pen);
-    strResult.PrintF("%d", FLOAT(iIndex));
+    strResult.PrintF("%d", iIndex);
     iFormat=PDF_INDEX;
     break;
   }
