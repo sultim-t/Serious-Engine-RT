@@ -243,7 +243,8 @@ void DeclareFeatureProperties(void)
  * Global structure of the source file.
  */
 program 
-  : c_int {
+  : /* empty file */ {}
+  | c_int {
     int iID = atoi($1.strString);
     if(iID>32767) {
       yyerror("Maximum allowed id for entity source file is 32767");
