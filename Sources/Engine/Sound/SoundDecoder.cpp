@@ -88,6 +88,7 @@ public:
 #include <vorbis\vorbisfile.h>  // we define needed stuff ourselves, and ignore the rest
 
 // vorbis vars
+extern BOOL _bOVEnabled = FALSE;
 static HINSTANCE _hOV = NULL;
 
 class CDecodeData_OGG {
@@ -98,6 +99,29 @@ public:
   OggVorbis_File *ogg_vfVorbisFile;  // the decoder file
   WAVEFORMATEX ogg_wfeFormat; // format of sound
 };
+
+// define vorbis function pointers
+#define DLLFUNCTION(dll, output, name, inputs, params, required) \
+  output (__cdecl *p##name) inputs = NULL;
+#include "ov_functions.h"
+#undef DLLFUNCTION
+
+static void OV_SetFunctionPointers_t(void) {
+  const char *strName;
+  // get vo function pointers
+  #define DLLFUNCTION(dll, output, name, inputs, params, required) \
+    strName = #name ;  \
+    p##name = (output (__cdecl *) inputs) GetProcAddress( _hOV, strName); \
+    if(p##name == NULL) FailFunction_t(strName);
+  #include "ov_functions.h"
+  #undef DLLFUNCTION
+}
+static void OV_ClearFunctionPointers(void) {
+  // clear vo function pointers
+  #define DLLFUNCTION(dll, output, name, inputs, params, required) p##name = NULL;
+  #include "ov_functions.h"
+  #undef DLLFUNCTION
+}
 
 // ogg file reading callbacks
 //
@@ -167,6 +191,30 @@ static ov_callbacks ovcCallbacks = {
 void CSoundDecoder::InitPlugins(void)
 {
   try {
+    // load vorbis
+    if (_hOV==NULL) {
+#ifndef NDEBUG
+  #define VORBISLIB "libvorbisfile.dll"
+#else
+  #define VORBISLIB "libvorbisfile.dll"
+#endif
+      _hOV = ::LoadLibraryA(VORBISLIB);
+    }
+    if( _hOV == NULL) {
+      ThrowF_t(TRANS("Cannot load libvorbisfile.dll."));
+    }
+    // prepare function pointers
+    OV_SetFunctionPointers_t();
+
+    // if all successful, enable mpx playing
+    _bOVEnabled = TRUE;
+    CPrintF(TRANS("  libvorbisfile.dll loaded, ogg playing enabled\n"));
+
+  } catch (char *strError) {
+    CPrintF(TRANS("OGG playing disabled: %s\n"), strError);
+  }
+
+  try {
     // load amp11lib
     if (_hAmp11lib==NULL) {
       _hAmp11lib = ::LoadLibraryA( "amp11lib.dll");
@@ -199,6 +247,14 @@ void CSoundDecoder::EndPlugins(void)
     _hAmp11lib = NULL;
     _bAMP11Enabled = FALSE;
   }
+
+  // cleanup vorbis when not needed anymore
+  if (_bOVEnabled) {
+    OV_ClearFunctionPointers();
+    FreeLibrary(_hOV);
+    _hOV = NULL;
+    _bOVEnabled = FALSE;
+  }
 }
 
 // decoder that streams from file
@@ -212,11 +268,10 @@ CSoundDecoder::CSoundDecoder(const CTFileName &fnm)
 
   // if ogg
   if (fnmExpanded.FileExt()==".ogg") {
-    /*
     if (!_bOVEnabled) {
       return;
     }
-    */
+
     sdc_pogg = new CDecodeData_OGG;
     sdc_pogg->ogg_fFile = NULL;
     sdc_pogg->ogg_vfVorbisFile = NULL;
@@ -273,7 +328,7 @@ CSoundDecoder::CSoundDecoder(const CTFileName &fnm)
 
       // initialize decoder
       sdc_pogg->ogg_vfVorbisFile = new OggVorbis_File;
-      int iRes = ov_open_callbacks(sdc_pogg, sdc_pogg->ogg_vfVorbisFile, NULL, 0, ovcCallbacks);
+      int iRes = pov_open_callbacks(sdc_pogg, sdc_pogg->ogg_vfVorbisFile, NULL, 0, ovcCallbacks);
 
       // if error
       if (iRes!=0) {
@@ -281,7 +336,7 @@ CSoundDecoder::CSoundDecoder(const CTFileName &fnm)
       }
 
       // get info on the file
-      vorbis_info *pvi = ov_info(sdc_pogg->ogg_vfVorbisFile, -1);
+      vorbis_info *pvi = pov_info(sdc_pogg->ogg_vfVorbisFile, -1);
 
       // remember it's format
       WAVEFORMATEX form;
@@ -443,7 +498,7 @@ void CSoundDecoder::Clear(void)
   } else if (sdc_pogg!=NULL) {
 
     if (sdc_pogg->ogg_vfVorbisFile!=NULL) {
-      ov_clear(sdc_pogg->ogg_vfVorbisFile);
+      pov_clear(sdc_pogg->ogg_vfVorbisFile);
       delete sdc_pogg->ogg_vfVorbisFile;
       sdc_pogg->ogg_vfVorbisFile = NULL;
     }
@@ -463,9 +518,9 @@ void CSoundDecoder::Reset(void)
     palDecSeekAbs(sdc_pmpeg->mpeg_hDecoder, 0.0f);
   } else if (sdc_pogg!=NULL) {
     // so instead, we reinit
-    ov_clear(sdc_pogg->ogg_vfVorbisFile);
+    pov_clear(sdc_pogg->ogg_vfVorbisFile);
     fseek(sdc_pogg->ogg_fFile, sdc_pogg->ogg_slOffset, SEEK_SET);
-    ov_open_callbacks(sdc_pogg, sdc_pogg->ogg_vfVorbisFile, NULL, 0, ovcCallbacks);
+    pov_open_callbacks(sdc_pogg, sdc_pogg->ogg_vfVorbisFile, NULL, 0, ovcCallbacks);
   }
 }
 
@@ -503,7 +558,7 @@ INDEX CSoundDecoder::Decode(void *pvDestBuffer, INDEX ctBytesToDecode)
     char *pch = (char *)pvDestBuffer;
     INDEX ctDecoded = 0;
     while (ctDecoded<ctBytesToDecode) {
-      long iRes = ov_read(sdc_pogg->ogg_vfVorbisFile, pch, ctBytesToDecode-ctDecoded, 
+      long iRes = pov_read(sdc_pogg->ogg_vfVorbisFile, pch, ctBytesToDecode-ctDecoded, 
         0, 2, 1, &iCurrrentSection);
       if (iRes<=0) {
         return ctDecoded;

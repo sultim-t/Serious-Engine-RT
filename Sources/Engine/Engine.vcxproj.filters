@@ -1365,6 +1365,9 @@
     <ClInclude Include="GameAgent\MSLegacy.h">
       <Filter>Header Files\GameAgent Headers</Filter>
     </ClInclude>
+    <ClInclude Include="Sound\ov_functions.h">
+      <Filter>Header Files\Sound Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Base\CTString.inl">
