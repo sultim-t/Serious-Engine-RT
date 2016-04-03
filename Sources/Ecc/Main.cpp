@@ -228,110 +228,6 @@ void ReplaceFile(const char *strOld, const char *strNew)
   rename(strNew, strOld);
 }
 
-enum ESStatus
-{
-    /* Appears to be non-empty, ready to parse. */
-    Good,
-    /* Appears to be empty, ignore it. */
-    Empty,
-    /* Error occured during status check. */
-    Error,
-};
-
-/* Determine whether or not our target ES file is indeed valid input. */
-ESStatus GetESStatus()
-{
-    ESStatus result = ESStatus::Empty;
-
-    // Read a temporary buffer of the entire file contents
-    fseek(_fInput, 0, SEEK_END);
-    size_t length = ftell(_fInput);
-
-    // Hard-stop on Empty out of paranoia
-    if (length == 0)
-        return result;
-
-    char* temporaryBuffer = (char*)malloc(length);
-
-    if (!temporaryBuffer)
-        return ESStatus::Error;
-
-    fseek(_fInput, 0, SEEK_SET);
-    fread(temporaryBuffer, length, 1, _fInput);
-    fseek(_fInput, 0, SEEK_SET);
-
-    // Loop through each line
-    char* currentSequence = strtok(temporaryBuffer, "\n");
-
-    // No newlines, but it might still be valid.
-    if (!currentSequence)
-        currentSequence = temporaryBuffer;
-
-    bool inBlockComment = false;
-    do
-    {
-        size_t sequenceLength = strlen(currentSequence);
-
-        for (size_t iteration = 0; iteration < sequenceLength; iteration++)
-        {
-            // If we're still in a block comment, find the closing */
-            if (inBlockComment)
-            {
-                char* blockClosing = strstr(currentSequence, "*/");
-                if (!blockClosing)
-                    break;
-                else
-                {
-                    inBlockComment = false;
-                    iteration = ((size_t)blockClosing - (size_t)currentSequence) + 2;
-                }
-            }
-
-            // If we find a // sequence, simply skip this line
-            if (currentSequence[iteration] == '/' && currentSequence[iteration + 1] == '/')
-                break;
-
-            // If we find a /* on this line but not a closing */, skip this line
-            if (currentSequence[iteration] == '/' && currentSequence[iteration + 1] == '*')
-            {
-                // Is there a closing */ on this line?
-                char* blockClosing = strstr(currentSequence, "*/");
-
-                if (!blockClosing)
-                {
-                    inBlockComment = true;
-                    break;
-                }
-                else
-                {
-                    iteration = ((size_t)blockClosing - (size_t)currentSequence) + 2;
-                    inBlockComment = false;
-                    continue;
-                }
-            }
-
-            if (iteration >= sequenceLength)
-                break;
-
-            // If we got to this point, we should be able to read only a number on this line
-            for (size_t checkIteration = 0; checkIteration < sequenceLength; checkIteration++)
-                if (currentSequence[checkIteration] != '\n' && currentSequence[checkIteration] != 0x20 && !isdigit(currentSequence[checkIteration]))
-                {
-                    result = ESStatus::Error;
-                    break;
-                }
-                else if (currentSequence[checkIteration] != '\n' && currentSequence[checkIteration] != 0x20)
-                    result = ESStatus::Good;
-
-            free(temporaryBuffer);
-            return result;
-        }
-    }
-    while(currentSequence = strtok(NULL, "\n"));
-
-    return result;
-}
-
 /* Replace a file with a new file if they are different.
  * Used to keep .h files from constantly changing when you change the implementation.
  */
@@ -388,24 +284,6 @@ int main(int argc, char *argv[])
   }
   // open the input file
   _fInput = FOpen(argv[1], "r");
-
-  // Make sure we're loading a valid ES file
-  ESStatus status = GetESStatus();
-
-  switch (status)
-  {
-      case ESStatus::Empty:
-      {
-          fclose(_fInput);
-          return EXIT_SUCCESS;
-      }
-      case ESStatus::Error:
-      {
-          fclose(_fInput);
-          printf("Ecc encountered an error during the es verification.\n");
-          return EXIT_FAILURE;
-      }
-  }
 
   //printf("%s\n", argv[1]);
   // open all the output files
