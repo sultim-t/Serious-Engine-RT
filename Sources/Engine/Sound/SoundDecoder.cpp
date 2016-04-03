@@ -85,53 +85,19 @@ public:
 
 
 // ------------------------------------ Ogg Vorbis
-
-//#include <vorbis\vorbisfile.h>  // we define needed stuff ourselves, and ignore the rest
+#include <vorbis\vorbisfile.h>  // we define needed stuff ourselves, and ignore the rest
 
 // vorbis vars
 extern BOOL _bOVEnabled = FALSE;
 static HINSTANCE _hOV = NULL;
 
-#define OV_FALSE      -1  
-#define OV_EOF        -2
-#define OV_HOLE       -3
-
-#define OV_EREAD      -128
-#define OV_EFAULT     -129
-#define OV_EIMPL      -130
-#define OV_EINVAL     -131
-#define OV_ENOTVORBIS -132
-#define OV_EBADHEADER -133
-#define OV_EVERSION   -134
-#define OV_ENOTAUDIO  -135
-#define OV_EBADPACKET -136
-#define OV_EBADLINK   -137
-#define OV_ENOSEEK    -138
-
-// vorbis types
-typedef __int64 ogg_int64_t;
-typedef struct {
-  size_t (*read_func)  (void *ptr, size_t size, size_t nmemb, void *datasource);
-  int    (*seek_func)  (void *datasource, ogg_int64_t offset, int whence);
-  int    (*close_func) (void *datasource);
-  long   (*tell_func)  (void *datasource);
-} ov_callbacks;
-
-struct OggVorbis_File {
-  // don't wanna know whats inside 
-  UBYTE dummy[2048];   // last time checked, the actual size was 720 (ogg vorbis version 1.0rc1)
-};
-struct vorbis_info {
-  int version;
-  int channels;
-  long rate;
-  
-  long bitrate_upper;
-  long bitrate_nominal;
-  long bitrate_lower;
-
-  // don't want to know the rest...
-  //..................
+class CDecodeData_OGG {
+public:
+  FILE *ogg_fFile;      // the stdio file that ogg is in
+  SLONG ogg_slOffset;   // offset where the ogg starts in the file (!=0 for oggs in zip)
+  SLONG ogg_slSize;     // size of ogg in the file (!=filesize for oggs in zip)
+  OggVorbis_File *ogg_vfVorbisFile;  // the decoder file
+  WAVEFORMATEX ogg_wfeFormat; // format of sound
 };
 
 // define vorbis function pointers
@@ -156,15 +122,6 @@ static void OV_ClearFunctionPointers(void) {
   #include "ov_functions.h"
   #undef DLLFUNCTION
 }
-
-class CDecodeData_OGG {
-public:
-  FILE *ogg_fFile;      // the stdio file that ogg is in
-  SLONG ogg_slOffset;   // offset where the ogg starts in the file (!=0 for oggs in zip)
-  SLONG ogg_slSize;     // size of ogg in the file (!=filesize for oggs in zip)
-  OggVorbis_File *ogg_vfVorbisFile;  // the decoder file
-  WAVEFORMATEX ogg_wfeFormat; // format of sound
-};
 
 // ogg file reading callbacks
 //
@@ -237,21 +194,21 @@ void CSoundDecoder::InitPlugins(void)
     // load vorbis
     if (_hOV==NULL) {
 #ifndef NDEBUG
-  #define VORBISLIB "vorbisfile_d.dll"
+  #define VORBISLIB "libvorbisfile.dll"
 #else
-  #define VORBISLIB "vorbisfile.dll"
+  #define VORBISLIB "libvorbisfile.dll"
 #endif
       _hOV = ::LoadLibraryA(VORBISLIB);
     }
     if( _hOV == NULL) {
-      ThrowF_t(TRANS("Cannot load vorbisfile.dll."));
+      ThrowF_t(TRANS("Cannot load libvorbisfile.dll."));
     }
     // prepare function pointers
     OV_SetFunctionPointers_t();
 
     // if all successful, enable mpx playing
     _bOVEnabled = TRUE;
-    CPrintF(TRANS("  vorbisfile.dll loaded, ogg playing enabled\n"));
+    CPrintF(TRANS("  libvorbisfile.dll loaded, ogg playing enabled\n"));
 
   } catch (char *strError) {
     CPrintF(TRANS("OGG playing disabled: %s\n"), strError);
@@ -314,6 +271,7 @@ CSoundDecoder::CSoundDecoder(const CTFileName &fnm)
     if (!_bOVEnabled) {
       return;
     }
+
     sdc_pogg = new CDecodeData_OGG;
     sdc_pogg->ogg_fFile = NULL;
     sdc_pogg->ogg_vfVorbisFile = NULL;
@@ -559,9 +517,6 @@ void CSoundDecoder::Reset(void)
   if (sdc_pmpeg!=NULL) {
     palDecSeekAbs(sdc_pmpeg->mpeg_hDecoder, 0.0f);
   } else if (sdc_pogg!=NULL) {
-/*  !!!! seeking is evil with vorbisfile 1.0RC2
-    pov_time_seek(sdc_pogg->ogg_vfVorbisFile, 0.0f);
-    */
     // so instead, we reinit
     pov_clear(sdc_pogg->ogg_vfVorbisFile);
     fseek(sdc_pogg->ogg_fFile, sdc_pogg->ogg_slOffset, SEEK_SET);

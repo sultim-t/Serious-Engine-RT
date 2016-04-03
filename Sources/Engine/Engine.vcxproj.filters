@@ -1356,9 +1356,6 @@
     <ClInclude Include="GameShell.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sound\ov_functions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="StdH.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1367,6 +1364,9 @@
     </ClInclude>
     <ClInclude Include="GameAgent\MSLegacy.h">
       <Filter>Header Files\GameAgent Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Sound\ov_functions.h">
+      <Filter>Header Files\Sound Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
