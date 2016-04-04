@@ -21,6 +21,7 @@ This is the source code for Serious Engine v.1.10, including the following proje
 * `MakeFONT` Used for generating *.fnt files
 * `Shaders` Compiled shaders
 * `GameAgent` The serverlist masterserver written in Python
+* `libogg`, `libvorbis` Third party libraries used for playing OGG-encoded ingame music (see http://www.vorbis.com/ for more information)
 
 These have been modified to run correctly under the recent version of Windows. (Tested: Win7 x64, Win8 x64, Win8.1 x64)
 
@@ -40,7 +41,7 @@ DirectX support is disabled by default. If you need DirectX support you'll have 
 * `/Tools.Win32/Libraries/DX8SDK/Include/..`
 * `/Tools.Win32/Libraries/DX8SDK/Lib/..`
 
-MP3 and OGG playback is disabled by default. If you need these features, you will have to copy amp11lib.dll (for MP3) and/or vorbis.dll with vorbisfile.dll (for OGG) to the '\Bin\' directory (and '\Bin\Debug\' for MP3/OGG support in debug mode)
+MP3 playback is disabled by default. If you need this features, you will have to copy amp11lib.dll to the '\Bin\' directory (and '\Bin\Debug\' for MP3 support in debug mode). The amp11lib.dll is distributed with older versions of Serious Sam: The First Encounter.
 
 3D Exploration support is disabled in the open source version of Serious Engine 1 due to copyright issues. In case if you need to create new models you will have to either use editing tools from any of the original games, or write your own code for 3D object import/export.
 
@@ -74,3 +75,4 @@ Some of the code included with the engine sources is not licensed under the GNU 
 
 * zlib (located in `Sources/Engine/zlib`) by Jean-loup Gailly and Mark Adler
 * LightWave SDK (located in `Sources/LWSkaExporter/SDK`) by NewTek Inc.
+* libogg/libvorbis (located in `Sources/libogg` and `Sources/libvorbis`) by Xiph.Org Foundation
