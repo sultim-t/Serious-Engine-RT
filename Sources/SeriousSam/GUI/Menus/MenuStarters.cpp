@@ -104,7 +104,7 @@ extern CTString sam_strFirstLevel;
 
 void StartSinglePlayerNewMenu(void)
 {
-  CVarMenu &gmCurrent = _pGUIM->gmVarMenu;
+  CSinglePlayerNewMenu &gmCurrent = _pGUIM->gmSinglePlayerNewMenu;
 
   _pGame->gam_strCustomLevel = sam_strFirstLevel;
 
