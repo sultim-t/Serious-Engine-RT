@@ -195,6 +195,7 @@ extern INDEX mdl_bCreateStrips     = TRUE;
 extern INDEX mdl_bRenderDetail     = TRUE;
 extern INDEX mdl_bRenderSpecular   = TRUE;
 extern INDEX mdl_bRenderReflection = TRUE;
+extern INDEX mdl_bRenderBump       = TRUE;
 extern INDEX mdl_bAllowOverbright  = TRUE;
 extern INDEX mdl_bFineQuality      = TRUE;
 extern INDEX mdl_iShadowQuality    = 1;
@@ -1117,6 +1118,7 @@ void CGfxLibrary::Init(void)
   _pShell->DeclareSymbol("persistent user INDEX mdl_bRenderDetail;",     &mdl_bRenderDetail);
   _pShell->DeclareSymbol("persistent user INDEX mdl_bRenderSpecular;",   &mdl_bRenderSpecular);
   _pShell->DeclareSymbol("persistent user INDEX mdl_bRenderReflection;", &mdl_bRenderReflection);
+  _pShell->DeclareSymbol("persistent user INDEX mdl_bRenderBump;",       &mdl_bRenderBump);
   _pShell->DeclareSymbol("persistent user INDEX mdl_bAllowOverbright;",  &mdl_bAllowOverbright);
   _pShell->DeclareSymbol("persistent user INDEX mdl_bFineQuality post:MdlPostFunc;", &mdl_bFineQuality);
   _pShell->DeclareSymbol("persistent user INDEX mdl_iShadowQuality;",  &mdl_iShadowQuality);
