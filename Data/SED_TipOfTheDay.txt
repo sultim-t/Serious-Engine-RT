@@ -1,4 +1,4 @@
-Serious Editor is a very powerful tool, but you will need to get acustomized with its interface to be able to use it well.
+Serious Editor is a very powerful tool, but you will need to get acquainted with its interface to be able to use it well.
 It is recommended that you read at least the overview section in the help file and go through the tutorials before you start working.
 $
 By pressing 'Q', you can toggle the tool window on or off manually.
@@ -28,7 +28,7 @@ $
 Use '[' and ']' keys or mouse wheel to circle through selected polygons or entities in current volume.
 You can browse through custom selection of entities by pressing 'Feed to Volume' in the Entity Browser dialog (invoked by 'N' or 'Ctrl+Shift+A' ).
 $
-By pressing the tilde key ('~'), you deselect current selection (polygons, sectors or entities, depending on the current mode). 
+By pressing the tilde key ('~'), you deselect current selection (polygons, sectors or entities, depending on the current mode).
 If you press that key twice quickly (double-click it), all selections are deselected (polygons, sectors and entities).
 $
 Pressing 'Alt+~' maximizes the view under mouse pointer to entire window, or restores the window configuration back.
@@ -44,13 +44,13 @@ If you press 'Ctrl+C' in entity or sector mode, currently selected entities are 
 $
 To copy sectors without entities, press 'Ctrl+Shift+C'.
 $
-You can paste entities from clipboard to second layer by 'Ctrl+Shift+V'. This way you can safely adjust their position as a group, without them beeing snapped to the grid.
+You can paste entities from clipboard to second layer by 'Ctrl+Shift+V'. This way you can safely adjust their position as a group, without them being snapped to the grid.
 $
-Use ','/'K' to copy/paste texture in current texture layer. 
+Use ','/'K' to copy/paste texture in current texture layer.
 $
 'Ctrl+Shift+V' in polygon mode will paste all polygon properties except textures.
 $
-Use 'M'/'J' to copy/paste mapping in current texture layer. 
+Use 'M'/'J' to copy/paste mapping in current texture layer.
 'U' will paste mapping projected from the original position that it was copied from.
 $
 'Ctrl+Shift+V' in polygon mode will paste all polygon properties except textures.
