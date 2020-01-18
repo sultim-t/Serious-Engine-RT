@@ -481,9 +481,19 @@ static void GAPInfo(void)
   // check API
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
+#ifdef SE1_VULKAN
   ASSERT( eAPI==GAT_OGL || eAPI==GAT_D3D || eAPI==GAT_NONE);
+#else // SE1_VULKAN
+  ASSERT( eAPI==GAT_OGL || eAPI==GAT_VK || eAPI==GAT_NONE);
+#endif // SE1_VULKAN
+
 #else // SE1_D3D
+#ifdef SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+#else // SE1_VULKAN
   ASSERT( eAPI==GAT_OGL || eAPI==GAT_NONE);
+#endif // SE1_VULKAN
+
 #endif // SE1_D3D
   CPrintF( "\n");
 
@@ -501,7 +511,13 @@ static void GAPInfo(void)
   // report API
   CPrintF( "- Graphics API: ");
   if( eAPI==GAT_OGL) CPrintF( "OpenGL\n");
-  else CPrintF( "Direct3D\n");
+#ifdef SE1_D3D
+  else if (eAPI==GAT_D3D) CPrintF("Direct3D\n");
+#endif // SE1_D3D
+#ifdef SE1_VULKAN
+  else if (eAPI == GAT_VK) CPrintF("Vulkan\n");
+#endif // SE1_VULKAN
+  
   // and number of adapters
   CPrintF( "- Adapters found: %d\n", _pGfx->gl_gaAPI[eAPI].ga_ctAdapters);
   CPrintF( "\n");
@@ -650,6 +666,13 @@ static void GAPInfo(void)
     if( _pGfx->go_strWinExtensions != "") CPrintF("%s", ReformatExtensionsString(_pGfx->go_strWinExtensions));
     CPrintF("\n- Supported extensions: %s\n", ReformatExtensionsString(_pGfx->go_strSupportedExtensions));
   }
+
+#ifdef SE1_VULKAN
+  if (eAPI == GAT_VK)
+  {
+    // TODO: Vulkan
+  }
+#endif // SE1_VULKAN
 
   // Direct3D only stuff
 #ifdef SE1_D3D
@@ -1365,6 +1388,31 @@ BOOL CGfxLibrary::StartDisplayMode( enum GfxAPIType eAPI, INDEX iAdapter, PIX pi
     gl_eCurrentAPI = GAT_D3D;
   }
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  else if (eAPI == GAT_VK)
+  {
+    // startup Vulkan
+    VkApplicationInfo appInfo = {};
+    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    appInfo.pApplicationName = "Serious App";
+    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.pEngineName = "Serious Engine 1";
+    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.apiVersion = VK_API_VERSION_1_0;
+
+    VkInstanceCreateInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    info.pApplicationInfo = &appInfo;
+    info.enabledLayerCount = 0;
+    info.enabledExtensionCount = 0;
+
+    bSuccess = vkCreateInstance(&info, nullptr, &vk_instance) == VK_SUCCESS;
+    
+    if (!bSuccess) return FALSE;
+
+    gl_eCurrentAPI = GAT_VK;
+  }
+#endif // SE1_VULKAN
 
   // no driver
   else

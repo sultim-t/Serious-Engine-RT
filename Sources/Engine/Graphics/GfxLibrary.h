@@ -30,6 +30,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Graphics/OpenGL.h>
 
+#ifdef SE1_VULKAN
+#include <vulkan/vulkan.h>
+#endif // SE1_VULKAN
+
 #include <Engine/Graphics/Color.h>
 #include <Engine/Graphics/Vertex.h>
 #include <Engine/Templates/StaticStackArray.cpp>
@@ -69,6 +73,10 @@ enum GfxAPIType
 #ifdef SE1_D3D
   GAT_D3D  =  1,     // Direct3D
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  GAT_VK,            // Vulkan
+#endif // SE1_VULKAN
+
   GAT_CURRENT = 9,   // current API
 };
 
@@ -119,7 +127,7 @@ enum VtxType
 class ENGINE_API CGfxLibrary
 {
 public:
-  CGfxAPI gl_gaAPI[2];
+  CGfxAPI gl_gaAPI[3];
   CViewPort *gl_pvpActive;   // active viewport
   HINSTANCE  gl_hiDriver;    // DLL handle
 
@@ -129,6 +137,10 @@ public:
   INDEX gl_iCurrentDepth; 
   INDEX gl_ctDriverChanges;        // count of driver changes
   ULONG gl_ulFlags;
+
+#ifdef SE1_VULKAN
+  VkInstance vk_instance;
+#endif
 
 #ifdef SE1_D3D
   // DirectX info
@@ -267,6 +279,9 @@ public:
 #ifdef SE1_D3D
     if( eAPI==GAT_D3D) return (gl_gaAPI[1].ga_ctAdapters>0);
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+    if (eAPI == GAT_VK) return (gl_gaAPI[2].ga_ctAdapters > 0);
+#endif // SE1_VULKAN
     return FALSE;
   };
 

@@ -147,6 +147,23 @@ void CGfxLibrary::InitAPIs(void)
     adm[3].dm_pixSizeI = 1024;  adm[3].dm_pixSizeJ = 768;  adm[3].dm_ddDepth = DD_16BIT;
   }
 
+#ifdef SE1_VULKAN
+  // fill Vulkan info
+  gl_gaAPI[GAT_VK].ga_ctAdapters = 1;
+  gl_gaAPI[GAT_VK].ga_iCurrentAdapter = 0;
+  pda = &gl_gaAPI[GAT_VK].ga_adaAdapter[0];
+  pda->da_ulFlags = NONE;
+  pda->da_strVendor = TRANS("unknown");
+  pda->da_strRenderer = TRANS("Default ICD");
+  pda->da_strVersion = "1.1";
+
+  pda->da_ctDisplayModes = 0;
+  // pda->da_iCurrentDisplayMode = -1;
+
+  // TODO;
+
+#endif // SE1_VULKAN
+
   // try to init Direct3D 8
 #ifdef SE1_D3D
   BOOL bRes = InitDriver_D3D();
