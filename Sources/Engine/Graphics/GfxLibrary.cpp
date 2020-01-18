@@ -725,14 +725,12 @@ static void GAPInfo(void)
   }
 #endif // SE1_D3D
   
-  // Vulkan only stuff
+  // Print info about Vulkan
 #ifdef SE1_VULKAN
-
   if (eAPI == GAT_VK)
   {
-
+    
   }
-
 #endif // SE1_VULKAN
 }
 
@@ -1413,23 +1411,7 @@ BOOL CGfxLibrary::StartDisplayMode( enum GfxAPIType eAPI, INDEX iAdapter, PIX pi
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-    // startup Vulkan
-    VkApplicationInfo appInfo = {};
-    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "Serious App";
-    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.pEngineName = "Serious Engine 1";
-    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = VK_API_VERSION_1_0;
-
-    VkInstanceCreateInfo info = {};
-    info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    info.pApplicationInfo = &appInfo;
-    info.enabledLayerCount = 0;
-    info.enabledExtensionCount = 0;
-
-    bSuccess = vkCreateInstance(&info, nullptr, &vk_instance) == VK_SUCCESS;
-    
+    bSuccess = InitDriver_Vulkan();
     if (!bSuccess) return FALSE;
 
     gl_eCurrentAPI = GAT_VK;
@@ -1520,7 +1502,7 @@ BOOL CGfxLibrary::SetCurrentViewport(CViewPort *pvp)
 #endif // SE1_D3D
 #ifdef SE1_VULKAN
   // TODO: Vulkan
-  //if (gl_eCurrentAPI == GAT_VK) return SetCurrentViewport_Vk();
+  if (gl_eCurrentAPI == GAT_VK) return SetCurrentViewport_Vulkan(pvp);
 #endif // SE1_VULKAN
   if( gl_eCurrentAPI==GAT_NONE) return TRUE;
   ASSERTALWAYS( "SetCurrenViewport: Wrong API!");
@@ -1920,7 +1902,7 @@ void CGfxLibrary::SwapBuffers(CViewPort *pvp)
 #ifdef SE1_VULKAN
   else if (gl_eCurrentAPI == GAT_VK)
   {
-    // TODO: Vulkan
+    // TODO: Vulkan - swap buffers
   }
 #endif // SE1_VK
 

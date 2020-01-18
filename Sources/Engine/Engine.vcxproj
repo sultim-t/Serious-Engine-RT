@@ -316,7 +316,11 @@ copy Release\$(TargetName).lib $(SolutionDir)..\Bin\ &gt;nul</Command>
     <ClCompile Include="Base\Unzip.cpp" />
     <ClCompile Include="Base\Updateable.cpp" />
     <ClCompile Include="GameAgent\GameAgent.cpp" />
-    <ClCompile Include="Gfx_Vulkan.cpp" />
+    <ClCompile Include="Graphics\Gfx_Vulkan.cpp" />
+    <ClCompile Include="Graphics\Gfx_wrapper_Vulkan.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Math\Float.cpp" />
     <ClCompile Include="Math\Functions.cpp" />
     <ClCompile Include="Math\Geometry.cpp">

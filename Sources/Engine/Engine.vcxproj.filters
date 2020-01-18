@@ -751,8 +751,11 @@
     <ClCompile Include="GameAgent\GameAgent.cpp">
       <Filter>Source Files\GameAgent</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx_Vulkan.cpp">
+    <ClCompile Include="Graphics\Gfx_Vulkan.cpp">
       <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Gfx_wrapper_Vulkan.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

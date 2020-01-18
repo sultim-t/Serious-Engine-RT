@@ -23,6 +23,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #ifdef SE1_D3D
 #include <d3d8.h>
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+#include <vulkan/vulkan.h>
+#endif // SE1_VULKAN
+
 
 /*
  *  ViewPort
@@ -50,6 +54,10 @@ public:
 	LPDIRECT3DSWAPCHAIN8 vp_pSwapChain;  // swap chain for D3D
 	LPDIRECT3DSURFACE8   vp_pSurfDepth;  // z-buffer for D3D
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  VkSwapchainKHR vp_VkSwapchain;
+#endif // SE1_VULKAN
+
   INDEX vp_ctDisplayChanges;    // number of display driver
 
   // open/close canvas window

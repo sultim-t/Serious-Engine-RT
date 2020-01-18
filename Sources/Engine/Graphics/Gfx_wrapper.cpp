@@ -167,6 +167,18 @@ extern void D3D_CheckError(HRESULT hr)
 }
 #endif // SE1_D3D
 
+#ifdef SE1_VULKAN
+extern void Vk_CheckError(VkResult r)
+{
+#ifndef NDEBUG
+  const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
+  if (eAPI == GAT_VK) ASSERT(r == VK_SUCCESS);
+  else ASSERT(eAPI == GAT_NONE);
+#endif
+}
+#endif // SE1_VULKAN
+
+
 
 // TEXTURE MANAGEMENT
 #ifdef SE1_D3D
@@ -701,6 +713,7 @@ extern ULONG gfxGetColorMask(void)
 
 #include "GFX_wrapper_OpenGL.cpp"
 #include "GFX_wrapper_Direct3D.cpp"
+#include "Gfx_wrapper_Vulkan.cpp"
 
 
 
@@ -832,6 +845,58 @@ extern void GFX_SetFunctionPointers( INDEX iAPI)
     gfxSetColorMask         = &d3d_SetColorMask;
   }
 #endif // SE1_D3D
+  // Vulkan?
+#ifdef SE1_VULKAN
+  else if (iAPI == (INDEX)GAT_VK)
+  {
+    gfxEnableDepthWrite = &svk_EnableDepthWrite;
+    gfxEnableDepthBias = &svk_EnableDepthBias;
+    gfxEnableDepthTest = &svk_EnableDepthTest;
+    gfxEnableAlphaTest = &svk_EnableAlphaTest;
+    gfxEnableBlend = &svk_EnableBlend;
+    gfxEnableDither = &svk_EnableDither;
+    gfxEnableTexture = &svk_EnableTexture;
+    gfxEnableClipping = &svk_EnableClipping;
+    gfxEnableClipPlane = &svk_EnableClipPlane;
+    gfxEnableTruform = &svk_EnableTruform;
+    gfxDisableDepthWrite = &svk_DisableDepthWrite;
+    gfxDisableDepthBias = &svk_DisableDepthBias;
+    gfxDisableDepthTest = &svk_DisableDepthTest;
+    gfxDisableAlphaTest = &svk_DisableAlphaTest;
+    gfxDisableBlend = &svk_DisableBlend;
+    gfxDisableDither = &svk_DisableDither;
+    gfxDisableTexture = &svk_DisableTexture;
+    gfxDisableClipping = &svk_DisableClipping;
+    gfxDisableClipPlane = &svk_DisableClipPlane;
+    gfxDisableTruform = &svk_DisableTruform;
+    gfxBlendFunc = &svk_BlendFunc;
+    gfxDepthFunc = &svk_DepthFunc;
+    gfxDepthRange = &svk_DepthRange;
+    gfxCullFace = &svk_CullFace;
+    gfxFrontFace = &svk_FrontFace;
+    gfxClipPlane = &svk_ClipPlane;
+    gfxSetOrtho = &svk_SetOrtho;
+    gfxSetFrustum = &svk_SetFrustum;
+    gfxSetTextureMatrix = &svk_SetTextureMatrix;
+    gfxSetViewMatrix = &svk_SetViewMatrix;
+    gfxPolygonMode = &svk_PolygonMode;
+    gfxSetTextureWrapping = &svk_SetTextureWrapping;
+    gfxSetTextureModulation = &svk_SetTextureModulation;
+    gfxGenerateTexture = &svk_GenerateTexture;
+    gfxDeleteTexture = &svk_DeleteTexture;
+    gfxSetVertexArray = &svk_SetVertexArray;
+    gfxSetNormalArray = &svk_SetNormalArray;
+    gfxSetTexCoordArray = &svk_SetTexCoordArray;
+    gfxSetColorArray = &svk_SetColorArray;
+    gfxDrawElements = &svk_DrawElements;
+    gfxSetConstantColor = &svk_SetConstantColor;
+    gfxEnableColorArray = &svk_EnableColorArray;
+    gfxDisableColorArray = &svk_DisableColorArray;
+    gfxFinish = &svk_Finish;
+    gfxLockArrays = &svk_LockArrays;
+    gfxSetColorMask = &svk_SetColorMask;
+  }
+#endif // SE1_VULKAN
   // NONE!
   else
   {

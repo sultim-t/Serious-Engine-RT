@@ -31,6 +31,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Graphics/OpenGL.h>
 
 #ifdef SE1_VULKAN
+#define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
 #endif // SE1_VULKAN
 
@@ -141,7 +142,14 @@ public:
   ULONG gl_ulFlags;
 
 #ifdef SE1_VULKAN
-  VkInstance vk_instance;
+  VkInstance gl_VkInstance;
+  VkDevice gl_VkDevice;
+  VkFormat gl_VkColorFormat;
+  VkFormat gl_VkDepthFormat;
+
+  VkDebugUtilsMessengerEXT gl_VkDebugMessenger;
+  VkSurfaceKHR gl_VkSurface;
+  
 #endif
 
 #ifdef SE1_D3D
@@ -225,6 +233,12 @@ private:
   BOOL SetCurrentViewport_D3D( CViewPort *pvp);
   void UploadPattern_D3D( ULONG ulPatternEven);
   void SwapBuffers_D3D( CViewPort *pvpToSwap);
+
+  // Vulkan specific
+  BOOL InitDriver_Vulkan(void);
+  void EndDriver_Vulkan(void);
+  BOOL InitDisplay_Vulkan(INDEX iAdapter, PIX pixSizeI, PIX pixSizeJ, enum DisplayDepth eColorDepth);
+  BOOL SetCurrentViewport_Vulkan(CViewPort* pvp);
 
 public:
 

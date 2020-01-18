@@ -19,13 +19,13 @@ Button
 Button
  Name: TTRS Strafe Right
  Key1: D
- Key2: E
+ Key2: None
  Pressed:  ctl_bMoveRight = 1;
  Released: ctl_bMoveRight = 0;
 Button
  Name: TTRS Up/Jump
  Key1: Space
- Key2: R
+ Key2: None
  Pressed:  ctl_bMoveUp = 1;
  Released: ctl_bMoveUp = 0;
 Button
@@ -91,7 +91,7 @@ Button
 Button
  Name: TTRS Reload
  Key1: Left Alt
- Key2: None
+ Key2: R
  Pressed:  ctl_bReload = 1;
  Released: ctl_bReload = 0;
 Button
@@ -102,8 +102,8 @@ Button
  Released: ctl_b3rdPersonView = 0;
 Button
  Name: TTRS Use/Invoke NETRICSA/Sniper Zoom
- Key1: Mouse Button 2
- Key2: Enter
+ Key1: E
+ Key2: None
  Pressed:  ctl_bUseOrComputer = 1;
  Released: ctl_bUseOrComputer = 0;
 Button

@@ -62,6 +62,14 @@ static void SetAsRenderTarget_D3D( CViewPort *pvp)
 }
 #endif // SE1_D3D
 
+#ifdef SE1_VULKAN
+static void CreateSwapchain_Vulkan(CViewPort* pvp, PIX pixSizeI, PIX pixSizeJ)
+{
+  // TODO: Vulkan swapchain
+}
+#endif // SE1_VULKAN
+
+
 // helper for OGL
 
 CTempDC::CTempDC(HWND hWnd)
@@ -91,6 +99,10 @@ CViewPort::CViewPort( PIX pixWidth, PIX pixHeight, HWND hWnd) :
   vp_pSwapChain = NULL;
   vp_pSurfDepth = NULL;
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  vp_VkSwapchain = VK_NULL_HANDLE;
+#endif // SE1_VULKAN
+
   vp_ctDisplayChanges = 0;
   OpenCanvas();
   vp_Raster.ra_pvpViewPort = this;
@@ -190,6 +202,11 @@ void CViewPort::OpenCanvas(void)
   if( _pGfx->gl_eCurrentAPI==GAT_D3D && !bFullScreen) CreateSwapChain_D3D( this, pixWinSizeI, pixWinSizeJ);
 #endif // SE1_D3D
 
+#ifdef SE1_VULKAN
+  if (_pGfx->gl_eCurrentAPI==GAT_VK && !bFullScreen) CreateSwapchain_Vulkan(this, pixWinSizeI, pixWinSizeJ);
+#endif // SE1_VULKAN
+
+
   // resize raster
   Resize();
   ShowWindow( vp_hWnd, SW_SHOW);
@@ -197,6 +214,11 @@ void CViewPort::OpenCanvas(void)
   // set as rendering target
   if( _pGfx->gl_eCurrentAPI==GAT_D3D && vp_pSwapChain!=NULL) SetAsRenderTarget_D3D(this);
 #endif // SE1_D3D
+
+#ifdef SE1_VULKAN
+  // TODO : Vulkan
+  // if (_pGfx->gl_eCurrentAPI == GAT_VK && vp_VkSwapchain != VK_NULL_HANDLE) SetAsRenderTarget_Vulkan(this, pixWinSizeI, pixWinSizeJ);
+#endif // SE1_VULKAN
 }
 
 

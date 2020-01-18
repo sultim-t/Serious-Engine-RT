@@ -147,22 +147,93 @@ void CGfxLibrary::InitAPIs(void)
     adm[3].dm_pixSizeI = 1024;  adm[3].dm_pixSizeJ = 768;  adm[3].dm_ddDepth = DD_16BIT;
   }
 
+
 #ifdef SE1_VULKAN
-  // fill Vulkan info
-  gl_gaAPI[GAT_VK].ga_ctAdapters = 1;
+  VkInstance tempVkInstance;  
+  VkInstanceCreateInfo instanceInfo = {};
+  instanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+  VkResult r = vkCreateInstance(&instanceInfo, nullptr, &tempVkInstance);
+  if (r != VK_SUCCESS)
+  {
+    ASSERT(FALSE);
+  }
+  
+  // get all physical devices
+  uint32_t ctMaxPhysDevices = 0;
+  vkEnumeratePhysicalDevices(tempVkInstance, &ctMaxPhysDevices, nullptr);
+
+  ASSERT(ctMaxPhysDevices < 8);
+  VkPhysicalDevice physDevices[8];
+  vkEnumeratePhysicalDevices(tempVkInstance, &ctMaxPhysDevices, physDevices);
+
+  // TODO: add only suitable devices, i.e. with:
+  // * required formats
+  // * queue family indices
+  // * present modes
+  // * required extensions (VK_KHR_SWAPCHAIN_EXTENSION_NAME)
+
+  for (INDEX iAdapter = 0; iAdapter < ctMaxPhysDevices; iAdapter++)
+  {
+    pda = &gl_gaAPI[GAT_VK_INDEX].ga_adaAdapter[iAdapter];
+    pda->da_ulFlags = NONE;
+    pda->da_ctDisplayModes = 0;
+    // pda->da_iCurrentDisplayMode = -1;
+
+    // Are they realy needed?
+    // * 32-bits rendering modes support
+    // * windowed rendering modes support
+
+    // enumerate modes thru resolution list
+    for (iResolution = 0; iResolution < MAX_RESOLUTIONS; iResolution++)
+    {
+      DEVMODE devmode;
+      memset(&devmode, 0, sizeof(devmode));
+      CResolution& re = _areResolutions[iResolution];
+
+      // ask windows if they could set the mode
+      devmode.dmSize = sizeof(devmode);
+      devmode.dmPelsWidth = re.re_pixSizeI;
+      devmode.dmPelsHeight = re.re_pixSizeJ;
+      devmode.dmDisplayFlags = CDS_FULLSCREEN;
+      devmode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS;
+      LONG lRes = ChangeDisplaySettings(&devmode, CDS_TEST | CDS_FULLSCREEN);
+      // skip if not successfull
+      if (lRes != DISP_CHANGE_SUCCESSFUL) continue;
+
+      // make a new display mode
+      CDisplayMode& dm = pda->da_admDisplayModes[pda->da_ctDisplayModes];
+      dm.dm_pixSizeI = re.re_pixSizeI;
+      dm.dm_pixSizeJ = re.re_pixSizeJ;
+      dm.dm_ddDepth = DD_DEFAULT;
+      pda->da_ctDisplayModes++;
+    }
+
+    VkPhysicalDeviceProperties properties;
+    vkGetPhysicalDeviceProperties(physDevices[iAdapter], &properties);
+
+    switch (properties.vendorID)
+    {
+    case 0x1002: pda->da_strVendor = "Advanced Micro Devices, Inc."; break;
+    case 0x10DE: pda->da_strVendor = "Imagination Technologies"; break;
+    case 0x13B5: pda->da_strVendor = "NVIDIA Corporation"; break;
+    case 0x5143: pda->da_strVendor = "Qualcomm Technologies, Inc."; break;
+    case 0x8086: pda->da_strVendor = "Intel Corporation"; break;
+    default: pda->da_strVendor = TRANS("unknown");; break;
+    }
+
+    pda->da_strRenderer = properties.deviceName;
+    pda->da_strVersion.PrintF("%d.%d",
+      VK_VERSION_MAJOR(properties.apiVersion),
+      VK_VERSION_MINOR(properties.apiVersion));
+  }
+
+  gl_gaAPI[GAT_VK].ga_ctAdapters = ctMaxPhysDevices;
   gl_gaAPI[GAT_VK].ga_iCurrentAdapter = 0;
-  pda = &gl_gaAPI[GAT_VK].ga_adaAdapter[0];
-  pda->da_ulFlags = NONE;
-  pda->da_strVendor = "";
-  pda->da_strRenderer = "";
-  pda->da_strVersion = "";
 
-  pda->da_ctDisplayModes = 0;
-  // pda->da_iCurrentDisplayMode = -1;
-
-  // TODO;
-
+  // destroy temporary instance
+  vkDestroyInstance(tempVkInstance, nullptr);
 #endif // SE1_VULKAN
+
 
   // try to init Direct3D 8
 #ifdef SE1_D3D

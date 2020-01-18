@@ -273,11 +273,16 @@ extern void gfxFlushQuads(void);
 #ifndef NDEBUG
   extern void OGL_CheckError(void);
   extern void D3D_CheckError(HRESULT hr);
+  extern void Vk_CheckError(VkResult r);
   #define OGL_CHECKERROR     OGL_CheckError();
   #define D3D_CHECKERROR(hr) D3D_CheckError(hr);
+  //#define VK_CHECKERROR(r)   Vk_CheckError(r);
+  #define VK_CHECKERROR   (void)(0);
 #else
   #define OGL_CHECKERROR     (void)(0);
   #define D3D_CHECKERROR(hr) (void)(0);
+  //#define VK_CHECKERROR(r)   (void)(0);
+  #define VK_CHECKERROR   (void)(0);
 #endif
 
 
