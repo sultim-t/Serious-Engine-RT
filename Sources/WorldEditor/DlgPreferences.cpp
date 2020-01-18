@@ -231,6 +231,13 @@ BOOL CDlgPreferences::OnInitDialog()
     m_ctrGfxApi.SetItemData(iAddedAs, GAT_D3D);
   }
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  if (_pGfx->HasAPI(GAT_VK))
+  {
+    INDEX iAddedAs = m_ctrGfxApi.AddString(L"Vulkan");
+    m_ctrGfxApi.SetItemData(iAddedAs, GAT_VK);
+  }
+#endif // SE1_VULKAN
 
   m_ctrlTerrainSelectionVisible.ResetContent();
   m_ctrlTerrainSelectionVisible.AddString(L"Texture");

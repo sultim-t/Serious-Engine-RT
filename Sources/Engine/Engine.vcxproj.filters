@@ -751,6 +751,9 @@
     <ClCompile Include="GameAgent\GameAgent.cpp">
       <Filter>Source Files\GameAgent</Filter>
     </ClCompile>
+    <ClCompile Include="Gfx_Vulkan.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Base\Anim.h">

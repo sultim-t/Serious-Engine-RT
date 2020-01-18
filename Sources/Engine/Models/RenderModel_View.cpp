@@ -1748,7 +1748,11 @@ void CModelObject::RenderModel_View( CRenderModel &rm)
 #ifdef SE1_D3D
   ASSERT( _eAPI==GAT_OGL || _eAPI==GAT_D3D || _eAPI==GAT_NONE);
 #else // SE1_D3D
-  ASSERT( _eAPI==GAT_OGL || _eAPI==GAT_NONE);
+#ifdef SE1_VULKAN
+  ASSERT(_eAPI == GAT_OGL || _eAPI == GAT_VK || _eAPI == GAT_NONE);
+#else SE1_VULKAN
+  ASSERT(_eAPI == GAT_OGL || _eAPI == GAT_NONE);
+#endif // SE1_VULKAN
 #endif // SE1_D3D
   if( _eAPI==GAT_NONE) return;  // must have API
 

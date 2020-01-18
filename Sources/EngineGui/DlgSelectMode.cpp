@@ -177,6 +177,10 @@ CDlgSelectMode::CDlgSelectMode( CDisplayMode &dm, enum GfxAPIType &gfxAPI,
     m_strCurrentDriver = "Direct3D";
     break;
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  case GAT_VK:
+    m_strCurrentDriver = "Vulkan";
+#endif // SE1_VULKAN
   default:
     m_strCurrentDriver = "none";
     break;
@@ -261,6 +265,11 @@ void CDlgSelectMode::DoDataExchange(CDataExchange* pDX)
     m_ctrlDriverCombo.SetItemData( i, (INDEX)GAT_D3D);
     if( *m_pGfxAPI==GAT_D3D) iSelect = i;
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+    i = m_ctrlDriverCombo.AddString( L"Vulkan");
+    m_ctrlDriverCombo.SetItemData(i, (INDEX)GAT_VK);
+    if (*m_pGfxAPI == GAT_VK) iSelect = i;
+#endif // SE1_VULKAN
     // set old driver to be default
     m_ctrlDriverCombo.SetCurSel( iSelect);
   

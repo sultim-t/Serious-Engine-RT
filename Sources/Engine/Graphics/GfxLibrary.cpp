@@ -481,19 +481,13 @@ static void GAPInfo(void)
   // check API
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
-#ifdef SE1_VULKAN
   ASSERT( eAPI==GAT_OGL || eAPI==GAT_D3D || eAPI==GAT_NONE);
-#else // SE1_VULKAN
-  ASSERT( eAPI==GAT_OGL || eAPI==GAT_VK || eAPI==GAT_NONE);
-#endif // SE1_VULKAN
-
 #else // SE1_D3D
 #ifdef SE1_VULKAN
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
-#else // SE1_VULKAN
-  ASSERT( eAPI==GAT_OGL || eAPI==GAT_NONE);
+#else
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_VULKAN
-
 #endif // SE1_D3D
   CPrintF( "\n");
 
@@ -502,6 +496,11 @@ static void GAPInfo(void)
 #ifdef SE1_D3D
     && _pGfx->gl_pd3dDevice==NULL
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+    // TODO: Vulkan
+    // && _pGfx.gl_pdVkDevice==NULL
+#endif // SE1_VULKAN
+
     ) || eAPI==GAT_NONE) {
     // be brief, be quick
     CPrintF( TRANS("Display driver hasn't been initialized.\n\n"));
@@ -667,13 +666,6 @@ static void GAPInfo(void)
     CPrintF("\n- Supported extensions: %s\n", ReformatExtensionsString(_pGfx->go_strSupportedExtensions));
   }
 
-#ifdef SE1_VULKAN
-  if (eAPI == GAT_VK)
-  {
-    // TODO: Vulkan
-  }
-#endif // SE1_VULKAN
-
   // Direct3D only stuff
 #ifdef SE1_D3D
   if( eAPI==GAT_D3D)
@@ -732,6 +724,16 @@ static void GAPInfo(void)
     }
   }
 #endif // SE1_D3D
+  
+  // Vulkan only stuff
+#ifdef SE1_VULKAN
+
+  if (eAPI == GAT_VK)
+  {
+
+  }
+
+#endif // SE1_VULKAN
 }
 
 
@@ -749,6 +751,7 @@ extern void UpdateGfxSysCVars(void)
   sys_bHasTruform = 0;
   sys_bHasCVAs = 1;
   sys_bUsingOpenGL = 0;
+  // TODO : sys_bUsingVulkan = 0;
   sys_bUsingDirect3D = 0;
   if( _pGfx->gl_iMaxTextureAnisotropy>1) sys_bHasTextureAnisotropy = 1;
   if( _pGfx->gl_fMaxTextureLODBias>0) sys_bHasTextureLODBias = 1;
@@ -762,10 +765,17 @@ extern void UpdateGfxSysCVars(void)
 #ifdef SE1_D3D
   if( _pGfx->gl_eCurrentAPI==GAT_D3D && !(_pGfx->gl_ulFlags&GLF_D3D_HASHWTNL)) sys_bHasHardwareTnL = 0;
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  // TODO: Vulkan
+#endif // SE1_VULKAN
   if( _pGfx->gl_eCurrentAPI==GAT_OGL) sys_bUsingOpenGL = 1;
 #ifdef SE1_D3D
   if( _pGfx->gl_eCurrentAPI==GAT_D3D) sys_bUsingDirect3D = 1;
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  // TODO:
+  // if (_pGfx->gl_eCurrentAPI == GAT_VK) sys_bUsingVulkan = 1;
+#endif // SE1_VULKAN
 }
 
    
@@ -1001,6 +1011,10 @@ CGfxLibrary::CGfxLibrary(void)
 #endif // SE1_D3D
   gl_ctVertices = 0;
   gl_ctIndices  = 0;
+
+#ifdef SE1_VULKAN
+  // TODO: Vulkan
+#endif // SE1_VULKAN
 
   // reset profiling counters
   gl_ctWorldTriangles    = 0;
@@ -1350,6 +1364,13 @@ BOOL CGfxLibrary::StartDisplayMode( enum GfxAPIType eAPI, INDEX iAdapter, PIX pi
   gl_ctRealTextureUnits = 0;
  _iLastVertexBufferSize = 0;
 
+  // prevent usage of Vulkan and DirectX at the same time
+#ifdef SE1_VULKAN
+#ifdef SE1_D3D
+  ASSERT(FALSE);
+#endif // SE1_D3D
+#endif // SE1_VULKAN
+
   // OpenGL driver ?
   if( eAPI==GAT_OGL)
   {
@@ -1388,6 +1409,7 @@ BOOL CGfxLibrary::StartDisplayMode( enum GfxAPIType eAPI, INDEX iAdapter, PIX pi
     gl_eCurrentAPI = GAT_D3D;
   }
 #endif // SE1_D3D
+
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
@@ -1460,6 +1482,14 @@ void CGfxLibrary::StopDisplayMode(void)
     MonitorsOn();
   }
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  else if (gl_eCurrentAPI == GAT_VK)
+  { // Vulkan
+    // TODO: Vulkan
+
+    //EndDriver_Vk();
+  }
+#endif // SE1_VULKAN
   else
   { // none
     ASSERT( gl_eCurrentAPI==GAT_NONE);
@@ -1488,6 +1518,10 @@ BOOL CGfxLibrary::SetCurrentViewport(CViewPort *pvp)
 #ifdef SE1_D3D
   if( gl_eCurrentAPI==GAT_D3D)  return SetCurrentViewport_D3D(pvp);
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  // TODO: Vulkan
+  //if (gl_eCurrentAPI == GAT_VK) return SetCurrentViewport_Vk();
+#endif // SE1_VULKAN
   if( gl_eCurrentAPI==GAT_NONE) return TRUE;
   ASSERTALWAYS( "SetCurrenViewport: Wrong API!");
   return FALSE;
@@ -1501,7 +1535,11 @@ BOOL CGfxLibrary::LockDrawPort( CDrawPort *pdpToLock)
 #ifdef SE1_D3D
   ASSERT( gl_eCurrentAPI==GAT_OGL || gl_eCurrentAPI==GAT_D3D || gl_eCurrentAPI==GAT_NONE);
 #else // SE1_D3D
-  ASSERT( gl_eCurrentAPI==GAT_OGL || gl_eCurrentAPI==GAT_NONE);
+#ifdef SE1_VULKAN
+  ASSERT(gl_eCurrentAPI == GAT_OGL || gl_eCurrentAPI == GAT_VK || gl_eCurrentAPI == GAT_NONE);
+#else
+  ASSERT(gl_eCurrentAPI == GAT_OGL || gl_eCurrentAPI == GAT_NONE);
+#endif // SE1_VULKAN
 #endif // SE1_D3D
 
   // don't allow locking if drawport is too small
@@ -1541,6 +1579,13 @@ BOOL CGfxLibrary::LockDrawPort( CDrawPort *pdpToLock)
     D3D_CHECKERROR(hr);
   }
 #endif // SE1_D3D
+  // Vulkan ...
+#ifdef SE1_VULKAN
+  else if (gl_eCurrentAPI == GAT_VK)
+  {
+    // TODO: Vulkan
+  }
+#endif // SE1_VULKAN
 
   // mark and set default projection
   GFX_ulLastDrawPortID = ulThisDrawPortID;
@@ -1557,7 +1602,11 @@ void CGfxLibrary::UnlockDrawPort( CDrawPort *pdpToUnlock)
 #ifdef SE1_D3D
   ASSERT(gl_eCurrentAPI == GAT_OGL || gl_eCurrentAPI == GAT_D3D || gl_eCurrentAPI == GAT_NONE);
 #else // SE1_D3D
+#ifdef SE1_VULKAN
+  ASSERT(gl_eCurrentAPI == GAT_OGL || gl_eCurrentAPI == GAT_VK || gl_eCurrentAPI == GAT_NONE);
+#else
   ASSERT(gl_eCurrentAPI == GAT_OGL || gl_eCurrentAPI == GAT_NONE);
+#endif // SE1_VULKAN
 #endif // SE1_D3D
   // eventually signalize that scene rendering has ended
 }
@@ -1767,7 +1816,11 @@ void CGfxLibrary::SwapBuffers(CViewPort *pvp)
 #ifdef SE1_D3D
   ASSERT(gl_eCurrentAPI == GAT_OGL || gl_eCurrentAPI == GAT_D3D || gl_eCurrentAPI == GAT_NONE);
 #else // SE1_D3D
+#ifdef SE1_VULKAN
+  ASSERT(gl_eCurrentAPI == GAT_OGL || gl_eCurrentAPI == GAT_VK || gl_eCurrentAPI == GAT_NONE);
+#else
   ASSERT(gl_eCurrentAPI == GAT_OGL || gl_eCurrentAPI == GAT_NONE);
+#endif // SE1_VULKAN
 #endif // SE1_D3D
 
   // safety check
@@ -1862,6 +1915,16 @@ void CGfxLibrary::SwapBuffers(CViewPort *pvp)
     } 
   }
 #endif // SE1_D3D
+  
+  // Vulkan
+#ifdef SE1_VULKAN
+  else if (gl_eCurrentAPI == GAT_VK)
+  {
+    // TODO: Vulkan
+  }
+#endif // SE1_VK
+
+
   // update tessellation level
   gl_iTessellationLevel = gap_iTruformLevel;
 
@@ -1930,6 +1993,12 @@ void CGfxLibrary::SwapBuffers(CViewPort *pvp)
         gl_pd3dDevice->SetGammaRamp( D3DSGR_NO_CALIBRATION, (D3DGAMMARAMP*)&_auwGammaTable[0]);
       }
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+      else if (gl_eCurrentAPI == GAT_VK)
+      {
+        // TODO: Vulkan
+      }
+#endif // SE1_VULKAN
     }
   }
   // if not supported
@@ -1976,6 +2045,12 @@ BOOL CGfxLibrary::LockRaster( CRaster *praToLock)
       bRes = (hr==D3D_OK);
     } // mark it
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+    if (gl_eCurrentAPI == GAT_VK && !GFX_bRenderingScene)
+    {
+      // TODO: Vulkan
+    }
+#endif // SE1_VULKAN
     GFX_bRenderingScene = TRUE;
   } // done
   return bRes;

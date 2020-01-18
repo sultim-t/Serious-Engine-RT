@@ -538,6 +538,15 @@ void CChildFrame::TestGame( BOOL bFullScreen)
       }
     }
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+    if (gat == GAT_VK)
+    {
+      
+      // TODO: Vulkan
+
+    }
+#endif // SE1_VULKAN
+
     // create canvas
     _pGfx->CreateWindowCanvas( hWndFullScreen, &pvp, &pdp);
     // initial screen fill and swap, just to get context running

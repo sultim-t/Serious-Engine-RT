@@ -312,6 +312,10 @@ void CDrawPort::SetOrtho(void) const
 #ifdef SE1_D3D
    || (d3d_iFinish==3 && _pGfx->gl_eCurrentAPI==GAT_D3D)
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+    // TODO
+#endif // SE1_VULKAN
+
    ) gfxFinish();
 
   // prepare ortho dimensions
@@ -343,6 +347,9 @@ void CDrawPort::SetProjection(CAnyProjection3D &apr) const
 #ifdef SE1_D3D
    || (d3d_iFinish==3 && _pGfx->gl_eCurrentAPI==GAT_D3D)
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+    // TODO
+#endif // SE1_VULKAN
    ) gfxFinish();
 
   // if isometric projection
@@ -441,7 +448,11 @@ void CDrawPort::DrawPoint( PIX pixI, PIX pixJ, COLOR col, PIX pixRadius/*=1*/) c
 #ifdef SE1_D3D
   ASSERT( eAPI==GAT_OGL || eAPI==GAT_D3D || eAPI==GAT_NONE);
 #else // SE1_D3D
-  ASSERT( eAPI==GAT_OGL || eAPI==GAT_NONE);
+#ifdef SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+#else
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
+#endif // SE1_VULKAN
 #endif // SE1_D3D
   ASSERT( pixRadius>=0);
   if( pixRadius==0) return; // do nothing if radius is 0
@@ -484,6 +495,14 @@ void CDrawPort::DrawPoint( PIX pixI, PIX pixJ, COLOR col, PIX pixRadius/*=1*/) c
     D3D_CHECKERROR(hr);
   }
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  else if (eAPI == GAT_VK)
+  {
+
+    // TODO: Vulkan
+
+  }
+#endif // SE1_VULKAN
 }
 
 
@@ -495,7 +514,11 @@ void CDrawPort::DrawPoint3D( FLOAT3D v, COLOR col, FLOAT fRadius/*=1.0f*/) const
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
+#ifdef SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+#else
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
+#endif // SE1_VULKAN
 #endif // SE1_D3D
   ASSERT( fRadius>=0);
   if( fRadius==0) return; // do nothing if radius is 0
@@ -532,6 +555,14 @@ void CDrawPort::DrawPoint3D( FLOAT3D v, COLOR col, FLOAT fRadius/*=1.0f*/) const
     D3D_CHECKERROR(hr);
   }
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  else if (eAPI == GAT_VK)
+  {
+
+    // TODO: Vulkan
+
+  }
+#endif // SE1_VULKAN
 }
 
 
@@ -544,7 +575,11 @@ void CDrawPort::DrawLine( PIX pixI0, PIX pixJ0, PIX pixI1, PIX pixJ1, COLOR col,
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
+#ifdef SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+#else
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
+#endif // SE1_VULKAN
 #endif // SE1_D3D
 
   // setup rendering mode
@@ -599,6 +634,14 @@ void CDrawPort::DrawLine( PIX pixI0, PIX pixJ0, PIX pixI1, PIX pixJ1, COLOR col,
     D3D_CHECKERROR(hr);
   }
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  else if (eAPI == GAT_VK)
+  {
+
+    // TODO: Vulkan
+
+  }
+#endif // SE1_VULKAN
   // revert to old filtering
   if( typ!=_FULL_) gfxSetTextureFiltering( iTexFilter, iTexAnisotropy);
 }
@@ -613,7 +656,11 @@ void CDrawPort::DrawLine3D( FLOAT3D v0, FLOAT3D v1, COLOR col) const
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
+#ifdef SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+#else
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
+#endif // SE1_VULKAN
 #endif // SE1_D3D
 
   // setup rendering mode
@@ -647,6 +694,14 @@ void CDrawPort::DrawLine3D( FLOAT3D v0, FLOAT3D v1, COLOR col) const
     D3D_CHECKERROR(hr);
   }
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  else if (eAPI == GAT_VK)
+  {
+
+    // TODO: Vulkan
+
+  }
+#endif // SE1_VULKAN
 }
 
 
@@ -659,7 +714,11 @@ void CDrawPort::DrawBorder( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, COL
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
+#ifdef SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+#else
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
+#endif // SE1_VULKAN
 #endif // SE1_D3D
 
   // setup rendering mode
@@ -721,6 +780,14 @@ void CDrawPort::DrawBorder( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, COL
     D3D_CHECKERROR(hr);
   }
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  else if (eAPI == GAT_VK)
+  {
+
+    // TODO: Vulkan
+
+  }
+#endif // SE1_VULKAN
   // revert to old filtering
   if( typ!=_FULL_) gfxSetTextureFiltering( iTexFilter, iTexAnisotropy);
 }
@@ -749,7 +816,11 @@ void CDrawPort::Fill( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, COLOR col
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
+#ifdef SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+#else
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
+#endif // SE1_VULKAN
 #endif // SE1_D3D
 
   // OpenGL
@@ -784,6 +855,14 @@ void CDrawPort::Fill( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, COLOR col
     D3D_CHECKERROR(hr);
   }
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  else if (eAPI == GAT_VK)
+  {
+
+    // TODO: Vulkan
+
+  }
+#endif // SE1_VULKAN
 }
 
 
@@ -800,7 +879,11 @@ void CDrawPort::Fill( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight,
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
+#ifdef SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+#else
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
+#endif // SE1_VULKAN
 #endif // SE1_D3D
 
   // setup rendering mode
@@ -849,6 +932,14 @@ void CDrawPort::Fill( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight,
     D3D_CHECKERROR(hr);
   }
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  else if (eAPI == GAT_VK)
+  {
+
+    // TODO: Vulkan
+
+  }
+#endif // SE1_VULKAN
 }
 
 
@@ -870,7 +961,11 @@ void CDrawPort::Fill( COLOR col) const
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
+#ifdef SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+#else
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
+#endif // SE1_VULKAN
 #endif // SE1_D3D
 
   // OpenGL
@@ -891,6 +986,14 @@ void CDrawPort::Fill( COLOR col) const
     D3D_CHECKERROR(hr);
   }
 #endif SE1_D3D
+#ifdef SE1_VULKAN
+  else if (eAPI == GAT_VK)
+  {
+
+    // TODO: Vulkan
+
+  }
+#endif // SE1_VULKAN
 }
 
 
@@ -902,7 +1005,11 @@ void CDrawPort::FillZBuffer( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, FL
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
+#ifdef SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+#else
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
+#endif // SE1_VULKAN
 #endif // SE1_D3D
 
   // clip and eventually reject
@@ -932,6 +1039,12 @@ void CDrawPort::FillZBuffer( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, FL
     D3D_CHECKERROR(hr);
   }
 #endif SE1_D3D
+#ifdef SE1_VULKAN
+  else if (eAPI == GAT_VK)
+  {
+    // TODO
+  }
+#endif // SE1_VULKAN
 }
 
 
@@ -943,7 +1056,11 @@ void CDrawPort::FillZBuffer( FLOAT zval) const
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
+#ifdef SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+#else
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
+#endif // SE1_VULKAN
 #endif // SE1_D3D
   gfxEnableDepthWrite();
 
@@ -963,6 +1080,14 @@ void CDrawPort::FillZBuffer( FLOAT zval) const
     D3D_CHECKERROR(hr);
   }
 #endif SE1_D3D
+#ifdef SE1_VULKAN
+  else if (eAPI == GAT_VK)
+  {
+
+    // TODO: Vulkan
+
+  }
+#endif // SE1_VULKAN
 }
 
 
@@ -974,7 +1099,11 @@ void CDrawPort::GrabScreen( class CImageInfo &iiGrabbedImage, INDEX iGrabZBuffer
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
+#ifdef SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+#else
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
+#endif // SE1_VULKAN
 #endif // SE1_D3D
   extern INDEX ogl_bGrabDepthBuffer;
   const BOOL bGrabDepth = eAPI==GAT_OGL && ((iGrabZBuffer==1 && ogl_bGrabDepthBuffer) || iGrabZBuffer==2);
@@ -1060,6 +1189,14 @@ void CDrawPort::GrabScreen( class CImageInfo &iiGrabbedImage, INDEX iGrabZBuffer
     D3DRELEASE( pBackBuffer, TRUE);
   }
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  else if (eAPI == GAT_VK)
+  {
+
+    // TODO: Vulkan
+
+  }
+#endif // SE1_VULKAN
 }
 
 
@@ -1076,7 +1213,11 @@ BOOL CDrawPort::IsPointVisible( PIX pixI, PIX pixJ, FLOAT fOoK, INDEX iID, INDEX
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
+#ifdef SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+#else
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
+#endif // SE1_VULKAN
 #endif // SE1_D3D
 
   // use delayed mechanism for checking
@@ -1093,7 +1234,11 @@ void CDrawPort::RenderLensFlare( CTextureObject *pto, FLOAT fI, FLOAT fJ,
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
+#ifdef SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+#else
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
+#endif // SE1_VULKAN
 #endif // SE1_D3D
 
   // setup rendering mode
@@ -1224,7 +1369,11 @@ void CDrawPort::PutText( const CTString &strText, PIX pixX0, PIX pixY0, const CO
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
+#ifdef SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+#else
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
+#endif // SE1_VULKAN
 #endif // SE1_D3D
 
   // skip drawing if text falls above or below draw port
@@ -1516,7 +1665,11 @@ void CDrawPort::PutTexture( class CTextureObject *pTO,
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
+#ifdef SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+#else
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
+#endif // SE1_VULKAN
 #endif // SE1_D3D
   FLOAT fI0 = pixI0;  FLOAT fI1 = pixI1;
   FLOAT fJ0 = pixJ0;  FLOAT fJ1 = pixJ1;

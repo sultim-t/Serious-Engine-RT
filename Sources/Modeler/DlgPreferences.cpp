@@ -154,6 +154,12 @@ void CDlgPreferences::DoDataExchange(CDataExchange* pDX)
         theApp.m_iApi=GAT_D3D;
         break;
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+      case GAT_VK_INDEX:
+        theApp.m_iApi = GAT_VK;
+        break;
+#endif // SE1_VULKAN
+
       default:
         {
         }
@@ -186,6 +192,9 @@ BOOL CDlgPreferences::OnInitDialog()
 #ifdef SE1_D3D
   m_ctrlGfxApi.AddString(L"DirectX");
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  m_ctrlGfxApi.AddString(L"Vulkan");
+#endif // SE1_VULKAN
 
   if( IsWindow(m_ctrlGfxApi.m_hWnd))
   {
@@ -199,6 +208,11 @@ BOOL CDlgPreferences::OnInitDialog()
       m_ctrlGfxApi.SetCurSel(1);
       break;
 #endif // SE1_D3D
+#ifdef SE1_VULKAN:
+    case GAT_VK:
+      m_ctrlGfxApi.SetCurSel(GAT_VK_INDEX);
+      break;
+#endif // SE1_VULKAN
     }
   }
 

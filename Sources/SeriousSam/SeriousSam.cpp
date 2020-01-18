@@ -644,6 +644,10 @@ void PrintDisplayModeInfo(void)
 #ifdef SE1_D3D
   else if( _pGfx->gl_eCurrentAPI==GAT_D3D) strRes += " (Direct3D)";
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  else if (_pGfx->gl_eCurrentAPI == GAT_VK) strRes += " (Vulkan)";
+#endif // SE1_VULKAN
+
 
   CTString strDescr;
   strDescr.PrintF("\n%s (%s)\n", _strPreferencesDescription, RenderingPreferencesDescription(sam_iVideoSetup));

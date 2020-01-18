@@ -153,9 +153,9 @@ void CGfxLibrary::InitAPIs(void)
   gl_gaAPI[GAT_VK].ga_iCurrentAdapter = 0;
   pda = &gl_gaAPI[GAT_VK].ga_adaAdapter[0];
   pda->da_ulFlags = NONE;
-  pda->da_strVendor = TRANS("unknown");
-  pda->da_strRenderer = TRANS("Default ICD");
-  pda->da_strVersion = "1.1";
+  pda->da_strVendor = "";
+  pda->da_strRenderer = "";
+  pda->da_strVersion = "";
 
   pda->da_ctDisplayModes = 0;
   // pda->da_iCurrentDisplayMode = -1;

@@ -124,7 +124,11 @@ extern CTString astrDisplayPrefsRadioTexts[] = {
 
 extern CTString astrDisplayAPIRadioTexts[] = {
   RADIOTRANS("OpenGL"),
+#ifndef SE1_VULKAN
   RADIOTRANS("Direct3D"),
+#else // SE1_VULKAN
+  RADIOTRANS("Vulkan")
+#endif // SE1_VULKAN
 };
 
 extern CTString astrBitsPerPixelRadioTexts[] = {
@@ -242,7 +246,7 @@ INDEX APIToSwitch(enum GfxAPIType gat)
   case GAT_D3D: return 1;
 #endif // SE1_D3D
 #ifdef SE1_VULKAN
-  case GAT_VK: return 2;
+  case GAT_VK: return GAT_VK_INDEX;
 #endif // SE1_VULKAN
   default: ASSERT(FALSE); return 0;
   }
@@ -256,7 +260,7 @@ enum GfxAPIType SwitchToAPI(INDEX i)
   case 1: return GAT_D3D;
 #endif // SE1_D3D
 #ifdef SE1_VULKAN
-  case 2: return GAT_VK;
+  case GAT_VK_INDEX: return GAT_VK;
 #endif // SE1_VULKAN
   default: ASSERT(FALSE); return GAT_OGL;
   }

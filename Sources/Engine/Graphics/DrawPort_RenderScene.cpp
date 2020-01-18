@@ -1710,12 +1710,20 @@ void RenderScene( CDrawPort *pDP, ScenePolygon *pspoFirst, CAnyProjection3D &prP
 #ifdef SE1_D3D
   ASSERT( eAPI==GAT_OGL || eAPI==GAT_D3D || eAPI==GAT_NONE);
 #else // SE1_D3D
-  ASSERT( eAPI==GAT_OGL || eAPI==GAT_NONE);
+#ifdef SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+#else
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
+#endif // SE1_VULKAN
 #endif // SE1_D3D
   if( eAPI!=GAT_OGL 
 #ifdef SE1_D3D
     && eAPI!=GAT_D3D
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+    && eAPI!=GAT_VK
+#endif // SE1_VULKAN
+
     ) return;
 
   // some cvars cannot be altered in multiplayer mode!

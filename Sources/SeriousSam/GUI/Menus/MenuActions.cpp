@@ -690,7 +690,12 @@ extern void UpdateVideoOptionsButtons(INDEX iSelected)
   const BOOL bD3DEnabled = _pGfx->HasAPI(GAT_D3D);
   ASSERT(bOGLEnabled || bD3DEnabled);
 #else // 
+#ifdef SE1_VULKAN
+  const BOOL bVKEnabled = _pGfx->HasAPI(GAT_VK);
+  ASSERT(bOGLEnabled || bVKEnabled);
+#else // SE1_VULKAN
   ASSERT(bOGLEnabled);
+#endif // SE1_VULKAN
 #endif // SE1_D3D
 
   CDisplayAdapter &da = _pGfx->gl_gaAPI[SwitchToAPI(gmCurrent.gm_mgDisplayAPITrigger.mg_iSelected)]
@@ -708,6 +713,9 @@ extern void UpdateVideoOptionsButtons(INDEX iSelected)
 #ifdef SE1_D3D
     && bD3DEnabled
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+    && bVKEnabled
+#endif // SE1_VULKAN
     ;
   gmCurrent.gm_mgDisplayAdaptersTrigger.mg_bEnabled = _ctAdapters>1;
   gmCurrent.gm_mgApply.mg_bEnabled = _bVideoOptionsChanged;

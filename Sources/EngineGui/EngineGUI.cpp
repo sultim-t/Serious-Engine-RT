@@ -271,7 +271,11 @@ void CEngineGUI::GetFullScreenModeFromRegistry( CTString strSectionName, CDispla
 #ifdef SE1_D3D
   gat = (strResult=="Direct3D") ? GAT_D3D : GAT_OGL;
 #else // SE1_D3D
+#ifdef SE1_VULKAN
+  gat = (strResult == "Vulkan") ? GAT_VK : GAT_OGL;
+#else
   gat = GAT_OGL;
+#endif // SE1_VULKAN
 #endif // SE1_D3D
 }
 
@@ -282,7 +286,11 @@ void CEngineGUI::SetFullScreenModeToRegistry( CTString strSectionName, CDisplayM
 #ifdef SE1_D3D
   CTString strGAT = (gat==GAT_D3D) ? "Direct3D" : "OpenGL";
 #else // SE1_D3D
+#ifdef SE1_VULKAN
+  CTString strGAT = (gat == GAT_VK) ? "Vulkan" : "OpenGL";
+#else
   CTString strGAT = "OpenGL";
+#endif // SE1_VULKAN
 #endif // SE1_D3D
   AfxGetApp()->WriteProfileString(CString(strSectionName), L"Full screen mode", CString(strDM));
   AfxGetApp()->WriteProfileString(CString(strSectionName), L"Full screen API", CString(strGAT));

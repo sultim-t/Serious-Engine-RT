@@ -21,7 +21,7 @@
     </SccLocalPath>
     <Keyword>MFCProj</Keyword>
     <ProjectGuid>{4B6F587C-7C59-4481-FBB9-CA44380D0CBF}</ProjectGuid>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'" Label="Configuration">
@@ -316,6 +316,7 @@ copy Release\$(TargetName).lib $(SolutionDir)..\Bin\ &gt;nul</Command>
     <ClCompile Include="Base\Unzip.cpp" />
     <ClCompile Include="Base\Updateable.cpp" />
     <ClCompile Include="GameAgent\GameAgent.cpp" />
+    <ClCompile Include="Gfx_Vulkan.cpp" />
     <ClCompile Include="Math\Float.cpp" />
     <ClCompile Include="Math\Functions.cpp" />
     <ClCompile Include="Math\Geometry.cpp">
