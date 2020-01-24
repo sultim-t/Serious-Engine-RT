@@ -11,7 +11,7 @@ static void svk_EnableTexture(void)
 #ifndef NDEBUG
   BOOL bRes;
   bRes = pglIsEnabled(GL_TEXTURE_2D);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   ASSERT(!bRes == !GFX_abTexture[GFX_iActiveTexUnit]);
 #endif
 
@@ -22,7 +22,7 @@ static void svk_EnableTexture(void)
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   pglEnable(GL_TEXTURE_2D);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -36,7 +36,7 @@ static void svk_DisableTexture(void)
 #ifndef NDEBUG
   BOOL bRes;
   bRes = pglIsEnabled(GL_TEXTURE_2D);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   ASSERT(!bRes == !GFX_abTexture[GFX_iActiveTexUnit]);
 #endif
 
@@ -48,7 +48,7 @@ static void svk_DisableTexture(void)
 
   pglDisable(GL_TEXTURE_2D);
   pglDisableClientState(GL_TEXTURE_COORD_ARRAY);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -62,7 +62,7 @@ static void svk_EnableDepthTest(void)
 #ifndef NDEBUG
   BOOL bRes;
   bRes = pglIsEnabled(GL_DEPTH_TEST);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   ASSERT(!bRes == !GFX_bDepthTest);
 #endif
   // cached?
@@ -72,7 +72,7 @@ static void svk_EnableDepthTest(void)
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   pglEnable(GL_DEPTH_TEST);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -85,7 +85,7 @@ static void svk_DisableDepthTest(void)
 #ifndef NDEBUG
   BOOL bRes;
   bRes = pglIsEnabled(GL_DEPTH_TEST);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   ASSERT(!bRes == !GFX_bDepthTest);
 #endif
 
@@ -96,7 +96,7 @@ static void svk_DisableDepthTest(void)
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   pglDisable(GL_DEPTH_TEST);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -111,7 +111,7 @@ static void svk_EnableDepthBias(void)
   pglEnable(GL_POLYGON_OFFSET_LINE);
   pglEnable(GL_POLYGON_OFFSET_FILL);
   pglPolygonOffset(-1.0f, -2.0f);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -126,7 +126,7 @@ static void svk_DisableDepthBias(void)
   pglDisable(GL_POLYGON_OFFSET_LINE);
   pglDisable(GL_POLYGON_OFFSET_FILL);
   pglPolygonOffset(0.0f, 0.0f);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -140,7 +140,7 @@ static void svk_EnableDepthWrite(void)
 #ifndef NDEBUG
   BOOL bRes;
   pglGetIntegerv(GL_DEPTH_WRITEMASK, (GLint*)&bRes);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   ASSERT(!bRes == !GFX_bDepthWrite);
 #endif
 
@@ -151,7 +151,7 @@ static void svk_EnableDepthWrite(void)
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   pglDepthMask(GL_TRUE);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -165,7 +165,7 @@ static void svk_DisableDepthWrite(void)
 #ifndef NDEBUG
   BOOL bRes;
   pglGetIntegerv(GL_DEPTH_WRITEMASK, (GLint*)&bRes);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   ASSERT(!bRes == !GFX_bDepthWrite);
 #endif
 
@@ -176,7 +176,7 @@ static void svk_DisableDepthWrite(void)
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   pglDepthMask(GL_FALSE);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -190,7 +190,7 @@ static void svk_EnableAlphaTest(void)
 #ifndef NDEBUG
   BOOL bRes;
   bRes = pglIsEnabled(GL_ALPHA_TEST);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   ASSERT(!bRes == !GFX_bAlphaTest);
 #endif
 
@@ -201,7 +201,7 @@ static void svk_EnableAlphaTest(void)
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   pglEnable(GL_ALPHA_TEST);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -215,7 +215,7 @@ static void svk_DisableAlphaTest(void)
 #ifndef NDEBUG
   BOOL bRes;
   bRes = pglIsEnabled(GL_ALPHA_TEST);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   ASSERT(!bRes == !GFX_bAlphaTest);
 #endif
 
@@ -226,7 +226,7 @@ static void svk_DisableAlphaTest(void)
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   pglDisable(GL_ALPHA_TEST);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -240,7 +240,7 @@ static void svk_EnableBlend(void)
 #ifndef NDEBUG
   BOOL bRes;
   bRes = pglIsEnabled(GL_BLEND);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   ASSERT(!bRes == !GFX_bBlending);
 #endif
   // cached?
@@ -250,7 +250,7 @@ static void svk_EnableBlend(void)
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   pglEnable(GL_BLEND);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 
@@ -268,7 +268,7 @@ static void svk_DisableBlend(void)
 #ifndef NDEBUG
   BOOL bRes;
   bRes = pglIsEnabled(GL_BLEND);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   ASSERT(!bRes == !GFX_bBlending);
 #endif
 
@@ -279,7 +279,7 @@ static void svk_DisableBlend(void)
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   pglDisable(GL_BLEND);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 
@@ -298,7 +298,7 @@ static void svk_EnableColorArray(void)
 #ifndef NDEBUG
   BOOL bRes;
   bRes = pglIsEnabled(GL_COLOR_ARRAY);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   ASSERT(!bRes == !GFX_bColorArray);
 #endif
 
@@ -309,7 +309,7 @@ static void svk_EnableColorArray(void)
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   pglEnableClientState(GL_COLOR_ARRAY);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -324,7 +324,7 @@ static void svk_DisableColorArray(void)
 #ifndef NDEBUG
   BOOL bRes;
   bRes = pglIsEnabled(GL_COLOR_ARRAY);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   ASSERT(!bRes == !GFX_bColorArray);
 #endif
 
@@ -335,7 +335,7 @@ static void svk_DisableColorArray(void)
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   pglDisableClientState(GL_COLOR_ARRAY);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -382,7 +382,7 @@ static void svk_BlendFunc(GfxBlend eSrc, GfxBlend eDst)
   GfxBlend gfxSrc, gfxDst;
   pglGetIntegerv(GL_BLEND_SRC, (GLint*)&gleSrc);
   pglGetIntegerv(GL_BLEND_DST, (GLint*)&gleDst);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   gfxSrc = BlendFromVK(gleSrc);
   gfxDst = BlendFromVK(gleDst);
   ASSERT(gfxSrc == GFX_eBlendSrc && gfxDst == GFX_eBlendDst);
@@ -398,7 +398,7 @@ static void svk_BlendFunc(GfxBlend eSrc, GfxBlend eDst)
   // TODO: uncomment it
   //pglBlendFunc(gleSrc, gleDst);
 
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   // done
   GFX_eBlendSrc = eSrc;
   GFX_eBlendDst = eDst;
@@ -448,7 +448,7 @@ static void svk_DepthFunc(GfxComp eFunc)
 #ifndef NDEBUG
   GfxComp gfxFunc;
   pglGetIntegerv(GL_DEPTH_FUNC, (GLint*)&gleFunc);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   gfxFunc = CompFromVK(gleFunc);
   ASSERT(gfxFunc == GFX_eDepthFunc);
 #endif
@@ -462,7 +462,7 @@ static void svk_DepthFunc(GfxComp eFunc)
   // TODO: uncomment it
   //pglDepthFunc(gleFunc);
 
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   GFX_eDepthFunc = eFunc;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
@@ -478,7 +478,7 @@ static void svk_DepthRange(FLOAT fMin, FLOAT fMax)
 #ifndef NDEBUG
   FLOAT fDepths[2];
   pglGetFloatv(GL_DEPTH_RANGE, (GLfloat*)&fDepths);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   ASSERT(fDepths[0] == GFX_fMinDepthRange && fDepths[1] == GFX_fMaxDepthRange);
 #endif
 
@@ -490,7 +490,7 @@ static void svk_DepthRange(FLOAT fMin, FLOAT fMax)
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   pglDepthRange(fMin, fMax);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -507,7 +507,7 @@ static void svk_CullFace(GfxFace eFace)
   GLenum gleCull;
   BOOL bRes = pglIsEnabled(GL_CULL_FACE);
   pglGetIntegerv(GL_CULL_FACE_MODE, (GLint*)&gleCull);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   ASSERT((bRes == GL_FALSE && GFX_eCullFace == GFX_NONE)
     || (bRes == GL_TRUE && gleCull == GL_FRONT && GFX_eCullFace == GFX_FRONT)
     || (bRes == GL_TRUE && gleCull == GL_BACK && GFX_eCullFace == GFX_BACK));
@@ -528,7 +528,7 @@ static void svk_CullFace(GfxFace eFace)
   else {
     pglDisable(GL_CULL_FACE);
   }
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   GFX_eCullFace = eFace;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
@@ -545,7 +545,7 @@ static void svk_FrontFace(GfxFace eFace)
 #ifndef NDEBUG
   GLenum gleFace;
   pglGetIntegerv(GL_FRONT_FACE, (GLint*)&gleFace);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   ASSERT((gleFace == GL_CCW && GFX_bFrontFace)
     || (gleFace == GL_CW && !GFX_bFrontFace));
 #endif
@@ -561,7 +561,7 @@ static void svk_FrontFace(GfxFace eFace)
   else {
     pglFrontFace(GL_CW);
   }
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   GFX_bFrontFace = bFrontFace;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
@@ -585,7 +585,7 @@ static void svk_SetViewMatrix(const FLOAT* pfMatrix/*=NULL*/)
   pglMatrixMode(GL_MODELVIEW);
   if (pfMatrix != NULL) pglLoadMatrixf(pfMatrix);
   else pglLoadIdentity();
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -612,7 +612,7 @@ static void svk_SetOrtho(const FLOAT fLeft, const FLOAT fRight, const FLOAT fTop
   pglMatrixMode(GL_PROJECTION);
   pglLoadIdentity();
   pglOrtho(fLeft, fRight, fBottom, fTop, fNear, fFar);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -639,7 +639,7 @@ static void svk_SetFrustum(const FLOAT fLeft, const FLOAT fRight,
   pglMatrixMode(GL_PROJECTION);
   pglLoadIdentity();
   pglFrustum(fLeft, fRight, fBottom, fTop, fNear, fFar);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -658,7 +658,7 @@ static void svk_PolygonMode(GfxPolyMode ePolyMode)
   case GFX_FILL:   pglPolygonMode(GL_FRONT_AND_BACK, GL_FILL);   break;
   default:  ASSERTALWAYS("Wrong polygon mode!");
   } // check
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -699,7 +699,7 @@ static void svk_SetTextureModulation(INDEX iScale)
   pglGetTexEnviv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &iRet);
   ASSERT((GFX_iTexModulation[GFX_iActiveTexUnit] == 1 && iRet == GL_MODULATE)
     || (GFX_iTexModulation[GFX_iActiveTexUnit] == 2 && iRet == GL_COMBINE_EXT));
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 #endif
 
   // cached?
@@ -716,7 +716,7 @@ static void svk_SetTextureModulation(INDEX iScale)
   }
   else {
     pglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-  } VK_CHECKERROR;
+  } VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -731,7 +731,7 @@ static void svk_GenerateTexture(ULONG& ulTexObject)
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   pglGenTextures(1, (GLuint*)&ulTexObject);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_BINDTEXTURE);
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
@@ -777,7 +777,7 @@ static void svk_SetVertexArray(GFXVertex4* pvtx, INDEX ctVtx)
   ASSERT(!pglIsEnabled(GL_NORMAL_ARRAY));
   ASSERT(pglIsEnabled(GL_VERTEX_ARRAY));
   pglVertexPointer(3, GL_FLOAT, 16, pvtx);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   GFX_bColorArray = FALSE; // mark that color array has been disabled (because of potential LockArrays)
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
@@ -795,7 +795,7 @@ static void svk_SetNormalArray(GFXNormal* pnor)
   pglEnableClientState(GL_NORMAL_ARRAY);
   ASSERT(pglIsEnabled(GL_NORMAL_ARRAY));
   pglNormalPointer(GL_FLOAT, 16, pnor);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -811,7 +811,7 @@ static void svk_SetColorArray(GFXColor* pcol)
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   pglColorPointer(4, GL_UNSIGNED_BYTE, 0, pcol);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -828,7 +828,7 @@ static void svk_SetTexCoordArray(GFXTexCoord* ptex, BOOL b4/*=FALSE*/)
   pglEnableClientState(GL_TEXTURE_COORD_ARRAY);
   ASSERT(pglIsEnabled(GL_TEXTURE_COORD_ARRAY));
   pglTexCoordPointer(b4 ? 4 : 2, GL_FLOAT, 0, ptex);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -843,7 +843,7 @@ static void svk_SetConstantColor(COLOR col)
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   glCOLOR(col);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -865,7 +865,7 @@ static void svk_DrawElements(INDEX ctElem, INDEX* pidx)
   // arrays or elements
   if (pidx == NULL) pglDrawArrays(GL_QUADS, 0, ctElem);
   else pglDrawElements(GL_TRIANGLES, ctElem, GL_UNSIGNED_INT, pidx);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -879,7 +879,7 @@ static void svk_Finish(void)
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   pglFinish();
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -895,7 +895,7 @@ static void svk_LockArrays(void)
   ASSERT(GFX_ctVertices > 0 && !_bCVAReallyLocked);
   if (!(_pGfx->gl_ulFlags & GLF_EXT_COMPILEDVERTEXARRAY)) return;
   pglLockArraysEXT(0, GFX_ctVertices);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
   _bCVAReallyLocked = TRUE;
 }
 
@@ -913,7 +913,7 @@ static void svk_SetColorMask(ULONG ulColorMask)
   const BOOL bB = (ulColorMask & CT_BMASK) == CT_BMASK;
   const BOOL bA = (ulColorMask & CT_AMASK) == CT_AMASK;
   pglColorMask(bR, bG, bB, bA);
-  VK_CHECKERROR;
+  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
 }

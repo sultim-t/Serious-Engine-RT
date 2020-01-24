@@ -55,7 +55,7 @@ public:
 	LPDIRECT3DSURFACE8   vp_pSurfDepth;  // z-buffer for D3D
 #endif // SE1_D3D
 #ifdef SE1_VULKAN
-  VkSwapchainKHR vp_VkSwapchain;
+  // nothing
 #endif // SE1_VULKAN
 
   INDEX vp_ctDisplayChanges;    // number of display driver

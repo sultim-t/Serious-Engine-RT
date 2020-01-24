@@ -65,7 +65,7 @@ static void SetAsRenderTarget_D3D( CViewPort *pvp)
 #ifdef SE1_VULKAN
 static void CreateSwapchain_Vulkan(CViewPort* pvp, PIX pixSizeI, PIX pixSizeJ)
 {
-  // TODO: Vulkan swapchain
+  _pGfx->CreateSwapchain(pixSizeI, pixSizeJ);
 }
 #endif // SE1_VULKAN
 
@@ -100,7 +100,7 @@ CViewPort::CViewPort( PIX pixWidth, PIX pixHeight, HWND hWnd) :
   vp_pSurfDepth = NULL;
 #endif // SE1_D3D
 #ifdef SE1_VULKAN
-  vp_VkSwapchain = VK_NULL_HANDLE;
+  // nothing 
 #endif // SE1_VULKAN
 
   vp_ctDisplayChanges = 0;
@@ -217,7 +217,7 @@ void CViewPort::OpenCanvas(void)
 
 #ifdef SE1_VULKAN
   // TODO : Vulkan
-  // if (_pGfx->gl_eCurrentAPI == GAT_VK && vp_VkSwapchain != VK_NULL_HANDLE) SetAsRenderTarget_Vulkan(this, pixWinSizeI, pixWinSizeJ);
+  // if (_pGfx->gl_eCurrentAPI == GAT_VK && vp_VkSwapchain != VK_NULL_HANDLE) SetAsRenderTarget_Vulkan(this);
 #endif // SE1_VULKAN
 }
 
@@ -232,17 +232,29 @@ void CViewPort::CloseCanvas( BOOL bRelease/*=FALSE*/)
     if( vp_pSurfDepth!=NULL) D3DRELEASE( vp_pSurfDepth, TRUE);
   }
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  if (_pGfx->gl_eCurrentAPI == GAT_VK && bRelease) 
+  {
+    _pGfx->DestroySwapchain();
+  }
+#endif // SE1_VULKAN
+
+
   // destroy window
   if( vp_hWnd!=NULL && IsWindow(vp_hWnd)) { 
     BOOL bRes = DestroyWindow(vp_hWnd);
     ASSERT(bRes);
   }
+
   // mark
   vp_hWnd = NULL;
 #ifdef SE1_D3D
   vp_pSwapChain = NULL;
   vp_pSurfDepth = NULL;
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  // nothing 
+#endif // SE1_VULKAN
 }
 
 
@@ -276,6 +288,12 @@ void CViewPort::Resize(void)
     SetAsRenderTarget_D3D(this);
   }
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  if (_pGfx->gl_eCurrentAPI == GAT_VK)
+  {
+    _pGfx->RecreateSwapchain(pixNewWidth, pixNewHeight);
+  }
+#endif // SE1_VULKAN
 }
 
 

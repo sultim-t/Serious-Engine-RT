@@ -130,7 +130,7 @@ enum VtxType
 class ENGINE_API CGfxLibrary
 {
 public:
-  CGfxAPI gl_gaAPI[3];
+  CGfxAPI gl_gaAPI[2];
   CViewPort *gl_pvpActive;   // active viewport
   HINSTANCE  gl_hiDriver;    // DLL handle
 
@@ -142,13 +142,41 @@ public:
   ULONG gl_ulFlags;
 
 #ifdef SE1_VULKAN
-  VkInstance gl_VkInstance;
-  VkDevice gl_VkDevice;
-  VkFormat gl_VkColorFormat;
-  VkFormat gl_VkDepthFormat;
+  VkInstance                      gl_VkInstance;
+  VkDevice                        gl_VkDevice;
+  VkSurfaceKHR                    gl_VkSurface;
 
-  VkDebugUtilsMessengerEXT gl_VkDebugMessenger;
-  VkSurfaceKHR gl_VkSurface;
+  VkSwapchainKHR                  gl_VkSwapchain;
+  VkFormat                        gl_VkSurfColorFormat;
+  VkColorSpaceKHR                 gl_VkSurfColorSpace;
+  VkFormat                        gl_VkSurfDepthFormat;
+  VkPresentModeKHR                gl_VkSurfPresentMode;
+  CStaticArray<VkImage>           gl_VkSwapchainImages;
+  CStaticArray<VkImageView>       gl_VkSwapchainImageViews;
+  CStaticArray<VkImage>           gl_VkSwapchainDepthImages;
+  CStaticArray<VkDeviceMemory>    gl_VkSwapchainDepthMemory;
+  CStaticArray<VkImageView>       gl_VkSwapchainDepthImageViews;
+  CStaticArray<VkFramebuffer>     gl_VkFramebuffers;
+
+  VkPhysicalDevice                    gl_VkPhysDevice;
+  VkPhysicalDeviceMemoryProperties    gl_VkPhMemoryProperties;
+  VkPhysicalDeviceProperties          gl_VkPhProperties;
+  VkPhysicalDeviceFeatures            gl_VkPhFeatures;
+  VkSurfaceCapabilitiesKHR            gl_VkPhSurfCapabilities;
+  CStaticArray<VkSurfaceFormatKHR>    gl_VkPhSurfFormats;
+  CStaticArray<VkPresentModeKHR>      gl_VkPhSurfPresentModes;
+
+  CStaticArray<const char *>          gl_VkPhysDeviceExtensions;
+  CStaticArray<const char *>          gl_VkLayers;
+
+  uint32_t            gl_VkQueueFamGraphics;
+  uint32_t            gl_VkQueueFamTransfer;
+  uint32_t            gl_VkQueueFamPresent;
+  VkQueue             gl_VkQueueGraphics;
+  VkQueue             gl_VkQueueTransfer;
+  VkQueue             gl_VkQueuePresent;
+
+  VkDebugUtilsMessengerEXT            gl_VkDebugMessenger;
   
 #endif
 
@@ -234,11 +262,31 @@ private:
   void UploadPattern_D3D( ULONG ulPatternEven);
   void SwapBuffers_D3D( CViewPort *pvpToSwap);
 
+#ifdef SE1_VULKAN
   // Vulkan specific
-  BOOL InitDriver_Vulkan(void);
-  void EndDriver_Vulkan(void);
-  BOOL InitDisplay_Vulkan(INDEX iAdapter, PIX pixSizeI, PIX pixSizeJ, enum DisplayDepth eColorDepth);
+  BOOL InitDriver_Vulkan();
+  void EndDriver_Vulkan();
+  //BOOL InitDisplay_Vulkan(INDEX iAdapter, PIX pixSizeI, PIX pixSizeJ, enum DisplayDepth eColorDepth);
+  void InitContext_Vulkan();
   BOOL SetCurrentViewport_Vulkan(CViewPort* pvp);
+
+  BOOL PickPhysicalDevice();
+  BOOL InitSurface_Win32(HINSTANCE hinstance, HWND hwnd);
+  BOOL CreateDevice();
+public:
+  BOOL CreateSwapchain(uint32_t width, uint32_t height);
+  void RecreateSwapchain(uint32_t newWidth, uint32_t newHeight);
+  void DestroySwapchain();
+private:
+  BOOL CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t imageIndex);
+
+  BOOL GetQueues(VkPhysicalDevice physDevice,
+    uint32_t &graphicsQueueFamily, uint32_t &transferQueueFamily, uint32_t &presentQueueFamily);
+  BOOL CheckDeviceExtensions(VkPhysicalDevice physDevice, const CStaticArray<const char *> &requiredExtensions);
+  VkExtent2D GetSwapchainExtent(uint32_t width, uint32_t height);
+  uint32_t GetMemoryTypeIndex(uint32_t memoryTypeBits, VkFlags requirementsMask);
+  VkFormat FindSupportedFormat(const VkFormat *formats, uint32_t formatCount, VkImageTiling tiling, VkFormatFeatureFlags features);
+#endif // SE1_VULKAN
 
 public:
 

@@ -809,7 +809,7 @@ static void ogl_FrontFace( GfxFace eFace)
 // set custom clip plane 
 static void ogl_ClipPlane( const DOUBLE *pdViewPlane)
 {
-  /*// check API and plane
+  // check API and plane
   ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL && pdViewPlane!=NULL);
 
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
@@ -817,7 +817,7 @@ static void ogl_ClipPlane( const DOUBLE *pdViewPlane)
   pglClipPlane( GL_CLIP_PLANE0, pdViewPlane);
   OGL_CHECKERROR;
 
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
+  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
 
 
