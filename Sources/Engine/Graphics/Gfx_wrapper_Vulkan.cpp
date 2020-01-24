@@ -183,56 +183,6 @@ static void svk_DisableDepthWrite(void)
 
 
 
-static void svk_EnableDither(void)
-{
-  // check consistency
-  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  BOOL bRes;
-  bRes = pglIsEnabled(GL_DITHER);
-  VK_CHECKERROR;
-  ASSERT(!bRes == !GFX_bDithering);
-#endif
-
-  // cached?
-  if (GFX_bDithering && gap_bOptimizeStateChanges) return;
-  GFX_bDithering = TRUE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  pglEnable(GL_DITHER);
-  VK_CHECKERROR;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
-}
-
-
-
-static void svk_DisableDither(void)
-{
-  // check consistency
-  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  BOOL bRes;
-  bRes = pglIsEnabled(GL_DITHER);
-  VK_CHECKERROR;
-  ASSERT(!bRes == !GFX_bDithering);
-#endif
-
-  // cached?
-  if (!GFX_bDithering && gap_bOptimizeStateChanges) return;
-  GFX_bDithering = FALSE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  pglDisable(GL_DITHER);
-  VK_CHECKERROR;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
-}
-
-
-
 static void svk_EnableAlphaTest(void)
 {
   // check consistency
@@ -305,8 +255,8 @@ static void svk_EnableBlend(void)
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 
   // adjust dithering
-  if (gap_iDithering == 2) svk_EnableDither();
-  else svk_DisableDither();
+  /*if (gap_iDithering == 2) svk_EnableDither();
+  else svk_DisableDither();*/
 }
 
 
@@ -334,115 +284,8 @@ static void svk_DisableBlend(void)
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 
   // adjust dithering
-  if (gap_iDithering == 0) svk_DisableDither();
-  else svk_EnableDither();
-}
-
-
-
-static void svk_EnableClipping(void)
-{
-  // only if supported
-  if (!(_pGfx->gl_ulFlags & GLF_EXT_CLIPHINT)) return;
-
-  // check consistency
-  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  BOOL bRes;
-  pglGetIntegerv(GL_CLIP_VOLUME_CLIPPING_HINT_EXT, (GLint*)&bRes);
-  bRes = (bRes == GL_FASTEST) ? FALSE : TRUE;
-  VK_CHECKERROR;
-  ASSERT(!bRes == !GFX_bClipping);
-#endif
-
-  // cached?
-  if (GFX_bClipping && gap_bOptimizeStateChanges) return;
-  GFX_bClipping = TRUE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  pglHint(GL_CLIP_VOLUME_CLIPPING_HINT_EXT, GL_DONT_CARE);
-  VK_CHECKERROR;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
-}
-
-
-
-static void svk_DisableClipping(void)
-{
-  // only if allowed and supported
-  if (gap_iOptimizeClipping < 2 || !(_pGfx->gl_ulFlags & GLF_EXT_CLIPHINT)) return;
-
-  // check consistency
-  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  BOOL bRes;
-  pglGetIntegerv(GL_CLIP_VOLUME_CLIPPING_HINT_EXT, (GLint*)&bRes);
-  bRes = (bRes == GL_FASTEST) ? FALSE : TRUE;
-  VK_CHECKERROR;
-  ASSERT(!bRes == !GFX_bClipping);
-#endif
-
-  // cached?
-  if (!GFX_bClipping && gap_bOptimizeStateChanges) return;
-  GFX_bClipping = FALSE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  pglHint(GL_CLIP_VOLUME_CLIPPING_HINT_EXT, GL_FASTEST);
-  VK_CHECKERROR;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
-}
-
-
-
-
-static void svk_EnableClipPlane(void)
-{
-  // check consistency
-  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  BOOL bRes;
-  bRes = pglIsEnabled(GL_CLIP_PLANE0);
-  VK_CHECKERROR;
-  ASSERT(!bRes == !GFX_bClipPlane);
-#endif
-  // cached?
-  if (GFX_bClipPlane && gap_bOptimizeStateChanges) return;
-  GFX_bClipPlane = TRUE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  pglEnable(GL_CLIP_PLANE0);
-  VK_CHECKERROR;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
-}
-
-
-
-static void svk_DisableClipPlane(void)
-{
-  // check consistency
-  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  BOOL bRes;
-  bRes = pglIsEnabled(GL_CLIP_PLANE0);
-  VK_CHECKERROR;
-  ASSERT(!bRes == !GFX_bClipPlane);
-#endif
-  // cached?
-  if (!GFX_bClipPlane && gap_bOptimizeStateChanges) return;
-  GFX_bClipPlane = FALSE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  pglDisable(GL_CLIP_PLANE0);
-  VK_CHECKERROR;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+  /*if (gap_iDithering == 0) svk_DisableDither();
+  else svk_EnableDither();*/
 }
 
 
@@ -492,62 +335,6 @@ static void svk_DisableColorArray(void)
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   pglDisableClientState(GL_COLOR_ARRAY);
-  VK_CHECKERROR;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
-}
-
-
-
-// enable truform rendering
-static void svk_EnableTruform(void)
-{
-  // skip if Truform isn't set
-  if (truform_iLevel < 1) return;
-
-  // check consistency
-  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  BOOL bRes;
-  bRes = pglIsEnabled(GL_PN_TRIANGLES_ATI);
-  VK_CHECKERROR;
-  ASSERT(!bRes == !GFX_bTruform);
-#endif
-
-  if (GFX_bTruform && gap_bOptimizeStateChanges) return;
-  GFX_bTruform = TRUE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  pglEnable(GL_PN_TRIANGLES_ATI);
-  VK_CHECKERROR;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
-}
-
-
-
-// disable truform rendering
-static void svk_DisableTruform(void)
-{
-  // skip if Truform isn't set
-  if (truform_iLevel < 1) return;
-
-  // check consistency
-  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  BOOL bRes;
-  bRes = pglIsEnabled(GL_PN_TRIANGLES_ATI);
-  VK_CHECKERROR;
-  ASSERT(!bRes == !GFX_bTruform);
-#endif
-
-  if (!GFX_bTruform && gap_bOptimizeStateChanges) return;
-  GFX_bTruform = FALSE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  pglDisable(GL_PN_TRIANGLES_ATI);
   VK_CHECKERROR;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
@@ -615,25 +402,6 @@ static void svk_BlendFunc(GfxBlend eSrc, GfxBlend eDst)
   // done
   GFX_eBlendSrc = eSrc;
   GFX_eBlendDst = eDst;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
-}
-
-
-
-// color buffer writing enable
-static void svk_SetColorMask(ULONG ulColorMask)
-{
-  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-  _ulCurrentColorMask = ulColorMask; // keep for Get...()
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  const BOOL bR = (ulColorMask & CT_RMASK) == CT_RMASK;
-  const BOOL bG = (ulColorMask & CT_GMASK) == CT_GMASK;
-  const BOOL bB = (ulColorMask & CT_BMASK) == CT_BMASK;
-  const BOOL bA = (ulColorMask & CT_AMASK) == CT_AMASK;
-  pglColorMask(bR, bG, bB, bA);
-  VK_CHECKERROR;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -798,42 +566,6 @@ static void svk_FrontFace(GfxFace eFace)
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
-
-
-
-// set custom clip plane 
-static void svk_ClipPlane(const DOUBLE* pdViewPlane)
-{
-  // check API and plane
-  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK && pdViewPlane != NULL);
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  pglClipPlane(GL_CLIP_PLANE0, pdViewPlane);
-  VK_CHECKERROR;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
-}
-
-
-
-// set texture matrix
-static void svk_SetTextureMatrix(const FLOAT* pfMatrix/*=NULL*/)
-{
-  // check API
-  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  // set matrix
-  pglMatrixMode(GL_TEXTURE);
-  if (pfMatrix != NULL) pglLoadMatrixf(pfMatrix);
-  else pglLoadIdentity();
-  VK_CHECKERROR;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
-}
-
 
 
 
@@ -1166,5 +898,54 @@ static void svk_LockArrays(void)
   VK_CHECKERROR;
   _bCVAReallyLocked = TRUE;
 }
+
+
+
+// color buffer writing enable
+static void svk_SetColorMask(ULONG ulColorMask)
+{
+  /*ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+  _ulCurrentColorMask = ulColorMask; // keep for Get...()
+  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+
+  const BOOL bR = (ulColorMask & CT_RMASK) == CT_RMASK;
+  const BOOL bG = (ulColorMask & CT_GMASK) == CT_GMASK;
+  const BOOL bB = (ulColorMask & CT_BMASK) == CT_BMASK;
+  const BOOL bA = (ulColorMask & CT_AMASK) == CT_AMASK;
+  pglColorMask(bR, bG, bB, bA);
+  VK_CHECKERROR;
+
+  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
+}
+
+static void svk_EnableDither(void)
+{}
+
+static void svk_DisableDither(void)
+{}
+
+static void svk_EnableClipping(void)
+{}
+
+static void svk_DisableClipping(void)
+{}
+
+static void svk_EnableClipPlane(void)
+{}
+
+static void svk_DisableClipPlane(void)
+{}
+
+static void svk_EnableTruform(void)
+{}
+
+static void svk_DisableTruform(void)
+{}
+
+static void svk_ClipPlane(const DOUBLE* pdViewPlane)
+{}
+
+static void svk_SetTextureMatrix(const FLOAT* pfMatrix/*=NULL*/)
+{}
 
 #endif // SE1_VULKAN

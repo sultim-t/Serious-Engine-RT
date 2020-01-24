@@ -1414,6 +1414,9 @@ BOOL CGfxLibrary::StartDisplayMode( enum GfxAPIType eAPI, INDEX iAdapter, PIX pi
     bSuccess = InitDriver_Vulkan();
     if (!bSuccess) return FALSE;
 
+    bSuccess = InitDisplay_Vulkan(iAdapter, pixSizeI, pixSizeJ, eColorDepth);
+    if (!bSuccess) return FALSE;
+
     gl_eCurrentAPI = GAT_VK;
   }
 #endif // SE1_VULKAN

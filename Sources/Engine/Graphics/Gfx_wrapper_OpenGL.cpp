@@ -118,7 +118,7 @@ static void ogl_DisableDepthTest(void)
 
 static void ogl_EnableDepthBias(void)
 {
-  ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL);
+  /*ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL);
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   pglEnable( GL_POLYGON_OFFSET_POINT);
@@ -127,13 +127,13 @@ static void ogl_EnableDepthBias(void)
   pglPolygonOffset( -1.0f, -2.0f);
   OGL_CHECKERROR;
 
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
 }
 
 
 static void ogl_DisableDepthBias(void)
 {
-  ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL);
+  /*ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL);
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   pglDisable( GL_POLYGON_OFFSET_POINT);
@@ -142,7 +142,7 @@ static void ogl_DisableDepthBias(void)
   pglPolygonOffset( 0.0f, 0.0f);
   OGL_CHECKERROR;
 
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
 }
 
 
@@ -199,7 +199,7 @@ static void ogl_DisableDepthWrite(void)
 
 static void ogl_EnableDither(void)
 {
-  // check consistency
+  /*// check consistency
   ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL);
 #ifndef NDEBUG
   BOOL bRes;
@@ -217,14 +217,14 @@ static void ogl_EnableDither(void)
   pglEnable(GL_DITHER);
   OGL_CHECKERROR;
 
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
 }
 
 
 
 static void ogl_DisableDither(void)
 {
-  // check consistency
+  /*// check consistency
   ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL);
 #ifndef NDEBUG
   BOOL bRes; 
@@ -242,7 +242,7 @@ static void ogl_DisableDither(void)
   pglDisable(GL_DITHER);
   OGL_CHECKERROR;
 
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
 }
 
 
@@ -356,7 +356,7 @@ static void ogl_DisableBlend(void)
 
 static void ogl_EnableClipping(void)
 {
-  // only if supported
+  /*// only if supported
   if( !(_pGfx->gl_ulFlags&GLF_EXT_CLIPHINT)) return;
 
   // check consistency
@@ -378,14 +378,14 @@ static void ogl_EnableClipping(void)
   pglHint( GL_CLIP_VOLUME_CLIPPING_HINT_EXT, GL_DONT_CARE);
   OGL_CHECKERROR;
 
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
 }
 
 
 
 static void ogl_DisableClipping(void)
 {
-  // only if allowed and supported
+  /*// only if allowed and supported
   if( gap_iOptimizeClipping<2 || !(_pGfx->gl_ulFlags&GLF_EXT_CLIPHINT)) return;
 
   // check consistency
@@ -407,7 +407,7 @@ static void ogl_DisableClipping(void)
   pglHint( GL_CLIP_VOLUME_CLIPPING_HINT_EXT, GL_FASTEST);
   OGL_CHECKERROR;
 
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
 }
 
 
@@ -415,7 +415,7 @@ static void ogl_DisableClipping(void)
 
 static void ogl_EnableClipPlane(void)
 {
-  // check consistency
+  /*// check consistency
   ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL);
 #ifndef NDEBUG
   BOOL bRes; 
@@ -432,14 +432,14 @@ static void ogl_EnableClipPlane(void)
   pglEnable( GL_CLIP_PLANE0);
   OGL_CHECKERROR;
 
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
 }
 
 
 
 static void ogl_DisableClipPlane(void)
 {
-  // check consistency
+  /*// check consistency
   ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL);
 #ifndef NDEBUG
   BOOL bRes; 
@@ -456,7 +456,7 @@ static void ogl_DisableClipPlane(void)
   pglDisable(GL_CLIP_PLANE0);
   OGL_CHECKERROR;
 
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
 }
 
 
@@ -516,7 +516,7 @@ static void ogl_DisableColorArray(void)
 // enable truform rendering
 static void ogl_EnableTruform(void)
 {
-  // skip if Truform isn't set
+  /*// skip if Truform isn't set
   if( truform_iLevel<1) return;
 
   // check consistency
@@ -536,7 +536,7 @@ static void ogl_EnableTruform(void)
   pglEnable( GL_PN_TRIANGLES_ATI); 
   OGL_CHECKERROR;
 
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
 }
 
 
@@ -544,7 +544,7 @@ static void ogl_EnableTruform(void)
 // disable truform rendering
 static void ogl_DisableTruform(void)
 {
-  // skip if Truform isn't set
+  /*// skip if Truform isn't set
   if( truform_iLevel<1) return;
 
   // check consistency
@@ -564,7 +564,7 @@ static void ogl_DisableTruform(void)
   pglDisable( GL_PN_TRIANGLES_ATI); 
   OGL_CHECKERROR;
 
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
 }
 
 
@@ -635,7 +635,7 @@ static void ogl_BlendFunc( GfxBlend eSrc, GfxBlend eDst)
 // color buffer writing enable
 static void ogl_SetColorMask( ULONG ulColorMask)
 {
-  ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL);
+  /*ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL);
   _ulCurrentColorMask = ulColorMask; // keep for Get...()
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
@@ -646,7 +646,7 @@ static void ogl_SetColorMask( ULONG ulColorMask)
   pglColorMask( bR,bG,bB,bA);
   OGL_CHECKERROR;
 
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
 }
 
 
@@ -809,7 +809,7 @@ static void ogl_FrontFace( GfxFace eFace)
 // set custom clip plane 
 static void ogl_ClipPlane( const DOUBLE *pdViewPlane)
 {
-  // check API and plane
+  /*// check API and plane
   ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL && pdViewPlane!=NULL);
 
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
@@ -817,7 +817,7 @@ static void ogl_ClipPlane( const DOUBLE *pdViewPlane)
   pglClipPlane( GL_CLIP_PLANE0, pdViewPlane);
   OGL_CHECKERROR;
 
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
 }
 
 
@@ -825,7 +825,7 @@ static void ogl_ClipPlane( const DOUBLE *pdViewPlane)
 // set texture matrix
 static void ogl_SetTextureMatrix( const FLOAT *pfMatrix/*=NULL*/)
 {
-  // check API
+  /*// check API
   ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL);
 
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
@@ -836,7 +836,7 @@ static void ogl_SetTextureMatrix( const FLOAT *pfMatrix/*=NULL*/)
   else pglLoadIdentity();
   OGL_CHECKERROR;
 
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
 }
 
 

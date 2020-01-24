@@ -109,7 +109,7 @@ inline static void SetMatrixDiagonal(Matrix12 &mat,FLOAT fValue)
 // Set texture matrix
 static inline void gfxSetTextureMatrix2(Matrix12 *pMatrix)
 {
-  pglMatrixMode( GL_TEXTURE);
+  /*pglMatrixMode( GL_TEXTURE);
   if(pMatrix==NULL) {
     pglLoadIdentity();
   } else {
@@ -123,7 +123,7 @@ static inline void gfxSetTextureMatrix2(Matrix12 *pMatrix)
     pglLoadMatrixf(mtra16);
     pglMultMatrixf(mrot16);
   }
-  pglMatrixMode(GL_MODELVIEW);
+  pglMatrixMode(GL_MODELVIEW);*/
 }
 
 
