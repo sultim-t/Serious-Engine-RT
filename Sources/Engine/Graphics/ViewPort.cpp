@@ -62,14 +62,6 @@ static void SetAsRenderTarget_D3D( CViewPort *pvp)
 }
 #endif // SE1_D3D
 
-#ifdef SE1_VULKAN
-static void CreateSwapchain_Vulkan(CViewPort* pvp, PIX pixSizeI, PIX pixSizeJ)
-{
-  _pGfx->CreateSwapchain(pixSizeI, pixSizeJ);
-}
-#endif // SE1_VULKAN
-
-
 // helper for OGL
 
 CTempDC::CTempDC(HWND hWnd)
@@ -203,7 +195,10 @@ void CViewPort::OpenCanvas(void)
 #endif // SE1_D3D
 
 #ifdef SE1_VULKAN
-  if (_pGfx->gl_eCurrentAPI==GAT_VK && !bFullScreen) CreateSwapchain_Vulkan(this, pixWinSizeI, pixWinSizeJ);
+  if (_pGfx->gl_eCurrentAPI == GAT_VK && !bFullScreen)
+  {
+    _pGfx->CreateSwapchain(pixWinSizeI, pixWinSizeJ);
+  }
 #endif // SE1_VULKAN
 
 
@@ -216,7 +211,7 @@ void CViewPort::OpenCanvas(void)
 #endif // SE1_D3D
 
 #ifdef SE1_VULKAN
-  // TODO : Vulkan
+  // is it required?
   // if (_pGfx->gl_eCurrentAPI == GAT_VK && vp_VkSwapchain != VK_NULL_HANDLE) SetAsRenderTarget_Vulkan(this);
 #endif // SE1_VULKAN
 }

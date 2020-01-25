@@ -294,6 +294,7 @@ static INDEX sys_bHasTruform = 0;
 static INDEX sys_bHasCVAs = 0;
 static INDEX sys_bUsingOpenGL = 0;
 extern INDEX sys_bUsingDirect3D = 0;
+extern INDEX sys_bUsingVulkan = 0;
 
 /*
  * Low level hook flags
@@ -497,8 +498,7 @@ static void GAPInfo(void)
     && _pGfx->gl_pd3dDevice==NULL
 #endif // SE1_D3D
 #ifdef SE1_VULKAN
-    // TODO: Vulkan
-    // && _pGfx.gl_pdVkDevice==NULL
+    && _pGfx->gl_VkInstance==VK_NULL_HANDLE
 #endif // SE1_VULKAN
 
     ) || eAPI==GAT_NONE) {
@@ -729,7 +729,7 @@ static void GAPInfo(void)
 #ifdef SE1_VULKAN
   if (eAPI == GAT_VK)
   {
-    
+    CPrintF("Using Vulkan API.\n");
   }
 #endif // SE1_VULKAN
 }
@@ -749,7 +749,7 @@ extern void UpdateGfxSysCVars(void)
   sys_bHasTruform = 0;
   sys_bHasCVAs = 1;
   sys_bUsingOpenGL = 0;
-  // TODO : sys_bUsingVulkan = 0;
+  sys_bUsingVulkan = 0;
   sys_bUsingDirect3D = 0;
   if( _pGfx->gl_iMaxTextureAnisotropy>1) sys_bHasTextureAnisotropy = 1;
   if( _pGfx->gl_fMaxTextureLODBias>0) sys_bHasTextureLODBias = 1;
@@ -760,19 +760,19 @@ extern void UpdateGfxSysCVars(void)
   if( _pGfx->gl_ulFlags & GLF_32BITTEXTURES) sys_bHas32bitTextures = 1;
   if( _pGfx->gl_ulFlags & GLF_VSYNC) sys_bHasSwapInterval = 1;
   if( _pGfx->gl_eCurrentAPI==GAT_OGL && !(_pGfx->gl_ulFlags&GLF_EXT_COMPILEDVERTEXARRAY)) sys_bHasCVAs = 0;
+
 #ifdef SE1_D3D
   if( _pGfx->gl_eCurrentAPI==GAT_D3D && !(_pGfx->gl_ulFlags&GLF_D3D_HASHWTNL)) sys_bHasHardwareTnL = 0;
 #endif // SE1_D3D
-#ifdef SE1_VULKAN
-  // TODO: Vulkan
-#endif // SE1_VULKAN
+
   if( _pGfx->gl_eCurrentAPI==GAT_OGL) sys_bUsingOpenGL = 1;
+
 #ifdef SE1_D3D
   if( _pGfx->gl_eCurrentAPI==GAT_D3D) sys_bUsingDirect3D = 1;
 #endif // SE1_D3D
+
 #ifdef SE1_VULKAN
-  // TODO:
-  // if (_pGfx->gl_eCurrentAPI == GAT_VK) sys_bUsingVulkan = 1;
+  if (_pGfx->gl_eCurrentAPI == GAT_VK) sys_bUsingVulkan = 1;
 #endif // SE1_VULKAN
 }
 
@@ -1011,7 +1011,36 @@ CGfxLibrary::CGfxLibrary(void)
   gl_ctIndices  = 0;
 
 #ifdef SE1_VULKAN
-  // TODO: Vulkan
+  gl_VkInstance = VK_NULL_HANDLE;
+  gl_VkDevice = VK_NULL_HANDLE;
+  gl_VkSurface = VK_NULL_HANDLE;
+  gl_VkCurrentImageIndex = 0;
+  gl_VkFence = VK_NULL_HANDLE;
+  gl_VkCurrentViewport = {};
+  gl_VkSwapChainExtent = {};
+  gl_VkCmdPool = VK_NULL_HANDLE;;
+  gl_VkRenderPass = VK_NULL_HANDLE;
+
+  gl_VkSwapchain = VK_NULL_HANDLE;
+  gl_VkSurfColorFormat = VK_FORMAT_B8G8R8A8_UNORM;
+  gl_VkSurfColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
+  gl_VkSurfDepthFormat = VK_FORMAT_D16_UNORM;
+  gl_VkSurfPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+
+  gl_VkPhysDevice = VK_NULL_HANDLE;
+  gl_VkPhMemoryProperties = {};
+  gl_VkPhProperties = {};
+  gl_VkPhFeatures = {};
+  gl_VkPhSurfCapabilities = {};
+
+  gl_VkQueueFamGraphics = VK_NULL_HANDLE;
+  gl_VkQueueFamTransfer = VK_NULL_HANDLE;
+  gl_VkQueueFamPresent = VK_NULL_HANDLE;
+  gl_VkQueueGraphics = VK_NULL_HANDLE;
+  gl_VkQueueTransfer = VK_NULL_HANDLE;
+  gl_VkQueuePresent = VK_NULL_HANDLE;
+
+  gl_VkDebugMessenger = VK_NULL_HANDLE;
 #endif // SE1_VULKAN
 
   // reset profiling counters
@@ -1267,6 +1296,7 @@ void CGfxLibrary::Init(void)
   _pShell->DeclareSymbol( "INDEX sys_bHasCVAs;", &sys_bHasCVAs);
   _pShell->DeclareSymbol( "INDEX sys_bUsingOpenGL;",   &sys_bUsingOpenGL);
   _pShell->DeclareSymbol( "INDEX sys_bUsingDirect3D;", &sys_bUsingDirect3D);
+  _pShell->DeclareSymbol( "INDEX sys_bUsingVulkan;", &sys_bUsingVulkan);
 
   // initialize gfx APIs support
   InitAPIs();
@@ -1467,9 +1497,8 @@ void CGfxLibrary::StopDisplayMode(void)
 #ifdef SE1_VULKAN
   else if (gl_eCurrentAPI == GAT_VK)
   { // Vulkan
-    // TODO: Vulkan
-
-    //EndDriver_Vk();
+    EndDriver_Vulkan();
+    MonitorsOn();
   }
 #endif // SE1_VULKAN
   else
@@ -1501,7 +1530,6 @@ BOOL CGfxLibrary::SetCurrentViewport(CViewPort *pvp)
   if( gl_eCurrentAPI==GAT_D3D)  return SetCurrentViewport_D3D(pvp);
 #endif // SE1_D3D
 #ifdef SE1_VULKAN
-  // TODO: Vulkan
   if (gl_eCurrentAPI == GAT_VK) return SetCurrentViewport_Vulkan(pvp);
 #endif // SE1_VULKAN
   if( gl_eCurrentAPI==GAT_NONE) return TRUE;
@@ -1565,7 +1593,12 @@ BOOL CGfxLibrary::LockDrawPort( CDrawPort *pdpToLock)
 #ifdef SE1_VULKAN
   else if (gl_eCurrentAPI == GAT_VK)
   {
-    // TODO: Vulkan
+    const PIX pixMinSI = pdpToLock->dp_ScissorMinI;
+    const PIX pixMaxSI = pdpToLock->dp_ScissorMaxI;
+    const PIX pixMinSJ = pdpToLock->dp_ScissorMinJ;
+    const PIX pixMaxSJ = pdpToLock->dp_ScissorMaxJ;
+
+    SetViewport_Vulkan(pixMinSI, pixMinSJ, pixMaxSI - pixMinSI + 1, pixMaxSJ - pixMinSJ + 1, 0, 1);
   }
 #endif // SE1_VULKAN
 
@@ -1902,7 +1935,19 @@ void CGfxLibrary::SwapBuffers(CViewPort *pvp)
 #ifdef SE1_VULKAN
   else if (gl_eCurrentAPI == GAT_VK)
   {
-    // TODO: Vulkan - swap buffers
+    // force finishing of all rendering operations (if required)
+    //if (vk_iFinish == 2) gfxFinish();
+
+    // end recording to cmd buffers
+    if (GFX_bRenderingScene) 
+    {
+      EndCommandBuffer();
+    }
+
+    SwapBuffers_Vulkan();
+
+    // force finishing of all rendering operations (if required)
+    //if (vk_iFinish == 3) gfxFinish();
   }
 #endif // SE1_VK
 
@@ -1978,7 +2023,7 @@ void CGfxLibrary::SwapBuffers(CViewPort *pvp)
 #ifdef SE1_VULKAN
       else if (gl_eCurrentAPI == GAT_VK)
       {
-        // TODO: Vulkan
+        CPrintF("Vulkan: Gamma adjustment is not available now.\n");
       }
 #endif // SE1_VULKAN
     }
@@ -2030,9 +2075,11 @@ BOOL CGfxLibrary::LockRaster( CRaster *praToLock)
 #ifdef SE1_VULKAN
     if (gl_eCurrentAPI == GAT_VK && !GFX_bRenderingScene)
     {
-      // TODO: Vulkan
+      StartFrame();
+      StartCommandBuffer();
     }
 #endif // SE1_VULKAN
+
     GFX_bRenderingScene = TRUE;
   } // done
   return bRes;

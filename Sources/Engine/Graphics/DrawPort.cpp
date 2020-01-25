@@ -1192,9 +1192,8 @@ void CDrawPort::GrabScreen( class CImageInfo &iiGrabbedImage, INDEX iGrabZBuffer
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-
-    // TODO: Vulkan
-
+    // TODO: Vulkan low prio
+    CPrintF("Screen grabbing is not implemented for Vulkan.\n");
   }
 #endif // SE1_VULKAN
 }

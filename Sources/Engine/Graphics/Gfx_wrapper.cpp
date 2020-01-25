@@ -168,12 +168,18 @@ extern void D3D_CheckError(HRESULT hr)
 #endif // SE1_D3D
 
 #ifdef SE1_VULKAN
-extern void Vk_CheckError(VkResult r)
+extern void Vk_CheckError(VkResult r) //, const char *msg)
 {
 #ifndef NDEBUG
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
-  if (eAPI == GAT_VK) ASSERT(r == VK_SUCCESS);
-  else ASSERT(eAPI == GAT_NONE);
+  if (eAPI == GAT_VK)
+  {
+    ASSERT(r == VK_SUCCESS);
+  }
+  else
+  {
+    ASSERT(eAPI == GAT_NONE);
+  }
 #endif
 }
 #endif // SE1_VULKAN

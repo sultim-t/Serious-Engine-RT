@@ -125,12 +125,27 @@ BOOL CGfxLibrary::InitDriver_Vulkan()
     return FALSE;
   }
 
+  VkCommandPoolCreateInfo cmdPoolInfo = {};
+  cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  cmdPoolInfo.pNext = nullptr;
+  cmdPoolInfo.queueFamilyIndex = gl_VkQueueFamGraphics;
+  cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+  r = vkCreateCommandPool(gl_VkDevice, &cmdPoolInfo, nullptr, &gl_VkCmdPool);
+  VK_CHECKERROR(r);
+
+  CreateRenderPass();
+  CreateSyncPrimitives();
+
   return TRUE;
 }
 
 void CGfxLibrary::EndDriver_Vulkan(void)
 {
+  vkDeviceWaitIdle(gl_VkDevice);
+
   // TODO
+  gl_VkCmdBuffers.Clear();
 
 #ifndef NDEBUG
   auto pfnDestroyDUMsg = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(gl_VkInstance, "vkDestroyDebugUtilsMessengerEXT");
@@ -177,7 +192,7 @@ BOOL CGfxLibrary::SetCurrentViewport_Vulkan(CViewPort* pvp)
     return TRUE;
   }
 
-  // if must init entire D3D
+  // if must init entire Vulkan
   if (gl_ulFlags & GLF_INITONNEXTWINDOW) {
     gl_ulFlags &= ~GLF_INITONNEXTWINDOW;
     // reopen window
@@ -216,6 +231,45 @@ BOOL CGfxLibrary::SetCurrentViewport_Vulkan(CViewPort* pvp)
   return TRUE;
 }
 
+void CGfxLibrary::SwapBuffers_Vulkan()
+{
+  VkResult r;
+
+  // wait until rendering is finished
+  VkSemaphore smpToWait = gl_VkRenderFinishedSemaphores[gl_VkCurrentFrame];
+
+  VkPresentInfoKHR presentInfo = {};
+  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+  presentInfo.waitSemaphoreCount = 1;
+  presentInfo.pWaitSemaphores = &smpToWait;
+  presentInfo.swapchainCount = 1;
+  presentInfo.pSwapchains = &gl_VkSwapchain;
+  presentInfo.pImageIndices = &gl_VkCurrentImageIndex;
+
+  r = vkQueuePresentKHR(gl_VkQueuePresent, &presentInfo);
+
+  if (r == VK_ERROR_OUT_OF_DATE_KHR || r == VK_SUBOPTIMAL_KHR)
+  {
+
+  }
+  else if (r != VK_SUCCESS) 
+  {
+    ASSERTALWAYS("Vulkan error: Can't present swap chain image.\n");
+  }
+
+  gl_VkCurrentFrame = (gl_VkCurrentFrame + 1) % gl_VkMaxFramesInFlight;
+}
+
+void CGfxLibrary::SetViewport_Vulkan(float leftUpperX, float leftUpperY, float width, float height, float minDepth, float maxDepth)
+{
+  gl_VkCurrentViewport.x = leftUpperX;
+  gl_VkCurrentViewport.y = leftUpperY;
+  gl_VkCurrentViewport.width = width;
+  gl_VkCurrentViewport.height = height;
+  gl_VkCurrentViewport.minDepth = minDepth;
+  gl_VkCurrentViewport.maxDepth = maxDepth;
+}
+
 BOOL CGfxLibrary::PickPhysicalDevice()
 {
   VkResult r;
@@ -236,8 +290,8 @@ BOOL CGfxLibrary::PickPhysicalDevice()
   {
     VkPhysicalDevice physDevice = physDevices[i];
 
-    bool foundQueues = GetQueues(physDevice, gl_VkQueueFamGraphics, gl_VkQueueFamTransfer, gl_VkQueueFamPresent);
-    bool extensionsSupported = CheckDeviceExtensions(physDevice, gl_VkPhysDeviceExtensions);
+    BOOL foundQueues = GetQueues(physDevice, gl_VkQueueFamGraphics, gl_VkQueueFamTransfer, gl_VkQueueFamPresent);
+    BOOL extensionsSupported = CheckDeviceExtensions(physDevice, gl_VkPhysDeviceExtensions);
 
     if (foundQueues && extensionsSupported)
     {
@@ -353,7 +407,7 @@ BOOL CGfxLibrary::CheckDeviceExtensions(VkPhysicalDevice physDevice, const CStat
 
   for (uint32_t i = 0; i < requiredExtensions.Count(); i++)
   {
-    bool found = FALSE;
+    BOOL found = FALSE;
     for (uint32_t j = 0; j < deviceExtCount; j++)
     {
       if (CTString(requiredExtensions[i]) == deviceExts[j].extensionName)
@@ -435,11 +489,104 @@ BOOL CGfxLibrary::CreateDevice()
   return TRUE;
 }
 
-BOOL CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
+void CGfxLibrary::CreateRenderPass()
 {
-  VkResult r1 = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gl_VkPhysDevice, gl_VkSurface, &gl_VkPhSurfCapabilities);
+  VkAttachmentDescription colorAttachment = {};
+  colorAttachment.format = gl_VkSurfColorFormat;
+  colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-  uint32_t preferredImageCount = gl_VkPhSurfCapabilities.minImageCount;
+  VkAttachmentDescription depthAttachment = {};
+  depthAttachment.format = gl_VkSurfDepthFormat;
+  depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+  VkAttachmentReference colorAttachmentRef = {};
+  colorAttachmentRef.attachment = 0;
+  colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  VkAttachmentReference depthAttachmentRef = {};
+  depthAttachmentRef.attachment = 1;
+  depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+  VkSubpassDescription subpass = {};
+  subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subpass.colorAttachmentCount = 1;
+  subpass.pColorAttachments = &colorAttachmentRef;
+  subpass.pDepthStencilAttachment = &depthAttachmentRef;
+
+  VkSubpassDependency dependency = {};
+  dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+  dependency.dstSubpass = 0;
+  dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.srcAccessMask = 0;
+  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+  VkAttachmentDescription attachments[2] = { colorAttachment, depthAttachment };
+  VkRenderPassCreateInfo renderPassInfo = {};
+  renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+  renderPassInfo.attachmentCount = 2;
+  renderPassInfo.pAttachments = attachments;
+  renderPassInfo.subpassCount = 1;
+  renderPassInfo.pSubpasses = &subpass;
+  renderPassInfo.dependencyCount = 1;
+  renderPassInfo.pDependencies = &dependency;
+
+  if (vkCreateRenderPass(gl_VkDevice, &renderPassInfo, nullptr, &gl_VkRenderPass) != VK_SUCCESS) 
+  {
+    ASSERTALWAYS("Vulkan error: Can't create render pass!");
+  }
+}
+
+void CGfxLibrary::CreateSyncPrimitives()
+{
+  VkResult r;
+
+  gl_VkImageAvailableSemaphores.New(gl_VkMaxFramesInFlight);
+  gl_VkRenderFinishedSemaphores.New(gl_VkMaxFramesInFlight);
+  gl_VkInFlightFences.New(gl_VkMaxFramesInFlight);
+
+  VkSemaphoreCreateInfo semaphoreInfo = {};
+  semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+  VkFenceCreateInfo fenceInfo = {};
+  fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+  for (uint32_t i = 0; i < gl_VkMaxFramesInFlight; i++) 
+  {
+    r = vkCreateSemaphore(gl_VkDevice, &semaphoreInfo, nullptr, &gl_VkImageAvailableSemaphores[i]);
+    VK_CHECKERROR(r);
+
+    r = vkCreateSemaphore(gl_VkDevice, &semaphoreInfo, nullptr, &gl_VkRenderFinishedSemaphores[i]);
+    VK_CHECKERROR(r);
+
+    r = vkCreateFence(gl_VkDevice, &fenceInfo, nullptr, &gl_VkInFlightFences[i]);
+    VK_CHECKERROR(r);
+  }
+}
+
+void CGfxLibrary::CreateGraphicsPipeline()
+{
+  // todo: dynamic state for scissor and vieport
+}
+
+void CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
+{
+  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gl_VkPhysDevice, gl_VkSurface, &gl_VkPhSurfCapabilities);
+
+  const uint32_t preferredImageCount = gl_VkPhSurfCapabilities.minImageCount;
   uint32_t swapchainImageCount;
 
   VkSwapchainCreateInfoKHR createInfo = {};
@@ -472,15 +619,13 @@ BOOL CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
 
   if (vkCreateSwapchainKHR(gl_VkDevice, &createInfo, nullptr, &gl_VkSwapchain) != VK_SUCCESS)
   {
-    CPrintF("Vulkan error: Can't create VkSwapchainKHR.\n");
-    return FALSE;
+    ASSERTALWAYS("Vulkan error: Can't create VkSwapchainKHR.\n");
   }
 
   // get images from swapchain
   if (vkGetSwapchainImagesKHR(gl_VkDevice, gl_VkSwapchain, &swapchainImageCount, nullptr) != VK_SUCCESS)
   {
-    CPrintF("Vulkan error: Can't get swapchain images.\n");
-    return FALSE;
+    ASSERTALWAYS("Vulkan error: Can't get swapchain images.\n");
   }
 
   // allocate arrays
@@ -489,11 +634,12 @@ BOOL CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
   gl_VkSwapchainDepthImages.New(swapchainImageCount);
   gl_VkSwapchainDepthMemory.New(swapchainImageCount);
   gl_VkSwapchainDepthImageViews.New(swapchainImageCount);
+  gl_VkFramebuffers.New(swapchainImageCount);
+  gl_VkImagesInFlight.New(swapchainImageCount);
 
   if (vkGetSwapchainImagesKHR(gl_VkDevice, gl_VkSwapchain, &swapchainImageCount, &gl_VkSwapchainImages[0]) != VK_SUCCESS)
   {
-    CPrintF("Vulkan error: Can't get swapchain images.\n");
-    return FALSE;
+    ASSERTALWAYS("Vulkan error: Can't get swapchain images.\n");
   }
 
   // init image views
@@ -518,8 +664,7 @@ BOOL CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
 
     if (vkCreateImageView(gl_VkDevice, &viewInfo, nullptr, &gl_VkSwapchainImageViews[i]) != VK_SUCCESS)
     {
-      CPrintF("Vulkan error: Can't create image view for swapchain image.\n");
-      return FALSE;
+      ASSERTALWAYS("Vulkan error: Can't create image view for swapchain image.\n");
     }
   }
 
@@ -528,19 +673,78 @@ BOOL CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
   {
     if (!CreateSwapchainDepth(width, height, i))
     {
-      return FALSE;
+      ASSERTALWAYS("Vulkan error: Can't create depth buffers for swapchain.\n");
     }
   }
 
-  return TRUE;
+  // allocate cmd buffers, if required
+  int diff = (int)swapchainImageCount - (int)gl_VkCmdBuffers.Count();
+  if (diff > 0)
+  {
+    int oldCount = (int)gl_VkCmdBuffers.Count();
+    gl_VkCmdBuffers.Expand(swapchainImageCount);
+
+    VkCommandBufferAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = gl_VkCmdPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = (uint32_t)diff;
+
+    if (vkAllocateCommandBuffers(gl_VkDevice, &allocInfo, &gl_VkCmdBuffers[oldCount]) != VK_SUCCESS)
+    {
+      ASSERTALWAYS("Vulkan error: Can't allocate command buffers.\n");
+    }
+  }
+
+  gl_VkSwapChainExtent.width = width;
+  gl_VkSwapChainExtent.height = height;
+
+  // create framebuffers
+  for (uint32_t i = 0; i < swapchainImageCount; i++)
+  {
+    VkImageView attachments[] = {
+      gl_VkSwapchainImageViews[i],
+      gl_VkSwapchainDepthImageViews[i]
+    };
+
+    VkFramebufferCreateInfo framebufferInfo = {};
+    framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    framebufferInfo.renderPass = gl_VkRenderPass;
+    framebufferInfo.attachmentCount = 2;
+    framebufferInfo.pAttachments = attachments;
+    framebufferInfo.width = gl_VkSwapChainExtent.width;
+    framebufferInfo.height = gl_VkSwapChainExtent.height;
+    framebufferInfo.layers = 1;
+
+    if (vkCreateFramebuffer(gl_VkDevice, &framebufferInfo, nullptr, &gl_VkFramebuffers[i]) != VK_SUCCESS)
+    {
+      ASSERTALWAYS("Vulkan error: Can't create framebuffer.\n");
+    }
+  }
+
+  for (uint32_t i = 0; i < swapchainImageCount; i++)
+  {
+    gl_VkImagesInFlight[i] = VK_NULL_HANDLE;
+  }
 }
 
 void CGfxLibrary::RecreateSwapchain(uint32_t newWidth, uint32_t newHeight)
 {
+  // TODO
+
+
+  gl_VkSwapChainExtent.width = newWidth;
+  gl_VkSwapChainExtent.height = newHeight;
 }
 
 void CGfxLibrary::DestroySwapchain()
 {
+  gl_VkSwapChainExtent = {};
+
+  for (uint32_t i = 0; i < gl_VkFramebuffers.Count(); i++) {
+    vkDestroyFramebuffer(gl_VkDevice, gl_VkFramebuffers[i], nullptr);
+  }
+
   for (uint32_t i = 0; i < gl_VkSwapchainDepthImageViews.Count(); i++) {
     vkDestroyImageView(gl_VkDevice, gl_VkSwapchainDepthImageViews[i], nullptr);
   }
@@ -564,6 +768,8 @@ void CGfxLibrary::DestroySwapchain()
   gl_VkSwapchainDepthImages.Clear();
   gl_VkSwapchainDepthMemory.Clear();
   gl_VkSwapchainDepthImageViews.Clear();
+  gl_VkFramebuffers.Clear();
+  gl_VkImagesInFlight.Clear();
 }
 
 VkExtent2D CGfxLibrary::GetSwapchainExtent(uint32_t width, uint32_t height)
@@ -663,6 +869,103 @@ BOOL CGfxLibrary::CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t
   }
 
   return TRUE;
+}
+
+void CGfxLibrary::StartFrame()
+{
+  VkResult r;
+  uint32_t nextImageIndex;
+
+  // wait when previous cmd with same frame index will be done
+  vkWaitForFences(gl_VkDevice, 1, &gl_VkInFlightFences[gl_VkCurrentFrame], VK_TRUE, UINT64_MAX);
+  VK_CHECKERROR(r);
+
+  r = vkAcquireNextImageKHR(gl_VkDevice, gl_VkSwapchain, UINT64_MAX,
+    gl_VkImageAvailableSemaphores[gl_VkCurrentFrame], VK_NULL_HANDLE, &nextImageIndex);
+
+  if (r == VK_ERROR_OUT_OF_DATE_KHR)
+  {
+    // TODO: recreate swapchain
+  }
+  else if (r != VK_SUCCESS && r != VK_SUBOPTIMAL_KHR)
+  {
+    ASSERTALWAYS("Vulkan error: Can't to acquire swap chain image.\n");
+  }
+
+  // set to next image index
+  gl_VkCurrentImageIndex = nextImageIndex;
+}
+
+void CGfxLibrary::StartCommandBuffer()
+{
+  VkResult r;
+  uint32_t index = gl_VkCurrentImageIndex;
+  VkCommandBuffer cmd = gl_VkCmdBuffers[index];
+
+  if (gl_VkImagesInFlight[gl_VkCurrentImageIndex] != VK_NULL_HANDLE)
+  {
+    // wait for another fence that uses same image index
+    r = vkWaitForFences(gl_VkDevice, 1, &gl_VkImagesInFlight[gl_VkCurrentImageIndex], VK_TRUE, UINT64_MAX);
+    VK_CHECKERROR(r);
+  }
+  // set reference
+  gl_VkImagesInFlight[gl_VkCurrentImageIndex] = gl_VkInFlightFences[gl_VkCurrentFrame];
+
+  VkCommandBufferBeginInfo beginInfo = {};
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+  r = vkBeginCommandBuffer(cmd, &beginInfo);
+  VK_CHECKERROR(r);
+
+  VkClearValue clearValues[2];
+  clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+  clearValues[1].depthStencil = { 1.0f, 0 };
+
+  VkRenderPassBeginInfo renderPassInfo = {};
+  renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  renderPassInfo.renderPass = gl_VkRenderPass;
+  renderPassInfo.framebuffer = gl_VkFramebuffers[index];
+  renderPassInfo.renderArea.offset = { 0, 0 };
+  renderPassInfo.renderArea.extent = gl_VkSwapChainExtent;
+  renderPassInfo.clearValueCount = 2;
+  renderPassInfo.pClearValues = clearValues;
+
+  vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+}
+
+void CGfxLibrary::EndCommandBuffer()
+{
+  VkResult r;
+  VkCommandBuffer cmd = gl_VkCmdBuffers[gl_VkCurrentImageIndex];
+
+  vkCmdEndRenderPass(cmd);
+  r = vkEndCommandBuffer(cmd);
+  VK_CHECKERROR(r);
+
+  // wait until image will be avaialable
+  VkSemaphore smpToWait = gl_VkImageAvailableSemaphores[gl_VkCurrentFrame];
+  // signal when it's finished
+  VkSemaphore smpToSignal = gl_VkRenderFinishedSemaphores[gl_VkCurrentFrame];
+
+  VkPipelineStageFlags pipelineStageFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+  VkSubmitInfo submitInfo[1] = {};
+  submitInfo[0].pNext = NULL;
+  submitInfo[0].sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submitInfo[0].waitSemaphoreCount = 1;
+  submitInfo[0].pWaitSemaphores = &smpToWait;
+  submitInfo[0].pWaitDstStageMask = &pipelineStageFlags;
+  submitInfo[0].commandBufferCount = 1;
+  submitInfo[0].pCommandBuffers = &cmd;
+  submitInfo[0].signalSemaphoreCount = 1;
+  submitInfo[0].pSignalSemaphores = &smpToSignal;
+
+  // fences must be set to unsignaled state manually
+  vkResetFences(gl_VkDevice, 1, &gl_VkInFlightFences[gl_VkCurrentFrame]);
+
+  // submit cmd buffer; fence will be in signaled state when cmd will be done
+  r = vkQueueSubmit(gl_VkQueueGraphics, 1, submitInfo, gl_VkInFlightFences[gl_VkCurrentFrame]);
+  VK_CHECKERROR(r);
 }
 
 uint32_t CGfxLibrary::GetMemoryTypeIndex(uint32_t memoryTypeBits, VkFlags requirementsMask) 

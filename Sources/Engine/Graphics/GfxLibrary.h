@@ -134,7 +134,7 @@ public:
   CViewPort *gl_pvpActive;   // active viewport
   HINSTANCE  gl_hiDriver;    // DLL handle
 
-  GfxAPIType   gl_eCurrentAPI;  // (0=none, 1=OpenGL, 2=DirectX8) 
+  GfxAPIType   gl_eCurrentAPI;  // (0=none, 1=OpenGL, 2=DirectX8, 2=Vulkan) 
   CDisplayMode gl_dmCurrentDisplayMode;
   INDEX gl_iCurrentAdapter;
   INDEX gl_iCurrentDepth; 
@@ -147,6 +147,8 @@ public:
   VkSurfaceKHR                    gl_VkSurface;
 
   VkSwapchainKHR                  gl_VkSwapchain;
+  VkExtent2D                      gl_VkSwapChainExtent;
+  uint32_t                        gl_VkCurrentImageIndex;
   VkFormat                        gl_VkSurfColorFormat;
   VkColorSpaceKHR                 gl_VkSurfColorSpace;
   VkFormat                        gl_VkSurfDepthFormat;
@@ -157,6 +159,20 @@ public:
   CStaticArray<VkDeviceMemory>    gl_VkSwapchainDepthMemory;
   CStaticArray<VkImageView>       gl_VkSwapchainDepthImageViews;
   CStaticArray<VkFramebuffer>     gl_VkFramebuffers;
+
+  CStaticArray<VkSemaphore>       gl_VkImageAvailableSemaphores;
+  CStaticArray<VkSemaphore>       gl_VkRenderFinishedSemaphores;
+  CStaticArray<VkFence>           gl_VkInFlightFences;
+  CStaticArray<VkFence>           gl_VkImagesInFlight;
+  uint32_t                        gl_VkCurrentFrame = 0;
+  const uint32_t                  gl_VkMaxFramesInFlight = 2;
+
+  VkRenderPass                    gl_VkRenderPass;
+
+  VkViewport                      gl_VkCurrentViewport;
+
+  VkCommandPool                   gl_VkCmdPool;
+  CStaticArray<VkCommandBuffer>   gl_VkCmdBuffers;
 
   VkPhysicalDevice                    gl_VkPhysDevice;
   VkPhysicalDeviceMemoryProperties    gl_VkPhMemoryProperties;
@@ -269,16 +285,25 @@ private:
   //BOOL InitDisplay_Vulkan(INDEX iAdapter, PIX pixSizeI, PIX pixSizeJ, enum DisplayDepth eColorDepth);
   void InitContext_Vulkan();
   BOOL SetCurrentViewport_Vulkan(CViewPort* pvp);
+  void SwapBuffers_Vulkan();
+  void SetViewport_Vulkan(float leftUpperX, float leftUpperY, float width, float height, float minDepth, float maxDepth);
 
   BOOL PickPhysicalDevice();
   BOOL InitSurface_Win32(HINSTANCE hinstance, HWND hwnd);
   BOOL CreateDevice();
+  void CreateRenderPass();
+  void CreateSyncPrimitives();
+
 public:
-  BOOL CreateSwapchain(uint32_t width, uint32_t height);
+  void CreateSwapchain(uint32_t width, uint32_t height);
   void RecreateSwapchain(uint32_t newWidth, uint32_t newHeight);
   void DestroySwapchain();
 private:
   BOOL CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t imageIndex);
+
+  void StartFrame();
+  void StartCommandBuffer();
+  void EndCommandBuffer();
 
   BOOL GetQueues(VkPhysicalDevice physDevice,
     uint32_t &graphicsQueueFamily, uint32_t &transferQueueFamily, uint32_t &presentQueueFamily);
