@@ -78,6 +78,19 @@ extern void DetermineSupportedTextureFormats( GfxAPIType eAPI)
     TS.ts_tfL8     = FindClosestFormat_D3D(D3DFMT_L8);
   }
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  if (eAPI == GAT_VK) {
+    TS.ts_tfRGBA8 = VK_FORMAT_R8G8B8A8_UNORM;
+    TS.ts_tfRGB8 = VK_FORMAT_R8G8B8_UNORM;
+    // to RGB565
+    TS.ts_tfRGB5 = VK_FORMAT_R5G6B5_UNORM_PACK16;
+    TS.ts_tfRGBA4 = VK_FORMAT_R4G4B4A4_UNORM_PACK16;
+    TS.ts_tfRGB5A1 = VK_FORMAT_R5G5B5A1_UNORM_PACK16;
+    // luminance to rgba8
+    TS.ts_tfLA8 = VK_FORMAT_R8G8B8A8_UNORM;
+    TS.ts_tfL8 = VK_FORMAT_R8G8B8A8_UNORM;
+  }
+#endif // SE1_VULKAN
 }
 
 
@@ -87,9 +100,11 @@ extern void UpdateTextureSettings(void)
   // determine API
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
-  ASSERT( eAPI==GAT_OGL || eAPI==GAT_D3D || eAPI==GAT_NONE);
-#else
-  ASSERT( eAPI==GAT_OGL || eAPI==GAT_NONE);
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
+#elif SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+#else // SE1_D3D
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_D3D
 
   // set texture formats and compression
@@ -684,9 +699,11 @@ void CTextureData::Read_t( CTStream *inFile)
   // determine API
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
-  ASSERT( eAPI==GAT_OGL || eAPI==GAT_D3D || eAPI==GAT_NONE);
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
+#elif SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
 #else // SE1_D3D
-  ASSERT( eAPI==GAT_OGL || eAPI==GAT_NONE);
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_D3D
 
   // determine driver context presence (must have at least 1 texture unit!)
@@ -1169,9 +1186,11 @@ void CTextureData::SetAsCurrent( INDEX iFrameNo/*=0*/, BOOL bForceUpload/*=FALSE
   // check API
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
-  ASSERT( eAPI==GAT_OGL || eAPI==GAT_D3D || eAPI==GAT_NONE);
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
+#elif SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
 #else // SE1_D3D
-  ASSERT( eAPI==GAT_OGL || eAPI==GAT_NONE);
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_D3D
 
   ASSERT( iFrameNo<td_ctFrames);

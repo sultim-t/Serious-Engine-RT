@@ -56,7 +56,11 @@ extern INDEX sam_iScreenSizeI = 1024;  // current size of the window
 extern INDEX sam_iScreenSizeJ = 768;  // current size of the window
 extern INDEX sam_iDisplayDepth  = 0;  // 0==default, 1==16bit, 2==32bit
 extern INDEX sam_iDisplayAdapter = 0; 
+#ifdef SE1_VULKAN
+extern INDEX sam_iGfxAPI = 1;         // 1==Vulkan
+#else
 extern INDEX sam_iGfxAPI = 0;         // 0==OpenGL
+#endif // SE1_VULKAN
 extern INDEX sam_bFirstStarted = FALSE;
 extern FLOAT sam_tmDisplayModeReport = 5.0f;
 extern INDEX sam_bShowAllLevels = FALSE;

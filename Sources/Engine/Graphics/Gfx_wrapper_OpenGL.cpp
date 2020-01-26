@@ -118,7 +118,7 @@ static void ogl_DisableDepthTest(void)
 
 static void ogl_EnableDepthBias(void)
 {
-  /*ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL);
+  ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL);
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   pglEnable( GL_POLYGON_OFFSET_POINT);
@@ -127,13 +127,13 @@ static void ogl_EnableDepthBias(void)
   pglPolygonOffset( -1.0f, -2.0f);
   OGL_CHECKERROR;
 
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
+  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
 
 
 static void ogl_DisableDepthBias(void)
 {
-  /*ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL);
+  ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL);
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   pglDisable( GL_POLYGON_OFFSET_POINT);
@@ -142,7 +142,7 @@ static void ogl_DisableDepthBias(void)
   pglPolygonOffset( 0.0f, 0.0f);
   OGL_CHECKERROR;
 
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
+  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
 
 
@@ -1060,7 +1060,7 @@ static void ogl_SetVertexArray( GFXVertex4 *pvtx, INDEX ctVtx)
 // prepare normal array for API
 static void ogl_SetNormalArray( GFXNormal *pnor)
 {
-  ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL);
+ /* ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL);
   ASSERT( pnor!=NULL);
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
@@ -1069,7 +1069,7 @@ static void ogl_SetNormalArray( GFXNormal *pnor)
   pglNormalPointer( GL_FLOAT, 16, pnor);
   OGL_CHECKERROR;
 
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
 }
 
 
@@ -1110,14 +1110,14 @@ static void ogl_SetTexCoordArray( GFXTexCoord *ptex, BOOL b4/*=FALSE*/)
 // set constant color (and force rendering w/o color array!)
 static void ogl_SetConstantColor( COLOR col)
 {
-  ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL);
+  /*ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL);
   ogl_DisableColorArray();
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   glCOLOR(col);
   OGL_CHECKERROR;
 
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
 }
 
 

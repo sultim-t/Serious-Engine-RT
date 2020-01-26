@@ -213,6 +213,8 @@ extern void UpdateLODBias( const FLOAT fLODBias)
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
   ASSERT( eAPI==GAT_OGL || eAPI==GAT_D3D || eAPI==GAT_NONE);
+#elif SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
 #else // SE1_D3D
   ASSERT( eAPI==GAT_OGL || eAPI==GAT_NONE);
 #endif // SE1_D3D
@@ -251,6 +253,13 @@ extern void UpdateLODBias( const FLOAT fLODBias)
     }
   }
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  else if (eAPI == GAT_VK)
+  {
+    // TODO
+  }
+#endif // SE1_VULKAN
+
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
 
@@ -329,6 +338,8 @@ extern void gfxSetTextureUnit( INDEX iUnit)
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
   ASSERT( eAPI==GAT_OGL || eAPI==GAT_D3D || eAPI==GAT_NONE);
+#elif SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
 #else // SE1_D3D
   ASSERT( eAPI==GAT_OGL || eAPI==GAT_NONE);
 #endif // SE1_D3D
@@ -376,6 +387,8 @@ extern void gfxSetTexture( ULONG &ulTexObject, CTexParams &tpLocal)
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
+#elif SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
 #else // SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_D3D
@@ -398,6 +411,13 @@ extern void gfxSetTexture( ULONG &ulTexObject, CTexParams &tpLocal)
     MimicTexParams_D3D(tpLocal);
   }
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  else if (eAPI == GAT_VK)
+  {
+
+  }
+#endif // SE1_VULKAN
+
   // done
   _pfGfxProfile.StopTimer(CGfxProfile::PTI_SETCURRENTTEXTURE);
   _sfStats.StopTimer(CStatForm::STI_BINDTEXTURE);
@@ -413,6 +433,8 @@ extern void gfxUploadTexture( ULONG *pulTexture, PIX pixWidth, PIX pixHeight, UL
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
+#elif SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
 #else // SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_D3D
@@ -449,6 +471,8 @@ extern SLONG gfxGetTextureSize( ULONG ulTexObject, BOOL bHasMipmaps/*=TRUE*/)
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
+#elif SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
 #else // SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_D3D
@@ -509,6 +533,8 @@ extern INDEX gfxGetTexturePixRatio( ULONG ulTextureObject)
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
+#elif SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
 #else // SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_D3D
@@ -529,6 +555,8 @@ extern INDEX gfxGetFormatPixRatio( ULONG ulTextureFormat)
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
+#elif SE1_VULKAN
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
 #else // SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_D3D
@@ -664,6 +692,11 @@ extern void gfxFlushElements(void)
 // set truform parameters
 extern void gfxSetTruform( INDEX iLevel, BOOL bLinearNormals)
 {
+#ifdef SE1_VULKAN
+  return;
+#endif // SE1_VULKAN
+
+
   // skip if Truform isn't supported
   if( _pGfx->gl_iMaxTessellationLevel<1) {
     truform_iLevel  = 0;

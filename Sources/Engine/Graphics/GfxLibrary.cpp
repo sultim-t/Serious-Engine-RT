@@ -1015,7 +1015,6 @@ CGfxLibrary::CGfxLibrary(void)
   gl_VkDevice = VK_NULL_HANDLE;
   gl_VkSurface = VK_NULL_HANDLE;
   gl_VkCurrentImageIndex = 0;
-  gl_VkFence = VK_NULL_HANDLE;
   gl_VkCurrentViewport = {};
   gl_VkSwapChainExtent = {};
   gl_VkCmdPool = VK_NULL_HANDLE;;

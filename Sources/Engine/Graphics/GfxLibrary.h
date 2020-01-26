@@ -169,6 +169,10 @@ public:
 
   VkRenderPass                    gl_VkRenderPass;
 
+  VkDescriptorSetLayout           gl_VkDescriptorSetLayout;
+  VkDescriptorSetLayout           gl_VkPipelineLayout;
+  VkPipeline                      gl_VkGraphicsPipeline;
+
   VkViewport                      gl_VkCurrentViewport;
 
   VkCommandPool                   gl_VkCmdPool;
@@ -293,6 +297,7 @@ private:
   BOOL CreateDevice();
   void CreateRenderPass();
   void CreateSyncPrimitives();
+  void CreateGraphicsPipeline();
 
 public:
   void CreateSwapchain(uint32_t width, uint32_t height);
@@ -304,7 +309,11 @@ private:
   void StartFrame();
   void StartCommandBuffer();
   void EndCommandBuffer();
+public:
+  // Get current started cmd buffer to write in
+  VkCommandBuffer GetCurrentCmdBuffer();
 
+private:
   BOOL GetQueues(VkPhysicalDevice physDevice,
     uint32_t &graphicsQueueFamily, uint32_t &transferQueueFamily, uint32_t &presentQueueFamily);
   BOOL CheckDeviceExtensions(VkPhysicalDevice physDevice, const CStaticArray<const char *> &requiredExtensions);
