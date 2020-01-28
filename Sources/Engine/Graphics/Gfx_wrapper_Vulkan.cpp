@@ -282,58 +282,6 @@ static void svk_DisableBlend(void)
 
 
 
-// enable usage of color array for subsequent rendering
-static void svk_EnableColorArray(void)
-{
-  // check consistency
-  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  //BOOL bRes;
-  //bRes = pglIsEnabled(GL_COLOR_ARRAY);
-  //VK_CHECKERROR1;
-  //ASSERT(!bRes == !GFX_bColorArray);
-#endif
-
-  // cached?
-  if (GFX_bColorArray && gap_bOptimizeStateChanges) return;
-  GFX_bColorArray = TRUE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  //pglEnableClientState(GL_COLOR_ARRAY);
-  VK_CHECKERROR1;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
-}
-
-
-
-// enable usage of constant color for subsequent rendering
-static void svk_DisableColorArray(void)
-{
-  // check consistency
-  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  //BOOL bRes;
-  //bRes = pglIsEnabled(GL_COLOR_ARRAY);
-  //VK_CHECKERROR1;
-  //ASSERT(!bRes == !GFX_bColorArray);
-#endif
-
-  // cached?
-  if (!GFX_bColorArray && gap_bOptimizeStateChanges) return;
-  GFX_bColorArray = FALSE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  //pglDisableClientState(GL_COLOR_ARRAY);
-  VK_CHECKERROR1;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
-}
-
-
-
 // helper for blending operation function
 __forceinline VkBlendFactor BlendToVK(GfxBlend eFunc) {
   switch (eFunc) {
@@ -706,7 +654,8 @@ static void svk_SetTextureModulation(INDEX iScale)
   //}
   //else {
   //  pglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-  //} VK_CHECKERROR1;
+  //} 
+  //VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -768,9 +717,18 @@ static void svk_SetVertexArray(GFXVertex4* pvtx, INDEX ctVtx)
   //ASSERT(!pglIsEnabled(GL_COLOR_ARRAY));
   //ASSERT(!pglIsEnabled(GL_NORMAL_ARRAY));
   //ASSERT(pglIsEnabled(GL_VERTEX_ARRAY));
-  //pglVertexPointer(3, GL_FLOAT, 16, pvtx);
-  VK_CHECKERROR1;
-  GFX_bColorArray = FALSE; // mark that color array has been disabled (because of potential LockArrays)
+
+  CStaticArray<VkVertex> &verts = _pGfx->gl_VkVerts;
+
+  verts.Clear();
+  verts.New(ctVtx);
+
+  for (INDEX i = 0; i < ctVtx; i++)
+  {
+    verts[i].SetPosition(pvtx[i].x, pvtx[i].y, pvtx[i].z);
+  }
+
+  //GFX_bColorArray = FALSE; // mark that color array has been disabled (because of potential LockArrays)
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -782,12 +740,17 @@ static void svk_SetNormalArray(GFXNormal* pnor)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
   ASSERT(pnor != NULL);
+  ASSERT(GFX_ctVertices > 0);
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  pglEnableClientState(GL_NORMAL_ARRAY);/*
-  ASSERT(pglIsEnabled(GL_NORMAL_ARRAY));
-  pglNormalPointer(GL_FLOAT, 16, pnor);*/
-  VK_CHECKERROR1;
+  CStaticArray<VkVertex> &verts = _pGfx->gl_VkVerts;
+  INDEX ctVtx = verts.Count();
+  ASSERT(ctVtx > 0);
+
+  for (INDEX i = 0; i < ctVtx; i++)
+  {
+    verts[i].SetNormal(pnor[i].nx, pnor[i].ny, pnor[i].nz);
+  }
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -799,11 +762,17 @@ static void svk_SetColorArray(GFXColor* pcol)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
   ASSERT(pcol != NULL);
-  svk_EnableColorArray();
+  //svk_EnableColorArray();
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  //pglColorPointer(4, GL_UNSIGNED_BYTE, 0, pcol);
-  VK_CHECKERROR1;
+  CStaticArray<VkVertex> &verts = _pGfx->gl_VkVerts;
+  INDEX ctVtx = verts.Count();
+  ASSERT(ctVtx > 0);
+
+  for (INDEX i = 0; i < ctVtx; i++)
+  {
+    verts[i].SetColorRGBA(pcol[i].r, pcol[i].g, pcol[i].b, pcol[i].a);
+  }
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -815,29 +784,25 @@ static void svk_SetTexCoordArray(GFXTexCoord* ptex, BOOL b4/*=FALSE*/)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
   ASSERT(ptex != NULL);
+  
+  if (!b4)
+  {
+    // ignore projective tex coords for now
+    return;
+  }
+
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  //pglEnableClientState(GL_TEXTURE_COORD_ARRAY);
-  //ASSERT(pglIsEnabled(GL_TEXTURE_COORD_ARRAY));
-  //pglTexCoordPointer(b4 ? 4 : 2, GL_FLOAT, 0, ptex);
-  VK_CHECKERROR1;
+  CStaticArray<VkVertex> &verts = _pGfx->gl_VkVerts;
+  INDEX ctVtx = verts.Count();
+  ASSERT(ctVtx > 0);
+
+  for (INDEX i = 0; i < ctVtx; i++)
+  {
+    verts[i].SetTexCoord(ptex[i].u, ptex[i].v);
+  }
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
-}
-
-
-
-// set constant color (and force rendering w/o color array!)
-static void svk_SetConstantColor(COLOR col)
-{
-  //ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-  //svk_DisableColorArray();
-  //_sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  //glCOLOR(col);
-  //VK_CHECKERROR1;
-
-  //_sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
 
 
@@ -857,75 +822,159 @@ static void svk_DrawElements(INDEX ctElem, INDEX* pidx)
   // arrays or elements
   if (pidx == NULL)
   {
-    ASSERTALWAYS("Vulkan error: QUADS are not implemented.\n");
+    ASSERTALWAYS("Vulkan error: QUADS drawing are not implemented.\n");
     // pglDrawArrays(GL_QUADS, 0, ctElem);
   }
   else
   {
+    ASSERT(_pGfx->gl_VkVerts.Count() > 0);
+
     //pglDrawElements(GL_TRIANGLES, ctElem, GL_UNSIGNED_INT, pidx);
-
-    //vkCmdBindIndexBuffer(_pGfx->GetCurrentCmdBuffer(), , 0, VK_INDEX_TYPE_UINT32);
-    //vkCmdDrawIndexed(_pGfx->GetCurrentCmdBuffer(), ctElem, 1, 0, 0, 0);
+    _pGfx->DrawTriangles(ctElem, (uint32_t*)pidx);
   }
-
-  VK_CHECKERROR1;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
 
 
 
-// force finish of API rendering queue
 static void svk_Finish(void)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  // vkDeviceWaitIdle(_pGfx->gl_VkDevice);
+  // force finish of API rendering queue
   VkResult r = vkQueueWaitIdle(_pGfx->gl_VkQueueGraphics);
+  //VkResult r = vkDeviceWaitIdle(_pGfx->gl_VkDevice);
   VK_CHECKERROR(r);
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
 
+
+
+#pragma region not implemented
+
+static void svk_EnableColorArray(void)
+{
+  // always enabled
+  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+  GFX_bColorArray = TRUE;
+
+  /*// check consistency
+  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+#ifndef NDEBUG
+  //BOOL bRes;
+  //bRes = pglIsEnabled(GL_COLOR_ARRAY);
+  //VK_CHECKERROR1;
+  //ASSERT(!bRes == !GFX_bColorArray);
+#endif
+
+  // cached?
+  if (GFX_bColorArray && gap_bOptimizeStateChanges) return;
+  GFX_bColorArray = TRUE;
+
+  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+
+  //pglEnableClientState(GL_COLOR_ARRAY);
+  VK_CHECKERROR1;
+
+  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
+}
+
+static void svk_DisableColorArray(void)
+{
+  // always enabled
+  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+  GFX_bColorArray = TRUE;
+
+  /*// check consistency
+  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+#ifndef NDEBUG
+  //BOOL bRes;
+  //bRes = pglIsEnabled(GL_COLOR_ARRAY);
+  //VK_CHECKERROR1;
+  //ASSERT(!bRes == !GFX_bColorArray);
+#endif
+
+  // cached?
+  if (!GFX_bColorArray && gap_bOptimizeStateChanges) return;
+  GFX_bColorArray = FALSE;
+
+  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+
+  //pglDisableClientState(GL_COLOR_ARRAY);
+  VK_CHECKERROR1;
+
+  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
+}
+
 static void svk_SetColorMask(ULONG ulColorMask)
-{ }
+{
+  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+}
 
 static void svk_LockArrays(void)
 {
   // only for OpenGL
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-  return;
 }
 
 static void svk_EnableDither(void)
-{}
+{
+  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+}
 
 static void svk_DisableDither(void)
-{}
+{
+  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+}
 
 static void svk_EnableClipping(void)
-{}
+{
+  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+}
 
 static void svk_DisableClipping(void)
-{}
+{
+  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+}
 
 static void svk_EnableClipPlane(void)
-{}
+{
+  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+}
 
 static void svk_DisableClipPlane(void)
-{}
+{
+  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+}
 
 static void svk_EnableTruform(void)
-{}
+{
+  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+}
 
 static void svk_DisableTruform(void)
-{}
+{
+  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+}
 
 static void svk_ClipPlane(const DOUBLE* pdViewPlane)
-{}
+{
+  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+}
 
 static void svk_SetTextureMatrix(const FLOAT* pfMatrix/*=NULL*/)
-{}
+{
+  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+}
+
+static void svk_SetConstantColor(COLOR col)
+{
+  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+}
+
+#pragma endregion
 
 #endif // SE1_VULKAN

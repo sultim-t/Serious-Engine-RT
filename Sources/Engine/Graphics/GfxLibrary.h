@@ -33,6 +33,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #ifdef SE1_VULKAN
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
+#include <Engine/Graphics/Vulkan/VkVertex.h>
 #endif // SE1_VULKAN
 
 #include <Engine/Graphics/Color.h>
@@ -170,13 +171,19 @@ public:
   VkRenderPass                    gl_VkRenderPass;
 
   VkDescriptorSetLayout           gl_VkDescriptorSetLayout;
-  VkDescriptorSetLayout           gl_VkPipelineLayout;
+  VkPipelineLayout                gl_VkPipelineLayout;
   VkPipeline                      gl_VkGraphicsPipeline;
 
+  VkRect2D                        gl_VkCurrentScissor;
   VkViewport                      gl_VkCurrentViewport;
 
   VkCommandPool                   gl_VkCmdPool;
   CStaticArray<VkCommandBuffer>   gl_VkCmdBuffers;
+  VkDescriptorPool                gl_VkDescriptorPool;
+  CStaticArray<VkDescriptorSet>   gl_VkDescriptorSets;
+
+  CStaticArray<VkBuffer>          gl_VkUniformBuffers;
+  CStaticArray<VkDeviceMemory>    gl_VkUniformBuffersMemory;
 
   VkPhysicalDevice                    gl_VkPhysDevice;
   VkPhysicalDeviceMemoryProperties    gl_VkPhMemoryProperties;
@@ -189,15 +196,24 @@ public:
   CStaticArray<const char *>          gl_VkPhysDeviceExtensions;
   CStaticArray<const char *>          gl_VkLayers;
 
-  uint32_t            gl_VkQueueFamGraphics;
-  uint32_t            gl_VkQueueFamTransfer;
-  uint32_t            gl_VkQueueFamPresent;
-  VkQueue             gl_VkQueueGraphics;
-  VkQueue             gl_VkQueueTransfer;
-  VkQueue             gl_VkQueuePresent;
+  uint32_t                        gl_VkQueueFamGraphics;
+  uint32_t                        gl_VkQueueFamTransfer;
+  uint32_t                        gl_VkQueueFamPresent;
+  VkQueue                         gl_VkQueueGraphics;
+  VkQueue                         gl_VkQueueTransfer;
+  VkQueue                         gl_VkQueuePresent;
 
-  VkDebugUtilsMessengerEXT            gl_VkDebugMessenger;
-  
+  VkDebugUtilsMessengerEXT        gl_VkDebugMessenger;
+
+  // model data 
+  CStaticArray<VkVertex>          gl_VkVerts;
+  const uint32_t                  gl_VkMaxVertexCount = 65536;
+  const uint32_t                  gl_VkMaxIndexCount = 65536 * 3;
+  VkBuffer                        gl_VkVertexBuffer;
+  VkDeviceMemory                  gl_VkVertexBufferMemory;
+  VkBuffer                        gl_VkIndexBuffer;
+  VkDeviceMemory                  gl_VkIndexBufferMemory;
+
 #endif
 
 #ifdef SE1_D3D
@@ -286,6 +302,7 @@ private:
   // Vulkan specific
   BOOL InitDriver_Vulkan();
   void EndDriver_Vulkan();
+  void Reset_Vulkan();
   //BOOL InitDisplay_Vulkan(INDEX iAdapter, PIX pixSizeI, PIX pixSizeJ, enum DisplayDepth eColorDepth);
   void InitContext_Vulkan();
   BOOL SetCurrentViewport_Vulkan(CViewPort* pvp);
@@ -297,29 +314,41 @@ private:
   BOOL CreateDevice();
   void CreateRenderPass();
   void CreateSyncPrimitives();
+  void CreateDescriptorSetLayout();
   void CreateGraphicsPipeline();
-
-public:
-  void CreateSwapchain(uint32_t width, uint32_t height);
-  void RecreateSwapchain(uint32_t newWidth, uint32_t newHeight);
-  void DestroySwapchain();
-private:
   BOOL CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t imageIndex);
+  void CreateUniformBuffers(uint32_t swapchainImageCount);
+  void DestroyUniformBuffers();
+  void UpdateDescriptorSet();
 
   void StartFrame();
   void StartCommandBuffer();
   void EndCommandBuffer();
-public:
-  // Get current started cmd buffer to write in
-  VkCommandBuffer GetCurrentCmdBuffer();
 
-private:
+  // allocate vulkan buffers for vertices, indices
+  void CreateMeshData();
+  void DestroyMeshData();
+
+  VkShaderModule CreateShaderModule(const uint32_t *spvCode, uint32_t codeSize);
+
+  // utils
   BOOL GetQueues(VkPhysicalDevice physDevice,
     uint32_t &graphicsQueueFamily, uint32_t &transferQueueFamily, uint32_t &presentQueueFamily);
   BOOL CheckDeviceExtensions(VkPhysicalDevice physDevice, const CStaticArray<const char *> &requiredExtensions);
   VkExtent2D GetSwapchainExtent(uint32_t width, uint32_t height);
   uint32_t GetMemoryTypeIndex(uint32_t memoryTypeBits, VkFlags requirementsMask);
   VkFormat FindSupportedFormat(const VkFormat *formats, uint32_t formatCount, VkImageTiling tiling, VkFormatFeatureFlags features);
+  void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory);
+  void CopyToDeviceMemory(VkDeviceMemory deviceMemory, const void *data, VkDeviceSize size);
+
+public:
+  void CreateSwapchain(uint32_t width, uint32_t height);
+  void RecreateSwapchain(uint32_t newWidth, uint32_t newHeight);
+  void DestroySwapchain();
+  // Get current started cmd buffer to write in
+  VkCommandBuffer GetCurrentCmdBuffer();
+  void DrawTriangles(uint32_t indexCount, const uint32_t *indices);
+
 #endif // SE1_VULKAN
 
 public:

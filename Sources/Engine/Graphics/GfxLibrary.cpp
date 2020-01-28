@@ -1011,35 +1011,7 @@ CGfxLibrary::CGfxLibrary(void)
   gl_ctIndices  = 0;
 
 #ifdef SE1_VULKAN
-  gl_VkInstance = VK_NULL_HANDLE;
-  gl_VkDevice = VK_NULL_HANDLE;
-  gl_VkSurface = VK_NULL_HANDLE;
-  gl_VkCurrentImageIndex = 0;
-  gl_VkCurrentViewport = {};
-  gl_VkSwapChainExtent = {};
-  gl_VkCmdPool = VK_NULL_HANDLE;;
-  gl_VkRenderPass = VK_NULL_HANDLE;
-
-  gl_VkSwapchain = VK_NULL_HANDLE;
-  gl_VkSurfColorFormat = VK_FORMAT_B8G8R8A8_UNORM;
-  gl_VkSurfColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
-  gl_VkSurfDepthFormat = VK_FORMAT_D16_UNORM;
-  gl_VkSurfPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-
-  gl_VkPhysDevice = VK_NULL_HANDLE;
-  gl_VkPhMemoryProperties = {};
-  gl_VkPhProperties = {};
-  gl_VkPhFeatures = {};
-  gl_VkPhSurfCapabilities = {};
-
-  gl_VkQueueFamGraphics = VK_NULL_HANDLE;
-  gl_VkQueueFamTransfer = VK_NULL_HANDLE;
-  gl_VkQueueFamPresent = VK_NULL_HANDLE;
-  gl_VkQueueGraphics = VK_NULL_HANDLE;
-  gl_VkQueueTransfer = VK_NULL_HANDLE;
-  gl_VkQueuePresent = VK_NULL_HANDLE;
-
-  gl_VkDebugMessenger = VK_NULL_HANDLE;
+  Reset_Vulkan();
 #endif // SE1_VULKAN
 
   // reset profiling counters

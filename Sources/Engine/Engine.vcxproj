@@ -749,6 +749,8 @@ copy Release\$(TargetName).lib $(SolutionDir)..\Bin\ &gt;nul</Command>
     <ClInclude Include="Base\UpdateableRT.h" />
     <ClInclude Include="GameAgent\GameAgent.h" />
     <ClInclude Include="GameAgent\MSLegacy.h" />
+    <ClInclude Include="Graphics\Vulkan\VkTextureObject.h" />
+    <ClInclude Include="Graphics\Vulkan\VkVertex.h" />
     <ClInclude Include="Math\AABBox.h" />
     <ClInclude Include="Math\FixInt.h" />
     <ClInclude Include="Math\Float.h" />

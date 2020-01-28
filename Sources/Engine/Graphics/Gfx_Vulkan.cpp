@@ -12,15 +12,38 @@
 #include <Engine/Templates/DynamicContainer.cpp>
 #include <Engine/Templates/Stock_CTextureData.h>
 
+#pragma region Shaders
+#include <Engine/Graphics/Vulkan/Shaders/Compiled/TexturedVertSpv.h>
+#include <Engine/Graphics/Vulkan/Shaders/Compiled/TexturedFragSpv.h>
+
+extern unsigned char TexturedVert_Spirv[];
+extern unsigned int TexturedVert_Size;
+extern unsigned char TexturedFrag_Spirv[];
+extern unsigned int TexturedFrag_Size;
+#pragma endregion
+
+
 #ifdef SE1_VULKAN
 
-struct VkVertex
-{
-  float Position[4];
-  float Color[4];
-  float Normal[3];
-  float TexCoord[2];
-};
+extern BOOL GFX_bDepthTest;
+extern BOOL GFX_bDepthWrite;
+extern BOOL GFX_bAlphaTest;
+extern BOOL GFX_bBlending;
+extern BOOL GFX_bDithering;
+extern BOOL GFX_bClipping;
+extern BOOL GFX_bClipPlane;
+extern BOOL GFX_bColorArray;
+extern BOOL GFX_bFrontFace;
+extern BOOL GFX_bTruform;
+extern INDEX GFX_iActiveTexUnit;
+extern FLOAT GFX_fMinDepthRange;
+extern FLOAT GFX_fMaxDepthRange;
+extern GfxBlend GFX_eBlendSrc;
+extern GfxBlend GFX_eBlendDst;
+extern GfxComp  GFX_eDepthFunc;
+extern GfxFace  GFX_eCullFace;
+extern INDEX GFX_iTexModulation[GFX_MAXTEXUNITS];
+extern INDEX GFX_ctVertices;
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) 
 {
@@ -148,18 +171,56 @@ BOOL CGfxLibrary::InitDriver_Vulkan()
   r = vkCreateCommandPool(gl_VkDevice, &cmdPoolInfo, nullptr, &gl_VkCmdPool);
   VK_CHECKERROR(r);
 
-  CreateRenderPass();
+  VkDescriptorPoolSize poolSizes[2];
+  poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  poolSizes[0].descriptorCount = 16; // temporary
+  poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  poolSizes[1].descriptorCount = 16; // temporary
+
+  VkDescriptorPoolCreateInfo descPoolInfo = {};
+  descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  descPoolInfo.poolSizeCount = 2;
+  descPoolInfo.pPoolSizes = poolSizes;
+  descPoolInfo.maxSets = 32; // temporary
+
+  r = vkCreateDescriptorPool(gl_VkDevice, &descPoolInfo, nullptr, &gl_VkDescriptorPool);
+  VK_CHECKERROR(r);
+
   CreateSyncPrimitives();
+  CreateRenderPass();
+  CreateDescriptorSetLayout();
+  CreateGraphicsPipeline();
+  CreateMeshData();
 
   return TRUE;
 }
 
 void CGfxLibrary::EndDriver_Vulkan(void)
 {
+  if (gl_VkInstance == VK_NULL_HANDLE)
+  {
+    return;
+  }
+
+  gl_VkVerts.Clear();
+
   vkDeviceWaitIdle(gl_VkDevice);
 
-  // TODO
+  DestroySwapchain();
+
+  for (uint32_t i = 0; i < gl_VkMaxFramesInFlight; i++)
+  {
+    vkDestroySemaphore(gl_VkDevice, gl_VkImageAvailableSemaphores[i], nullptr);
+    vkDestroySemaphore(gl_VkDevice, gl_VkRenderFinishedSemaphores[i], nullptr);
+    vkDestroyFence(gl_VkDevice, gl_VkInFlightFences[i], nullptr);
+  }
+
+  gl_VkImageAvailableSemaphores.Clear();
+  gl_VkRenderFinishedSemaphores.Clear();
+  gl_VkInFlightFences.Clear();
+
   gl_VkCmdBuffers.Clear();
+  gl_VkDescriptorSets.Clear();
 
 #ifndef NDEBUG
   auto pfnDestroyDUMsg = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(gl_VkInstance, "vkDestroyDebugUtilsMessengerEXT");
@@ -169,7 +230,63 @@ void CGfxLibrary::EndDriver_Vulkan(void)
   }
 #endif
 
+  DestroyMeshData();
+  DestroyUniformBuffers();
+
+  vkDestroyDescriptorSetLayout(gl_VkDevice, gl_VkDescriptorSetLayout, nullptr);
+  vkDestroyPipelineLayout(gl_VkDevice, gl_VkPipelineLayout, nullptr);
+  vkDestroyPipeline(gl_VkDevice, gl_VkGraphicsPipeline, nullptr);
+
+  vkDestroyRenderPass(gl_VkDevice, gl_VkRenderPass, nullptr);
+  vkDestroyCommandPool(gl_VkDevice, gl_VkCmdPool, nullptr);
+  vkDestroySurfaceKHR(gl_VkInstance, gl_VkSurface, nullptr);
+  vkDestroyDevice(gl_VkDevice, nullptr);
   vkDestroyInstance(gl_VkInstance, nullptr);
+
+  Reset_Vulkan();
+}
+
+void CGfxLibrary::Reset_Vulkan()
+{
+  gl_VkInstance = VK_NULL_HANDLE;
+  gl_VkDevice = VK_NULL_HANDLE;
+  gl_VkSurface = VK_NULL_HANDLE;
+  gl_VkCurrentImageIndex = 0;
+  gl_VkCurrentViewport = {};
+  gl_VkSwapChainExtent = {};
+  gl_VkCmdPool = VK_NULL_HANDLE;;
+  gl_VkRenderPass = VK_NULL_HANDLE;
+
+  gl_VkSwapchain = VK_NULL_HANDLE;
+  gl_VkSurfColorFormat = VK_FORMAT_B8G8R8A8_UNORM;
+  gl_VkSurfColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
+  gl_VkSurfDepthFormat = VK_FORMAT_D16_UNORM;
+  gl_VkSurfPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+  gl_VkCurrentFrame = 0;
+
+  gl_VkVertexBuffer = VK_NULL_HANDLE;
+  gl_VkVertexBufferMemory = VK_NULL_HANDLE;
+  gl_VkIndexBuffer = VK_NULL_HANDLE;
+  gl_VkIndexBufferMemory = VK_NULL_HANDLE;
+
+  gl_VkDescriptorSetLayout = VK_NULL_HANDLE;
+  gl_VkPipelineLayout = VK_NULL_HANDLE;
+  gl_VkGraphicsPipeline = VK_NULL_HANDLE;
+
+  gl_VkPhysDevice = VK_NULL_HANDLE;
+  gl_VkPhMemoryProperties = {};
+  gl_VkPhProperties = {};
+  gl_VkPhFeatures = {};
+  gl_VkPhSurfCapabilities = {};
+
+  gl_VkQueueFamGraphics = VK_NULL_HANDLE;
+  gl_VkQueueFamTransfer = VK_NULL_HANDLE;
+  gl_VkQueueFamPresent = VK_NULL_HANDLE;
+  gl_VkQueueGraphics = VK_NULL_HANDLE;
+  gl_VkQueueTransfer = VK_NULL_HANDLE;
+  gl_VkQueuePresent = VK_NULL_HANDLE;
+
+  gl_VkDebugMessenger = VK_NULL_HANDLE;
 }
 
 // prepares Vulkan drawing context
@@ -190,6 +307,10 @@ void CGfxLibrary::InitContext_Vulkan()
   gl_iMaxTextureAnisotropy = 16;
   gl_iTessellationLevel = 0;
   gl_iMaxTessellationLevel = 0;
+  GFX_ctVertices = 0;
+  gl_VkVerts.Clear();
+
+  GFX_bColorArray = TRUE;
 
   gl_ulFlags |= GLF_HASACCELERATION;
   gl_ulFlags |= GLF_32BITTEXTURES;
@@ -311,6 +432,11 @@ void CGfxLibrary::SetViewport_Vulkan(float leftUpperX, float leftUpperY, float w
   gl_VkCurrentViewport.height = height;
   gl_VkCurrentViewport.minDepth = minDepth;
   gl_VkCurrentViewport.maxDepth = maxDepth;
+
+  gl_VkCurrentScissor.extent.width = width;
+  gl_VkCurrentScissor.extent.height = height;
+  gl_VkCurrentScissor.offset.x = leftUpperX;
+  gl_VkCurrentScissor.offset.y = leftUpperY;
 }
 
 BOOL CGfxLibrary::PickPhysicalDevice()
@@ -427,8 +553,8 @@ BOOL CGfxLibrary::GetQueues(VkPhysicalDevice physDevice,
     }
 
     bool found[] = {
-      p.queueFlags & VK_QUEUE_GRAPHICS_BIT,
-      p.queueFlags & VK_QUEUE_TRANSFER_BIT
+      (uint32_t)p.queueFlags & VK_QUEUE_GRAPHICS_BIT,
+      (uint32_t)p.queueFlags & VK_QUEUE_TRANSFER_BIT
     };
 
     if (found[0] && found[1])
@@ -598,9 +724,15 @@ void CGfxLibrary::CreateSyncPrimitives()
 {
   VkResult r;
 
-  if (gl_VkImageAvailableSemaphores.Count() > 0) gl_VkImageAvailableSemaphores.Delete();
-  if (gl_VkRenderFinishedSemaphores.Count() > 0) gl_VkRenderFinishedSemaphores.Delete();
-  if (gl_VkInFlightFences.Count() > 0) gl_VkInFlightFences.Delete();
+  ASSERT(gl_VkImageAvailableSemaphores.Count() == gl_VkRenderFinishedSemaphores.Count()
+    && gl_VkRenderFinishedSemaphores.Count() == gl_VkInFlightFences.Count());
+
+  if (gl_VkImageAvailableSemaphores.Count() > 0
+    /*&& gl_VkRenderFinishedSemaphores.Count() > 0
+    && gl_VkInFlightFences.Count() > 0*/)
+  {
+    return;
+  }
 
   gl_VkImageAvailableSemaphores.New(gl_VkMaxFramesInFlight);
   gl_VkRenderFinishedSemaphores.New(gl_VkMaxFramesInFlight);
@@ -626,11 +758,38 @@ void CGfxLibrary::CreateSyncPrimitives()
   }
 }
 
+void CGfxLibrary::CreateDescriptorSetLayout()
+{
+  VkResult r;
+
+  VkDescriptorSetLayoutBinding uniformBinding = {};
+  uniformBinding.binding = 0;
+  uniformBinding.descriptorCount = 1;
+  uniformBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  uniformBinding.pImmutableSamplers = nullptr;
+  uniformBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+  VkDescriptorSetLayoutBinding samplerBinding = {};
+  samplerBinding.binding = 1;
+  samplerBinding.descriptorCount = 1;
+  samplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  samplerBinding.pImmutableSamplers = nullptr;
+  samplerBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+  VkDescriptorSetLayoutBinding bindings[2] = { uniformBinding, samplerBinding };
+  VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+  layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  // TODO: textures
+  layoutInfo.bindingCount = 1;
+  layoutInfo.pBindings = bindings;
+
+  r = vkCreateDescriptorSetLayout(gl_VkDevice, &layoutInfo, nullptr, &gl_VkDescriptorSetLayout);
+}
+
 void CGfxLibrary::CreateGraphicsPipeline()
 {
-  // TODO
-  VkShaderModule vertShaderModule = 0;
-  VkShaderModule fragShaderModule = 0;
+  VkShaderModule vertShaderModule = CreateShaderModule((uint32_t*)TexturedVert_Spirv, TexturedVert_Size);
+  VkShaderModule fragShaderModule = CreateShaderModule((uint32_t*)TexturedFrag_Spirv, TexturedFrag_Size);
 
   VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
   vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -656,24 +815,24 @@ void CGfxLibrary::CreateGraphicsPipeline()
 
   VkVertexInputAttributeDescription attributeDescriptions[4];
   attributeDescriptions[0].binding = 0;
-  attributeDescriptions[0].location = 0;
-  attributeDescriptions[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-  attributeDescriptions[0].offset = offsetof(VkVertex, Position);
+  attributeDescriptions[0].location = VK_VERT_POS_LOC;
+  attributeDescriptions[0].format = VK_VERT_POS_FORMAT;
+  attributeDescriptions[0].offset = VK_VERT_POS_OFFSET;
 
   attributeDescriptions[1].binding = 0;
-  attributeDescriptions[1].location = 1;
-  attributeDescriptions[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-  attributeDescriptions[1].offset = offsetof(VkVertex, Color);
+  attributeDescriptions[1].location = VK_VERT_COL_LOC;
+  attributeDescriptions[1].format = VK_VERT_COL_FORMAT;
+  attributeDescriptions[1].offset = VK_VERT_COL_OFFSET;
 
   attributeDescriptions[2].binding = 0;
-  attributeDescriptions[2].location = 2;
-  attributeDescriptions[2].format = VK_FORMAT_R32G32B32_SFLOAT;
-  attributeDescriptions[2].offset = offsetof(VkVertex, Normal);
+  attributeDescriptions[2].location = VK_VERT_NOR_LOC;
+  attributeDescriptions[2].format = VK_VERT_NOR_FORMAT;
+  attributeDescriptions[2].offset = VK_VERT_NOR_OFFSET;
 
   attributeDescriptions[3].binding = 0;
-  attributeDescriptions[3].location = 3;
-  attributeDescriptions[3].format = VK_FORMAT_R32G32_SFLOAT;
-  attributeDescriptions[3].offset = offsetof(VkVertex, TexCoord);
+  attributeDescriptions[3].location = VK_VERT_TEX_LOC;
+  attributeDescriptions[3].format = VK_VERT_TEX_FORMAT;
+  attributeDescriptions[3].offset = VK_VERT_TEX_OFFSET;
 
   vertexInputInfo.vertexBindingDescriptionCount = 1;
   vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions;
@@ -687,11 +846,10 @@ void CGfxLibrary::CreateGraphicsPipeline()
 
   VkPipelineViewportStateCreateInfo viewportState = {};
   viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-  // will be set dynamically
-  viewportState.viewportCount = 0;
-  viewportState.pViewports = nullptr;
-  viewportState.scissorCount = 0;
-  viewportState.pScissors = nullptr;
+  viewportState.viewportCount = 1;
+  viewportState.pViewports = nullptr; // will be set dynamically
+  viewportState.scissorCount = 1;
+  viewportState.pScissors = nullptr; // will be set dynamically
 
   VkPipelineRasterizationStateCreateInfo rasterizer = {};
   rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -778,6 +936,20 @@ void CGfxLibrary::CreateGraphicsPipeline()
 
 void CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
 {
+  // check consistency
+  ASSERT(gl_VkSwapchainImages.Count() == gl_VkSwapchainImageViews.Count());
+  ASSERT(gl_VkSwapchainImages.Count() == gl_VkSwapchainDepthImages.Count());
+  ASSERT(gl_VkSwapchainImages.Count() == gl_VkSwapchainDepthMemory.Count());
+  ASSERT(gl_VkSwapchainImages.Count() == gl_VkSwapchainDepthImageViews.Count());
+  ASSERT(gl_VkSwapchainImages.Count() == gl_VkFramebuffers.Count());
+  ASSERT(gl_VkSwapchainImages.Count() == gl_VkImagesInFlight.Count());
+
+  // destroy if was created
+  if (gl_VkSwapchainImages.Count() > 0)
+  {
+    DestroySwapchain();
+  }
+
   vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gl_VkPhysDevice, gl_VkSurface, &gl_VkPhSurfCapabilities);
 
   const uint32_t preferredImageCount = gl_VkPhSurfCapabilities.minImageCount;
@@ -821,15 +993,6 @@ void CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
   {
     ASSERTALWAYS("Vulkan error: Can't get swapchain images.\n");
   }
-
-  // reallocate arrays
-  if (gl_VkSwapchainImages.Count() > 0) gl_VkSwapchainImages.Delete();
-  if (gl_VkSwapchainImageViews.Count() > 0) gl_VkSwapchainImageViews.Delete();
-  if (gl_VkSwapchainDepthImages.Count() > 0) gl_VkSwapchainDepthImages.Delete();
-  if (gl_VkSwapchainDepthMemory.Count() > 0) gl_VkSwapchainDepthMemory.Delete();
-  if (gl_VkSwapchainDepthImageViews.Count() > 0) gl_VkSwapchainDepthImageViews.Delete();
-  if (gl_VkFramebuffers.Count() > 0) gl_VkFramebuffers.Delete();
-  if (gl_VkImagesInFlight.Count() > 0) gl_VkImagesInFlight.Delete();
 
   gl_VkSwapchainImages.New(swapchainImageCount);
   gl_VkSwapchainImageViews.New(swapchainImageCount);
@@ -880,23 +1043,47 @@ void CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
   }
 
   // allocate cmd buffers, if required
-  int diff = (int)swapchainImageCount - (int)gl_VkCmdBuffers.Count();
+  INDEX oldCount = gl_VkCmdBuffers.Count();
+  int diff = (int)swapchainImageCount - (int)oldCount;
   if (diff > 0)
   {
-    int oldCount = (int)gl_VkCmdBuffers.Count();
+    VkResult r;
+
     gl_VkCmdBuffers.Expand(swapchainImageCount);
 
+    // allocate cmd buffers
     VkCommandBufferAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.commandPool = gl_VkCmdPool;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = (uint32_t)diff;
 
-    if (vkAllocateCommandBuffers(gl_VkDevice, &allocInfo, &gl_VkCmdBuffers[oldCount]) != VK_SUCCESS)
+    r = vkAllocateCommandBuffers(gl_VkDevice, &allocInfo, &gl_VkCmdBuffers[oldCount]);
+    VK_CHECKERROR(r);
+
+    // allocate descriptor sets
+    gl_VkDescriptorSets.Expand(swapchainImageCount);
+
+    CStaticArray<VkDescriptorSetLayout> layouts;
+    layouts.New(swapchainImageCount);
+    for (uint32_t i = 0; i < swapchainImageCount; i++)
     {
-      ASSERTALWAYS("Vulkan error: Can't allocate command buffers.\n");
+      layouts[i] = gl_VkDescriptorSetLayout;
     }
+
+    VkDescriptorSetAllocateInfo setAllocInfo = {};
+    setAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    setAllocInfo.descriptorPool = gl_VkDescriptorPool;
+    setAllocInfo.descriptorSetCount = (uint32_t)diff;
+    setAllocInfo.pSetLayouts = &layouts[0];
+
+    r = vkAllocateDescriptorSets(gl_VkDevice, &setAllocInfo, &gl_VkDescriptorSets[oldCount]);
+    VK_CHECKERROR(r);
   }
+
+  DestroyUniformBuffers();
+  CreateUniformBuffers(swapchainImageCount);
+  UpdateDescriptorSet();
 
   gl_VkSwapChainExtent.width = width;
   gl_VkSwapChainExtent.height = height;
@@ -945,6 +1132,11 @@ void CGfxLibrary::RecreateSwapchain(uint32_t newWidth, uint32_t newHeight)
 
 void CGfxLibrary::DestroySwapchain()
 {
+  if (gl_VkDevice == VK_NULL_HANDLE || gl_VkSwapchain == VK_NULL_HANDLE)
+  {
+    return;
+  }
+
   vkDeviceWaitIdle(gl_VkDevice);
 
   gl_VkSwapChainExtent = {};
@@ -971,6 +1163,7 @@ void CGfxLibrary::DestroySwapchain()
 
 
   vkDestroySwapchainKHR(gl_VkDevice, gl_VkSwapchain, nullptr);
+  gl_VkSwapchain = VK_NULL_HANDLE;
 
   gl_VkSwapchainImages.Clear();
   gl_VkSwapchainImageViews.Clear();
@@ -1081,6 +1274,37 @@ BOOL CGfxLibrary::CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t
   return TRUE;
 }
 
+void CGfxLibrary::CreateUniformBuffers(uint32_t swapchainImageCount)
+{
+  ASSERT(gl_VkUniformBuffers.Count() == 0);
+  ASSERT(gl_VkUniformBuffersMemory.Count() == 0);
+
+  // TODO
+  VkDeviceSize bufferSize = 16;
+
+  gl_VkUniformBuffers.New(swapchainImageCount);
+  gl_VkUniformBuffersMemory.New(swapchainImageCount);
+
+  for (size_t i = 0; i < swapchainImageCount; i++)
+  {
+    CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+      gl_VkUniformBuffers[i], gl_VkUniformBuffersMemory[i]);
+  }
+}
+
+void CGfxLibrary::DestroyUniformBuffers()
+{
+  for (size_t i = 0; i < gl_VkUniformBuffers.Count(); i++)
+  {
+    vkDestroyBuffer(gl_VkDevice, gl_VkUniformBuffers[i], nullptr);
+    vkFreeMemory(gl_VkDevice, gl_VkUniformBuffersMemory[i], nullptr);
+  }
+
+  gl_VkUniformBuffers.Clear();
+  gl_VkUniformBuffersMemory.Clear();
+}
+
 void CGfxLibrary::StartFrame()
 {
   VkResult r;
@@ -1178,9 +1402,77 @@ void CGfxLibrary::EndCommandBuffer()
   VK_CHECKERROR(r);
 }
 
+void CGfxLibrary::CreateMeshData()
+{
+  VkDeviceSize vertBufferSize = VK_VERT_SIZE * gl_VkMaxVertexCount;
+  VkDeviceSize indexBufferSize = sizeof(UINT) * gl_VkMaxVertexCount;
+
+  CreateBuffer(vertBufferSize, 
+    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 
+    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+    gl_VkVertexBuffer, gl_VkVertexBufferMemory);
+
+  CreateBuffer(indexBufferSize,
+    VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+    gl_VkIndexBuffer, gl_VkIndexBufferMemory);
+}
+
+void CGfxLibrary::DestroyMeshData()
+{
+  vkDestroyBuffer(gl_VkDevice, gl_VkVertexBuffer, nullptr);
+  vkFreeMemory(gl_VkDevice, gl_VkVertexBufferMemory, nullptr);
+  vkDestroyBuffer(gl_VkDevice, gl_VkIndexBuffer, nullptr);
+  vkFreeMemory(gl_VkDevice, gl_VkIndexBufferMemory, nullptr);
+}
+
+VkShaderModule CGfxLibrary::CreateShaderModule(const uint32_t *spvCode, uint32_t codeSize)
+{
+  VkResult r;
+  VkShaderModule shaderModule;
+
+  VkShaderModuleCreateInfo moduleInfo = {};
+  moduleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+  moduleInfo.codeSize = codeSize;
+  moduleInfo.pCode = spvCode;
+
+  r = vkCreateShaderModule(gl_VkDevice, &moduleInfo, nullptr, &shaderModule);
+
+  return shaderModule;
+}
+
 VkCommandBuffer CGfxLibrary::GetCurrentCmdBuffer()
 {
   return gl_VkCmdBuffers[gl_VkCurrentImageIndex];
+}
+
+void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
+{
+  CStaticArray<VkVertex> &verts = gl_VkVerts;
+  ASSERT(verts.Count() > 0);
+
+  VkCommandBuffer cmd = GetCurrentCmdBuffer();
+
+  // firstly, copy vertex and index data to buffers
+  CopyToDeviceMemory(gl_VkVertexBufferMemory, &gl_VkVerts[0], gl_VkVerts.Count() * VK_VERT_SIZE);
+  CopyToDeviceMemory(gl_VkIndexBufferMemory, indices, sizeof(uint32_t) * indexCount);
+
+  vkCmdSetViewport(cmd, 0, 1, &gl_VkCurrentViewport);
+  vkCmdSetScissor(cmd, 0, 1, &gl_VkCurrentScissor);
+
+  // bind current pipeline
+  vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkGraphicsPipeline);
+
+  // bind descriptor set
+  vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkPipelineLayout, 0, 1, &gl_VkDescriptorSets[gl_VkCurrentImageIndex], 0, nullptr);
+
+  // set mesh
+  VkDeviceSize offsets[] = { 0 };
+  vkCmdBindVertexBuffers(cmd, 0, 1, &gl_VkVertexBuffer, offsets);
+  vkCmdBindIndexBuffer(cmd, gl_VkIndexBuffer, 0, VK_INDEX_TYPE_UINT32);
+
+  // draw
+  vkCmdDrawIndexed(cmd, indexCount, 1, 0, 0, 0);
 }
 
 uint32_t CGfxLibrary::GetMemoryTypeIndex(uint32_t memoryTypeBits, VkFlags requirementsMask) 
@@ -1226,6 +1518,41 @@ VkFormat CGfxLibrary::FindSupportedFormat(const VkFormat *formats, uint32_t form
   CPrintF("Vulkan error: Can't find required format");
   ASSERT(FALSE);
   return VK_FORMAT_UNDEFINED;
+}
+
+void CGfxLibrary::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory)
+{
+  VkResult r;
+
+  VkBufferCreateInfo bufferInfo = {};
+  bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+  bufferInfo.size = size;
+  bufferInfo.usage = usage;
+  bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+  r = vkCreateBuffer(gl_VkDevice, &bufferInfo, nullptr, &buffer);
+  VK_CHECKERROR(r);
+
+  VkMemoryRequirements memRequirements;
+  vkGetBufferMemoryRequirements(gl_VkDevice, buffer, &memRequirements);
+
+  VkMemoryAllocateInfo allocInfo = {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  allocInfo.allocationSize = memRequirements.size;
+  allocInfo.memoryTypeIndex = GetMemoryTypeIndex(memRequirements.memoryTypeBits, properties);
+
+  r = vkAllocateMemory(gl_VkDevice, &allocInfo, nullptr, &bufferMemory);
+  VK_CHECKERROR(r);
+
+  vkBindBufferMemory(gl_VkDevice, buffer, bufferMemory, 0);
+}
+
+void CGfxLibrary::CopyToDeviceMemory(VkDeviceMemory deviceMemory, const void *data, VkDeviceSize size)
+{
+  void *mapped;
+  vkMapMemory(gl_VkDevice, deviceMemory, 0, size, 0, &mapped);
+  memcpy(mapped, data, (size_t)size);
+  vkUnmapMemory(gl_VkDevice, deviceMemory);
 }
 
 //BOOL CGfxLibrary::InitDisplay_Vulkan(INDEX iAdapter, PIX pixSizeI, PIX pixSizeJ, DisplayDepth eColorDepth)
@@ -1278,6 +1605,48 @@ extern void orthoMatrix(float left, float right, float bottom, float top, float 
   outMatrix[3][0] = -(right + left) / (right - left);
   outMatrix[3][1] = -(top + bottom) / (top - bottom);
   outMatrix[3][2] = -zNear / (zFar - zNear);
+}
+
+void CGfxLibrary::UpdateDescriptorSet()
+{
+  VkDescriptorBufferInfo bufferInfo = {};
+  bufferInfo.buffer = gl_VkUniformBuffers[gl_VkCurrentImageIndex];
+  bufferInfo.offset = 0;
+  // TODO
+  bufferInfo.range = 16;
+
+  // TODO: textures
+  //VkDescriptorImageInfo imageInfo = {};
+  //imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  //imageInfo.imageView = textureImageView;
+  //imageInfo.sampler = textureSampler;
+
+  VkWriteDescriptorSet descriptorWrites[2];
+
+  descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  descriptorWrites[0].pNext = nullptr;
+  descriptorWrites[0].dstSet = gl_VkDescriptorSets[gl_VkCurrentImageIndex];
+  descriptorWrites[0].dstBinding = 0;
+  descriptorWrites[0].dstArrayElement = 0;
+  descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  descriptorWrites[0].descriptorCount = 1;
+  descriptorWrites[0].pBufferInfo = &bufferInfo;
+  descriptorWrites[0].pImageInfo = nullptr;
+  descriptorWrites[0].pTexelBufferView = nullptr;
+
+  //descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  //descriptorWrites[1].pNext = nullptr;
+  //descriptorWrites[1].dstSet = gl_VkDescriptorSets[gl_VkCurrentImageIndex];
+  //descriptorWrites[1].dstBinding = 1;
+  //descriptorWrites[1].dstArrayElement = 0;
+  //descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  //descriptorWrites[1].descriptorCount = 1;
+  //descriptorWrites[1].pImageInfo = &imageInfo;
+  //descriptorWrites[1].pBufferInfo = nullptr;
+  //descriptorWrites[1].pTexelBufferView = nullptr;
+
+  // TODO: textures - change to 2
+  vkUpdateDescriptorSets(gl_VkDevice, 1, descriptorWrites, 0, nullptr);
 }
 
 #endif // SE1_VULKAN
