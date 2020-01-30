@@ -3,8 +3,8 @@
 
 // ENABLE/DISABLE FUNCTIONS
 
-extern float VkViewMatrix[16];
-extern float VkProjectionMatrix[16];
+extern FLOAT VkViewMatrix[16];
+extern FLOAT VkProjectionMatrix[16];
 
 static void svk_EnableTexture(void)
 {
@@ -523,7 +523,7 @@ static void svk_SetViewMatrix(const FLOAT* pfMatrix/*=NULL*/)
 
   if (pfMatrix != NULL) 
   {
-    Svk_MatCopy(pfMatrix, VkViewMatrix);
+    Svk_MatCopy(VkViewMatrix, pfMatrix);
   }
   else 
   {
@@ -715,14 +715,14 @@ static void svk_SetVertexArray(GFXVertex4* pvtx, INDEX ctVtx)
   //ASSERT(!pglIsEnabled(GL_NORMAL_ARRAY));
   //ASSERT(pglIsEnabled(GL_VERTEX_ARRAY));
 
-  CStaticArray<SvkVertex> &verts = _pGfx->gl_VkVerts;
+  CStaticStackArray<SvkVertex> &verts = _pGfx->gl_VkVerts;
 
-  verts.Clear();
-  verts.New(ctVtx);
+  verts.PopAll();
+  SvkVertex *pushed = verts.Push(ctVtx);
 
   for (INDEX i = 0; i < ctVtx; i++)
   {
-    verts[i].SetPosition(pvtx[i].x, pvtx[i].y, pvtx[i].z);
+    pushed[i].SetPosition(pvtx[i].x, pvtx[i].y, pvtx[i].z);
   }
 
   //GFX_bColorArray = FALSE; // mark that color array has been disabled (because of potential LockArrays)
@@ -740,9 +740,10 @@ static void svk_SetNormalArray(GFXNormal* pnor)
   ASSERT(GFX_ctVertices > 0);
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  CStaticArray<SvkVertex> &verts = _pGfx->gl_VkVerts;
+  CStaticStackArray<SvkVertex> &verts = _pGfx->gl_VkVerts;
   INDEX ctVtx = verts.Count();
   ASSERT(ctVtx > 0);
+  ASSERT(ctVtx == GFX_ctVertices);
 
   for (INDEX i = 0; i < ctVtx; i++)
   {
@@ -762,9 +763,10 @@ static void svk_SetColorArray(GFXColor* pcol)
   //svk_EnableColorArray();
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  CStaticArray<SvkVertex> &verts = _pGfx->gl_VkVerts;
+  CStaticStackArray<SvkVertex> &verts = _pGfx->gl_VkVerts;
   INDEX ctVtx = verts.Count();
   ASSERT(ctVtx > 0);
+  ASSERT(ctVtx == GFX_ctVertices);
 
   for (INDEX i = 0; i < ctVtx; i++)
   {
@@ -790,7 +792,7 @@ static void svk_SetTexCoordArray(GFXTexCoord* ptex, BOOL b4/*=FALSE*/)
 
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  CStaticArray<SvkVertex> &verts = _pGfx->gl_VkVerts;
+  CStaticStackArray<SvkVertex> &verts = _pGfx->gl_VkVerts;
   INDEX ctVtx = verts.Count();
   ASSERT(ctVtx > 0);
 
@@ -825,6 +827,7 @@ static void svk_DrawElements(INDEX ctElem, INDEX* pidx)
   else
   {
     ASSERT(_pGfx->gl_VkVerts.Count() > 0);
+    ASSERT(_pGfx->gl_VkVerts.Count() == GFX_ctVertices);
 
     //pglDrawElements(GL_TRIANGLES, ctElem, GL_UNSIGNED_INT, pidx);
     _pGfx->DrawTriangles(ctElem, (uint32_t*)pidx);

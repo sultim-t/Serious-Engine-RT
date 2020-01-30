@@ -323,6 +323,7 @@ copy Release\$(TargetName).lib $(SolutionDir)..\Bin\ &gt;nul</Command>
     </ClCompile>
     <ClCompile Include="Graphics\Vulkan\SvkDescriptors.cpp" />
     <ClCompile Include="Graphics\Vulkan\SvkDynamicBuffers.cpp" />
+    <ClCompile Include="Graphics\Vulkan\SvkMatrix.cpp" />
     <ClCompile Include="Graphics\Vulkan\SvkSwapchain.cpp" />
     <ClCompile Include="Graphics\Vulkan\SvkUtils.cpp" />
     <ClCompile Include="Math\Float.cpp" />

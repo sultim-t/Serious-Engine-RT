@@ -23,7 +23,6 @@ extern unsigned int TexturedFrag_Size;
 
 FLOAT	VkProjectionMatrix[16];
 FLOAT	VkViewMatrix[16];
-//FLOAT	VkViewProjMatrix[16];
 #pragma endregion
 
 
@@ -48,6 +47,7 @@ extern GfxComp  GFX_eDepthFunc;
 extern GfxFace  GFX_eCullFace;
 extern INDEX GFX_iTexModulation[GFX_MAXTEXUNITS];
 extern INDEX GFX_ctVertices;
+extern BOOL  GFX_bViewMatrix;
 
 #pragma region Debug messenger
 static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) 
@@ -198,11 +198,11 @@ void CGfxLibrary::EndDriver_Vulkan(void)
   {
     vkDestroySemaphore(gl_VkDevice, gl_VkImageAvailableSemaphores[i], nullptr);
     vkDestroySemaphore(gl_VkDevice, gl_VkRenderFinishedSemaphores[i], nullptr);
-    vkDestroyFence(gl_VkDevice, gl_VkInFlightFences[i], nullptr);
+    vkDestroyFence(gl_VkDevice, gl_VkCmdFences[i], nullptr);
 
     gl_VkImageAvailableSemaphores[i] = VK_NULL_HANDLE;
     gl_VkRenderFinishedSemaphores[i] = VK_NULL_HANDLE;
-    gl_VkInFlightFences[i] = VK_NULL_HANDLE;
+    gl_VkCmdFences[i] = VK_NULL_HANDLE;
   }
 
 #ifndef NDEBUG
@@ -241,7 +241,9 @@ void CGfxLibrary::Reset_Vulkan()
   gl_VkSurface = VK_NULL_HANDLE;
   gl_VkCurrentImageIndex = 0;
   gl_VkCurrentViewport = {};
+  gl_VkCurrentScissor = {};
   gl_VkSwapChainExtent = {};
+
   gl_VkCmdPool = VK_NULL_HANDLE;;
   gl_VkRenderPass = VK_NULL_HANDLE;
 
@@ -278,7 +280,8 @@ void CGfxLibrary::Reset_Vulkan()
     gl_VkDescriptorPools[i] = VK_NULL_HANDLE;
     gl_VkImageAvailableSemaphores[i] = VK_NULL_HANDLE;
     gl_VkRenderFinishedSemaphores[i] = VK_NULL_HANDLE;
-    gl_VkInFlightFences[i] = VK_NULL_HANDLE;
+    gl_vkCmdSubmited[i] = false;
+    gl_VkCmdFences[i] = VK_NULL_HANDLE;
 
     // manually set memory as arrays contain garbage
     gl_VkDescriptorSets[i].sa_Array = nullptr;
@@ -326,7 +329,8 @@ void CGfxLibrary::InitContext_Vulkan()
   gl_iTessellationLevel = 0;
   gl_iMaxTessellationLevel = 0;
   GFX_ctVertices = 0;
-  gl_VkVerts.Clear();
+  gl_VkVerts.New(gl_VkVerts_StartCount);
+  gl_VkVerts.SetAllocationStep(gl_VkVerts_AllocationStep);
 
   GFX_bColorArray = TRUE;
 
@@ -776,7 +780,7 @@ void CGfxLibrary::StartFrame()
   gl_VkCmdBufferCurrent = (gl_VkCmdBufferCurrent + 1) % gl_VkMaxCmdBufferCount;
 
   // wait when previous cmd with same index will be done
-  r = vkWaitForFences(gl_VkDevice, 1, &gl_VkInFlightFences[gl_VkCmdBufferCurrent], VK_TRUE, UINT64_MAX);
+  r = vkWaitForFences(gl_VkDevice, 1, &gl_VkCmdFences[gl_VkCmdBufferCurrent], VK_TRUE, UINT64_MAX);
   VK_CHECKERROR(r);
 
   // get image index in swapchain
@@ -806,23 +810,25 @@ void CGfxLibrary::StartCommandBuffer()
   VkResult r;
   VkCommandBuffer cmd = gl_VkCmdBuffers[gl_VkCmdBufferCurrent];
 
-  if (gl_VkImagesInFlight[gl_VkCurrentImageIndex] != VK_NULL_HANDLE)
+  if (gl_vkCmdSubmited[gl_VkCmdBufferCurrent])
   {
     // wait for another fence that uses same image index
-    r = vkWaitForFences(gl_VkDevice, 1, &gl_VkImagesInFlight[gl_VkCurrentImageIndex], VK_TRUE, UINT64_MAX);
+    r = vkWaitForFences(gl_VkDevice, 1, &gl_VkCmdFences[gl_VkCmdBufferCurrent], VK_TRUE, UINT64_MAX);
     VK_CHECKERROR(r);
   }
-  // set reference
-  gl_VkImagesInFlight[gl_VkCurrentImageIndex] = gl_VkInFlightFences[gl_VkCmdBufferCurrent];
+
+  // fences must be set to unsignaled state manually
+  vkResetFences(gl_VkDevice, 1, &gl_VkCmdFences[gl_VkCmdBufferCurrent]);
 
   VkCommandBufferBeginInfo beginInfo = {};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
   r = vkBeginCommandBuffer(cmd, &beginInfo);
   VK_CHECKERROR(r);
 
   VkClearValue clearValues[2];
-  clearValues[0].color = { 0.5f, 0.5f, 0.5f, 1.0f };
+  clearValues[0].color = { 0.25f, 0.25f, 0.25f, 1.0f };
   clearValues[1].depthStencil = { 1.0f, 0 };
 
   VkRenderPassBeginInfo renderPassInfo = {};
@@ -837,8 +843,34 @@ void CGfxLibrary::StartCommandBuffer()
   vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
   // set viewport and scissor dynamically
-  vkCmdSetViewport(cmd, 0, 1, &gl_VkCurrentViewport);
-  vkCmdSetScissor(cmd, 0, 1, &gl_VkCurrentScissor);
+  if (gl_VkCurrentViewport.width != 0 && gl_VkCurrentViewport.height != 0)
+  {
+    vkCmdSetViewport(cmd, 0, 1, &gl_VkCurrentViewport);
+  }
+  else
+  {
+    // use default if wasn't set
+    VkViewport vp;
+    vp.minDepth = 0; vp.maxDepth = 1; vp.x = 0; vp.y = 0;
+    vp.width = gl_VkSwapChainExtent.width; vp.height = gl_VkSwapChainExtent.height;
+    vkCmdSetViewport(cmd, 0, 1, &vp);
+  }
+
+  if (gl_VkCurrentScissor.extent.width != 0 && gl_VkCurrentScissor.extent.height != 0)
+  {
+    vkCmdSetScissor(cmd, 0, 1, &gl_VkCurrentScissor);
+  }
+  else
+  {
+    // use default if wasn't set
+    VkRect2D sc;
+    sc.offset = { 0, 0 };
+    sc.extent = { gl_VkSwapChainExtent.width, gl_VkSwapChainExtent.height };
+    vkCmdSetScissor(cmd, 0, 1, &sc);
+  }
+  // bind current pipeline
+  vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkGraphicsPipeline);
+
 }
 
 void CGfxLibrary::EndCommandBuffer()
@@ -868,12 +900,11 @@ void CGfxLibrary::EndCommandBuffer()
   submitInfo[0].signalSemaphoreCount = 1;
   submitInfo[0].pSignalSemaphores = &smpToSignal;
 
-  // fences must be set to unsignaled state manually
-  vkResetFences(gl_VkDevice, 1, &gl_VkInFlightFences[gl_VkCmdBufferCurrent]);
-
   // submit cmd buffer; fence will be in signaled state when cmd will be done
-  r = vkQueueSubmit(gl_VkQueueGraphics, 1, submitInfo, gl_VkInFlightFences[gl_VkCmdBufferCurrent]);
+  r = vkQueueSubmit(gl_VkQueueGraphics, 1, submitInfo, gl_VkCmdFences[gl_VkCmdBufferCurrent]);
   VK_CHECKERROR(r);
+
+  gl_vkCmdSubmited[gl_VkCmdBufferCurrent] = true;
 }
 
 VkCommandBuffer CGfxLibrary::GetCurrentCmdBuffer()
@@ -883,24 +914,30 @@ VkCommandBuffer CGfxLibrary::GetCurrentCmdBuffer()
 
 void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
 {
-  CStaticArray<SvkVertex> &verts = gl_VkVerts;
+  CStaticStackArray<SvkVertex> &verts = gl_VkVerts;
   ASSERT(verts.Count() > 0);
 
   VkCommandBuffer cmd = gl_VkCmdBuffers[gl_VkCmdBufferCurrent];
   
   // TODO: dynamic vertex and index buffer
   // TODO: dynamic descriptor sets
-  SvkBufferObject vertexBuffer = GetVertexBuffer(&verts[0], gl_VkVerts.Count() * VK_VERT_SIZE);
-  SvkBufferObject indexBuffer = GetIndexBuffer(&indices[0], sizeof(UINT) * indexCount);
+  const SvkBufferObject &vertexBuffer = GetVertexBuffer(&verts[0], verts.Count() * VK_VERT_SIZE);
+  const SvkBufferObject &indexBuffer = GetIndexBuffer(&indices[0], sizeof(UINT) * indexCount);
 
-  FLOAT mvp[16];
-  // TODO: check
-  Svk_MatMultiply(mvp, VkViewMatrix, VkProjectionMatrix);
+  FLOAT vp[16];
+  // TODO: check matrix multiplications, transformation matrices
 
-  const SvkDescriptorObject &descObj = GetUniformBuffer(mvp, 16 * sizeof(FLOAT));
+  if (GFX_bViewMatrix)
+  {
+    Svk_MatMultiply(vp, VkViewMatrix, VkProjectionMatrix);
+  }
+  else
+  {
+    Svk_MatCopy(vp, VkProjectionMatrix);
+  }
 
-  // bind current pipeline
-  vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkGraphicsPipeline);
+  const SvkDescriptorObject &descObj = GetUniformBuffer(vp, 16 * sizeof(FLOAT));
+
 
   // bind descriptor set
   vkCmdBindDescriptorSets(
@@ -919,106 +956,6 @@ void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
   vkCmdDrawIndexed(cmd, indexCount, 1, 0, 0, 0);
 }
 
-void Svk_MatCopy(const float *src, float *dest)
-{
-  for (int i = 0; i < 4; i++)
-  {
-    for (int j = 0; j < 4; j++)
-    {
-      dest[i * 4 + j] = src[i * 4 + j];
-    }
-  }
-}
-
-void Svk_MatSetIdentity(float *result)
-{
-  result[0] = 1.0f;
-  result[1] = 0.0f;
-  result[2] = 0.0f;
-  result[3] = 0.0f;
-  result[4] = 0.0f;
-  result[5] = 1.0f;
-  result[6] = 0.0f;
-  result[7] = 0.0f;
-  result[8] = 0.0f;
-  result[9] = 0.0f;
-  result[10] = 1.0f;
-  result[11] = 0.0f;
-  result[12] = 0.0f;
-  result[13] = 0.0f;
-  result[14] = 0.0f;
-  result[15] = 1.0f;
-}
-
-void Svk_MatMultiply(float *result, const float *a, const float *b)
-{
-  for (int i = 0; i < 4; i++)
-  {
-    for (int j = 0; j < 4; j++)
-    {
-      result[i * 4 + j] = 0.0f;
-
-      for (int s = 0; s < 4; s++)
-      {
-        result[i * 4 + j] += a[i * 4 + s] * b[s * 4 + j];
-      }
-    }
-  }
-}
-
-void Svk_MatFrustum(float *result, float fLeft, float fRight, float fBottom, float fTop, float fNear, float fFar)
-{
-  const float fRpL = fRight + fLeft;  const float fRmL = fRight - fLeft;  const float fFpN = fFar + fNear;
-  const float fTpB = fTop + fBottom;  const float fTmB = fTop - fBottom;  const float fFmN = fFar - fNear;
-  const float f2Fm2N = 2.0f * fFar - 2.0f * fNear;
-
-  result[0 * 4 + 0] = 2.0f * fNear / fRmL;
-  result[0 * 4 + 1] = 0.0f;
-  result[0 * 4 + 2] = 0.0f;
-  result[0 * 4 + 3] = 0.0f;
-
-  result[1 * 4 + 0] = 0.0f;
-  result[1 * 4 + 1] = -2.0f * fNear / fTmB;
-  result[1 * 4 + 2] = 0.0f;
-  result[1 * 4 + 3] = 0.0f;
-
-  result[2 * 4 + 0] = fRpL / fRmL;
-  result[2 * 4 + 1] = -fTpB / fTmB;
-  result[2 * 4 + 2] = -(2 * fFar - fNear) / f2Fm2N;
-  result[2 * 4 + 3] = -1.0f;
-
-  result[3 * 4 + 0] = 0.0f;
-  result[3 * 4 + 1] = 0.0f;
-  result[3 * 4 + 2] = -fFar * fNear / f2Fm2N;
-  result[3 * 4 + 3] = 0.0f;
-}
-
-void Svk_MatOrtho(float *result, float fLeft, float fRight, float fBottom, float fTop, float fNear, float fFar)
-{
-  const float fRpL = fRight + fLeft;  const float fRmL = fRight - fLeft;  const float fFpN = fFar + fNear;
-  const float fTpB = fTop + fBottom;  const float fTmB = fTop - fBottom;  const float fFmN = fFar - fNear;
-  const float f2Fm2N = 2 * fFar - 2 * fNear;
-
-  result[0 * 4 + 0] = 2.0f / fRmL;
-  result[0 * 4 + 1] = 0.0f;
-  result[0 * 4 + 2] = 0.0f;
-  result[0 * 4 + 3] = 0.0f;
-
-  result[1 * 4 + 0] = 0.0f;
-  result[1 * 4 + 1] = -2.0f / fTmB;
-  result[1 * 4 + 2] = 0.0f;
-  result[1 * 4 + 3] = 0.0f;
-
-  result[2 * 4 + 0] = 0.0f;
-  result[2 * 4 + 1] = 0.0f;
-  result[2 * 4 + 2] = -1.0f / f2Fm2N;
-  result[2 * 4 + 3] = 0.0f;
-
-  result[3 * 4 + 0] = -fRpL / fRmL;
-  result[3 * 4 + 1] = fTpB / fTmB;
-  result[3 * 4 + 2] = (2.0f * fFar - 3.0f * fNear) / f2Fm2N;
-  result[3 * 4 + 3] = 1.0f;
-}
 //BOOL CGfxLibrary::InitDisplay_Vulkan(INDEX iAdapter, PIX pixSizeI, PIX pixSizeJ, DisplayDepth eColorDepth)
 //{
 //  // prepare display mode

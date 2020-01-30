@@ -159,11 +159,10 @@ public:
   CStaticArray<VkImageView>       gl_VkSwapchainDepthImageViews;
   CStaticArray<VkFramebuffer>     gl_VkFramebuffers;
 
-  CStaticArray<VkFence>           gl_VkImagesInFlight;
-
   VkSemaphore                     gl_VkImageAvailableSemaphores[gl_VkMaxCmdBufferCount];
   VkSemaphore                     gl_VkRenderFinishedSemaphores[gl_VkMaxCmdBufferCount];
-  VkFence                         gl_VkInFlightFences[gl_VkMaxCmdBufferCount];
+  VkFence                         gl_VkCmdFences[gl_VkMaxCmdBufferCount];
+  bool                            gl_vkCmdSubmited[gl_VkMaxCmdBufferCount];
 
   VkRenderPass                    gl_VkRenderPass;
 
@@ -211,7 +210,7 @@ public:
   VkDebugUtilsMessengerEXT        gl_VkDebugMessenger;
 
   // current mesh
-  CStaticArray<SvkVertex>         gl_VkVerts;
+  CStaticStackArray<SvkVertex>    gl_VkVerts;
 
   // do not remove this var as created window 
   // with zero size in ViewPort.cpp is NULL without it

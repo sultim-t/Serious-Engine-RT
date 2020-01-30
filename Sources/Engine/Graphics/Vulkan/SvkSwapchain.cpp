@@ -9,7 +9,6 @@ void CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
   ASSERT(gl_VkSwapchainImages.Count() == gl_VkSwapchainDepthMemory.Count());
   ASSERT(gl_VkSwapchainImages.Count() == gl_VkSwapchainDepthImageViews.Count());
   ASSERT(gl_VkSwapchainImages.Count() == gl_VkFramebuffers.Count());
-  ASSERT(gl_VkSwapchainImages.Count() == gl_VkImagesInFlight.Count());
 
   // destroy if was created
   if (gl_VkSwapchainImages.Count() > 0)
@@ -19,7 +18,8 @@ void CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
 
   vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gl_VkPhysDevice, gl_VkSurface, &gl_VkPhSurfCapabilities);
 
-  const uint32_t preferredImageCount = gl_VkPhSurfCapabilities.minImageCount;
+  const uint32_t preferredImageCount = 2; 
+  ASSERT(gl_VkPhSurfCapabilities.maxImageCount >= 2);
   uint32_t swapchainImageCount;
 
   VkSwapchainCreateInfoKHR createInfo = {};
@@ -67,11 +67,6 @@ void CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
   gl_VkSwapchainDepthMemory.New(swapchainImageCount);
   gl_VkSwapchainDepthImageViews.New(swapchainImageCount);
   gl_VkFramebuffers.New(swapchainImageCount);
-  gl_VkImagesInFlight.New(swapchainImageCount);
-  for (uint32_t i = 0; i < swapchainImageCount; i++)
-  {
-    gl_VkImagesInFlight[i] = VK_NULL_HANDLE;
-  }
 
   if (vkGetSwapchainImagesKHR(gl_VkDevice, gl_VkSwapchain, &swapchainImageCount, &gl_VkSwapchainImages[0]) != VK_SUCCESS)
   {
@@ -193,7 +188,6 @@ void CGfxLibrary::DestroySwapchain()
   gl_VkSwapchainDepthMemory.Clear();
   gl_VkSwapchainDepthImageViews.Clear();
   gl_VkFramebuffers.Clear();
-  gl_VkImagesInFlight.Clear();
 }
 
 VkExtent2D CGfxLibrary::GetSwapchainExtent(uint32_t width, uint32_t height)

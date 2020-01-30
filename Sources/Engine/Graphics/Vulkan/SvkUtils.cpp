@@ -181,7 +181,7 @@ void CGfxLibrary::CreateSyncPrimitives()
   {
     ASSERT(gl_VkImageAvailableSemaphores[i] == VK_NULL_HANDLE);
     ASSERT(gl_VkRenderFinishedSemaphores[i] == VK_NULL_HANDLE);
-    ASSERT(gl_VkInFlightFences[i] == VK_NULL_HANDLE);
+    ASSERT(gl_VkCmdFences[i] == VK_NULL_HANDLE);
   }
 #endif // !NDEBUG
 
@@ -200,7 +200,7 @@ void CGfxLibrary::CreateSyncPrimitives()
     r = vkCreateSemaphore(gl_VkDevice, &semaphoreInfo, nullptr, &gl_VkRenderFinishedSemaphores[i]);
     VK_CHECKERROR(r);
 
-    r = vkCreateFence(gl_VkDevice, &fenceInfo, nullptr, &gl_VkInFlightFences[i]);
+    r = vkCreateFence(gl_VkDevice, &fenceInfo, nullptr, &gl_VkCmdFences[i]);
     VK_CHECKERROR(r);
   }
 }
