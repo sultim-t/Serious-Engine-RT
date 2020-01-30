@@ -321,6 +321,8 @@ copy Release\$(TargetName).lib $(SolutionDir)..\Bin\ &gt;nul</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Graphics\Vulkan\SvkDescriptors.cpp" />
+    <ClCompile Include="Graphics\Vulkan\SvkDynamicBuffers.cpp" />
     <ClCompile Include="Graphics\Vulkan\SvkSwapchain.cpp" />
     <ClCompile Include="Graphics\Vulkan\SvkUtils.cpp" />
     <ClCompile Include="Math\Float.cpp" />

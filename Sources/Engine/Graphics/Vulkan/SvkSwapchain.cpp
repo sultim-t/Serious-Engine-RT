@@ -184,7 +184,6 @@ void CGfxLibrary::DestroySwapchain()
     vkDestroyImageView(gl_VkDevice, gl_VkSwapchainImageViews[i], nullptr);
   }
 
-
   vkDestroySwapchainKHR(gl_VkDevice, gl_VkSwapchain, nullptr);
   gl_VkSwapchain = VK_NULL_HANDLE;
 

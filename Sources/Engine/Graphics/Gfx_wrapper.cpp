@@ -21,6 +21,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Graphics/GfxProfile.h>
 #include <Engine/Base/Statistics_internal.h>
 
+#ifdef SE1_VULKAN
+#include <Engine/Graphics/Vulkan/VulkanInclude.h>
+#endif
+
 //#include <d3dx8math.h>
 //#pragma comment(lib, "d3dx8.lib")
 

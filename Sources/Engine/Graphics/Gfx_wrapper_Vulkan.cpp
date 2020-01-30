@@ -3,6 +3,8 @@
 
 // ENABLE/DISABLE FUNCTIONS
 
+extern float VkViewMatrix[16];
+extern float VkProjectionMatrix[16];
 
 static void svk_EnableTexture(void)
 {
@@ -519,11 +521,14 @@ static void svk_SetViewMatrix(const FLOAT* pfMatrix/*=NULL*/)
 
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  // set matrix
-  //pglMatrixMode(GL_MODELVIEW);
-  //if (pfMatrix != NULL) pglLoadMatrixf(pfMatrix);
-  //else pglLoadIdentity();
-  VK_CHECKERROR1;
+  if (pfMatrix != NULL) 
+  {
+    Svk_MatCopy(pfMatrix, VkViewMatrix);
+  }
+  else 
+  {
+    Svk_MatSetIdentity(VkViewMatrix);
+  }
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -546,11 +551,7 @@ static void svk_SetOrtho(const FLOAT fLeft, const FLOAT fRight, const FLOAT fTop
 
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  // set matrix
-  //pglMatrixMode(GL_PROJECTION);
-  //pglLoadIdentity();
-  //pglOrtho(fLeft, fRight, fBottom, fTop, fNear, fFar);
-  VK_CHECKERROR1;
+  Svk_MatOrtho(VkProjectionMatrix, fLeft, fRight, fBottom, fTop, fNear, fFar);
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -573,11 +574,7 @@ static void svk_SetFrustum(const FLOAT fLeft, const FLOAT fRight,
 
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  //// set matrix
-  //pglMatrixMode(GL_PROJECTION);
-  //pglLoadIdentity();
-  //pglFrustum(fLeft, fRight, fBottom, fTop, fNear, fFar);
-  VK_CHECKERROR1;
+  Svk_MatFrustum(VkProjectionMatrix, fLeft, fRight, fBottom, fTop, fNear, fFar);
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }

@@ -178,11 +178,17 @@ public:
   VkCommandPool                   gl_VkCmdPool;
   VkCommandBuffer                 gl_VkCmdBuffers[gl_VkMaxCmdBufferCount];
 
+  // pool for each cmd buffer; will be reset on cmd buffer begin
   VkDescriptorPool                        gl_VkDescriptorPools[gl_VkMaxCmdBufferCount];
-  CStaticStackArray<VkDescriptorSet>      gl_VkDescriptorSets;
+  // allocated descritor sets from one of the pools
+  CStaticStackArray<VkDescriptorSet>      gl_VkDescriptorSets[gl_VkMaxCmdBufferCount];
 
-  CStaticStackArray<SvkBufferObject>      gl_VkUniformBuffers;
-  CStaticStackArray<SvkDescriptorObject>  gl_VkDescriptors;
+  // buffers for each cmd buffer; will be reset on cmd buffer begin
+  CStaticStackArray<SvkBufferObject>      gl_VkVertexBuffers[gl_VkMaxCmdBufferCount];
+  CStaticStackArray<SvkBufferObject>      gl_VkIndexBuffers[gl_VkMaxCmdBufferCount];
+  CStaticStackArray<SvkBufferObject>      gl_VkUniformBuffers[gl_VkMaxCmdBufferCount];
+  // holders for one set from gl_VkDescriptorSets and offset in that set
+  CStaticStackArray<SvkDescriptorObject>  gl_VkDescriptors[gl_VkMaxCmdBufferCount];
 
   VkPhysicalDevice                        gl_VkPhysDevice;
   VkPhysicalDeviceMemoryProperties        gl_VkPhMemoryProperties;
@@ -207,6 +213,8 @@ public:
   // current mesh
   CStaticArray<SvkVertex>         gl_VkVerts;
 
+  // do not remove this var as created window 
+  // with zero size in ViewPort.cpp is NULL without it
   const uint32_t                  gl_VkDummy = 0;
 
 #endif
@@ -319,8 +327,6 @@ private:
   void CreateGraphicsPipeline();
   BOOL CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t imageIndex);
 
-  void DestroyUniformBuffers();
-
   void CreateCmdBuffers();
   void DestroyCmdBuffers();
 
@@ -328,13 +334,13 @@ private:
   SvkBufferObject GetIndexBuffer(const void *data, uint32_t dataSize);
   const SvkDescriptorObject &GetUniformBuffer(const void *data, uint32_t dataSize);
 
+  void InitDynamicBuffers();
+  // free frame data: vertex, index, uniform buffers, descriptor sets
+  void FreeDynamicBuffers(uint32_t cmdBufferIndex);
+
   void StartFrame();
   void StartCommandBuffer();
   void EndCommandBuffer();
-
-  // allocate vulkan buffers for vertices, indices
-  void CreateMeshData();
-  void DestroyMeshData();
 
   VkShaderModule CreateShaderModule(const uint32_t *spvCode, uint32_t codeSize);
 

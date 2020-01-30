@@ -71,6 +71,9 @@ BOOL CGfxLibrary::InitDriver_Vulkan()
 {
   gl_hiDriver = NONE; // must be initialized?
 
+  ASSERT(gl_VkInstance == VK_NULL_HANDLE);
+  ASSERT(gl_VkDevice == VK_NULL_HANDLE);
+
   HINSTANCE hInstance = GetModuleHandle(NULL);
 
   // startup Vulkan
@@ -167,42 +170,17 @@ BOOL CGfxLibrary::InitDriver_Vulkan()
     return FALSE;
   }
 
+  CreateDescriptorPools();
+  InitDynamicBuffers();
   CreateCmdBuffers();
   CreateSyncPrimitives();
   CreateRenderPass();
   CreateDescriptorSetLayout();
   CreateGraphicsPipeline();
-  CreateMeshData();
 
   return TRUE;
 }
-void CGfxLibrary::CreateDescriptorSetLayout()
-{
-  VkResult r;
 
-  VkDescriptorSetLayoutBinding uniformBinding = {};
-  uniformBinding.binding = 0;
-  uniformBinding.descriptorCount = 1;
-  uniformBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  uniformBinding.pImmutableSamplers = nullptr;
-  uniformBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-  VkDescriptorSetLayoutBinding samplerBinding = {};
-  samplerBinding.binding = 1;
-  samplerBinding.descriptorCount = 1;
-  samplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  samplerBinding.pImmutableSamplers = nullptr;
-  samplerBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-  VkDescriptorSetLayoutBinding bindings[2] = { uniformBinding, samplerBinding };
-  VkDescriptorSetLayoutCreateInfo layoutInfo = {};
-  layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  // TODO: textures
-  layoutInfo.bindingCount = 1;
-  layoutInfo.pBindings = bindings;
-
-  r = vkCreateDescriptorSetLayout(gl_VkDevice, &layoutInfo, nullptr, &gl_VkDescriptorSetLayout);
-}
 void CGfxLibrary::EndDriver_Vulkan(void)
 {
   if (gl_VkInstance == VK_NULL_HANDLE)
@@ -235,12 +213,15 @@ void CGfxLibrary::EndDriver_Vulkan(void)
   }
 #endif
 
-  DestroyMeshData();
-  //DestroyUniformBuffers();
+  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
+  {
+    FreeDynamicBuffers(i);
+  }
+
   DestroyCmdBuffers();
 
   vkDestroyDescriptorSetLayout(gl_VkDevice, gl_VkDescriptorSetLayout, nullptr);
-  //DestroyDescriptorPools();
+  DestroyDescriptorPools();
 
   vkDestroyPipelineLayout(gl_VkDevice, gl_VkPipelineLayout, nullptr);
   vkDestroyPipeline(gl_VkDevice, gl_VkGraphicsPipeline, nullptr);
@@ -298,6 +279,31 @@ void CGfxLibrary::Reset_Vulkan()
     gl_VkImageAvailableSemaphores[i] = VK_NULL_HANDLE;
     gl_VkRenderFinishedSemaphores[i] = VK_NULL_HANDLE;
     gl_VkInFlightFences[i] = VK_NULL_HANDLE;
+
+    // manually set memory as arrays contain garbage
+    gl_VkDescriptorSets[i].sa_Array = nullptr;
+    gl_VkVertexBuffers[i].sa_Array = nullptr;
+    gl_VkIndexBuffers[i].sa_Array = nullptr;
+    gl_VkUniformBuffers[i].sa_Array = nullptr;
+    gl_VkDescriptors[i].sa_Array = nullptr;
+
+    gl_VkDescriptorSets[i].sa_Count =
+      gl_VkVertexBuffers[i].sa_Count =
+      gl_VkIndexBuffers[i].sa_Count =
+      gl_VkUniformBuffers[i].sa_Count =
+      gl_VkDescriptors[i].sa_Count = 0;
+
+    gl_VkDescriptorSets[i].sa_UsedCount =
+      gl_VkVertexBuffers[i].sa_UsedCount =
+      gl_VkIndexBuffers[i].sa_UsedCount =
+      gl_VkUniformBuffers[i].sa_UsedCount =
+      gl_VkDescriptors[i].sa_UsedCount = 0;
+
+    gl_VkDescriptorSets[i].sa_ctAllocationStep =
+      gl_VkVertexBuffers[i].sa_ctAllocationStep =
+      gl_VkIndexBuffers[i].sa_ctAllocationStep =
+      gl_VkUniformBuffers[i].sa_ctAllocationStep =
+      gl_VkDescriptors[i].sa_ctAllocationStep = 256;
   }
 }
 
@@ -769,7 +775,7 @@ void CGfxLibrary::StartFrame()
   // set new indices
   gl_VkCmdBufferCurrent = (gl_VkCmdBufferCurrent + 1) % gl_VkMaxCmdBufferCount;
 
-  // wait when previous cmd with same frame index will be done
+  // wait when previous cmd with same index will be done
   r = vkWaitForFences(gl_VkDevice, 1, &gl_VkInFlightFences[gl_VkCmdBufferCurrent], VK_TRUE, UINT64_MAX);
   VK_CHECKERROR(r);
 
@@ -789,13 +795,10 @@ void CGfxLibrary::StartFrame()
   // set to next image index
   gl_VkCurrentImageIndex = nextImageIndex;
 
-  if (gl_VkDescriptorPools[gl_VkCmdBufferCurrent] != VK_NULL_HANDLE)
-  {
-    // reset descriptor pool to begin new list
-    vkResetDescriptorPool(gl_VkDevice, gl_VkDescriptorPools[gl_VkCmdBufferCurrent], 0);
-  }
-  gl_VkDescriptorSets.PopAll();
-  //vkFreeDescriptorSets(gl_VkDevice, gl_VkDescriptorPools[i], gl_VkDescriptorSets.Count(), &gl_VkDescriptorSets[0]);
+
+  // previous cmd with same index completely finished, 
+  // free its data: vertex, index, uniform buffers, descriptor sets
+  FreeDynamicBuffers(gl_VkCmdBufferCurrent);
 }
 
 void CGfxLibrary::StartCommandBuffer()
@@ -846,7 +849,6 @@ void CGfxLibrary::EndCommandBuffer()
   vkCmdEndRenderPass(cmd);
   r = vkEndCommandBuffer(cmd);
   VK_CHECKERROR(r);
-  VK_CHECKERROR(r);
 
   // wait until image will be avaialable
   VkSemaphore smpToWait = gl_VkImageAvailableSemaphores[gl_VkCmdBufferCurrent];
@@ -874,15 +876,6 @@ void CGfxLibrary::EndCommandBuffer()
   VK_CHECKERROR(r);
 }
 
-void CGfxLibrary::CreateMeshData()
-{
-
-}
-
-void CGfxLibrary::DestroyMeshData()
-{
-}
-
 VkCommandBuffer CGfxLibrary::GetCurrentCmdBuffer()
 {
   return gl_VkCmdBuffers[gl_VkCmdBufferCurrent];
@@ -890,40 +883,40 @@ VkCommandBuffer CGfxLibrary::GetCurrentCmdBuffer()
 
 void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
 {
-  //CStaticArray<SvkVertex> &verts = gl_VkVerts;
-  //ASSERT(verts.Count() > 0);
+  CStaticArray<SvkVertex> &verts = gl_VkVerts;
+  ASSERT(verts.Count() > 0);
 
-  //VkCommandBuffer cmd = gl_VkCmdBuffers[gl_VkCmdBufferCurrent];
-  //
-  //// TODO: dynamic vertex and index buffer
-  //// TODO: dynamic descriptor sets
-  //SvkBufferObject vertexBuffer = GetVertexBuffer(&verts[0], gl_VkVerts.Count() * VK_VERT_SIZE);
-  //SvkBufferObject indexBuffer = GetIndexBuffer(&indices[0], sizeof(UINT) * indexCount);
+  VkCommandBuffer cmd = gl_VkCmdBuffers[gl_VkCmdBufferCurrent];
+  
+  // TODO: dynamic vertex and index buffer
+  // TODO: dynamic descriptor sets
+  SvkBufferObject vertexBuffer = GetVertexBuffer(&verts[0], gl_VkVerts.Count() * VK_VERT_SIZE);
+  SvkBufferObject indexBuffer = GetIndexBuffer(&indices[0], sizeof(UINT) * indexCount);
 
-  //FLOAT mvp[16];
-  //// TODO: check
-  //Svk_MatMultiply(mvp, VkViewMatrix, VkProjectionMatrix);
+  FLOAT mvp[16];
+  // TODO: check
+  Svk_MatMultiply(mvp, VkViewMatrix, VkProjectionMatrix);
 
-  //SvkDescriptorObject descObj = GetUniformBuffer(mvp, 16 * sizeof(FLOAT));
+  const SvkDescriptorObject &descObj = GetUniformBuffer(mvp, 16 * sizeof(FLOAT));
 
-  //// bind current pipeline
-  //vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkGraphicsPipeline);
+  // bind current pipeline
+  vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkGraphicsPipeline);
 
-  //// bind descriptor set
-  //vkCmdBindDescriptorSets(
-  //  cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkPipelineLayout,
-  //  0, 1, &descObj.sdo_DescSet,
-  //  0, nullptr);
-  //  // TODO: uncomment this when uniform buffer will be dynamic
-  //  //1, &descObj.sdo_Offset);
+  // bind descriptor set
+  vkCmdBindDescriptorSets(
+    cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkPipelineLayout,
+    0, 1, &descObj.sdo_DescSet,
+    0, nullptr);
+    // TODO: uncomment this when uniform buffer will be dynamic
+    //1, &descObj.sdo_Offset);
 
-  //// set mesh
-  //VkDeviceSize offsets[] = { 0 };
-  //vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer.sbo_Buffer, offsets);
-  //vkCmdBindIndexBuffer(cmd, indexBuffer.sbo_Buffer, 0, VK_INDEX_TYPE_UINT32);
+  // set mesh
+  VkDeviceSize offsets[] = { 0 };
+  vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer.sbo_Buffer, offsets);
+  vkCmdBindIndexBuffer(cmd, indexBuffer.sbo_Buffer, 0, VK_INDEX_TYPE_UINT32);
 
-  //// draw
-  //vkCmdDrawIndexed(cmd, indexCount, 1, 0, 0, 0);
+  // draw
+  vkCmdDrawIndexed(cmd, indexCount, 1, 0, 0, 0);
 }
 
 void Svk_MatCopy(const float *src, float *dest)
