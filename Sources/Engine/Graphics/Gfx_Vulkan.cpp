@@ -104,8 +104,9 @@ BOOL CGfxLibrary::InitDriver_Vulkan()
 
   if (gl_VkLayers.Count() == 0)
   {
-    gl_VkLayers.New(1);
+    gl_VkLayers.New(2);
     gl_VkLayers[0] = "VK_LAYER_KHRONOS_validation";
+    gl_VkLayers[1] = "VK_LAYER_LUNARG_monitor";
   }
 
   instanceInfo.enabledExtensionCount = 3;
@@ -280,7 +281,6 @@ void CGfxLibrary::Reset_Vulkan()
     gl_VkDescriptorPools[i] = VK_NULL_HANDLE;
     gl_VkImageAvailableSemaphores[i] = VK_NULL_HANDLE;
     gl_VkRenderFinishedSemaphores[i] = VK_NULL_HANDLE;
-    gl_vkCmdSubmited[i] = false;
     gl_VkCmdFences[i] = VK_NULL_HANDLE;
 
     // manually set memory as arrays contain garbage
@@ -771,17 +771,10 @@ void CGfxLibrary::DestroyCmdBuffers()
   vkDestroyCommandPool(gl_VkDevice, gl_VkCmdPool, nullptr);
 }
 
-void CGfxLibrary::StartFrame()
+void CGfxLibrary::AcquireNextImage()
 {
   VkResult r;
   uint32_t nextImageIndex;
-
-  // set new indices
-  gl_VkCmdBufferCurrent = (gl_VkCmdBufferCurrent + 1) % gl_VkMaxCmdBufferCount;
-
-  // wait when previous cmd with same index will be done
-  r = vkWaitForFences(gl_VkDevice, 1, &gl_VkCmdFences[gl_VkCmdBufferCurrent], VK_TRUE, UINT64_MAX);
-  VK_CHECKERROR(r);
 
   // get image index in swapchain
   r = vkAcquireNextImageKHR(gl_VkDevice, gl_VkSwapchain, UINT64_MAX,
@@ -798,27 +791,29 @@ void CGfxLibrary::StartFrame()
 
   // set to next image index
   gl_VkCurrentImageIndex = nextImageIndex;
+}
 
+void CGfxLibrary::StartFrame()
+{
+  VkResult r;
+
+  // set new index
+  gl_VkCmdBufferCurrent = (gl_VkCmdBufferCurrent + 1) % gl_VkMaxCmdBufferCount;
+
+  VkCommandBuffer cmd = gl_VkCmdBuffers[gl_VkCmdBufferCurrent];
+
+  // wait when previous cmd with same index will be done
+  r = vkWaitForFences(gl_VkDevice, 1, &gl_VkCmdFences[gl_VkCmdBufferCurrent], VK_TRUE, UINT64_MAX);
+  VK_CHECKERROR(r);
+
+  // fences must be set to unsignaled state manually
+  vkResetFences(gl_VkDevice, 1, &gl_VkCmdFences[gl_VkCmdBufferCurrent]);
+
+  AcquireNextImage();
 
   // previous cmd with same index completely finished, 
   // free its data: vertex, index, uniform buffers, descriptor sets
   FreeDynamicBuffers(gl_VkCmdBufferCurrent);
-}
-
-void CGfxLibrary::StartCommandBuffer()
-{
-  VkResult r;
-  VkCommandBuffer cmd = gl_VkCmdBuffers[gl_VkCmdBufferCurrent];
-
-  if (gl_vkCmdSubmited[gl_VkCmdBufferCurrent])
-  {
-    // wait for another fence that uses same image index
-    r = vkWaitForFences(gl_VkDevice, 1, &gl_VkCmdFences[gl_VkCmdBufferCurrent], VK_TRUE, UINT64_MAX);
-    VK_CHECKERROR(r);
-  }
-
-  // fences must be set to unsignaled state manually
-  vkResetFences(gl_VkDevice, 1, &gl_VkCmdFences[gl_VkCmdBufferCurrent]);
 
   VkCommandBufferBeginInfo beginInfo = {};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -868,12 +863,13 @@ void CGfxLibrary::StartCommandBuffer()
     sc.extent = { gl_VkSwapChainExtent.width, gl_VkSwapChainExtent.height };
     vkCmdSetScissor(cmd, 0, 1, &sc);
   }
+
   // bind current pipeline
   vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkGraphicsPipeline);
 
 }
 
-void CGfxLibrary::EndCommandBuffer()
+void CGfxLibrary::EndFrame()
 {
   VkResult r;
   VkCommandBuffer cmd = gl_VkCmdBuffers[gl_VkCmdBufferCurrent];
@@ -903,8 +899,6 @@ void CGfxLibrary::EndCommandBuffer()
   // submit cmd buffer; fence will be in signaled state when cmd will be done
   r = vkQueueSubmit(gl_VkQueueGraphics, 1, submitInfo, gl_VkCmdFences[gl_VkCmdBufferCurrent]);
   VK_CHECKERROR(r);
-
-  gl_vkCmdSubmited[gl_VkCmdBufferCurrent] = true;
 }
 
 VkCommandBuffer CGfxLibrary::GetCurrentCmdBuffer()

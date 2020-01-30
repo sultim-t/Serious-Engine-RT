@@ -162,7 +162,6 @@ public:
   VkSemaphore                     gl_VkImageAvailableSemaphores[gl_VkMaxCmdBufferCount];
   VkSemaphore                     gl_VkRenderFinishedSemaphores[gl_VkMaxCmdBufferCount];
   VkFence                         gl_VkCmdFences[gl_VkMaxCmdBufferCount];
-  bool                            gl_vkCmdSubmited[gl_VkMaxCmdBufferCount];
 
   VkRenderPass                    gl_VkRenderPass;
 
@@ -337,9 +336,9 @@ private:
   // free frame data: vertex, index, uniform buffers, descriptor sets
   void FreeDynamicBuffers(uint32_t cmdBufferIndex);
 
+  void AcquireNextImage();
   void StartFrame();
-  void StartCommandBuffer();
-  void EndCommandBuffer();
+  void EndFrame();
 
   VkShaderModule CreateShaderModule(const uint32_t *spvCode, uint32_t codeSize);
 

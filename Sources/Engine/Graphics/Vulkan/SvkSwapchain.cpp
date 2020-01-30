@@ -220,7 +220,7 @@ BOOL CGfxLibrary::CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t
   VkImageCreateInfo depthImageInfo = {};
 
   depthImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-  depthImageInfo.pNext = NULL;
+  depthImageInfo.pNext = nullptr;
   depthImageInfo.imageType = VK_IMAGE_TYPE_2D;
   depthImageInfo.format = gl_VkSurfDepthFormat;
   depthImageInfo.extent.width = width;
@@ -234,6 +234,7 @@ BOOL CGfxLibrary::CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t
   depthImageInfo.pQueueFamilyIndices = nullptr;
   depthImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   depthImageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+  depthImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
   depthImageInfo.flags = 0;
 
   if (vkCreateImage(gl_VkDevice, &depthImageInfo, nullptr, &gl_VkSwapchainDepthImages[imageIndex]) != VK_SUCCESS)
@@ -247,7 +248,8 @@ BOOL CGfxLibrary::CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t
 
   VkMemoryAllocateInfo allocInfo = {};
   allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-  allocInfo.pNext = NULL; allocInfo.allocationSize = memReqs.size;
+  allocInfo.pNext = nullptr; 
+  allocInfo.allocationSize = memReqs.size;
   allocInfo.memoryTypeIndex = GetMemoryTypeIndex(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
   if (vkAllocateMemory(gl_VkDevice, &allocInfo, NULL, &gl_VkSwapchainDepthMemory[imageIndex]) != VK_SUCCESS)
@@ -265,14 +267,13 @@ BOOL CGfxLibrary::CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t
   VkImageViewCreateInfo depthViewInfo = {};
   depthViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   depthViewInfo.pNext = nullptr;
-  depthViewInfo.image = VK_NULL_HANDLE;
   depthViewInfo.format = gl_VkSurfDepthFormat;
   depthViewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
   depthViewInfo.components.g = VK_COMPONENT_SWIZZLE_G;
   depthViewInfo.components.b = VK_COMPONENT_SWIZZLE_B;
   depthViewInfo.components.a = VK_COMPONENT_SWIZZLE_A;
   depthViewInfo.subresourceRange.aspectMask = gl_VkSurfDepthFormat == VK_FORMAT_D32_SFLOAT ?
-    VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+    VK_IMAGE_ASPECT_DEPTH_BIT : (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
   depthViewInfo.subresourceRange.baseMipLevel = 0;
   depthViewInfo.subresourceRange.levelCount = 1;
   depthViewInfo.subresourceRange.baseArrayLayer = 0;

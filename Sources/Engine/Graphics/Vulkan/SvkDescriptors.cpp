@@ -92,24 +92,20 @@ VkDescriptorSet CGfxLibrary::CreateDescriptorSet()
   ASSERT(gl_VkDescriptorPools[gl_VkCmdBufferCurrent] != VK_NULL_HANDLE);
 
   auto &s = gl_VkDescriptorSets[gl_VkCmdBufferCurrent];
-  //ASSERT(s.Count() < gl_VkMaxDescSetCount - 1);
-  if (s.Count() > gl_VkMaxDescSetCount / 2)
-  {
-    uint32_t c = s.Count();
-  }
+  ASSERT(s.Count() < gl_VkMaxDescSetCount - 1);
 #endif // !NDEBUG
 
   VkResult r;
-  VkDescriptorSet descSet = gl_VkDescriptorSets[gl_VkCmdBufferCurrent].Push();
+  VkDescriptorSet *descSet = &gl_VkDescriptorSets[gl_VkCmdBufferCurrent].Push();
 
   VkDescriptorSetAllocateInfo setAllocInfo = {};
   setAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
   setAllocInfo.descriptorPool = gl_VkDescriptorPools[gl_VkCmdBufferCurrent];
   setAllocInfo.descriptorSetCount = 1;
   setAllocInfo.pSetLayouts = &gl_VkDescriptorSetLayout;
-  r = vkAllocateDescriptorSets(gl_VkDevice, &setAllocInfo, &descSet);
+  r = vkAllocateDescriptorSets(gl_VkDevice, &setAllocInfo, descSet);
   VK_CHECKERROR(r);
 
 
-  return descSet;
+  return *descSet;
 }

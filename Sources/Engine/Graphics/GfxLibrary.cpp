@@ -1912,7 +1912,7 @@ void CGfxLibrary::SwapBuffers(CViewPort *pvp)
     // end recording to cmd buffers
     if (GFX_bRenderingScene) 
     {
-      EndCommandBuffer();
+      EndFrame();
     }
 
     SwapBuffers_Vulkan();
@@ -2047,7 +2047,6 @@ BOOL CGfxLibrary::LockRaster( CRaster *praToLock)
     if (gl_eCurrentAPI == GAT_VK && !GFX_bRenderingScene)
     {
       StartFrame();
-      StartCommandBuffer();
     }
 #endif // SE1_VULKAN
 
