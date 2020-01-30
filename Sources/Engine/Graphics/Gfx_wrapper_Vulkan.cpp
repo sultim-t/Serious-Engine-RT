@@ -718,7 +718,7 @@ static void svk_SetVertexArray(GFXVertex4* pvtx, INDEX ctVtx)
   //ASSERT(!pglIsEnabled(GL_NORMAL_ARRAY));
   //ASSERT(pglIsEnabled(GL_VERTEX_ARRAY));
 
-  CStaticArray<VkVertex> &verts = _pGfx->gl_VkVerts;
+  CStaticArray<SvkVertex> &verts = _pGfx->gl_VkVerts;
 
   verts.Clear();
   verts.New(ctVtx);
@@ -743,7 +743,7 @@ static void svk_SetNormalArray(GFXNormal* pnor)
   ASSERT(GFX_ctVertices > 0);
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  CStaticArray<VkVertex> &verts = _pGfx->gl_VkVerts;
+  CStaticArray<SvkVertex> &verts = _pGfx->gl_VkVerts;
   INDEX ctVtx = verts.Count();
   ASSERT(ctVtx > 0);
 
@@ -765,7 +765,7 @@ static void svk_SetColorArray(GFXColor* pcol)
   //svk_EnableColorArray();
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  CStaticArray<VkVertex> &verts = _pGfx->gl_VkVerts;
+  CStaticArray<SvkVertex> &verts = _pGfx->gl_VkVerts;
   INDEX ctVtx = verts.Count();
   ASSERT(ctVtx > 0);
 
@@ -793,7 +793,7 @@ static void svk_SetTexCoordArray(GFXTexCoord* ptex, BOOL b4/*=FALSE*/)
 
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  CStaticArray<VkVertex> &verts = _pGfx->gl_VkVerts;
+  CStaticArray<SvkVertex> &verts = _pGfx->gl_VkVerts;
   INDEX ctVtx = verts.Count();
   ASSERT(ctVtx > 0);
 

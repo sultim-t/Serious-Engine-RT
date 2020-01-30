@@ -757,6 +757,12 @@
     <ClCompile Include="Graphics\Gfx_wrapper_Vulkan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\Vulkan\SvkUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Vulkan\SvkSwapchain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Base\Anim.h">
@@ -1374,10 +1380,10 @@
     <ClInclude Include="Sound\ov_functions.h">
       <Filter>Header Files\Sound Headers</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\Vulkan\VkVertex.h">
+    <ClInclude Include="Graphics\Vulkan\SvkVertex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\Vulkan\VkTextureObject.h">
+    <ClInclude Include="Graphics\Vulkan\VulkanInclude.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

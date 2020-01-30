@@ -20,6 +20,10 @@ extern unsigned char TexturedVert_Spirv[];
 extern unsigned int TexturedVert_Size;
 extern unsigned char TexturedFrag_Spirv[];
 extern unsigned int TexturedFrag_Size;
+
+FLOAT	VkProjectionMatrix[16];
+FLOAT	VkViewMatrix[16];
+//FLOAT	VkViewProjMatrix[16];
 #pragma endregion
 
 
@@ -45,6 +49,7 @@ extern GfxFace  GFX_eCullFace;
 extern INDEX GFX_iTexModulation[GFX_MAXTEXUNITS];
 extern INDEX GFX_ctVertices;
 
+#pragma region Debug messenger
 static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) 
 {
   // print debug message to console
@@ -59,6 +64,7 @@ void GetDebugMsgCreateInfo(VkDebugUtilsMessengerCreateInfoEXT &outInfo)
   outInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
   outInfo.pfnUserCallback = DebugCallback;
 }
+#pragma endregion
 
 // initialize Vulkan driver
 BOOL CGfxLibrary::InitDriver_Vulkan()
@@ -136,7 +142,6 @@ BOOL CGfxLibrary::InitDriver_Vulkan()
   }
 #endif
 
-  // it's required to do that
   extern HWND _hwndMain;
   if (!InitSurface_Win32(hInstance, _hwndMain))
   {
@@ -162,30 +167,7 @@ BOOL CGfxLibrary::InitDriver_Vulkan()
     return FALSE;
   }
 
-  VkCommandPoolCreateInfo cmdPoolInfo = {};
-  cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-  cmdPoolInfo.pNext = nullptr;
-  cmdPoolInfo.queueFamilyIndex = gl_VkQueueFamGraphics;
-  cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-
-  r = vkCreateCommandPool(gl_VkDevice, &cmdPoolInfo, nullptr, &gl_VkCmdPool);
-  VK_CHECKERROR(r);
-
-  VkDescriptorPoolSize poolSizes[2];
-  poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  poolSizes[0].descriptorCount = 16; // temporary
-  poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  poolSizes[1].descriptorCount = 16; // temporary
-
-  VkDescriptorPoolCreateInfo descPoolInfo = {};
-  descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-  descPoolInfo.poolSizeCount = 2;
-  descPoolInfo.pPoolSizes = poolSizes;
-  descPoolInfo.maxSets = 32; // temporary
-
-  r = vkCreateDescriptorPool(gl_VkDevice, &descPoolInfo, nullptr, &gl_VkDescriptorPool);
-  VK_CHECKERROR(r);
-
+  CreateCmdBuffers();
   CreateSyncPrimitives();
   CreateRenderPass();
   CreateDescriptorSetLayout();
@@ -194,7 +176,33 @@ BOOL CGfxLibrary::InitDriver_Vulkan()
 
   return TRUE;
 }
+void CGfxLibrary::CreateDescriptorSetLayout()
+{
+  VkResult r;
 
+  VkDescriptorSetLayoutBinding uniformBinding = {};
+  uniformBinding.binding = 0;
+  uniformBinding.descriptorCount = 1;
+  uniformBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  uniformBinding.pImmutableSamplers = nullptr;
+  uniformBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+  VkDescriptorSetLayoutBinding samplerBinding = {};
+  samplerBinding.binding = 1;
+  samplerBinding.descriptorCount = 1;
+  samplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  samplerBinding.pImmutableSamplers = nullptr;
+  samplerBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+  VkDescriptorSetLayoutBinding bindings[2] = { uniformBinding, samplerBinding };
+  VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+  layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  // TODO: textures
+  layoutInfo.bindingCount = 1;
+  layoutInfo.pBindings = bindings;
+
+  r = vkCreateDescriptorSetLayout(gl_VkDevice, &layoutInfo, nullptr, &gl_VkDescriptorSetLayout);
+}
 void CGfxLibrary::EndDriver_Vulkan(void)
 {
   if (gl_VkInstance == VK_NULL_HANDLE)
@@ -208,19 +216,16 @@ void CGfxLibrary::EndDriver_Vulkan(void)
 
   DestroySwapchain();
 
-  for (uint32_t i = 0; i < gl_VkMaxFramesInFlight; i++)
+  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
   {
     vkDestroySemaphore(gl_VkDevice, gl_VkImageAvailableSemaphores[i], nullptr);
     vkDestroySemaphore(gl_VkDevice, gl_VkRenderFinishedSemaphores[i], nullptr);
     vkDestroyFence(gl_VkDevice, gl_VkInFlightFences[i], nullptr);
+
+    gl_VkImageAvailableSemaphores[i] = VK_NULL_HANDLE;
+    gl_VkRenderFinishedSemaphores[i] = VK_NULL_HANDLE;
+    gl_VkInFlightFences[i] = VK_NULL_HANDLE;
   }
-
-  gl_VkImageAvailableSemaphores.Clear();
-  gl_VkRenderFinishedSemaphores.Clear();
-  gl_VkInFlightFences.Clear();
-
-  gl_VkCmdBuffers.Clear();
-  gl_VkDescriptorSets.Clear();
 
 #ifndef NDEBUG
   auto pfnDestroyDUMsg = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(gl_VkInstance, "vkDestroyDebugUtilsMessengerEXT");
@@ -231,14 +236,16 @@ void CGfxLibrary::EndDriver_Vulkan(void)
 #endif
 
   DestroyMeshData();
-  DestroyUniformBuffers();
+  //DestroyUniformBuffers();
+  DestroyCmdBuffers();
 
   vkDestroyDescriptorSetLayout(gl_VkDevice, gl_VkDescriptorSetLayout, nullptr);
+  //DestroyDescriptorPools();
+
   vkDestroyPipelineLayout(gl_VkDevice, gl_VkPipelineLayout, nullptr);
   vkDestroyPipeline(gl_VkDevice, gl_VkGraphicsPipeline, nullptr);
 
   vkDestroyRenderPass(gl_VkDevice, gl_VkRenderPass, nullptr);
-  vkDestroyCommandPool(gl_VkDevice, gl_VkCmdPool, nullptr);
   vkDestroySurfaceKHR(gl_VkInstance, gl_VkSurface, nullptr);
   vkDestroyDevice(gl_VkDevice, nullptr);
   vkDestroyInstance(gl_VkInstance, nullptr);
@@ -262,12 +269,8 @@ void CGfxLibrary::Reset_Vulkan()
   gl_VkSurfColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
   gl_VkSurfDepthFormat = VK_FORMAT_D16_UNORM;
   gl_VkSurfPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-  gl_VkCurrentFrame = 0;
-
-  gl_VkVertexBuffer = VK_NULL_HANDLE;
-  gl_VkVertexBufferMemory = VK_NULL_HANDLE;
-  gl_VkIndexBuffer = VK_NULL_HANDLE;
-  gl_VkIndexBufferMemory = VK_NULL_HANDLE;
+  gl_VkCmdBufferCurrent = 0;
+  gl_VkCmdBufferCurrent = 0;
 
   gl_VkDescriptorSetLayout = VK_NULL_HANDLE;
   gl_VkPipelineLayout = VK_NULL_HANDLE;
@@ -287,6 +290,15 @@ void CGfxLibrary::Reset_Vulkan()
   gl_VkQueuePresent = VK_NULL_HANDLE;
 
   gl_VkDebugMessenger = VK_NULL_HANDLE;
+
+  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
+  {
+    gl_VkCmdBuffers[i] = VK_NULL_HANDLE;
+    gl_VkDescriptorPools[i] = VK_NULL_HANDLE;
+    gl_VkImageAvailableSemaphores[i] = VK_NULL_HANDLE;
+    gl_VkRenderFinishedSemaphores[i] = VK_NULL_HANDLE;
+    gl_VkInFlightFences[i] = VK_NULL_HANDLE;
+  }
 }
 
 // prepares Vulkan drawing context
@@ -400,7 +412,7 @@ void CGfxLibrary::SwapBuffers_Vulkan()
   VkResult r;
 
   // wait until rendering is finished
-  VkSemaphore smpToWait = gl_VkRenderFinishedSemaphores[gl_VkCurrentFrame];
+  VkSemaphore smpToWait = gl_VkRenderFinishedSemaphores[gl_VkCmdBufferCurrent];
 
   VkPresentInfoKHR presentInfo = {};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -420,8 +432,6 @@ void CGfxLibrary::SwapBuffers_Vulkan()
   {
     ASSERTALWAYS("Vulkan error: Can't present swap chain image.\n");
   }
-
-  gl_VkCurrentFrame = (gl_VkCurrentFrame + 1) % gl_VkMaxFramesInFlight;
 }
 
 void CGfxLibrary::SetViewport_Vulkan(float leftUpperX, float leftUpperY, float width, float height, float minDepth, float maxDepth)
@@ -437,164 +447,6 @@ void CGfxLibrary::SetViewport_Vulkan(float leftUpperX, float leftUpperY, float w
   gl_VkCurrentScissor.extent.height = height;
   gl_VkCurrentScissor.offset.x = leftUpperX;
   gl_VkCurrentScissor.offset.y = leftUpperY;
-}
-
-BOOL CGfxLibrary::PickPhysicalDevice()
-{
-  VkResult r;
-  uint32_t physDeviceCount = 0;
-
-  r = vkEnumeratePhysicalDevices(gl_VkInstance, &physDeviceCount, NULL);
-  VK_CHECKERROR(r)
-    ASSERT(physDeviceCount > 0);
-
-  CStaticArray<VkPhysicalDevice> physDevices;
-  physDevices.New(physDeviceCount);
-
-  r = vkEnumeratePhysicalDevices(gl_VkInstance, &physDeviceCount, &physDevices[0]);
-  VK_CHECKERROR(r)
-    ASSERT(physDeviceCount > 0);
-
-  for (uint32_t i = 0; i < physDeviceCount; i++)
-  {
-    VkPhysicalDevice physDevice = physDevices[i];
-
-    BOOL foundQueues = GetQueues(physDevice, gl_VkQueueFamGraphics, gl_VkQueueFamTransfer, gl_VkQueueFamPresent);
-    BOOL extensionsSupported = CheckDeviceExtensions(physDevice, gl_VkPhysDeviceExtensions);
-
-    if (foundQueues && extensionsSupported)
-    {
-      uint32_t formatsCount = 0, presentModesCount = 0;
-
-      gl_VkPhysDevice = physDevice;
-      vkGetPhysicalDeviceFeatures(physDevice, &gl_VkPhFeatures);
-      vkGetPhysicalDeviceMemoryProperties(physDevice, &gl_VkPhMemoryProperties);
-      vkGetPhysicalDeviceProperties(physDevice, &gl_VkPhProperties);
-      vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physDevice, gl_VkSurface, &gl_VkPhSurfCapabilities);
-
-      vkGetPhysicalDeviceSurfaceFormatsKHR(physDevice, gl_VkSurface, &formatsCount, nullptr);
-      vkGetPhysicalDeviceSurfacePresentModesKHR(physDevice, gl_VkSurface, &presentModesCount, nullptr);
-
-      if (formatsCount == 0 || presentModesCount == 0)
-      {
-        CPrintF("Vulkan error: Physical device doesn't have formats or present modes.\n");
-        return FALSE;
-      }
-
-      if (gl_VkPhSurfFormats.Count() > 0) gl_VkPhSurfFormats.Delete();
-      if (gl_VkPhSurfPresentModes.Count() > 0) gl_VkPhSurfPresentModes.Delete();
-
-      gl_VkPhSurfFormats.New(formatsCount);
-      gl_VkPhSurfPresentModes.New(presentModesCount);
-
-      vkGetPhysicalDeviceSurfaceFormatsKHR(physDevice, gl_VkSurface, &formatsCount, &gl_VkPhSurfFormats[0]);
-      vkGetPhysicalDeviceSurfacePresentModesKHR(physDevice, gl_VkSurface, &presentModesCount, &gl_VkPhSurfPresentModes[0]);
-
-      // now select preferred settings
-      gl_VkSurfColorFormat = VK_FORMAT_UNDEFINED;
-
-      for (uint32_t i = 0; i < formatsCount; i++)
-      {
-        if (gl_VkPhSurfFormats[i].format == VK_FORMAT_R8G8B8A8_UNORM)
-        {
-          gl_VkSurfColorFormat = gl_VkPhSurfFormats[i].format;
-          gl_VkSurfColorSpace = gl_VkPhSurfFormats[i].colorSpace;
-          break;
-        }
-      }
-
-      for (uint32_t i = 0; i < presentModesCount; i++)
-      {
-        if (gl_VkPhSurfPresentModes[i] == VK_PRESENT_MODE_FIFO_KHR)
-        {
-          gl_VkSurfPresentMode = gl_VkPhSurfPresentModes[i];
-          break;
-        }
-      }
-
-      VkFormat depthFormats[3] = { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT };
-      gl_VkSurfDepthFormat = FindSupportedFormat(depthFormats, 3, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-
-      // TODO: if not found
-
-      return TRUE;
-    }
-  }
-
-  return FALSE;
-}
-
-BOOL CGfxLibrary::GetQueues(VkPhysicalDevice physDevice, 
-  uint32_t &graphicsFamily, uint32_t &transferFamily, uint32_t &presentQueueFamily)
-{
-  uint32_t queueFamilyCount = 0;
-  vkGetPhysicalDeviceQueueFamilyProperties(physDevice, &queueFamilyCount, nullptr);
-
-  CStaticArray<VkQueueFamilyProperties> queuesFamilies;
-  queuesFamilies.New(queueFamilyCount);
-  vkGetPhysicalDeviceQueueFamilyProperties(physDevice, &queueFamilyCount, &queuesFamilies[0]);
-
-  // actually, finds graphics and transfer queued that present in one family
-  for (uint32_t i = 0; i < queueFamilyCount; i++)
-  {
-    VkQueueFamilyProperties &p = queuesFamilies[i];
-
-    if (p.queueCount == 0)
-    {
-      continue;
-    }
-
-    VkBool32 presentSupport = FALSE;
-    vkGetPhysicalDeviceSurfaceSupportKHR(physDevice, i, gl_VkSurface, &presentSupport);
-
-    if (presentSupport)
-    {
-      presentQueueFamily = i;
-    }
-
-    bool found[] = {
-      (uint32_t)p.queueFlags & VK_QUEUE_GRAPHICS_BIT,
-      (uint32_t)p.queueFlags & VK_QUEUE_TRANSFER_BIT
-    };
-
-    if (found[0] && found[1])
-    {
-      graphicsFamily = transferFamily = i;
-      return TRUE;
-    }
-  }
-
-  return FALSE;
-}
-
-BOOL CGfxLibrary::CheckDeviceExtensions(VkPhysicalDevice physDevice, const CStaticArray<const char *> &requiredExtensions)
-{
-  uint32_t deviceExtCount;
-  vkEnumerateDeviceExtensionProperties(physDevice, nullptr, &deviceExtCount, nullptr);
-
-  CStaticArray<VkExtensionProperties> deviceExts;
-  deviceExts.New(deviceExtCount);
-  vkEnumerateDeviceExtensionProperties(physDevice, nullptr, &deviceExtCount, &deviceExts[0]);
-
-  for (uint32_t i = 0; i < requiredExtensions.Count(); i++)
-  {
-    BOOL found = FALSE;
-    for (uint32_t j = 0; j < deviceExtCount; j++)
-    {
-      if (CTString(requiredExtensions[i]) == deviceExts[j].extensionName)
-      {
-        found = TRUE;
-        break;
-      }
-    }
-
-    if (!found)
-    {
-      return FALSE;
-    }
-  }
-
-  return TRUE;
 }
 
 BOOL CGfxLibrary::InitSurface_Win32(HINSTANCE hinstance, HWND hwnd)
@@ -720,72 +572,6 @@ void CGfxLibrary::CreateRenderPass()
   }
 }
 
-void CGfxLibrary::CreateSyncPrimitives()
-{
-  VkResult r;
-
-  ASSERT(gl_VkImageAvailableSemaphores.Count() == gl_VkRenderFinishedSemaphores.Count()
-    && gl_VkRenderFinishedSemaphores.Count() == gl_VkInFlightFences.Count());
-
-  if (gl_VkImageAvailableSemaphores.Count() > 0
-    /*&& gl_VkRenderFinishedSemaphores.Count() > 0
-    && gl_VkInFlightFences.Count() > 0*/)
-  {
-    return;
-  }
-
-  gl_VkImageAvailableSemaphores.New(gl_VkMaxFramesInFlight);
-  gl_VkRenderFinishedSemaphores.New(gl_VkMaxFramesInFlight);
-  gl_VkInFlightFences.New(gl_VkMaxFramesInFlight);
-
-  VkSemaphoreCreateInfo semaphoreInfo = {};
-  semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-  VkFenceCreateInfo fenceInfo = {};
-  fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-  fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-  for (uint32_t i = 0; i < gl_VkMaxFramesInFlight; i++) 
-  {
-    r = vkCreateSemaphore(gl_VkDevice, &semaphoreInfo, nullptr, &gl_VkImageAvailableSemaphores[i]);
-    VK_CHECKERROR(r);
-
-    r = vkCreateSemaphore(gl_VkDevice, &semaphoreInfo, nullptr, &gl_VkRenderFinishedSemaphores[i]);
-    VK_CHECKERROR(r);
-
-    r = vkCreateFence(gl_VkDevice, &fenceInfo, nullptr, &gl_VkInFlightFences[i]);
-    VK_CHECKERROR(r);
-  }
-}
-
-void CGfxLibrary::CreateDescriptorSetLayout()
-{
-  VkResult r;
-
-  VkDescriptorSetLayoutBinding uniformBinding = {};
-  uniformBinding.binding = 0;
-  uniformBinding.descriptorCount = 1;
-  uniformBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  uniformBinding.pImmutableSamplers = nullptr;
-  uniformBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-  VkDescriptorSetLayoutBinding samplerBinding = {};
-  samplerBinding.binding = 1;
-  samplerBinding.descriptorCount = 1;
-  samplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  samplerBinding.pImmutableSamplers = nullptr;
-  samplerBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-  VkDescriptorSetLayoutBinding bindings[2] = { uniformBinding, samplerBinding };
-  VkDescriptorSetLayoutCreateInfo layoutInfo = {};
-  layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  // TODO: textures
-  layoutInfo.bindingCount = 1;
-  layoutInfo.pBindings = bindings;
-
-  r = vkCreateDescriptorSetLayout(gl_VkDevice, &layoutInfo, nullptr, &gl_VkDescriptorSetLayout);
-}
-
 void CGfxLibrary::CreateGraphicsPipeline()
 {
   VkShaderModule vertShaderModule = CreateShaderModule((uint32_t*)TexturedVert_Spirv, TexturedVert_Size);
@@ -810,7 +596,7 @@ void CGfxLibrary::CreateGraphicsPipeline()
 
   VkVertexInputBindingDescription bindingDescriptions[1];
   bindingDescriptions[0].binding = 0;
-  bindingDescriptions[0].stride = sizeof(VkVertex);
+  bindingDescriptions[0].stride = sizeof(SvkVertex);
   bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
   VkVertexInputAttributeDescription attributeDescriptions[4];
@@ -934,375 +720,45 @@ void CGfxLibrary::CreateGraphicsPipeline()
   }
 }
 
-void CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
+void CGfxLibrary::CreateCmdBuffers()
 {
-  // check consistency
-  ASSERT(gl_VkSwapchainImages.Count() == gl_VkSwapchainImageViews.Count());
-  ASSERT(gl_VkSwapchainImages.Count() == gl_VkSwapchainDepthImages.Count());
-  ASSERT(gl_VkSwapchainImages.Count() == gl_VkSwapchainDepthMemory.Count());
-  ASSERT(gl_VkSwapchainImages.Count() == gl_VkSwapchainDepthImageViews.Count());
-  ASSERT(gl_VkSwapchainImages.Count() == gl_VkFramebuffers.Count());
-  ASSERT(gl_VkSwapchainImages.Count() == gl_VkImagesInFlight.Count());
-
-  // destroy if was created
-  if (gl_VkSwapchainImages.Count() > 0)
+#ifndef NDEBUG
+  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
   {
-    DestroySwapchain();
+    ASSERT(gl_VkCmdBuffers[i] == VK_NULL_HANDLE);
   }
+#endif // !NDEBUG
 
-  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gl_VkPhysDevice, gl_VkSurface, &gl_VkPhSurfCapabilities);
+  VkResult r;
 
-  const uint32_t preferredImageCount = gl_VkPhSurfCapabilities.minImageCount;
-  uint32_t swapchainImageCount;
+  VkCommandPoolCreateInfo cmdPoolInfo = {};
+  cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  cmdPoolInfo.pNext = nullptr;
+  cmdPoolInfo.queueFamilyIndex = gl_VkQueueFamGraphics;
+  cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-  VkSwapchainCreateInfoKHR createInfo = {};
-  createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-  createInfo.surface = gl_VkSurface;
-  createInfo.minImageCount = preferredImageCount;
-  createInfo.imageFormat = gl_VkSurfColorFormat;
-  createInfo.imageColorSpace = gl_VkSurfColorSpace;
-  createInfo.imageExtent = GetSwapchainExtent(width, height);
-  createInfo.imageArrayLayers = 1;
-  createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  r = vkCreateCommandPool(gl_VkDevice, &cmdPoolInfo, nullptr, &gl_VkCmdPool);
+  VK_CHECKERROR(r);
 
-  uint32_t queueFamilyIndices[] = { gl_VkQueueFamGraphics, gl_VkQueueFamPresent };
+  // allocate cmd buffers
+  VkCommandBufferAllocateInfo allocInfo = {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  allocInfo.commandPool = gl_VkCmdPool;
+  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocInfo.commandBufferCount = gl_VkMaxCmdBufferCount;
 
-  if (gl_VkQueueFamGraphics != gl_VkQueueFamPresent)
-  {
-    createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-    createInfo.queueFamilyIndexCount = 2;
-    createInfo.pQueueFamilyIndices = queueFamilyIndices;
-  }
-  else
-  {
-    createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  }
-
-  createInfo.preTransform = gl_VkPhSurfCapabilities.currentTransform;
-  createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-  createInfo.presentMode = gl_VkSurfPresentMode;
-  createInfo.clipped = VK_TRUE;
-
-  if (vkCreateSwapchainKHR(gl_VkDevice, &createInfo, nullptr, &gl_VkSwapchain) != VK_SUCCESS)
-  {
-    ASSERTALWAYS("Vulkan error: Can't create VkSwapchainKHR.\n");
-  }
-
-  // get images from swapchain
-  if (vkGetSwapchainImagesKHR(gl_VkDevice, gl_VkSwapchain, &swapchainImageCount, nullptr) != VK_SUCCESS)
-  {
-    ASSERTALWAYS("Vulkan error: Can't get swapchain images.\n");
-  }
-
-  gl_VkSwapchainImages.New(swapchainImageCount);
-  gl_VkSwapchainImageViews.New(swapchainImageCount);
-  gl_VkSwapchainDepthImages.New(swapchainImageCount);
-  gl_VkSwapchainDepthMemory.New(swapchainImageCount);
-  gl_VkSwapchainDepthImageViews.New(swapchainImageCount);
-  gl_VkFramebuffers.New(swapchainImageCount);
-  gl_VkImagesInFlight.New(swapchainImageCount);
-
-  if (vkGetSwapchainImagesKHR(gl_VkDevice, gl_VkSwapchain, &swapchainImageCount, &gl_VkSwapchainImages[0]) != VK_SUCCESS)
-  {
-    ASSERTALWAYS("Vulkan error: Can't get swapchain images.\n");
-  }
-
-  // init image views
-  for (uint32_t i = 0; i < swapchainImageCount; i++)
-  {
-    VkImageViewCreateInfo viewInfo = {};
-    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    viewInfo.pNext = nullptr;
-    viewInfo.format = gl_VkSurfColorFormat;
-    viewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
-    viewInfo.components.g = VK_COMPONENT_SWIZZLE_G;
-    viewInfo.components.b = VK_COMPONENT_SWIZZLE_B;
-    viewInfo.components.a = VK_COMPONENT_SWIZZLE_A;
-    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    viewInfo.subresourceRange.baseMipLevel = 0;
-    viewInfo.subresourceRange.levelCount = 1;
-    viewInfo.subresourceRange.baseArrayLayer = 0;
-    viewInfo.subresourceRange.layerCount = 1;
-    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    viewInfo.flags = 0;
-    viewInfo.image = gl_VkSwapchainImages[i];
-
-    if (vkCreateImageView(gl_VkDevice, &viewInfo, nullptr, &gl_VkSwapchainImageViews[i]) != VK_SUCCESS)
-    {
-      ASSERTALWAYS("Vulkan error: Can't create image view for swapchain image.\n");
-    }
-  }
-
-  // create depth buffers
-  for (uint32_t i = 0; i < swapchainImageCount; i++)
-  {
-    if (!CreateSwapchainDepth(width, height, i))
-    {
-      ASSERTALWAYS("Vulkan error: Can't create depth buffers for swapchain.\n");
-    }
-  }
-
-  // allocate cmd buffers, if required
-  INDEX oldCount = gl_VkCmdBuffers.Count();
-  int diff = (int)swapchainImageCount - (int)oldCount;
-  if (diff > 0)
-  {
-    VkResult r;
-
-    gl_VkCmdBuffers.Expand(swapchainImageCount);
-
-    // allocate cmd buffers
-    VkCommandBufferAllocateInfo allocInfo = {};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = gl_VkCmdPool;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = (uint32_t)diff;
-
-    r = vkAllocateCommandBuffers(gl_VkDevice, &allocInfo, &gl_VkCmdBuffers[oldCount]);
-    VK_CHECKERROR(r);
-
-    // allocate descriptor sets
-    gl_VkDescriptorSets.Expand(swapchainImageCount);
-
-    CStaticArray<VkDescriptorSetLayout> layouts;
-    layouts.New(swapchainImageCount);
-    for (uint32_t i = 0; i < swapchainImageCount; i++)
-    {
-      layouts[i] = gl_VkDescriptorSetLayout;
-    }
-
-    VkDescriptorSetAllocateInfo setAllocInfo = {};
-    setAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    setAllocInfo.descriptorPool = gl_VkDescriptorPool;
-    setAllocInfo.descriptorSetCount = (uint32_t)diff;
-    setAllocInfo.pSetLayouts = &layouts[0];
-
-    r = vkAllocateDescriptorSets(gl_VkDevice, &setAllocInfo, &gl_VkDescriptorSets[oldCount]);
-    VK_CHECKERROR(r);
-  }
-
-  DestroyUniformBuffers();
-  CreateUniformBuffers(swapchainImageCount);
-  UpdateDescriptorSet();
-
-  gl_VkSwapChainExtent.width = width;
-  gl_VkSwapChainExtent.height = height;
-
-  // create framebuffers
-  for (uint32_t i = 0; i < swapchainImageCount; i++)
-  {
-    VkImageView attachments[] = {
-      gl_VkSwapchainImageViews[i],
-      gl_VkSwapchainDepthImageViews[i]
-    };
-
-    VkFramebufferCreateInfo framebufferInfo = {};
-    framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebufferInfo.renderPass = gl_VkRenderPass;
-    framebufferInfo.attachmentCount = 2;
-    framebufferInfo.pAttachments = attachments;
-    framebufferInfo.width = gl_VkSwapChainExtent.width;
-    framebufferInfo.height = gl_VkSwapChainExtent.height;
-    framebufferInfo.layers = 1;
-
-    if (vkCreateFramebuffer(gl_VkDevice, &framebufferInfo, nullptr, &gl_VkFramebuffers[i]) != VK_SUCCESS)
-    {
-      ASSERTALWAYS("Vulkan error: Can't create framebuffer.\n");
-    }
-  }
-
-  for (uint32_t i = 0; i < swapchainImageCount; i++)
-  {
-    gl_VkImagesInFlight[i] = VK_NULL_HANDLE;
-  }
+  r = vkAllocateCommandBuffers(gl_VkDevice, &allocInfo, &gl_VkCmdBuffers[0]);
+  VK_CHECKERROR(r);
 }
 
-void CGfxLibrary::RecreateSwapchain(uint32_t newWidth, uint32_t newHeight)
+void CGfxLibrary::DestroyCmdBuffers()
 {
-  if (gl_VkSwapChainExtent.width == newWidth && gl_VkSwapChainExtent.height == newHeight)
+  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
   {
-    return;
+    gl_VkCmdBuffers[i] = VK_NULL_HANDLE;
   }
 
-  // TODO
-
-  gl_VkSwapChainExtent.width = newWidth;
-  gl_VkSwapChainExtent.height = newHeight;
-}
-
-void CGfxLibrary::DestroySwapchain()
-{
-  if (gl_VkDevice == VK_NULL_HANDLE || gl_VkSwapchain == VK_NULL_HANDLE)
-  {
-    return;
-  }
-
-  vkDeviceWaitIdle(gl_VkDevice);
-
-  gl_VkSwapChainExtent = {};
-
-  for (uint32_t i = 0; i < gl_VkSwapchainDepthImages.Count(); i++) {
-    vkDestroyImage(gl_VkDevice, gl_VkSwapchainDepthImages[i], nullptr);
-  }
-
-  for (uint32_t i = 0; i < gl_VkSwapchainDepthImageViews.Count(); i++) {
-    vkDestroyImageView(gl_VkDevice, gl_VkSwapchainDepthImageViews[i], nullptr);
-  }
-
-  for (uint32_t i = 0; i < gl_VkSwapchainDepthMemory.Count(); i++) {
-    vkFreeMemory(gl_VkDevice, gl_VkSwapchainDepthMemory[i], nullptr);
-  }
-
-  for (uint32_t i = 0; i < gl_VkFramebuffers.Count(); i++) {
-    vkDestroyFramebuffer(gl_VkDevice, gl_VkFramebuffers[i], nullptr);
-  }
-
-  for (uint32_t i = 0; i < gl_VkSwapchainImageViews.Count(); i++) {
-    vkDestroyImageView(gl_VkDevice, gl_VkSwapchainImageViews[i], nullptr);
-  }
-
-
-  vkDestroySwapchainKHR(gl_VkDevice, gl_VkSwapchain, nullptr);
-  gl_VkSwapchain = VK_NULL_HANDLE;
-
-  gl_VkSwapchainImages.Clear();
-  gl_VkSwapchainImageViews.Clear();
-  gl_VkSwapchainDepthImages.Clear();
-  gl_VkSwapchainDepthMemory.Clear();
-  gl_VkSwapchainDepthImageViews.Clear();
-  gl_VkFramebuffers.Clear();
-  gl_VkImagesInFlight.Clear();
-}
-
-VkExtent2D CGfxLibrary::GetSwapchainExtent(uint32_t width, uint32_t height)
-{
-  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gl_VkPhysDevice, gl_VkSurface, &gl_VkPhSurfCapabilities);
-
-  if (gl_VkPhSurfCapabilities.currentExtent.width == 0xFFFFFFFF) 
-  {
-    VkExtent2D extent;
-
-    extent.width = Clamp<uint32_t>(width, 
-      gl_VkPhSurfCapabilities.minImageExtent.width, 
-      gl_VkPhSurfCapabilities.maxImageExtent.width);
-
-    extent.height = Clamp<uint32_t>(height,
-      gl_VkPhSurfCapabilities.minImageExtent.height,
-      gl_VkPhSurfCapabilities.maxImageExtent.height);
-
-    return extent;
-  }
-  else 
-  {
-    // if defined
-    return gl_VkPhSurfCapabilities.currentExtent;
-  }
-}
-
-BOOL CGfxLibrary::CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t imageIndex)
-{
-  VkImageCreateInfo depthImageInfo = {};
-
-  depthImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-  depthImageInfo.pNext = NULL;
-  depthImageInfo.imageType = VK_IMAGE_TYPE_2D;
-  depthImageInfo.format = gl_VkSurfDepthFormat;
-  depthImageInfo.extent.width = width;
-  depthImageInfo.extent.height = height;
-  depthImageInfo.extent.depth = 1;
-  depthImageInfo.mipLevels = 1;
-  depthImageInfo.arrayLayers = 1;
-  depthImageInfo.samples = VkSampleCountFlagBits::VK_SAMPLE_COUNT_1_BIT;
-  depthImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  depthImageInfo.queueFamilyIndexCount = 0;
-  depthImageInfo.pQueueFamilyIndices = nullptr;
-  depthImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  depthImageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-  depthImageInfo.flags = 0;
-
-  if (vkCreateImage(gl_VkDevice, &depthImageInfo, nullptr, &gl_VkSwapchainDepthImages[imageIndex]) != VK_SUCCESS)
-  {
-    CPrintF("Vulkan error: Can't create image for depth buffer.\n");
-    return FALSE;
-  }
-
-  VkMemoryRequirements memReqs;
-  vkGetImageMemoryRequirements(gl_VkDevice, gl_VkSwapchainDepthImages[imageIndex], &memReqs);
-
-  VkMemoryAllocateInfo allocInfo = {};
-  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-  allocInfo.pNext = NULL; allocInfo.allocationSize = memReqs.size;
-  allocInfo.memoryTypeIndex = GetMemoryTypeIndex(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-  
-  if (vkAllocateMemory(gl_VkDevice, &allocInfo, NULL, &gl_VkSwapchainDepthMemory[imageIndex]) != VK_SUCCESS)
-  {
-    CPrintF("Vulkan error: Can't allocate memory for depth buffer.\n");
-    return FALSE;
-  }
-
-  if (vkBindImageMemory(gl_VkDevice, gl_VkSwapchainDepthImages[imageIndex], gl_VkSwapchainDepthMemory[imageIndex], 0) != VK_SUCCESS)
-  {
-    CPrintF("Vulkan error: Can't bind allocated memory to image in depth buffer.\n");
-    return FALSE;
-  }
-
-  VkImageViewCreateInfo depthViewInfo = {};
-  depthViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-  depthViewInfo.pNext = nullptr;
-  depthViewInfo.image = VK_NULL_HANDLE;
-  depthViewInfo.format = gl_VkSurfDepthFormat;
-  depthViewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
-  depthViewInfo.components.g = VK_COMPONENT_SWIZZLE_G;
-  depthViewInfo.components.b = VK_COMPONENT_SWIZZLE_B;
-  depthViewInfo.components.a = VK_COMPONENT_SWIZZLE_A;
-  depthViewInfo.subresourceRange.aspectMask = gl_VkSurfDepthFormat == VK_FORMAT_D32_SFLOAT ?
-    VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-  depthViewInfo.subresourceRange.baseMipLevel = 0;
-  depthViewInfo.subresourceRange.levelCount = 1;
-  depthViewInfo.subresourceRange.baseArrayLayer = 0;
-  depthViewInfo.subresourceRange.layerCount = 1;
-  depthViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-  depthViewInfo.flags = 0;
-  depthViewInfo.image = gl_VkSwapchainDepthImages[imageIndex];
- 
-  if (vkCreateImageView(gl_VkDevice, &depthViewInfo, nullptr, &gl_VkSwapchainDepthImageViews[imageIndex]) != VK_SUCCESS)
-  {
-    CPrintF("Vulkan error: Can't bind allocated memory to image in depth buffer.\n");
-    return FALSE;
-  }
-
-  return TRUE;
-}
-
-void CGfxLibrary::CreateUniformBuffers(uint32_t swapchainImageCount)
-{
-  ASSERT(gl_VkUniformBuffers.Count() == 0);
-  ASSERT(gl_VkUniformBuffersMemory.Count() == 0);
-
-  // TODO
-  VkDeviceSize bufferSize = 16;
-
-  gl_VkUniformBuffers.New(swapchainImageCount);
-  gl_VkUniformBuffersMemory.New(swapchainImageCount);
-
-  for (size_t i = 0; i < swapchainImageCount; i++)
-  {
-    CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
-      gl_VkUniformBuffers[i], gl_VkUniformBuffersMemory[i]);
-  }
-}
-
-void CGfxLibrary::DestroyUniformBuffers()
-{
-  for (size_t i = 0; i < gl_VkUniformBuffers.Count(); i++)
-  {
-    vkDestroyBuffer(gl_VkDevice, gl_VkUniformBuffers[i], nullptr);
-    vkFreeMemory(gl_VkDevice, gl_VkUniformBuffersMemory[i], nullptr);
-  }
-
-  gl_VkUniformBuffers.Clear();
-  gl_VkUniformBuffersMemory.Clear();
+  vkDestroyCommandPool(gl_VkDevice, gl_VkCmdPool, nullptr);
 }
 
 void CGfxLibrary::StartFrame()
@@ -1310,12 +766,16 @@ void CGfxLibrary::StartFrame()
   VkResult r;
   uint32_t nextImageIndex;
 
+  // set new indices
+  gl_VkCmdBufferCurrent = (gl_VkCmdBufferCurrent + 1) % gl_VkMaxCmdBufferCount;
+
   // wait when previous cmd with same frame index will be done
-  r = vkWaitForFences(gl_VkDevice, 1, &gl_VkInFlightFences[gl_VkCurrentFrame], VK_TRUE, UINT64_MAX);
+  r = vkWaitForFences(gl_VkDevice, 1, &gl_VkInFlightFences[gl_VkCmdBufferCurrent], VK_TRUE, UINT64_MAX);
   VK_CHECKERROR(r);
 
+  // get image index in swapchain
   r = vkAcquireNextImageKHR(gl_VkDevice, gl_VkSwapchain, UINT64_MAX,
-    gl_VkImageAvailableSemaphores[gl_VkCurrentFrame], VK_NULL_HANDLE, &nextImageIndex);
+    gl_VkImageAvailableSemaphores[gl_VkCmdBufferCurrent], VK_NULL_HANDLE, &nextImageIndex);
 
   if (r == VK_ERROR_OUT_OF_DATE_KHR)
   {
@@ -1328,13 +788,20 @@ void CGfxLibrary::StartFrame()
 
   // set to next image index
   gl_VkCurrentImageIndex = nextImageIndex;
+
+  if (gl_VkDescriptorPools[gl_VkCmdBufferCurrent] != VK_NULL_HANDLE)
+  {
+    // reset descriptor pool to begin new list
+    vkResetDescriptorPool(gl_VkDevice, gl_VkDescriptorPools[gl_VkCmdBufferCurrent], 0);
+  }
+  gl_VkDescriptorSets.PopAll();
+  //vkFreeDescriptorSets(gl_VkDevice, gl_VkDescriptorPools[i], gl_VkDescriptorSets.Count(), &gl_VkDescriptorSets[0]);
 }
 
 void CGfxLibrary::StartCommandBuffer()
 {
   VkResult r;
-  uint32_t index = gl_VkCurrentImageIndex;
-  VkCommandBuffer cmd = gl_VkCmdBuffers[index];
+  VkCommandBuffer cmd = gl_VkCmdBuffers[gl_VkCmdBufferCurrent];
 
   if (gl_VkImagesInFlight[gl_VkCurrentImageIndex] != VK_NULL_HANDLE)
   {
@@ -1343,7 +810,7 @@ void CGfxLibrary::StartCommandBuffer()
     VK_CHECKERROR(r);
   }
   // set reference
-  gl_VkImagesInFlight[gl_VkCurrentImageIndex] = gl_VkInFlightFences[gl_VkCurrentFrame];
+  gl_VkImagesInFlight[gl_VkCurrentImageIndex] = gl_VkInFlightFences[gl_VkCmdBufferCurrent];
 
   VkCommandBufferBeginInfo beginInfo = {};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -1352,34 +819,39 @@ void CGfxLibrary::StartCommandBuffer()
   VK_CHECKERROR(r);
 
   VkClearValue clearValues[2];
-  clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+  clearValues[0].color = { 0.5f, 0.5f, 0.5f, 1.0f };
   clearValues[1].depthStencil = { 1.0f, 0 };
 
   VkRenderPassBeginInfo renderPassInfo = {};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
   renderPassInfo.renderPass = gl_VkRenderPass;
-  renderPassInfo.framebuffer = gl_VkFramebuffers[index];
+  renderPassInfo.framebuffer = gl_VkFramebuffers[gl_VkCurrentImageIndex];
   renderPassInfo.renderArea.offset = { 0, 0 };
   renderPassInfo.renderArea.extent = gl_VkSwapChainExtent;
   renderPassInfo.clearValueCount = 2;
   renderPassInfo.pClearValues = clearValues;
 
   vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+  // set viewport and scissor dynamically
+  vkCmdSetViewport(cmd, 0, 1, &gl_VkCurrentViewport);
+  vkCmdSetScissor(cmd, 0, 1, &gl_VkCurrentScissor);
 }
 
 void CGfxLibrary::EndCommandBuffer()
 {
   VkResult r;
-  VkCommandBuffer cmd = gl_VkCmdBuffers[gl_VkCurrentImageIndex];
+  VkCommandBuffer cmd = gl_VkCmdBuffers[gl_VkCmdBufferCurrent];
 
   vkCmdEndRenderPass(cmd);
   r = vkEndCommandBuffer(cmd);
   VK_CHECKERROR(r);
+  VK_CHECKERROR(r);
 
   // wait until image will be avaialable
-  VkSemaphore smpToWait = gl_VkImageAvailableSemaphores[gl_VkCurrentFrame];
+  VkSemaphore smpToWait = gl_VkImageAvailableSemaphores[gl_VkCmdBufferCurrent];
   // signal when it's finished
-  VkSemaphore smpToSignal = gl_VkRenderFinishedSemaphores[gl_VkCurrentFrame];
+  VkSemaphore smpToSignal = gl_VkRenderFinishedSemaphores[gl_VkCmdBufferCurrent];
 
   VkPipelineStageFlags pipelineStageFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
@@ -1395,166 +867,165 @@ void CGfxLibrary::EndCommandBuffer()
   submitInfo[0].pSignalSemaphores = &smpToSignal;
 
   // fences must be set to unsignaled state manually
-  vkResetFences(gl_VkDevice, 1, &gl_VkInFlightFences[gl_VkCurrentFrame]);
+  vkResetFences(gl_VkDevice, 1, &gl_VkInFlightFences[gl_VkCmdBufferCurrent]);
 
   // submit cmd buffer; fence will be in signaled state when cmd will be done
-  r = vkQueueSubmit(gl_VkQueueGraphics, 1, submitInfo, gl_VkInFlightFences[gl_VkCurrentFrame]);
+  r = vkQueueSubmit(gl_VkQueueGraphics, 1, submitInfo, gl_VkInFlightFences[gl_VkCmdBufferCurrent]);
   VK_CHECKERROR(r);
 }
 
 void CGfxLibrary::CreateMeshData()
 {
-  VkDeviceSize vertBufferSize = VK_VERT_SIZE * gl_VkMaxVertexCount;
-  VkDeviceSize indexBufferSize = sizeof(UINT) * gl_VkMaxVertexCount;
 
-  CreateBuffer(vertBufferSize, 
-    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 
-    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
-    gl_VkVertexBuffer, gl_VkVertexBufferMemory);
-
-  CreateBuffer(indexBufferSize,
-    VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-    gl_VkIndexBuffer, gl_VkIndexBufferMemory);
 }
 
 void CGfxLibrary::DestroyMeshData()
 {
-  vkDestroyBuffer(gl_VkDevice, gl_VkVertexBuffer, nullptr);
-  vkFreeMemory(gl_VkDevice, gl_VkVertexBufferMemory, nullptr);
-  vkDestroyBuffer(gl_VkDevice, gl_VkIndexBuffer, nullptr);
-  vkFreeMemory(gl_VkDevice, gl_VkIndexBufferMemory, nullptr);
-}
-
-VkShaderModule CGfxLibrary::CreateShaderModule(const uint32_t *spvCode, uint32_t codeSize)
-{
-  VkResult r;
-  VkShaderModule shaderModule;
-
-  VkShaderModuleCreateInfo moduleInfo = {};
-  moduleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-  moduleInfo.codeSize = codeSize;
-  moduleInfo.pCode = spvCode;
-
-  r = vkCreateShaderModule(gl_VkDevice, &moduleInfo, nullptr, &shaderModule);
-
-  return shaderModule;
 }
 
 VkCommandBuffer CGfxLibrary::GetCurrentCmdBuffer()
 {
-  return gl_VkCmdBuffers[gl_VkCurrentImageIndex];
+  return gl_VkCmdBuffers[gl_VkCmdBufferCurrent];
 }
 
 void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
 {
-  CStaticArray<VkVertex> &verts = gl_VkVerts;
-  ASSERT(verts.Count() > 0);
+  //CStaticArray<SvkVertex> &verts = gl_VkVerts;
+  //ASSERT(verts.Count() > 0);
 
-  VkCommandBuffer cmd = GetCurrentCmdBuffer();
+  //VkCommandBuffer cmd = gl_VkCmdBuffers[gl_VkCmdBufferCurrent];
+  //
+  //// TODO: dynamic vertex and index buffer
+  //// TODO: dynamic descriptor sets
+  //SvkBufferObject vertexBuffer = GetVertexBuffer(&verts[0], gl_VkVerts.Count() * VK_VERT_SIZE);
+  //SvkBufferObject indexBuffer = GetIndexBuffer(&indices[0], sizeof(UINT) * indexCount);
 
-  // firstly, copy vertex and index data to buffers
-  CopyToDeviceMemory(gl_VkVertexBufferMemory, &gl_VkVerts[0], gl_VkVerts.Count() * VK_VERT_SIZE);
-  CopyToDeviceMemory(gl_VkIndexBufferMemory, indices, sizeof(uint32_t) * indexCount);
+  //FLOAT mvp[16];
+  //// TODO: check
+  //Svk_MatMultiply(mvp, VkViewMatrix, VkProjectionMatrix);
 
-  vkCmdSetViewport(cmd, 0, 1, &gl_VkCurrentViewport);
-  vkCmdSetScissor(cmd, 0, 1, &gl_VkCurrentScissor);
+  //SvkDescriptorObject descObj = GetUniformBuffer(mvp, 16 * sizeof(FLOAT));
 
-  // bind current pipeline
-  vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkGraphicsPipeline);
+  //// bind current pipeline
+  //vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkGraphicsPipeline);
 
-  // bind descriptor set
-  vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkPipelineLayout, 0, 1, &gl_VkDescriptorSets[gl_VkCurrentImageIndex], 0, nullptr);
+  //// bind descriptor set
+  //vkCmdBindDescriptorSets(
+  //  cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkPipelineLayout,
+  //  0, 1, &descObj.sdo_DescSet,
+  //  0, nullptr);
+  //  // TODO: uncomment this when uniform buffer will be dynamic
+  //  //1, &descObj.sdo_Offset);
 
-  // set mesh
-  VkDeviceSize offsets[] = { 0 };
-  vkCmdBindVertexBuffers(cmd, 0, 1, &gl_VkVertexBuffer, offsets);
-  vkCmdBindIndexBuffer(cmd, gl_VkIndexBuffer, 0, VK_INDEX_TYPE_UINT32);
+  //// set mesh
+  //VkDeviceSize offsets[] = { 0 };
+  //vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer.sbo_Buffer, offsets);
+  //vkCmdBindIndexBuffer(cmd, indexBuffer.sbo_Buffer, 0, VK_INDEX_TYPE_UINT32);
 
-  // draw
-  vkCmdDrawIndexed(cmd, indexCount, 1, 0, 0, 0);
+  //// draw
+  //vkCmdDrawIndexed(cmd, indexCount, 1, 0, 0, 0);
 }
 
-uint32_t CGfxLibrary::GetMemoryTypeIndex(uint32_t memoryTypeBits, VkFlags requirementsMask) 
+void Svk_MatCopy(const float *src, float *dest)
 {
-  // for each memory type available for this device
-  for (uint32_t i = 0; i < gl_VkPhMemoryProperties.memoryTypeCount; i++)
+  for (int i = 0; i < 4; i++)
   {
-    // if type is available
-    if ((memoryTypeBits & 1u) == 1) {
-      if ((gl_VkPhMemoryProperties.memoryTypes[i].propertyFlags & requirementsMask) == requirementsMask)
+    for (int j = 0; j < 4; j++)
+    {
+      dest[i * 4 + j] = src[i * 4 + j];
+    }
+  }
+}
+
+void Svk_MatSetIdentity(float *result)
+{
+  result[0] = 1.0f;
+  result[1] = 0.0f;
+  result[2] = 0.0f;
+  result[3] = 0.0f;
+  result[4] = 0.0f;
+  result[5] = 1.0f;
+  result[6] = 0.0f;
+  result[7] = 0.0f;
+  result[8] = 0.0f;
+  result[9] = 0.0f;
+  result[10] = 1.0f;
+  result[11] = 0.0f;
+  result[12] = 0.0f;
+  result[13] = 0.0f;
+  result[14] = 0.0f;
+  result[15] = 1.0f;
+}
+
+void Svk_MatMultiply(float *result, const float *a, const float *b)
+{
+  for (int i = 0; i < 4; i++)
+  {
+    for (int j = 0; j < 4; j++)
+    {
+      result[i * 4 + j] = 0.0f;
+
+      for (int s = 0; s < 4; s++)
       {
-        return i;
+        result[i * 4 + j] += a[i * 4 + s] * b[s * 4 + j];
       }
     }
-
-    memoryTypeBits >>= 1u;
   }
-
-  CPrintF("Vulkan error: Can't find memory type in device memory properties");
-  ASSERT(FALSE);
-  return 0;
 }
 
-VkFormat CGfxLibrary::FindSupportedFormat(const VkFormat *formats, uint32_t formatCount, VkImageTiling tiling, VkFormatFeatureFlags features)
+void Svk_MatFrustum(float *result, float fLeft, float fRight, float fBottom, float fTop, float fNear, float fFar)
 {
-  for (uint32_t i = 0; i < formatCount; i++)
-  {
-    VkFormat format = formats[i];
+  const float fRpL = fRight + fLeft;  const float fRmL = fRight - fLeft;  const float fFpN = fFar + fNear;
+  const float fTpB = fTop + fBottom;  const float fTmB = fTop - fBottom;  const float fFmN = fFar - fNear;
+  const float f2Fm2N = 2.0f * fFar - 2.0f * fNear;
 
-    VkFormatProperties props;
-    vkGetPhysicalDeviceFormatProperties(gl_VkPhysDevice, format, &props);
+  result[0 * 4 + 0] = 2.0f * fNear / fRmL;
+  result[0 * 4 + 1] = 0.0f;
+  result[0 * 4 + 2] = 0.0f;
+  result[0 * 4 + 3] = 0.0f;
 
-    if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) 
-    {
-      return format;
-    }
-    else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) 
-    {
-      return format;
-    }
-  }
+  result[1 * 4 + 0] = 0.0f;
+  result[1 * 4 + 1] = -2.0f * fNear / fTmB;
+  result[1 * 4 + 2] = 0.0f;
+  result[1 * 4 + 3] = 0.0f;
 
-  CPrintF("Vulkan error: Can't find required format");
-  ASSERT(FALSE);
-  return VK_FORMAT_UNDEFINED;
+  result[2 * 4 + 0] = fRpL / fRmL;
+  result[2 * 4 + 1] = -fTpB / fTmB;
+  result[2 * 4 + 2] = -(2 * fFar - fNear) / f2Fm2N;
+  result[2 * 4 + 3] = -1.0f;
+
+  result[3 * 4 + 0] = 0.0f;
+  result[3 * 4 + 1] = 0.0f;
+  result[3 * 4 + 2] = -fFar * fNear / f2Fm2N;
+  result[3 * 4 + 3] = 0.0f;
 }
 
-void CGfxLibrary::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory)
+void Svk_MatOrtho(float *result, float fLeft, float fRight, float fBottom, float fTop, float fNear, float fFar)
 {
-  VkResult r;
+  const float fRpL = fRight + fLeft;  const float fRmL = fRight - fLeft;  const float fFpN = fFar + fNear;
+  const float fTpB = fTop + fBottom;  const float fTmB = fTop - fBottom;  const float fFmN = fFar - fNear;
+  const float f2Fm2N = 2 * fFar - 2 * fNear;
 
-  VkBufferCreateInfo bufferInfo = {};
-  bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-  bufferInfo.size = size;
-  bufferInfo.usage = usage;
-  bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  result[0 * 4 + 0] = 2.0f / fRmL;
+  result[0 * 4 + 1] = 0.0f;
+  result[0 * 4 + 2] = 0.0f;
+  result[0 * 4 + 3] = 0.0f;
 
-  r = vkCreateBuffer(gl_VkDevice, &bufferInfo, nullptr, &buffer);
-  VK_CHECKERROR(r);
+  result[1 * 4 + 0] = 0.0f;
+  result[1 * 4 + 1] = -2.0f / fTmB;
+  result[1 * 4 + 2] = 0.0f;
+  result[1 * 4 + 3] = 0.0f;
 
-  VkMemoryRequirements memRequirements;
-  vkGetBufferMemoryRequirements(gl_VkDevice, buffer, &memRequirements);
+  result[2 * 4 + 0] = 0.0f;
+  result[2 * 4 + 1] = 0.0f;
+  result[2 * 4 + 2] = -1.0f / f2Fm2N;
+  result[2 * 4 + 3] = 0.0f;
 
-  VkMemoryAllocateInfo allocInfo = {};
-  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-  allocInfo.allocationSize = memRequirements.size;
-  allocInfo.memoryTypeIndex = GetMemoryTypeIndex(memRequirements.memoryTypeBits, properties);
-
-  r = vkAllocateMemory(gl_VkDevice, &allocInfo, nullptr, &bufferMemory);
-  VK_CHECKERROR(r);
-
-  vkBindBufferMemory(gl_VkDevice, buffer, bufferMemory, 0);
+  result[3 * 4 + 0] = -fRpL / fRmL;
+  result[3 * 4 + 1] = fTpB / fTmB;
+  result[3 * 4 + 2] = (2.0f * fFar - 3.0f * fNear) / f2Fm2N;
+  result[3 * 4 + 3] = 1.0f;
 }
-
-void CGfxLibrary::CopyToDeviceMemory(VkDeviceMemory deviceMemory, const void *data, VkDeviceSize size)
-{
-  void *mapped;
-  vkMapMemory(gl_VkDevice, deviceMemory, 0, size, 0, &mapped);
-  memcpy(mapped, data, (size_t)size);
-  vkUnmapMemory(gl_VkDevice, deviceMemory);
-}
-
 //BOOL CGfxLibrary::InitDisplay_Vulkan(INDEX iAdapter, PIX pixSizeI, PIX pixSizeJ, DisplayDepth eColorDepth)
 //{
 //  // prepare display mode
@@ -1583,70 +1054,4 @@ void CGfxLibrary::CopyToDeviceMemory(VkDeviceMemory deviceMemory, const void *da
 //
 //  return 0;
 //}
-
-extern void setIdentity(float outMatrix[4][4])
-{
-  for (int i = 0; i < 4; i++)
-  {
-    for (int j = 0; j < 4; j++)
-    {
-      outMatrix[i][j] = i != j ? 0.0f : 1.0f;
-    }
-  }
-}
-
-extern void orthoMatrix(float left, float right, float bottom, float top, float zNear, float zFar, float outMatrix[4][4])
-{
-  setIdentity(outMatrix);
-
-  outMatrix[0][0] = 2.0f / (right - left);
-  outMatrix[1][1] = 2.0f / (top - bottom);
-  outMatrix[2][2] = 1.0f / (zFar - zNear);
-  outMatrix[3][0] = -(right + left) / (right - left);
-  outMatrix[3][1] = -(top + bottom) / (top - bottom);
-  outMatrix[3][2] = -zNear / (zFar - zNear);
-}
-
-void CGfxLibrary::UpdateDescriptorSet()
-{
-  VkDescriptorBufferInfo bufferInfo = {};
-  bufferInfo.buffer = gl_VkUniformBuffers[gl_VkCurrentImageIndex];
-  bufferInfo.offset = 0;
-  // TODO
-  bufferInfo.range = 16;
-
-  // TODO: textures
-  //VkDescriptorImageInfo imageInfo = {};
-  //imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  //imageInfo.imageView = textureImageView;
-  //imageInfo.sampler = textureSampler;
-
-  VkWriteDescriptorSet descriptorWrites[2];
-
-  descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  descriptorWrites[0].pNext = nullptr;
-  descriptorWrites[0].dstSet = gl_VkDescriptorSets[gl_VkCurrentImageIndex];
-  descriptorWrites[0].dstBinding = 0;
-  descriptorWrites[0].dstArrayElement = 0;
-  descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  descriptorWrites[0].descriptorCount = 1;
-  descriptorWrites[0].pBufferInfo = &bufferInfo;
-  descriptorWrites[0].pImageInfo = nullptr;
-  descriptorWrites[0].pTexelBufferView = nullptr;
-
-  //descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  //descriptorWrites[1].pNext = nullptr;
-  //descriptorWrites[1].dstSet = gl_VkDescriptorSets[gl_VkCurrentImageIndex];
-  //descriptorWrites[1].dstBinding = 1;
-  //descriptorWrites[1].dstArrayElement = 0;
-  //descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  //descriptorWrites[1].descriptorCount = 1;
-  //descriptorWrites[1].pImageInfo = &imageInfo;
-  //descriptorWrites[1].pBufferInfo = nullptr;
-  //descriptorWrites[1].pTexelBufferView = nullptr;
-
-  // TODO: textures - change to 2
-  vkUpdateDescriptorSets(gl_VkDevice, 1, descriptorWrites, 0, nullptr);
-}
-
 #endif // SE1_VULKAN

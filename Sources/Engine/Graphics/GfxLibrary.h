@@ -31,9 +31,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Graphics/OpenGL.h>
 
 #ifdef SE1_VULKAN
-#define VK_USE_PLATFORM_WIN32_KHR
-#include <vulkan/vulkan.h>
-#include <Engine/Graphics/Vulkan/VkVertex.h>
+#include <Engine/Graphics/Vulkan/VulkanInclude.h>
 #endif // SE1_VULKAN
 
 #include <Engine/Graphics/Color.h>
@@ -161,12 +159,11 @@ public:
   CStaticArray<VkImageView>       gl_VkSwapchainDepthImageViews;
   CStaticArray<VkFramebuffer>     gl_VkFramebuffers;
 
-  CStaticArray<VkSemaphore>       gl_VkImageAvailableSemaphores;
-  CStaticArray<VkSemaphore>       gl_VkRenderFinishedSemaphores;
-  CStaticArray<VkFence>           gl_VkInFlightFences;
   CStaticArray<VkFence>           gl_VkImagesInFlight;
-  uint32_t                        gl_VkCurrentFrame = 0;
-  const uint32_t                  gl_VkMaxFramesInFlight = 2;
+
+  VkSemaphore                     gl_VkImageAvailableSemaphores[gl_VkMaxCmdBufferCount];
+  VkSemaphore                     gl_VkRenderFinishedSemaphores[gl_VkMaxCmdBufferCount];
+  VkFence                         gl_VkInFlightFences[gl_VkMaxCmdBufferCount];
 
   VkRenderPass                    gl_VkRenderPass;
 
@@ -177,24 +174,26 @@ public:
   VkRect2D                        gl_VkCurrentScissor;
   VkViewport                      gl_VkCurrentViewport;
 
+  uint32_t                        gl_VkCmdBufferCurrent;
   VkCommandPool                   gl_VkCmdPool;
-  CStaticArray<VkCommandBuffer>   gl_VkCmdBuffers;
-  VkDescriptorPool                gl_VkDescriptorPool;
-  CStaticArray<VkDescriptorSet>   gl_VkDescriptorSets;
+  VkCommandBuffer                 gl_VkCmdBuffers[gl_VkMaxCmdBufferCount];
 
-  CStaticArray<VkBuffer>          gl_VkUniformBuffers;
-  CStaticArray<VkDeviceMemory>    gl_VkUniformBuffersMemory;
+  VkDescriptorPool                        gl_VkDescriptorPools[gl_VkMaxCmdBufferCount];
+  CStaticStackArray<VkDescriptorSet>      gl_VkDescriptorSets;
 
-  VkPhysicalDevice                    gl_VkPhysDevice;
-  VkPhysicalDeviceMemoryProperties    gl_VkPhMemoryProperties;
-  VkPhysicalDeviceProperties          gl_VkPhProperties;
-  VkPhysicalDeviceFeatures            gl_VkPhFeatures;
-  VkSurfaceCapabilitiesKHR            gl_VkPhSurfCapabilities;
-  CStaticArray<VkSurfaceFormatKHR>    gl_VkPhSurfFormats;
-  CStaticArray<VkPresentModeKHR>      gl_VkPhSurfPresentModes;
+  CStaticStackArray<SvkBufferObject>      gl_VkUniformBuffers;
+  CStaticStackArray<SvkDescriptorObject>  gl_VkDescriptors;
 
-  CStaticArray<const char *>          gl_VkPhysDeviceExtensions;
-  CStaticArray<const char *>          gl_VkLayers;
+  VkPhysicalDevice                        gl_VkPhysDevice;
+  VkPhysicalDeviceMemoryProperties        gl_VkPhMemoryProperties;
+  VkPhysicalDeviceProperties              gl_VkPhProperties;
+  VkPhysicalDeviceFeatures                gl_VkPhFeatures;
+  VkSurfaceCapabilitiesKHR                gl_VkPhSurfCapabilities;
+  CStaticArray<VkSurfaceFormatKHR>        gl_VkPhSurfFormats;
+  CStaticArray<VkPresentModeKHR>          gl_VkPhSurfPresentModes;
+
+  CStaticArray<const char *>              gl_VkPhysDeviceExtensions;
+  CStaticArray<const char *>              gl_VkLayers;
 
   uint32_t                        gl_VkQueueFamGraphics;
   uint32_t                        gl_VkQueueFamTransfer;
@@ -205,14 +204,10 @@ public:
 
   VkDebugUtilsMessengerEXT        gl_VkDebugMessenger;
 
-  // model data 
-  CStaticArray<VkVertex>          gl_VkVerts;
-  const uint32_t                  gl_VkMaxVertexCount = 65536;
-  const uint32_t                  gl_VkMaxIndexCount = 65536 * 3;
-  VkBuffer                        gl_VkVertexBuffer;
-  VkDeviceMemory                  gl_VkVertexBufferMemory;
-  VkBuffer                        gl_VkIndexBuffer;
-  VkDeviceMemory                  gl_VkIndexBufferMemory;
+  // current mesh
+  CStaticArray<SvkVertex>         gl_VkVerts;
+
+  const uint32_t                  gl_VkDummy = 0;
 
 #endif
 
@@ -314,12 +309,24 @@ private:
   BOOL CreateDevice();
   void CreateRenderPass();
   void CreateSyncPrimitives();
+
   void CreateDescriptorSetLayout();
+  VkDescriptorSet CreateDescriptorSet();
+
+  void CreateDescriptorPools();
+  void DestroyDescriptorPools();
+
   void CreateGraphicsPipeline();
   BOOL CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t imageIndex);
-  void CreateUniformBuffers(uint32_t swapchainImageCount);
+
   void DestroyUniformBuffers();
-  void UpdateDescriptorSet();
+
+  void CreateCmdBuffers();
+  void DestroyCmdBuffers();
+
+  SvkBufferObject GetVertexBuffer(const void *data, uint32_t dataSize);
+  SvkBufferObject GetIndexBuffer(const void *data, uint32_t dataSize);
+  const SvkDescriptorObject &GetUniformBuffer(const void *data, uint32_t dataSize);
 
   void StartFrame();
   void StartCommandBuffer();

@@ -1,5 +1,5 @@
-#ifndef SE_INCL_VKVERTEX_H
-#define SE_INCL_VKVERTEX_H
+#ifndef SE_INCL_SVKVERTEX_H
+#define SE_INCL_SVKVERTEX_H
 #ifdef PRAGMA_ONCE
 #pragma once
 #endif
@@ -7,7 +7,7 @@
 #include <Engine/Graphics/Color.h>
 
 // Vertex structure that will be used in shaders
-struct VkVertex
+struct SvkVertex
 {
   FLOAT Position[4];
   FLOAT Color[4];
@@ -15,7 +15,7 @@ struct VkVertex
   FLOAT TexCoord[2];
 
   // default constructor
-  VkVertex()
+  SvkVertex()
   {
     Position[0] = Position[1] = Position[2] = Position[3] = 0.0f;
     Color[0] = Color[1] = Color[2] = Color[3] = 1.0f;
@@ -43,8 +43,8 @@ struct VkVertex
     Color[0] = r;
     Color[1] = g;
     Color[2] = b;
-  }  
-  
+  }
+
   inline void SetColorRGB(COLOR col)
   {
     BYTE colBytes[3];
@@ -81,7 +81,7 @@ struct VkVertex
   }
 };
 
-#define VK_VERT_SIZE (sizeof(VkVertex))
+#define VK_VERT_SIZE (sizeof(SvkVertex))
 
 #define VK_VERT_POS_SIZE (4*sizeof(FLOAT))
 #define VK_VERT_COL_SIZE (4*sizeof(FLOAT))
@@ -93,14 +93,15 @@ struct VkVertex
 #define VK_VERT_NOR_FORMAT VK_FORMAT_R32G32B32A32_SFLOAT
 #define VK_VERT_TEX_FORMAT VK_FORMAT_R32G32_SFLOAT
 
-#define VK_VERT_POS_OFFSET (offsetof(VkVertex, Position))
-#define VK_VERT_COL_OFFSET (offsetof(VkVertex, Color))
-#define VK_VERT_NOR_OFFSET (offsetof(VkVertex, Normal))
-#define VK_VERT_TEX_OFFSET (offsetof(VkVertex, TexCoord))
+#define VK_VERT_POS_OFFSET (offsetof(SvkVertex, Position))
+#define VK_VERT_COL_OFFSET (offsetof(SvkVertex, Color))
+#define VK_VERT_NOR_OFFSET (offsetof(SvkVertex, Normal))
+#define VK_VERT_TEX_OFFSET (offsetof(SvkVertex, TexCoord))
 
 #define VK_VERT_POS_LOC (0)
 #define VK_VERT_COL_LOC (1)
 #define VK_VERT_NOR_LOC (2)
 #define VK_VERT_TEX_LOC (3)
+
 
 #endif

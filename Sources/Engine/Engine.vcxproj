@@ -321,6 +321,8 @@ copy Release\$(TargetName).lib $(SolutionDir)..\Bin\ &gt;nul</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Graphics\Vulkan\SvkSwapchain.cpp" />
+    <ClCompile Include="Graphics\Vulkan\SvkUtils.cpp" />
     <ClCompile Include="Math\Float.cpp" />
     <ClCompile Include="Math\Functions.cpp" />
     <ClCompile Include="Math\Geometry.cpp">
@@ -749,8 +751,8 @@ copy Release\$(TargetName).lib $(SolutionDir)..\Bin\ &gt;nul</Command>
     <ClInclude Include="Base\UpdateableRT.h" />
     <ClInclude Include="GameAgent\GameAgent.h" />
     <ClInclude Include="GameAgent\MSLegacy.h" />
-    <ClInclude Include="Graphics\Vulkan\VkTextureObject.h" />
-    <ClInclude Include="Graphics\Vulkan\VkVertex.h" />
+    <ClInclude Include="Graphics\Vulkan\VulkanInclude.h" />
+    <ClInclude Include="Graphics\Vulkan\SvkVertex.h" />
     <ClInclude Include="Math\AABBox.h" />
     <ClInclude Include="Math\FixInt.h" />
     <ClInclude Include="Math\Float.h" />
