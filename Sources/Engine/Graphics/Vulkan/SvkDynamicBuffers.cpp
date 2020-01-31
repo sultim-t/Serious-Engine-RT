@@ -25,7 +25,7 @@ void CGfxLibrary::InitDynamicVertexBuffers(uint32_t newSize)
   InitDynamicBuffer(gl_VkDynamicVBGlobal, gl_VkDynamicVB, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 
 #ifndef NDEBUG
-  CPrintF("SVK: Allocated dynamic vertex buffer: %uKB", gl_VkDynamicVBGlobal.sdg_CurrentDynamicBufferSize / 1024);
+  CPrintF("SVK: Allocated dynamic vertex buffer: %u KB.\n", gl_VkDynamicVBGlobal.sdg_CurrentDynamicBufferSize / 1024);
 #endif // !NDEBUG
 }
 
@@ -37,7 +37,7 @@ void CGfxLibrary::InitDynamicIndexBuffers(uint32_t newSize)
   InitDynamicBuffer(gl_VkDynamicIBGlobal, gl_VkDynamicIB, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
 #ifndef NDEBUG
-  CPrintF("SVK: Allocated dynamic index buffer: %uKB", gl_VkDynamicIBGlobal.sdg_CurrentDynamicBufferSize / 1024);
+  CPrintF("SVK: Allocated dynamic index buffer: %u KB.\n", gl_VkDynamicIBGlobal.sdg_CurrentDynamicBufferSize / 1024);
 #endif // !NDEBUG
 }
 
@@ -45,11 +45,13 @@ void CGfxLibrary::InitDynamicUniformBuffers(uint32_t newSize)
 {
   // ASSERT(newSize < gl_VkPhProperties.limits.);
 
-  gl_VkDynamicIBGlobal.sdg_CurrentDynamicBufferSize = newSize;
-  InitDynamicBuffer(gl_VkDynamicUBGlobal, gl_VkDynamicUB, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+  SvkDynamicBuffer uniformDynBuffers[gl_VkMaxCmdBufferCount];
+
+  gl_VkDynamicUBGlobal.sdg_CurrentDynamicBufferSize = newSize;
+  InitDynamicBuffer(gl_VkDynamicUBGlobal, uniformDynBuffers, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 
 #ifndef NDEBUG
-  CPrintF("SVK: Allocated dynamic index buffer: %uKB", gl_VkDynamicUBGlobal.sdg_CurrentDynamicBufferSize / 1024);
+  CPrintF("SVK: Allocated dynamic uniform buffer: %u KB.\n", gl_VkDynamicUBGlobal.sdg_CurrentDynamicBufferSize / 1024);
 #endif // !NDEBUG
 
   // allocate descriptor sets for uniform buffers
@@ -65,7 +67,7 @@ void CGfxLibrary::InitDynamicUniformBuffers(uint32_t newSize)
     vkAllocateDescriptorSets(gl_VkDevice, &descAllocInfo, &descSet);
   
     VkDescriptorBufferInfo bufferInfo = {};
-    bufferInfo.buffer = gl_VkDynamicUB[i].sdb_Buffer;
+    bufferInfo.buffer = uniformDynBuffers[i].sdb_Buffer;
     // start in uniform buffer is 0
     bufferInfo.offset = 0;
     // max size for uniform data
@@ -83,6 +85,9 @@ void CGfxLibrary::InitDynamicUniformBuffers(uint32_t newSize)
 
     vkUpdateDescriptorSets(gl_VkDevice, 1, &write, 0, nullptr);
 
+    gl_VkDynamicUB[i].sdb_Buffer = uniformDynBuffers[i].sdb_Buffer;
+    gl_VkDynamicUB[i].sdb_CurrentOffset = uniformDynBuffers[i].sdb_CurrentOffset;
+    gl_VkDynamicUB[i].sdb_Data = uniformDynBuffers[i].sdb_Data;
     gl_VkDynamicUB[i].sdu_DescriptorSet = descSet;
   }
 }
@@ -292,14 +297,25 @@ void CGfxLibrary::FreeUnusedDynamicBuffers(uint32_t cmdBufferIndex)
 
     vkFreeMemory(gl_VkDevice, toDelete[i].sdd_Memory, nullptr);
   }
+
+  toDelete.PopAll();
 }
 
 void CGfxLibrary::DestroyDynamicBuffers()
 {
+  ASSERT(gl_VkDynamicVBGlobal.sdg_DynamicBufferMemory != VK_NULL_HANDLE);
+  ASSERT(gl_VkDynamicIBGlobal.sdg_DynamicBufferMemory != VK_NULL_HANDLE);
+  ASSERT(gl_VkDynamicUBGlobal.sdg_DynamicBufferMemory != VK_NULL_HANDLE);
+
   VkResult r;
 
   for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
   {
+    FreeUnusedDynamicBuffers(i);
+
+    // delete array
+    gl_VkDynamicToDelete[i].Clear();
+
     vkDestroyBuffer(gl_VkDevice, gl_VkDynamicVB[i].sdb_Buffer, nullptr);
     vkDestroyBuffer(gl_VkDevice, gl_VkDynamicIB[i].sdb_Buffer, nullptr);
     vkDestroyBuffer(gl_VkDevice, gl_VkDynamicUB[i].sdb_Buffer, nullptr);

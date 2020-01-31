@@ -1,14 +1,14 @@
 #include "stdh.h"
 #include <Engine/Graphics/GfxLibrary.h>
 
-void CGfxLibrary::CreateDescriptorSetLayout()
+void CGfxLibrary::CreateDescriptorSetLayouts()
 {
   VkResult r;
 
   VkDescriptorSetLayoutBinding uniformBinding = {};
   uniformBinding.binding = 0;
   uniformBinding.descriptorCount = 1;
-  uniformBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  uniformBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
   uniformBinding.pImmutableSamplers = nullptr;
   uniformBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 

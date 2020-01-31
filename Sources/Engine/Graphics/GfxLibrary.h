@@ -165,7 +165,6 @@ public:
 
   VkRenderPass                    gl_VkRenderPass;
 
-  // TODO: update VkDescriptorSetLayoutBinding to dynamic uniform buffer
   VkDescriptorSetLayout           gl_VkDescriptorSetLayout;
   VkPipelineLayout                gl_VkPipelineLayout;
   VkPipeline                      gl_VkGraphicsPipeline;
@@ -191,16 +190,6 @@ public:
   // dynamic buffers to delete
   CStaticStackArray<SvkDBufferToDelete>   gl_VkDynamicToDelete[gl_VkMaxCmdBufferCount];
 
-  // TODO: remove
-  //---
-  // buffers for each cmd buffer; will be reset on cmd buffer begin
-  CStaticStackArray<SvkBufferObject>      gl_VkVertexBuffers[gl_VkMaxCmdBufferCount];
-  CStaticStackArray<SvkBufferObject>      gl_VkIndexBuffers[gl_VkMaxCmdBufferCount];
-  CStaticStackArray<SvkBufferObject>      gl_VkUniformBuffers[gl_VkMaxCmdBufferCount];
-  // holders for one set from gl_VkDescriptorSets and offset in that set
-  CStaticStackArray<SvkDescriptorObject>  gl_VkDescriptors[gl_VkMaxCmdBufferCount];
-  //---
-
   VkPhysicalDevice                        gl_VkPhysDevice;
   VkPhysicalDeviceMemoryProperties        gl_VkPhMemoryProperties;
   VkPhysicalDeviceProperties              gl_VkPhProperties;
@@ -224,8 +213,8 @@ public:
   // current mesh
   CStaticStackArray<SvkVertex>    gl_VkVerts;
 
-  // do not remove this var as created window 
-  // with zero size in ViewPort.cpp is NULL without it
+  // do not remove this dummy as created window with zero size in ViewPort.cpp 
+  // will be NULL without it
   const uint32_t                  gl_VkDummy = 0;
 
 #endif
@@ -329,7 +318,7 @@ private:
   void CreateRenderPass();
   void CreateSyncPrimitives();
 
-  void CreateDescriptorSetLayout();
+  void CreateDescriptorSetLayouts();
 
   void CreateDescriptorPools();
   void DestroyDescriptorPools();
@@ -356,6 +345,7 @@ private:
   void AddDynamicUniformToDeletion(SvkDynamicBufferGlobal &dynBufferGlobal, SvkDynamicUniform *buffers);
   // free frame data: vertex, index, uniform buffers, descriptor sets
   void FreeUnusedDynamicBuffers(uint32_t cmdBufferIndex);
+  // destroy all dynamic buffers data, including unused
   void DestroyDynamicBuffers();
 
   void AcquireNextImage();

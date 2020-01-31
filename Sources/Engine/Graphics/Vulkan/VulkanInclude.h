@@ -31,18 +31,6 @@ struct SvkTextureObject
   VkSampler       sto_Sampler;
 };
 
-struct SvkBufferObject
-{
-  VkBuffer        sbo_Buffer;
-  VkDeviceMemory  sbo_Memory;
-};
-
-struct SvkDescriptorObject
-{
-  VkDescriptorSet sdo_DescSet;
-  VkDeviceSize    sdo_Offset;
-};
-
 struct SvkDynamicBuffer
 {
   VkBuffer        sdb_Buffer;

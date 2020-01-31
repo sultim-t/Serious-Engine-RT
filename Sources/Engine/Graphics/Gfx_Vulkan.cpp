@@ -172,11 +172,11 @@ BOOL CGfxLibrary::InitDriver_Vulkan()
   }
 
   CreateDescriptorPools();
-  InitDynamicBuffers();
   CreateCmdBuffers();
   CreateSyncPrimitives();
   CreateRenderPass();
-  CreateDescriptorSetLayout();
+  CreateDescriptorSetLayouts();
+  InitDynamicBuffers();
   CreateGraphicsPipeline();
 
   return TRUE;
@@ -214,12 +214,7 @@ void CGfxLibrary::EndDriver_Vulkan(void)
   }
 #endif
 
-  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
-  {
-    FreeUnusedDynamicBuffers(i);
-    DestroyDynamicBuffers();
-  }
-
+  DestroyDynamicBuffers();
   DestroyCmdBuffers();
 
   vkDestroyDescriptorSetLayout(gl_VkDevice, gl_VkDescriptorSetLayout, nullptr);
@@ -257,6 +252,7 @@ void CGfxLibrary::Reset_Vulkan()
   gl_VkCmdBufferCurrent = 0;
   gl_VkCmdBufferCurrent = 0;
 
+  gl_VkDescriptorPool = VK_NULL_HANDLE;
   gl_VkDescriptorSetLayout = VK_NULL_HANDLE;
   gl_VkPipelineLayout = VK_NULL_HANDLE;
   gl_VkGraphicsPipeline = VK_NULL_HANDLE;
@@ -298,29 +294,10 @@ void CGfxLibrary::Reset_Vulkan()
     gl_VkDynamicUB[i].sdu_DescriptorSet = VK_NULL_HANDLE;
 
     // manually set memory as arrays contain garbage
-    gl_VkVertexBuffers[i].sa_Array = nullptr;
-    gl_VkIndexBuffers[i].sa_Array = nullptr;
-    gl_VkUniformBuffers[i].sa_Array = nullptr;
-    gl_VkDescriptors[i].sa_Array = nullptr;
     gl_VkDynamicToDelete[i].sa_Array = nullptr;
-
-    gl_VkVertexBuffers[i].sa_Count =
-      gl_VkIndexBuffers[i].sa_Count =
-      gl_VkUniformBuffers[i].sa_Count =
-      gl_VkDescriptors[i].sa_Count =
-      gl_VkDynamicToDelete[i].sa_Count = 0;
-
-    gl_VkVertexBuffers[i].sa_UsedCount =
-      gl_VkIndexBuffers[i].sa_UsedCount =
-      gl_VkUniformBuffers[i].sa_UsedCount =
-      gl_VkDescriptors[i].sa_UsedCount =
-      gl_VkDynamicToDelete[i].sa_UsedCount = 0;
-
-    gl_VkVertexBuffers[i].sa_ctAllocationStep =
-      gl_VkIndexBuffers[i].sa_ctAllocationStep =
-      gl_VkUniformBuffers[i].sa_ctAllocationStep =
-      gl_VkDescriptors[i].sa_ctAllocationStep =
-      gl_VkDynamicToDelete[i].sa_ctAllocationStep = 256;
+    gl_VkDynamicToDelete[i].sa_Count = 0;
+    gl_VkDynamicToDelete[i].sa_UsedCount = 0;
+    gl_VkDynamicToDelete[i].sa_ctAllocationStep = 256;
   }
 
   gl_VkDynamicVBGlobal.sdg_DynamicBufferMemory = VK_NULL_HANDLE;
