@@ -216,7 +216,8 @@ void CGfxLibrary::EndDriver_Vulkan(void)
 
   for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
   {
-    FreeDynamicBuffers(i);
+    FreeUnusedDynamicBuffers(i);
+    DestroyDynamicBuffers();
   }
 
   DestroyCmdBuffers();
@@ -278,36 +279,57 @@ void CGfxLibrary::Reset_Vulkan()
   for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
   {
     gl_VkCmdBuffers[i] = VK_NULL_HANDLE;
-    gl_VkDescriptorPools[i] = VK_NULL_HANDLE;
     gl_VkImageAvailableSemaphores[i] = VK_NULL_HANDLE;
     gl_VkRenderFinishedSemaphores[i] = VK_NULL_HANDLE;
     gl_VkCmdFences[i] = VK_NULL_HANDLE;
 
+    gl_VkDynamicVB[i].sdb_Buffer = VK_NULL_HANDLE;
+    gl_VkDynamicIB[i].sdb_Buffer = VK_NULL_HANDLE;
+    gl_VkDynamicUB[i].sdb_Buffer = VK_NULL_HANDLE;
+
+    gl_VkDynamicVB[i].sdb_CurrentOffset = 0;
+    gl_VkDynamicIB[i].sdb_CurrentOffset = 0;
+    gl_VkDynamicUB[i].sdb_CurrentOffset = 0;
+
+    gl_VkDynamicVB[i].sdb_Data = nullptr;
+    gl_VkDynamicIB[i].sdb_Data = nullptr;
+    gl_VkDynamicUB[i].sdb_Data = nullptr;
+
+    gl_VkDynamicUB[i].sdu_DescriptorSet = VK_NULL_HANDLE;
+
     // manually set memory as arrays contain garbage
-    gl_VkDescriptorSets[i].sa_Array = nullptr;
     gl_VkVertexBuffers[i].sa_Array = nullptr;
     gl_VkIndexBuffers[i].sa_Array = nullptr;
     gl_VkUniformBuffers[i].sa_Array = nullptr;
     gl_VkDescriptors[i].sa_Array = nullptr;
+    gl_VkDynamicToDelete[i].sa_Array = nullptr;
 
-    gl_VkDescriptorSets[i].sa_Count =
-      gl_VkVertexBuffers[i].sa_Count =
+    gl_VkVertexBuffers[i].sa_Count =
       gl_VkIndexBuffers[i].sa_Count =
       gl_VkUniformBuffers[i].sa_Count =
-      gl_VkDescriptors[i].sa_Count = 0;
+      gl_VkDescriptors[i].sa_Count =
+      gl_VkDynamicToDelete[i].sa_Count = 0;
 
-    gl_VkDescriptorSets[i].sa_UsedCount =
-      gl_VkVertexBuffers[i].sa_UsedCount =
+    gl_VkVertexBuffers[i].sa_UsedCount =
       gl_VkIndexBuffers[i].sa_UsedCount =
       gl_VkUniformBuffers[i].sa_UsedCount =
-      gl_VkDescriptors[i].sa_UsedCount = 0;
+      gl_VkDescriptors[i].sa_UsedCount =
+      gl_VkDynamicToDelete[i].sa_UsedCount = 0;
 
-    gl_VkDescriptorSets[i].sa_ctAllocationStep =
-      gl_VkVertexBuffers[i].sa_ctAllocationStep =
+    gl_VkVertexBuffers[i].sa_ctAllocationStep =
       gl_VkIndexBuffers[i].sa_ctAllocationStep =
       gl_VkUniformBuffers[i].sa_ctAllocationStep =
-      gl_VkDescriptors[i].sa_ctAllocationStep = 256;
+      gl_VkDescriptors[i].sa_ctAllocationStep =
+      gl_VkDynamicToDelete[i].sa_ctAllocationStep = 256;
   }
+
+  gl_VkDynamicVBGlobal.sdg_DynamicBufferMemory = VK_NULL_HANDLE;
+  gl_VkDynamicIBGlobal.sdg_DynamicBufferMemory = VK_NULL_HANDLE;
+  gl_VkDynamicUBGlobal.sdg_DynamicBufferMemory = VK_NULL_HANDLE;
+
+  gl_VkDynamicVBGlobal.sdg_CurrentDynamicBufferSize = 0;
+  gl_VkDynamicIBGlobal.sdg_CurrentDynamicBufferSize = 0;
+  gl_VkDynamicUBGlobal.sdg_CurrentDynamicBufferSize = 0;
 }
 
 // prepares Vulkan drawing context
@@ -809,11 +831,15 @@ void CGfxLibrary::StartFrame()
   // fences must be set to unsignaled state manually
   vkResetFences(gl_VkDevice, 1, &gl_VkCmdFences[gl_VkCmdBufferCurrent]);
 
+  // get next image index
   AcquireNextImage();
 
-  // previous cmd with same index completely finished, 
-  // free its data: vertex, index, uniform buffers, descriptor sets
-  FreeDynamicBuffers(gl_VkCmdBufferCurrent);
+  // previous cmd with same index completely finished,
+  // free dynamic buffers that have to be deleted
+  FreeUnusedDynamicBuffers(gl_VkCmdBufferCurrent);
+
+  // set 0 offsets to dynamic buffers for current cmd buffer
+  ClearCurrentDynamicOffsets(gl_VkCmdBufferCurrent);
 
   VkCommandBufferBeginInfo beginInfo = {};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -908,19 +934,17 @@ VkCommandBuffer CGfxLibrary::GetCurrentCmdBuffer()
 
 void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
 {
+  VkCommandBuffer cmd = gl_VkCmdBuffers[gl_VkCmdBufferCurrent];
+
+  // prepare data
   CStaticStackArray<SvkVertex> &verts = gl_VkVerts;
   ASSERT(verts.Count() > 0);
 
-  VkCommandBuffer cmd = gl_VkCmdBuffers[gl_VkCmdBufferCurrent];
-  
-  // TODO: dynamic vertex and index buffer
-  // TODO: dynamic descriptor sets
-  const SvkBufferObject &vertexBuffer = GetVertexBuffer(&verts[0], verts.Count() * VK_VERT_SIZE);
-  const SvkBufferObject &indexBuffer = GetIndexBuffer(&indices[0], sizeof(UINT) * indexCount);
+  uint32_t vertsSize = verts.Count() * VK_VERT_SIZE;
+  uint32_t indicesSize = indexCount * sizeof(UINT);
+  uint32_t uniformSize = 16 * sizeof(FLOAT);
 
   FLOAT vp[16];
-  // TODO: check matrix multiplications, transformation matrices
-
   if (GFX_bViewMatrix)
   {
     Svk_MatMultiply(vp, VkViewMatrix, VkProjectionMatrix);
@@ -930,23 +954,31 @@ void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
     Svk_MatCopy(vp, VkProjectionMatrix);
   }
 
-  const SvkDescriptorObject &descObj = GetUniformBuffer(vp, 16 * sizeof(FLOAT));
+  // get buffers
+  SvkDynamicBuffer vertexBuffer, indexBuffer;
+  SvkDynamicUniform uniformBuffer;
 
+  GetVertexBuffer(vertsSize, vertexBuffer);
+  GetIndexBuffer(indicesSize, indexBuffer);
+  GetUniformBuffer(uniformSize, uniformBuffer);
+
+  // copy data
+  memcpy(vertexBuffer.sdb_Data, &verts[0], vertsSize);
+  memcpy(indexBuffer.sdb_Data, indices, indicesSize);
+  memcpy(uniformBuffer.sdb_Data, vp, uniformSize);
 
   // bind descriptor set
   vkCmdBindDescriptorSets(
     cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkPipelineLayout,
-    0, 1, &descObj.sdo_DescSet,
-    0, nullptr);
-    // TODO: uncomment this when uniform buffer will be dynamic
-    //1, &descObj.sdo_Offset);
+    0, 1, &uniformBuffer.sdu_DescriptorSet,
+    // simple cast from VkDeviceSize to uint32_t as only 1 offset is used
+    1, (uint32_t*)&uniformBuffer.sdb_CurrentOffset);
 
   // set mesh
-  VkDeviceSize offsets[] = { 0 };
-  vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer.sbo_Buffer, offsets);
-  vkCmdBindIndexBuffer(cmd, indexBuffer.sbo_Buffer, 0, VK_INDEX_TYPE_UINT32);
+  vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer.sdb_Buffer, &vertexBuffer.sdb_CurrentOffset);
+  vkCmdBindIndexBuffer(cmd, indexBuffer.sdb_Buffer, indexBuffer.sdb_CurrentOffset, VK_INDEX_TYPE_UINT32);
 
-  // draw
+  //// draw
   vkCmdDrawIndexed(cmd, indexCount, 1, 0, 0, 0);
 }
 

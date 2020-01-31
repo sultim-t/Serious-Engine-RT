@@ -31,81 +31,39 @@ void CGfxLibrary::CreateDescriptorSetLayout()
 
 void CGfxLibrary::CreateDescriptorPools()
 {
-#ifndef NDEBUG
-  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
-  {
-    ASSERT(gl_VkDescriptorPools[i] == VK_NULL_HANDLE);
-    ASSERT(gl_VkDescriptorSets[i].Count() == 0);
-  }
-#endif // !NDEBUG
+  ASSERT(gl_VkDescriptorPool == VK_NULL_HANDLE);
 
   VkResult r;
 
   const uint32_t poolSizeCount = 2;
   VkDescriptorPoolSize poolSizes[poolSizeCount];
-  // ------------
-  // ------------
-  // TODO: VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC
-  // ------------
-  // ------------
-  poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  poolSizes[0].descriptorCount = gl_VkMaxDescUniformCount;
+
+  // dynamic buffers count same as cmd buffers
+  poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+  poolSizes[0].descriptorCount = gl_VkMaxCmdBufferCount;
+
   poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   poolSizes[1].descriptorCount = gl_VkMaxDescSamplerCount;
 
   VkDescriptorPoolCreateInfo descPoolInfo = {};
   descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  // to deallocate unused desc sets in dynamic buffers
+  descPoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
   descPoolInfo.poolSizeCount = poolSizeCount;
   descPoolInfo.pPoolSizes = poolSizes;
   descPoolInfo.maxSets = gl_VkMaxDescSetCount;
 
-  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
-  {
-    r = vkCreateDescriptorPool(gl_VkDevice, &descPoolInfo, nullptr, &gl_VkDescriptorPools[i]);
-    VK_CHECKERROR(r);
-
-    gl_VkDescriptorSets[i].New(gl_VkMaxDescSetCount);
-  }
+  r = vkCreateDescriptorPool(gl_VkDevice, &descPoolInfo, nullptr, &gl_VkDescriptorPool);
+  VK_CHECKERROR(r);
 }
 
 void CGfxLibrary::DestroyDescriptorPools()
 {
-#ifndef NDEBUG
-  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
-  {
-    ASSERT(gl_VkDescriptorPools[i] != VK_NULL_HANDLE);
-  }
-#endif // !NDEBUG
+  ASSERT(gl_VkDescriptorPool != VK_NULL_HANDLE);
 
   for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
   {
-    vkDestroyDescriptorPool(gl_VkDevice, gl_VkDescriptorPools[i], nullptr);
-    gl_VkDescriptorPools[i] = VK_NULL_HANDLE;
-
-    gl_VkDescriptorSets[i].Clear();
+    vkDestroyDescriptorPool(gl_VkDevice, gl_VkDescriptorPool, nullptr);
+    gl_VkDescriptorPool = VK_NULL_HANDLE;
   }
-}
-
-VkDescriptorSet CGfxLibrary::CreateDescriptorSet()
-{
-#ifndef NDEBUG
-  ASSERT(gl_VkDescriptorPools[gl_VkCmdBufferCurrent] != VK_NULL_HANDLE);
-
-  auto &s = gl_VkDescriptorSets[gl_VkCmdBufferCurrent];
-  ASSERT(s.Count() < gl_VkMaxDescSetCount - 1);
-#endif // !NDEBUG
-
-  VkResult r;
-  VkDescriptorSet *descSet = &gl_VkDescriptorSets[gl_VkCmdBufferCurrent].Push();
-
-  VkDescriptorSetAllocateInfo setAllocInfo = {};
-  setAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-  setAllocInfo.descriptorPool = gl_VkDescriptorPools[gl_VkCmdBufferCurrent];
-  setAllocInfo.descriptorSetCount = 1;
-  setAllocInfo.pSetLayouts = &gl_VkDescriptorSetLayout;
-  r = vkAllocateDescriptorSets(gl_VkDevice, &setAllocInfo, descSet);
-  VK_CHECKERROR(r);
-
-
-  return *descSet;
 }

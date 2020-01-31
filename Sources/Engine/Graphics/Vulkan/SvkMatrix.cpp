@@ -1,6 +1,8 @@
 #include "stdh.h"
 #include <Engine/Graphics/Vulkan/VulkanInclude.h>
 
+#ifdef SE1_VULKAN
+
 void Svk_MatCopy(float *dest, const float *src)
 {
   for (int i = 0; i < 4; i++)
@@ -59,18 +61,18 @@ void Svk_MatFrustum(float *result, float fLeft, float fRight, float fBottom, flo
   result[0 * 4 + 3] = 0.0f;
 
   result[1 * 4 + 0] = 0.0f;
-  result[1 * 4 + 1] = -2.0f * fNear / fTmB;
+  result[1 * 4 + 1] = -2.0f * fNear / fTmB; // 2.0f * fNear / fTmB;
   result[1 * 4 + 2] = 0.0f;
   result[1 * 4 + 3] = 0.0f;
 
   result[2 * 4 + 0] = fRpL / fRmL;
-  result[2 * 4 + 1] = -fTpB / fTmB;
-  result[2 * 4 + 2] = -(2 * fFar - fNear) / f2Fm2N;
+  result[2 * 4 + 1] = -fTpB / fTmB; // fTpB / fTmB;
+  result[2 * 4 + 2] = -(2 * fFar - fNear) / f2Fm2N; // -fFar / fFmN;
   result[2 * 4 + 3] = -1.0f;
 
   result[3 * 4 + 0] = 0.0f;
   result[3 * 4 + 1] = 0.0f;
-  result[3 * 4 + 2] = -fFar * fNear / f2Fm2N;
+  result[3 * 4 + 2] = -fFar * fNear / f2Fm2N; // -fFar * fNear / fFmN;
   result[3 * 4 + 3] = 0.0f;
 }
 
@@ -86,17 +88,19 @@ void Svk_MatOrtho(float *result, float fLeft, float fRight, float fBottom, float
   result[0 * 4 + 3] = 0.0f;
 
   result[1 * 4 + 0] = 0.0f;
-  result[1 * 4 + 1] = -2.0f / fTmB;
+  result[1 * 4 + 1] = -2.0f / fTmB; // 2.0f / fTmB;
   result[1 * 4 + 2] = 0.0f;
   result[1 * 4 + 3] = 0.0f;
 
   result[2 * 4 + 0] = 0.0f;
   result[2 * 4 + 1] = 0.0f;
-  result[2 * 4 + 2] = -1.0f / f2Fm2N;
+  result[2 * 4 + 2] = -1.0f / f2Fm2N; // -1.0f / fFmN;
   result[2 * 4 + 3] = 0.0f;
 
   result[3 * 4 + 0] = -fRpL / fRmL;
-  result[3 * 4 + 1] = fTpB / fTmB;
-  result[3 * 4 + 2] = (fFar - 2.0f * fNear) / f2Fm2N;
+  result[3 * 4 + 1] = fTpB / fTmB; // -fTpB / fTmB;
+  result[3 * 4 + 2] = (fFar - 2.0f * fNear) / f2Fm2N;// -fNear / fFmN; 
   result[3 * 4 + 3] = 1.0f;
 }
+
+#endif // SE1_VULKAN

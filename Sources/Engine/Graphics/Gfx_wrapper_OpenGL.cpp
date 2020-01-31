@@ -781,11 +781,11 @@ static void ogl_FrontFace( GfxFace eFace)
   ASSERT( eFace==GFX_CW || eFace==GFX_CCW);
   ASSERT( _pGfx->gl_eCurrentAPI==GAT_OGL);
 #ifndef NDEBUG
-  GLenum gleFace;
-  pglGetIntegerv( GL_FRONT_FACE, (GLint*)&gleFace);
-  OGL_CHECKERROR;
-  ASSERT( (gleFace==GL_CCW &&  GFX_bFrontFace)
-       || (gleFace==GL_CW  && !GFX_bFrontFace));
+  //GLenum gleFace;
+  //pglGetIntegerv( GL_FRONT_FACE, (GLint*)&gleFace);
+  //OGL_CHECKERROR;
+  //ASSERT( (gleFace==GL_CCW &&  GFX_bFrontFace)
+  //     || (gleFace==GL_CW  && !GFX_bFrontFace));
 #endif
   // cached?
   BOOL bFrontFace = (eFace==GFX_CCW);
@@ -793,11 +793,11 @@ static void ogl_FrontFace( GfxFace eFace)
 
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  if( eFace==GFX_CCW) {
-    pglFrontFace( GL_CCW);
-  } else {
-    pglFrontFace( GL_CW);
-  }
+  //if( eFace==GFX_CCW) {
+  //  pglFrontFace( GL_CCW);
+  //} else {
+  //  pglFrontFace( GL_CW);
+  //}
   OGL_CHECKERROR;
   GFX_bFrontFace = bFrontFace; 
 
@@ -883,8 +883,35 @@ static void ogl_SetOrtho( const FLOAT fLeft,   const FLOAT fRight, const FLOAT f
 
   // set matrix
   pglMatrixMode( GL_PROJECTION);
-  pglLoadIdentity();
-  pglOrtho( fLeft, fRight, fBottom, fTop, fNear, fFar);
+  //pglLoadIdentity();
+  //pglOrtho( fLeft, fRight, fBottom, fTop, fNear, fFar);
+
+  const float fRpL = fRight + fLeft;  const float fRmL = fRight - fLeft;  const float fFpN = fFar + fNear;
+  const float fTpB = fTop + fBottom;  const float fTmB = fTop - fBottom;  const float fFmN = fFar - fNear;
+  const float f2Fm2N = 2 * fFar - 2 * fNear;
+
+  float result[16];
+  result[0 * 4 + 0] = 2.0f / fRmL;
+  result[0 * 4 + 1] = 0.0f;
+  result[0 * 4 + 2] = 0.0f;
+  result[0 * 4 + 3] = 0.0f;
+
+  result[1 * 4 + 0] = 0.0f;
+  result[1 * 4 + 1] = 2.0f / fTmB; // -2.0f / fTmB;
+  result[1 * 4 + 2] = 0.0f;
+  result[1 * 4 + 3] = 0.0f;
+
+  result[2 * 4 + 0] = 0.0f;
+  result[2 * 4 + 1] = 0.0f;
+  result[2 * 4 + 2] = -1.0f / fFmN; // -1.0f / f2Fm2N;
+  result[2 * 4 + 3] = 0.0f;
+
+  result[3 * 4 + 0] = -fRpL / fRmL;
+  result[3 * 4 + 1] = -fTpB / fTmB;// fTpB / fTmB;
+  result[3 * 4 + 2] = -fNear / fFmN; // (fFar - 2.0f * fNear) / f2Fm2N;
+  result[3 * 4 + 3] = 1.0f;
+
+  pglLoadMatrixf(result);
   OGL_CHECKERROR;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
@@ -910,8 +937,35 @@ static void ogl_SetFrustum( const FLOAT fLeft, const FLOAT fRight,
 
   // set matrix
   pglMatrixMode( GL_PROJECTION);
-  pglLoadIdentity();
-  pglFrustum( fLeft, fRight, fBottom, fTop, fNear, fFar);
+  //pglLoadIdentity();
+  //pglFrustum( fLeft, fRight, fBottom, fTop, fNear, fFar);
+  const float fRpL = fRight + fLeft;  const float fRmL = fRight - fLeft;  const float fFpN = fFar + fNear;
+  const float fTpB = fTop + fBottom;  const float fTmB = fTop - fBottom;  const float fFmN = fFar - fNear;
+
+  float result[16];
+  result[0 * 4 + 0] = 2.0f * fNear / fRmL;
+  result[0 * 4 + 1] = 0.0f;
+  result[0 * 4 + 2] = 0.0f;
+  result[0 * 4 + 3] = 0.0f;
+
+  result[1 * 4 + 0] = 0.0f;
+  result[1 * 4 + 1] = 2.0f * fNear / fTmB; // -2.0f * fNear / fTmB;
+  result[1 * 4 + 2] = 0.0f;
+  result[1 * 4 + 3] = 0.0f;
+
+  result[2 * 4 + 0] = fRpL / fRmL;
+  result[2 * 4 + 1] = fTpB / fTmB; // -fTpB / fTmB;
+  result[2 * 4 + 2] = -fFar / fFmN;// -(2 * fFar - fNear) / f2Fm2N;
+  result[2 * 4 + 3] = -1.0f;
+
+  result[3 * 4 + 0] = 0.0f;
+  result[3 * 4 + 1] = 0.0f;
+  result[3 * 4 + 2] = -fFar * fNear / fFmN; // -fFar * fNear / f2Fm2N;
+  result[3 * 4 + 3] = 0.0f;
+
+  pglLoadMatrixf(result);
+
+
   OGL_CHECKERROR;
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);

@@ -24,7 +24,8 @@ uint32_t CGfxLibrary::GetMemoryTypeIndex(uint32_t memoryTypeBits, VkFlags requir
   for (uint32_t i = 0; i < gl_VkPhMemoryProperties.memoryTypeCount; i++)
   {
     // if type is available
-    if ((memoryTypeBits & 1u) == 1) {
+    if ((memoryTypeBits & 1u) == 1) 
+    {
       if ((gl_VkPhMemoryProperties.memoryTypes[i].propertyFlags & requirementsMask) == requirementsMask)
       {
         return i;
@@ -35,7 +36,41 @@ uint32_t CGfxLibrary::GetMemoryTypeIndex(uint32_t memoryTypeBits, VkFlags requir
   }
 
   CPrintF("Vulkan error: Can't find memory type in device memory properties");
-  ASSERT(FALSE);
+  return 0;
+}
+
+uint32_t CGfxLibrary::GetMemoryTypeIndex(uint32_t memoryTypeBits, VkFlags requirementsMask, VkFlags preferredMask)
+{
+  // for each memory type available for this device
+  for (uint32_t i = 0; i < gl_VkPhMemoryProperties.memoryTypeCount; i++)
+  {
+    // if type is available
+    if ((memoryTypeBits & 1u) == 1)
+    {
+      if ((gl_VkPhMemoryProperties.memoryTypes[i].propertyFlags & (requirementsMask | preferredMask)) == (requirementsMask | preferredMask))
+      {
+        return i;
+      }
+    }
+
+    memoryTypeBits >>= 1u;
+  }
+
+  for (uint32_t i = 0; i < gl_VkPhMemoryProperties.memoryTypeCount; i++)
+  {
+    // if type is available
+    if ((memoryTypeBits & 1u) == 1)
+    {
+      if ((gl_VkPhMemoryProperties.memoryTypes[i].propertyFlags & requirementsMask) == requirementsMask)
+      {
+        return i;
+      }
+    }
+
+    memoryTypeBits >>= 1u;
+  }
+
+  CPrintF("Vulkan error: Can't find memory type in device memory properties");
   return 0;
 }
 

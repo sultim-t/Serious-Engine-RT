@@ -165,6 +165,7 @@ public:
 
   VkRenderPass                    gl_VkRenderPass;
 
+  // TODO: update VkDescriptorSetLayoutBinding to dynamic uniform buffer
   VkDescriptorSetLayout           gl_VkDescriptorSetLayout;
   VkPipelineLayout                gl_VkPipelineLayout;
   VkPipeline                      gl_VkGraphicsPipeline;
@@ -176,17 +177,29 @@ public:
   VkCommandPool                   gl_VkCmdPool;
   VkCommandBuffer                 gl_VkCmdBuffers[gl_VkMaxCmdBufferCount];
 
-  // pool for each cmd buffer; will be reset on cmd buffer begin
-  VkDescriptorPool                        gl_VkDescriptorPools[gl_VkMaxCmdBufferCount];
-  // allocated descritor sets from one of the pools
-  CStaticStackArray<VkDescriptorSet>      gl_VkDescriptorSets[gl_VkMaxCmdBufferCount];
+  VkDescriptorPool                        gl_VkDescriptorPool;
 
+  SvkDynamicBufferGlobal                  gl_VkDynamicVBGlobal;
+  SvkDynamicBuffer                        gl_VkDynamicVB[gl_VkMaxCmdBufferCount];
+ 
+  SvkDynamicBufferGlobal                  gl_VkDynamicIBGlobal;
+  SvkDynamicBuffer                        gl_VkDynamicIB[gl_VkMaxCmdBufferCount];
+  
+  SvkDynamicBufferGlobal                  gl_VkDynamicUBGlobal;
+  SvkDynamicUniform                       gl_VkDynamicUB[gl_VkMaxCmdBufferCount];
+
+  // dynamic buffers to delete
+  CStaticStackArray<SvkDBufferToDelete>   gl_VkDynamicToDelete[gl_VkMaxCmdBufferCount];
+
+  // TODO: remove
+  //---
   // buffers for each cmd buffer; will be reset on cmd buffer begin
   CStaticStackArray<SvkBufferObject>      gl_VkVertexBuffers[gl_VkMaxCmdBufferCount];
   CStaticStackArray<SvkBufferObject>      gl_VkIndexBuffers[gl_VkMaxCmdBufferCount];
   CStaticStackArray<SvkBufferObject>      gl_VkUniformBuffers[gl_VkMaxCmdBufferCount];
   // holders for one set from gl_VkDescriptorSets and offset in that set
   CStaticStackArray<SvkDescriptorObject>  gl_VkDescriptors[gl_VkMaxCmdBufferCount];
+  //---
 
   VkPhysicalDevice                        gl_VkPhysDevice;
   VkPhysicalDeviceMemoryProperties        gl_VkPhMemoryProperties;
@@ -317,7 +330,6 @@ private:
   void CreateSyncPrimitives();
 
   void CreateDescriptorSetLayout();
-  VkDescriptorSet CreateDescriptorSet();
 
   void CreateDescriptorPools();
   void DestroyDescriptorPools();
@@ -328,13 +340,23 @@ private:
   void CreateCmdBuffers();
   void DestroyCmdBuffers();
 
-  SvkBufferObject GetVertexBuffer(const void *data, uint32_t dataSize);
-  SvkBufferObject GetIndexBuffer(const void *data, uint32_t dataSize);
-  const SvkDescriptorObject &GetUniformBuffer(const void *data, uint32_t dataSize);
-
   void InitDynamicBuffers();
+  void InitDynamicVertexBuffers(uint32_t newSize);
+  void InitDynamicIndexBuffers(uint32_t newSize);
+  void InitDynamicUniformBuffers(uint32_t newSize);
+  void InitDynamicBuffer(SvkDynamicBufferGlobal &dynBufferGlobal, SvkDynamicBuffer *buffers, VkBufferUsageFlags usage);
+  
+  void ClearCurrentDynamicOffsets(uint32_t cmdBufferIndex);
+  void GetVertexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer);
+  void GetIndexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer);
+  void GetUniformBuffer(uint32_t size, SvkDynamicUniform &outDynUniform);
+  void FlushDynamicBuffersMemory();
+
+  void AddDynamicBufferToDeletion(SvkDynamicBufferGlobal &dynBufferGlobal, SvkDynamicBuffer *buffers);
+  void AddDynamicUniformToDeletion(SvkDynamicBufferGlobal &dynBufferGlobal, SvkDynamicUniform *buffers);
   // free frame data: vertex, index, uniform buffers, descriptor sets
-  void FreeDynamicBuffers(uint32_t cmdBufferIndex);
+  void FreeUnusedDynamicBuffers(uint32_t cmdBufferIndex);
+  void DestroyDynamicBuffers();
 
   void AcquireNextImage();
   void StartFrame();
@@ -348,6 +370,7 @@ private:
   BOOL CheckDeviceExtensions(VkPhysicalDevice physDevice, const CStaticArray<const char *> &requiredExtensions);
   VkExtent2D GetSwapchainExtent(uint32_t width, uint32_t height);
   uint32_t GetMemoryTypeIndex(uint32_t memoryTypeBits, VkFlags requirementsMask);
+  uint32_t GetMemoryTypeIndex(uint32_t memoryTypeBits, VkFlags requirementsMask, VkFlags preferredMask);
   VkFormat FindSupportedFormat(const VkFormat *formats, uint32_t formatCount, VkImageTiling tiling, VkFormatFeatureFlags features);
   void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory);
   void CopyToDeviceMemory(VkDeviceMemory deviceMemory, const void *data, VkDeviceSize size);
