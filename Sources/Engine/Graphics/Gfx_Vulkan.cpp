@@ -877,10 +877,12 @@ void CGfxLibrary::EndFrame()
   VkResult r;
   VkCommandBuffer cmd = gl_VkCmdBuffers[gl_VkCmdBufferCurrent];
 
+  FlushDynamicBuffersMemory();
+
   vkCmdEndRenderPass(cmd);
   r = vkEndCommandBuffer(cmd);
   VK_CHECKERROR(r);
-
+  
   // wait until image will be avaialable
   VkSemaphore smpToWait = gl_VkImageAvailableSemaphores[gl_VkCmdBufferCurrent];
   // signal when it's finished
@@ -924,7 +926,7 @@ void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
   FLOAT vp[16];
   if (GFX_bViewMatrix)
   {
-    Svk_MatMultiply(vp, VkViewMatrix, VkProjectionMatrix);
+    Svk_MatMultiply(vp, VkProjectionMatrix, VkViewMatrix);
   }
   else
   {
@@ -958,33 +960,4 @@ void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
   //// draw
   vkCmdDrawIndexed(cmd, indexCount, 1, 0, 0, 0);
 }
-
-//BOOL CGfxLibrary::InitDisplay_Vulkan(INDEX iAdapter, PIX pixSizeI, PIX pixSizeJ, DisplayDepth eColorDepth)
-//{
-//  // prepare display mode
-//  extern HWND _hwndMain;
-//  HINSTANCE hInstance = GetModuleHandle(NULL);
-//
-//  VkWin32SurfaceCreateInfoKHR createInfo = {};
-//  createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-//  createInfo.pNext = nullptr;
-//  createInfo.hinstance = hInstance;
-//  createInfo.hwnd = _hwndMain;
-//  VkResult r = vkCreateWin32SurfaceKHR(gl_VkInstance, &createInfo, nullptr, &gl_VkSurface);
-//
-//  if (r != VK_SUCCESS)
-//  {
-//    CPrintF("Vulkan error: Can't create Win32 surface.\n");
-//    return FALSE;
-//  }
-//
-//  const BOOL bFullScreen = (pixSizeI > 0 && pixSizeJ > 0);
-//
-//  // ASSERT(eColorDepth == DD_32BIT);
-//
-//  //VK_FORMAT_D24_UNORM_S8_UINT
-//
-//
-//  return 0;
-//}
 #endif // SE1_VULKAN
