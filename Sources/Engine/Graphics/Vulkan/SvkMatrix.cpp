@@ -5,33 +5,15 @@
 
 void Svk_MatCopy(float *dest, const float *src)
 {
-  for (int i = 0; i < 4; i++)
-  {
-    for (int j = 0; j < 4; j++)
-    {
-      dest[i * 4 + j] = src[i * 4 + j];
-    }
-  }
+  memcpy(dest, src, 16 * sizeof(float));
 }
 
 void Svk_MatSetIdentity(float *result)
 {
-  result[0] = 1.0f;
-  result[1] = 0.0f;
-  result[2] = 0.0f;
-  result[3] = 0.0f;
-  result[4] = 0.0f;
-  result[5] = 1.0f;
-  result[6] = 0.0f;
-  result[7] = 0.0f;
-  result[8] = 0.0f;
-  result[9] = 0.0f;
-  result[10] = 1.0f;
-  result[11] = 0.0f;
-  result[12] = 0.0f;
-  result[13] = 0.0f;
-  result[14] = 0.0f;
-  result[15] = 1.0f;
+  memset(result, 0, 16 * sizeof(float));
+
+  result[0] = result[5] =
+    result[10] = result[15] = 1.0f;
 }
 
 void Svk_MatMultiply(float *result, const float *a, const float *b)

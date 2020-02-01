@@ -770,7 +770,7 @@ static void svk_SetColorArray(GFXColor* pcol)
 
   for (INDEX i = 0; i < ctVtx; i++)
   {
-    verts[i].SetColorRGBA(pcol[i].r, pcol[i].g, pcol[i].b, pcol[i].a);
+    verts[i].SetColorRGBA(pcol[i].r / 255.0f, pcol[i].g / 255.0f, pcol[i].b / 255.0f, pcol[i].a / 255.0f);
   }
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);

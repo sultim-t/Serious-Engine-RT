@@ -202,8 +202,6 @@ void CGfxLibrary::GetVertexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer)
 
 void CGfxLibrary::GetIndexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer)
 {
-  // alignment? size % 4 should be 0 for indices?
-
   SvkDynamicBuffer &commonBuffer = gl_VkDynamicIB[gl_VkCmdBufferCurrent];
   SvkDynamicBufferGlobal &dynBufferGlobal = gl_VkDynamicIBGlobal;
 

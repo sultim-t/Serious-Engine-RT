@@ -926,7 +926,7 @@ void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
   FLOAT vp[16];
   if (GFX_bViewMatrix)
   {
-    Svk_MatMultiply(vp, VkProjectionMatrix, VkViewMatrix);
+    Svk_MatMultiply(vp, VkViewMatrix, VkProjectionMatrix);
   }
   else
   {
