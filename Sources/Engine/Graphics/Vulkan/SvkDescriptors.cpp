@@ -27,6 +27,24 @@ void CGfxLibrary::CreateDescriptorSetLayouts()
   layoutInfo.pBindings = bindings;
 
   r = vkCreateDescriptorSetLayout(gl_VkDevice, &layoutInfo, nullptr, &gl_VkDescriptorSetLayout);
+  VK_CHECKERROR(r);
+
+  VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
+  pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+  pipelineLayoutInfo.setLayoutCount = 1;
+  pipelineLayoutInfo.pSetLayouts = &gl_VkDescriptorSetLayout;
+
+  r = vkCreatePipelineLayout(gl_VkDevice, &pipelineLayoutInfo, nullptr, &gl_VkPipelineLayout);
+  VK_CHECKERROR(r);
+}
+
+void CGfxLibrary::DestroyDescriptorSetLayouts()
+{
+  ASSERT(gl_VkDescriptorSetLayout != VK_NULL_HANDLE);
+  ASSERT(gl_VkDescriptorPool != VK_NULL_HANDLE);
+
+  vkDestroyDescriptorSetLayout(gl_VkDevice, gl_VkDescriptorSetLayout, nullptr);
+  vkDestroyPipelineLayout(gl_VkDevice, gl_VkPipelineLayout, nullptr);
 }
 
 void CGfxLibrary::CreateDescriptorPools()
@@ -43,7 +61,7 @@ void CGfxLibrary::CreateDescriptorPools()
   poolSizes[0].descriptorCount = gl_VkMaxCmdBufferCount;
 
   poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  poolSizes[1].descriptorCount = gl_VkMaxDescSamplerCount;
+  poolSizes[1].descriptorCount = SVK_DESC_MAX_SAMPLER_COUNT;
 
   VkDescriptorPoolCreateInfo descPoolInfo = {};
   descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -51,7 +69,7 @@ void CGfxLibrary::CreateDescriptorPools()
   descPoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
   descPoolInfo.poolSizeCount = poolSizeCount;
   descPoolInfo.pPoolSizes = poolSizes;
-  descPoolInfo.maxSets = gl_VkMaxDescSetCount;
+  descPoolInfo.maxSets = SVK_DESC_MAX_SET_COUNT;
 
   r = vkCreateDescriptorPool(gl_VkDevice, &descPoolInfo, nullptr, &gl_VkDescriptorPool);
   VK_CHECKERROR(r);

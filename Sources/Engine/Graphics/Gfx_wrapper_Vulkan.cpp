@@ -61,22 +61,9 @@ static void svk_EnableDepthTest(void)
 {
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  //BOOL bRes;
-  //bRes = pglIsEnabled(GL_DEPTH_TEST);
-  //VK_CHECKERROR1;
-  //ASSERT(!bRes == !GFX_bDepthTest);
-#endif
-  // cached?
-  if (GFX_bDepthTest && gap_bOptimizeStateChanges) return;
+
+  _pGfx->GetPipelineState() |= SVK_PLS_DEPTH_TEST_BOOL;
   GFX_bDepthTest = TRUE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  //pglEnable(GL_DEPTH_TEST);
-  VK_CHECKERROR1;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
 
 
@@ -84,23 +71,9 @@ static void svk_DisableDepthTest(void)
 {
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  //BOOL bRes;
-  //bRes = pglIsEnabled(GL_DEPTH_TEST);
-  //VK_CHECKERROR1;
-  //ASSERT(!bRes == !GFX_bDepthTest);
-#endif
 
-  // cached?
-  if (!GFX_bDepthTest && gap_bOptimizeStateChanges) return;
+  _pGfx->GetPipelineState() &= ~SVK_PLS_DEPTH_TEST_BOOL;
   GFX_bDepthTest = FALSE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  //pglDisable(GL_DEPTH_TEST);
-  VK_CHECKERROR1;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
 
 
@@ -109,7 +82,8 @@ static void svk_EnableDepthBias(void)
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  vkCmdSetDepthBias(_pGfx->GetCurrentCmdBuffer(),-1.0f, 0.0f, -2.0f);
+  //_pGfx->GetPipelineState() |= SVK_PLS_DEPTH_BIAS_BOOL;
+  //vkCmdSetDepthBias(_pGfx->GetCurrentCmdBuffer(), -2.0f, 0.0f, -1.0f);
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -118,11 +92,7 @@ static void svk_EnableDepthBias(void)
 static void svk_DisableDepthBias(void)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  vkCmdSetDepthBias(_pGfx->GetCurrentCmdBuffer(), 0.0f, 0.0f, 0.0f);
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+  _pGfx->GetPipelineState() &= ~SVK_PLS_DEPTH_BIAS_BOOL;
 }
 
 
@@ -131,23 +101,9 @@ static void svk_EnableDepthWrite(void)
 {
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  //BOOL bRes;
-  //pglGetIntegerv(GL_DEPTH_WRITEMASK, (GLint*)&bRes);
-  //VK_CHECKERROR1;
-  //ASSERT(!bRes == !GFX_bDepthWrite);
-#endif
 
-  // cached?
-  if (GFX_bDepthWrite && gap_bOptimizeStateChanges) return;
+  _pGfx->GetPipelineState() |= SVK_PLS_DEPTH_WRITE_BOOL;
   GFX_bDepthWrite = TRUE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  //pglDepthMask(GL_TRUE);
-  VK_CHECKERROR1;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
 
 
@@ -156,23 +112,9 @@ static void svk_DisableDepthWrite(void)
 {
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  //BOOL bRes;
-  //pglGetIntegerv(GL_DEPTH_WRITEMASK, (GLint*)&bRes);
-  //VK_CHECKERROR1;
-  //ASSERT(!bRes == !GFX_bDepthWrite);
-#endif
 
-  // cached?
-  if (!GFX_bDepthWrite && gap_bOptimizeStateChanges) return;
+  _pGfx->GetPipelineState() &= ~SVK_PLS_DEPTH_WRITE_BOOL;
   GFX_bDepthWrite = FALSE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  //pglDepthMask(GL_FALSE);
-  VK_CHECKERROR1;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
 
 
@@ -231,26 +173,9 @@ static void svk_EnableBlend(void)
 {
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  //BOOL bRes;
-  //bRes = pglIsEnabled(GL_BLEND);
-  //VK_CHECKERROR1;
-  //ASSERT(!bRes == !GFX_bBlending);
-#endif
-  // cached?
-  if (GFX_bBlending && gap_bOptimizeStateChanges) return;
+
+  _pGfx->GetPipelineState() |= SVK_PLS_BLEND_ENABLE_BOOL;
   GFX_bBlending = TRUE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  //pglEnable(GL_BLEND);
-  VK_CHECKERROR1;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
-
-  // adjust dithering
-  /*if (gap_iDithering == 2) svk_EnableDither();
-  else svk_DisableDither();*/
 }
 
 
@@ -259,58 +184,40 @@ static void svk_DisableBlend(void)
 {
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  //BOOL bRes;
-  //bRes = pglIsEnabled(GL_BLEND);
-  //VK_CHECKERROR1;
-  //ASSERT(!bRes == !GFX_bBlending);
-#endif
 
-  // cached?
-  if (!GFX_bBlending && gap_bOptimizeStateChanges) return;
+  _pGfx->GetPipelineState() &= ~SVK_PLS_BLEND_ENABLE_BOOL;
   GFX_bBlending = FALSE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  //pglDisable(GL_BLEND);
-  VK_CHECKERROR1;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
-
-  // adjust dithering
-  /*if (gap_iDithering == 0) svk_DisableDither();
-  else svk_EnableDither();*/
 }
 
 
 
 // helper for blending operation function
-__forceinline VkBlendFactor BlendToVK(GfxBlend eFunc) {
+__forceinline SvkPipelineStateFlags BlendToSvkSrcFlag(GfxBlend eFunc) {
   switch (eFunc) {
-  case GFX_ZERO:          return VK_BLEND_FACTOR_ZERO;
-  case GFX_ONE:           return VK_BLEND_FACTOR_ONE;
-  case GFX_SRC_COLOR:     return VK_BLEND_FACTOR_SRC_COLOR;
-  case GFX_INV_SRC_COLOR: return VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
-  case GFX_DST_COLOR:     return VK_BLEND_FACTOR_DST_COLOR;
-  case GFX_INV_DST_COLOR: return VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
-  case GFX_SRC_ALPHA:     return VK_BLEND_FACTOR_SRC_ALPHA;
-  case GFX_INV_SRC_ALPHA: return VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+  case GFX_ZERO:          return SVK_PLS_SRC_BLEND_FACTOR_ZERO;
+  case GFX_ONE:           return SVK_PLS_SRC_BLEND_FACTOR_ONE;
+  case GFX_SRC_COLOR:     return SVK_PLS_SRC_BLEND_FACTOR_SRC_COLOR;
+  case GFX_INV_SRC_COLOR: return SVK_PLS_SRC_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+  case GFX_DST_COLOR:     return SVK_PLS_SRC_BLEND_FACTOR_DST_COLOR;
+  case GFX_INV_DST_COLOR: return SVK_PLS_SRC_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
+  case GFX_SRC_ALPHA:     return SVK_PLS_SRC_BLEND_FACTOR_SRC_ALPHA;
+  case GFX_INV_SRC_ALPHA: return SVK_PLS_SRC_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
   default: ASSERTALWAYS("Invalid GFX blending function!");
-  } return VK_BLEND_FACTOR_ONE;
+  } return 0;
 }
 
-__forceinline GfxBlend BlendFromVK(VkBlendFactor gFunc) {
-  switch (gFunc) {
-  case VK_BLEND_FACTOR_ZERO:                return GFX_ZERO;
-  case VK_BLEND_FACTOR_ONE:                 return GFX_ONE;
-  case VK_BLEND_FACTOR_SRC_COLOR:           return GFX_SRC_COLOR;
-  case VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR: return GFX_INV_SRC_COLOR;
-  case VK_BLEND_FACTOR_DST_COLOR:           return GFX_DST_COLOR;
-  case VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR: return GFX_INV_DST_COLOR;
-  case VK_BLEND_FACTOR_SRC_ALPHA:           return GFX_SRC_ALPHA;
-  case VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA: return GFX_INV_SRC_ALPHA;
-  default: ASSERTALWAYS("Unsupported Vulkan blending function!");
-  } return GFX_ONE;
+__forceinline SvkPipelineStateFlags BlendToSvkDstFlag(GfxBlend eFunc) {
+  switch (eFunc) {
+  case GFX_ZERO:          return SVK_PLS_DST_BLEND_FACTOR_ZERO;
+  case GFX_ONE:           return SVK_PLS_DST_BLEND_FACTOR_ONE;
+  case GFX_SRC_COLOR:     return SVK_PLS_DST_BLEND_FACTOR_SRC_COLOR;
+  case GFX_INV_SRC_COLOR: return SVK_PLS_DST_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+  case GFX_DST_COLOR:     return SVK_PLS_DST_BLEND_FACTOR_DST_COLOR;
+  case GFX_INV_DST_COLOR: return SVK_PLS_DST_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
+  case GFX_SRC_ALPHA:     return SVK_PLS_DST_BLEND_FACTOR_SRC_ALPHA;
+  case GFX_INV_SRC_ALPHA: return SVK_PLS_DST_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+  default: ASSERTALWAYS("Invalid GFX blending function!");
+  } return 0;
 }
 
 
@@ -319,64 +226,55 @@ static void svk_BlendFunc(GfxBlend eSrc, GfxBlend eDst)
 {
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-  VkBlendFactor gleSrc, gleDst;
-#ifndef NDEBUG
-  //GfxBlend gfxSrc, gfxDst;
-  //pglGetIntegerv(GL_BLEND_SRC, (GLint*)&gleSrc);
-  //pglGetIntegerv(GL_BLEND_DST, (GLint*)&gleDst);
-  //VK_CHECKERROR1;
-  //gfxSrc = BlendFromVK(gleSrc);
-  //gfxDst = BlendFromVK(gleDst);
-  //ASSERT(gfxSrc == GFX_eBlendSrc && gfxDst == GFX_eBlendDst);
-#endif
-  // cached?
-  if (eSrc == GFX_eBlendSrc && eDst == GFX_eBlendDst && gap_bOptimizeStateChanges) return;
 
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+  // disable all bits and set one
+  _pGfx->GetPipelineState() &= ~SVK_PLS_SRC_BLEND_FACTOR_BITS;
+  _pGfx->GetPipelineState() &= ~SVK_PLS_DST_BLEND_FACTOR_BITS;
 
-  gleSrc = BlendToVK(eSrc);
-  gleDst = BlendToVK(eDst);
+  _pGfx->GetPipelineState() |= BlendToSvkSrcFlag(eSrc);
+  _pGfx->GetPipelineState() |= BlendToSvkDstFlag(eDst);
 
-  //pglBlendFunc(gleSrc, gleDst);
-  // update BOTH alphaBlendFactor and colorBlendFactor
-
-  VK_CHECKERROR1;
-  // done
   GFX_eBlendSrc = eSrc;
   GFX_eBlendDst = eDst;
+}
 
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+
+
+// color buffer writing enable
+static void svk_SetColorMask(ULONG ulColorMask)
+{
+  ASSERT( _pGfx->gl_eCurrentAPI==GAT_VK);
+  _ulCurrentColorMask = ulColorMask; // keep for Get...()
+
+  const BOOL bR = (ulColorMask&CT_RMASK) == CT_RMASK;
+  const BOOL bG = (ulColorMask&CT_GMASK) == CT_GMASK;
+  const BOOL bB = (ulColorMask&CT_BMASK) == CT_BMASK;
+  const BOOL bA = (ulColorMask&CT_AMASK) == CT_AMASK;
+
+  // disable all and set specific
+  _pGfx->GetPipelineState() &= ~SVK_PLS_COLOR_WRITE_MASK_RGBA;
+
+  if (bR) { _pGfx->GetPipelineState() |= SVK_PLS_COLOR_WRITE_MASK_R_BIT; }
+  if (bG) { _pGfx->GetPipelineState() |= SVK_PLS_COLOR_WRITE_MASK_G_BIT; }
+  if (bB) { _pGfx->GetPipelineState() |= SVK_PLS_COLOR_WRITE_MASK_B_BIT; }
+  if (bA) { _pGfx->GetPipelineState() |= SVK_PLS_COLOR_WRITE_MASK_A_BIT; }
 }
 
 
 
 // helper for depth compare function
-__forceinline VkCompareOp CompToVK(GfxComp eFunc) {
+__forceinline SvkPipelineStateFlags CompToSvkSrcFlag(GfxComp eFunc) {
   switch (eFunc) {
-  case GFX_NEVER:         return VK_COMPARE_OP_NEVER;
-  case GFX_LESS:          return VK_COMPARE_OP_LESS;
-  case GFX_LESS_EQUAL:    return VK_COMPARE_OP_LESS_OR_EQUAL;
-  case GFX_EQUAL:         return VK_COMPARE_OP_EQUAL;
-  case GFX_NOT_EQUAL:     return VK_COMPARE_OP_NOT_EQUAL;
-  case GFX_GREATER_EQUAL: return VK_COMPARE_OP_GREATER_OR_EQUAL;
-  case GFX_GREATER:       return VK_COMPARE_OP_GREATER;
-  case GFX_ALWAYS:        return VK_COMPARE_OP_ALWAYS;
+  case GFX_NEVER:         return SVK_PLS_DEPTH_COMPARE_OP_NEVER;
+  case GFX_LESS:          return SVK_PLS_DEPTH_COMPARE_OP_LESS;
+  case GFX_LESS_EQUAL:    return SVK_PLS_DEPTH_COMPARE_OP_LESS_OR_EQUAL;
+  case GFX_EQUAL:         return SVK_PLS_DEPTH_COMPARE_OP_EQUAL;
+  case GFX_NOT_EQUAL:     return SVK_PLS_DEPTH_COMPARE_OP_NOT_EQUAL;
+  case GFX_GREATER_EQUAL: return SVK_PLS_DEPTH_COMPARE_OP_GREATER_OR_EQUAL;
+  case GFX_GREATER:       return SVK_PLS_DEPTH_COMPARE_OP_GREATER;
+  case GFX_ALWAYS:        return SVK_PLS_DEPTH_COMPARE_OP_ALWAYS;
   default: ASSERTALWAYS("Invalid GFX compare function!");
-  } return VK_COMPARE_OP_ALWAYS;
-}
-
-__forceinline GfxComp CompFromVK(VkCompareOp gFunc) {
-  switch (gFunc) {
-  case VK_COMPARE_OP_NEVER:             return GFX_NEVER;
-  case VK_COMPARE_OP_LESS:              return GFX_LESS;
-  case VK_COMPARE_OP_LESS_OR_EQUAL:     return GFX_LESS_EQUAL;
-  case VK_COMPARE_OP_EQUAL:             return GFX_EQUAL;
-  case VK_COMPARE_OP_NOT_EQUAL:         return GFX_NOT_EQUAL;
-  case VK_COMPARE_OP_GREATER_OR_EQUAL:  return GFX_GREATER_EQUAL;
-  case VK_COMPARE_OP_GREATER:           return GFX_GREATER;
-  case VK_COMPARE_OP_ALWAYS:            return GFX_ALWAYS;
-  default: ASSERTALWAYS("Invalid Vulkan compare function!");
-  } return GFX_ALWAYS;
+  } return 0;
 }
 
 
@@ -386,27 +284,12 @@ static void svk_DepthFunc(GfxComp eFunc)
 {
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-  VkCompareOp gleFunc;
-#ifndef NDEBUG
-  //GfxComp gfxFunc;
-  //pglGetIntegerv(GL_DEPTH_FUNC, (GLint*)&gleFunc);
-  //VK_CHECKERROR1;
-  //gfxFunc = CompFromVK(gleFunc);
-  //ASSERT(gfxFunc == GFX_eDepthFunc);
-#endif
-  // cached?
-  if (eFunc == GFX_eDepthFunc && gap_bOptimizeStateChanges) return;
 
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+  // disable all bits and set one
+  _pGfx->GetPipelineState() &= ~SVK_PLS_DEPTH_COMPARE_OP_BITS;
 
-  gleFunc = CompToVK(eFunc);
-
-  //pglDepthFunc(gleFunc);
-
-  VK_CHECKERROR1;
+  _pGfx->GetPipelineState() |= CompToSvkSrcFlag(eFunc);
   GFX_eDepthFunc = eFunc;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
 
 
@@ -416,21 +299,14 @@ static void svk_DepthRange(FLOAT fMin, FLOAT fMax)
 {
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  //FLOAT fDepths[2];
-  //pglGetFloatv(GL_DEPTH_RANGE, (GLfloat*)&fDepths);
-  //VK_CHECKERROR1;
-  //ASSERT(fDepths[0] == GFX_fMinDepthRange && fDepths[1] == GFX_fMaxDepthRange);
-#endif
 
-  // cached?
-  if (GFX_fMinDepthRange == fMin && GFX_fMaxDepthRange == fMax && gap_bOptimizeStateChanges) return;
   GFX_fMinDepthRange = fMin;
   GFX_fMaxDepthRange = fMax;
 
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  vkCmdSetDepthBounds(_pGfx->GetCurrentCmdBuffer(), fMin, fMax);
+  //_pGfx->GetPipelineState() |= SVK_PLS_DEPTH_BOUNDS_BOOL;
+  //vkCmdSetDepthBounds(_pGfx->GetCurrentCmdBuffer(), fMin, fMax);
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -443,35 +319,23 @@ static void svk_CullFace(GfxFace eFace)
   // check consistency and face
   ASSERT(eFace == GFX_FRONT || eFace == GFX_BACK || eFace == GFX_NONE);
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  //GLenum gleCull;
-  //BOOL bRes = pglIsEnabled(GL_CULL_FACE);
-  //pglGetIntegerv(GL_CULL_FACE_MODE, (GLint*)&gleCull);
-  //VK_CHECKERROR1;
-  //ASSERT((bRes == GL_FALSE && GFX_eCullFace == GFX_NONE)
-  //  || (bRes == GL_TRUE && gleCull == GL_FRONT && GFX_eCullFace == GFX_FRONT)
-  //  || (bRes == GL_TRUE && gleCull == GL_BACK && GFX_eCullFace == GFX_BACK));
-#endif
-  // cached?
-  if (GFX_eCullFace == eFace && gap_bOptimizeStateChanges) return;
 
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+  _pGfx->GetPipelineState() &= ~SVK_PLS_CULL_MODE_BITS;
 
-  //if (eFace == GFX_FRONT) {
-  //  if (GFX_eCullFace == GFX_NONE) pglEnable(GL_CULL_FACE);
-  //  pglCullFace(GL_FRONT);
-  //}
-  //else if (eFace == GFX_BACK) {
-  //  if (GFX_eCullFace == GFX_NONE) pglEnable(GL_CULL_FACE);
-  //  pglCullFace(GL_BACK);
-  //}
-  //else {
-  //  pglDisable(GL_CULL_FACE);
-  //}
-  VK_CHECKERROR1;
+  if (eFace == GFX_FRONT)
+  {
+    _pGfx->GetPipelineState() |= SVK_PLS_CULL_MODE_FRONT;
+  }
+  else if (eFace == GFX_BACK) 
+  {
+    _pGfx->GetPipelineState() |= SVK_PLS_CULL_MODE_BACK;
+  }
+  else
+  {
+    _pGfx->GetPipelineState() |= SVK_PLS_CULL_MODE_NONE;
+  }
+
   GFX_eCullFace = eFace;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
 
 
@@ -482,29 +346,19 @@ static void svk_FrontFace(GfxFace eFace)
   // check consistency and face
   ASSERT(eFace == GFX_CW || eFace == GFX_CCW);
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  //GLenum gleFace;
-  //pglGetIntegerv(GL_FRONT_FACE, (GLint*)&gleFace);
-  //VK_CHECKERROR1;
-  //ASSERT((gleFace == GL_CCW && GFX_bFrontFace)
-  //  || (gleFace == GL_CW && !GFX_bFrontFace));
-#endif
-  // cached?
-  BOOL bFrontFace = (eFace == GFX_CCW);
-  if (!bFrontFace == !GFX_bFrontFace && gap_bOptimizeStateChanges) return;
 
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+  _pGfx->GetPipelineState() &= ~SVK_PLS_FRONT_FACE_BITS;
 
-  //if (eFace == GFX_CCW) {
-  //  pglFrontFace(GL_CCW);
-  //}
-  //else {
-  //  pglFrontFace(GL_CW);
-  //}
-  VK_CHECKERROR1;
-  GFX_bFrontFace = bFrontFace;
+  if (eFace == GFX_CCW)
+  {
+    _pGfx->GetPipelineState() |= SVK_PLS_FRONT_FACE_COUNTER_CLOCKWISE;
+  }
+  else
+  {
+    _pGfx->GetPipelineState() |= SVK_PLS_FRONT_FACE_CLOCKWISE;
+  }
 
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+  GFX_bFrontFace = eFace == GFX_CCW;
 }
 
 
@@ -585,7 +439,6 @@ static void svk_SetFrustum(const FLOAT fLeft, const FLOAT fRight,
 static void svk_PolygonMode(GfxPolyMode ePolyMode)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   //switch (ePolyMode) {
   //case GFX_POINT:  pglPolygonMode(GL_FRONT_AND_BACK, GL_POINT);  break;
@@ -593,9 +446,6 @@ static void svk_PolygonMode(GfxPolyMode ePolyMode)
   //case GFX_FILL:   pglPolygonMode(GL_FRONT_AND_BACK, GL_FILL);   break;
   //default:  ASSERTALWAYS("Wrong polygon mode!");
   //} // check
-  VK_CHECKERROR1;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
 
 
@@ -707,14 +557,6 @@ static void svk_SetVertexArray(GFXVertex4* pvtx, INDEX ctVtx)
   GFX_ctVertices = ctVtx;
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  //pglDisableClientState(GL_TEXTURE_COORD_ARRAY);
-  //pglDisableClientState(GL_COLOR_ARRAY);
-  //pglDisableClientState(GL_NORMAL_ARRAY);
-  //ASSERT(!pglIsEnabled(GL_TEXTURE_COORD_ARRAY));
-  //ASSERT(!pglIsEnabled(GL_COLOR_ARRAY));
-  //ASSERT(!pglIsEnabled(GL_NORMAL_ARRAY));
-  //ASSERT(pglIsEnabled(GL_VERTEX_ARRAY));
-
   CStaticStackArray<SvkVertex> &verts = _pGfx->gl_VkVerts;
 
   verts.PopAll();
@@ -724,8 +566,6 @@ static void svk_SetVertexArray(GFXVertex4* pvtx, INDEX ctVtx)
   {
     pushed[i].SetPosition(pvtx[i].x, pvtx[i].y, pvtx[i].z);
   }
-
-  //GFX_bColorArray = FALSE; // mark that color array has been disabled (because of potential LockArrays)
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -760,7 +600,7 @@ static void svk_SetColorArray(GFXColor* pcol)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
   ASSERT(pcol != NULL);
-  //svk_EnableColorArray();
+
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   CStaticStackArray<SvkVertex> &verts = _pGfx->gl_VkVerts;
@@ -836,7 +676,6 @@ static void svk_Finish(void)
 
   // force finish of API rendering queue
   VkResult r = vkQueueWaitIdle(_pGfx->gl_VkQueueGraphics);
-  //VkResult r = vkDeviceWaitIdle(_pGfx->gl_VkDevice);
   VK_CHECKERROR(r);
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
@@ -844,33 +683,13 @@ static void svk_Finish(void)
 
 
 
-#pragma region not implemented
+#pragma region empty
 
 static void svk_EnableColorArray(void)
 {
   // always enabled
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
   GFX_bColorArray = TRUE;
-
-  /*// check consistency
-  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  //BOOL bRes;
-  //bRes = pglIsEnabled(GL_COLOR_ARRAY);
-  //VK_CHECKERROR1;
-  //ASSERT(!bRes == !GFX_bColorArray);
-#endif
-
-  // cached?
-  if (GFX_bColorArray && gap_bOptimizeStateChanges) return;
-  GFX_bColorArray = TRUE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  //pglEnableClientState(GL_COLOR_ARRAY);
-  VK_CHECKERROR1;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
 }
 
 static void svk_DisableColorArray(void)
@@ -878,31 +697,6 @@ static void svk_DisableColorArray(void)
   // always enabled
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
   GFX_bColorArray = TRUE;
-
-  /*// check consistency
-  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  //BOOL bRes;
-  //bRes = pglIsEnabled(GL_COLOR_ARRAY);
-  //VK_CHECKERROR1;
-  //ASSERT(!bRes == !GFX_bColorArray);
-#endif
-
-  // cached?
-  if (!GFX_bColorArray && gap_bOptimizeStateChanges) return;
-  GFX_bColorArray = FALSE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  //pglDisableClientState(GL_COLOR_ARRAY);
-  VK_CHECKERROR1;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);*/
-}
-
-static void svk_SetColorMask(ULONG ulColorMask)
-{
-  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
 }
 
 static void svk_LockArrays(void)

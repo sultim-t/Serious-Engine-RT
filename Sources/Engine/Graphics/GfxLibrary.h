@@ -167,7 +167,9 @@ public:
 
   VkDescriptorSetLayout           gl_VkDescriptorSetLayout;
   VkPipelineLayout                gl_VkPipelineLayout;
-  VkPipeline                      gl_VkGraphicsPipeline;
+
+  VkShaderModule                  gl_VkShaderModuleVert;
+  VkShaderModule                  gl_VkShaderModuleFrag;
 
   VkRect2D                        gl_VkCurrentScissor;
   VkViewport                      gl_VkCurrentViewport;
@@ -189,6 +191,12 @@ public:
 
   // dynamic buffers to delete
   CStaticStackArray<SvkDBufferToDelete>   gl_VkDynamicToDelete[gl_VkMaxCmdBufferCount];
+
+  SvkPipelineStateFlags                   gl_VkGlobalState;
+  SvkPipelineState                        *gl_VkPreviousPipeline;
+  CStaticStackArray<SvkPipelineState>     gl_VkPipelines;
+  VkPipelineCache                         gl_VkPipelineCache;
+  SvkVertexLayout                         *gl_VkDefaultVertexLayout;
 
   VkPhysicalDevice                        gl_VkPhysDevice;
   VkPhysicalDeviceMemoryProperties        gl_VkPhMemoryProperties;
@@ -316,14 +324,30 @@ private:
   BOOL InitSurface_Win32(HINSTANCE hinstance, HWND hwnd);
   BOOL CreateDevice();
   void CreateRenderPass();
-  void CreateSyncPrimitives();
 
+  void CreateSyncPrimitives();
+  void DestroySyncPrimitives();
+
+  void CreateVertexLayouts();
+  void DestroyVertexLayouts();
+
+  // create desc set layout and its pipeline layout
   void CreateDescriptorSetLayouts();
+  void DestroyDescriptorSetLayouts();
+
+  void CreateShaderModules();
+  void DestroyShaderModules();
 
   void CreateDescriptorPools();
   void DestroyDescriptorPools();
 
-  void CreateGraphicsPipeline();
+  SvkPipelineState &GetPipeline(SvkPipelineStateFlags flags);
+  // create new pipeline and add it to list
+  SvkPipelineState &CreatePipeline(SvkPipelineStateFlags flags, const SvkVertexLayout &vertLayout,
+    VkShaderModule vertShader, VkShaderModule fragShader);
+  void CreatePipelineCache();
+  void DestroyPipelines();
+
   BOOL CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t imageIndex);
 
   void CreateCmdBuffers();
@@ -369,6 +393,10 @@ public:
   void CreateSwapchain(uint32_t width, uint32_t height);
   void RecreateSwapchain(uint32_t newWidth, uint32_t newHeight);
   void DestroySwapchain();
+
+  // get current global pipeline state
+  SvkPipelineStateFlags &GetPipelineState();
+
   // Get current started cmd buffer to write in
   VkCommandBuffer GetCurrentCmdBuffer();
   void DrawTriangles(uint32_t indexCount, const uint32_t *indices);

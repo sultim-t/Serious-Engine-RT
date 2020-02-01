@@ -18,8 +18,13 @@ void CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
 
   vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gl_VkPhysDevice, gl_VkSurface, &gl_VkPhSurfCapabilities);
 
-  const uint32_t preferredImageCount = 2; 
-  ASSERT(gl_VkPhSurfCapabilities.maxImageCount >= 2);
+  const uint32_t preferredImageCount =
+    gl_VkPhSurfCapabilities.minImageCount <= SVK_PREFERRED_SWAPCHAIN_SIZE ?
+    SVK_PREFERRED_SWAPCHAIN_SIZE :
+    gl_VkPhSurfCapabilities.minImageCount;
+
+  ASSERT(preferredImageCount <= gl_VkPhSurfCapabilities.maxImageCount);
+
   uint32_t swapchainImageCount;
 
   VkSwapchainCreateInfoKHR createInfo = {};

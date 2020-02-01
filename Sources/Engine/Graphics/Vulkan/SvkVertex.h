@@ -82,27 +82,27 @@ struct SvkVertex
   }
 };
 
-#define VK_VERT_SIZE (sizeof(SvkVertex))
+#define SVK_VERT_SIZE (sizeof(SvkVertex))
 
-#define VK_VERT_POS_SIZE (4*sizeof(FLOAT))
-#define VK_VERT_COL_SIZE (4*sizeof(FLOAT))
-#define VK_VERT_NOR_SIZE (4*sizeof(FLOAT))
-#define VK_VERT_TEX_SIZE (2*sizeof(FLOAT))
+#define SVK_VERT_POS_SIZE (4*sizeof(FLOAT))
+#define SVK_VERT_COL_SIZE (4*sizeof(FLOAT))
+#define SVK_VERT_NOR_SIZE (4*sizeof(FLOAT))
+#define SVK_VERT_TEX_SIZE (2*sizeof(FLOAT))
 
-#define VK_VERT_POS_FORMAT VK_FORMAT_R32G32B32A32_SFLOAT
-#define VK_VERT_COL_FORMAT VK_FORMAT_R32G32B32A32_SFLOAT
-#define VK_VERT_NOR_FORMAT VK_FORMAT_R32G32B32A32_SFLOAT
-#define VK_VERT_TEX_FORMAT VK_FORMAT_R32G32_SFLOAT
+#define SVK_VERT_POS_FORMAT VK_FORMAT_R32G32B32A32_SFLOAT
+#define SVK_VERT_COL_FORMAT VK_FORMAT_R32G32B32A32_SFLOAT
+#define SVK_VERT_NOR_FORMAT VK_FORMAT_R32G32B32A32_SFLOAT
+#define SVK_VERT_TEX_FORMAT VK_FORMAT_R32G32_SFLOAT
 
-#define VK_VERT_POS_OFFSET (offsetof(SvkVertex, Position))
-#define VK_VERT_COL_OFFSET (offsetof(SvkVertex, Color))
-#define VK_VERT_NOR_OFFSET (offsetof(SvkVertex, Normal))
-#define VK_VERT_TEX_OFFSET (offsetof(SvkVertex, TexCoord))
+#define SVK_VERT_POS_OFFSET (offsetof(SvkVertex, Position))
+#define SVK_VERT_COL_OFFSET (offsetof(SvkVertex, Color))
+#define SVK_VERT_NOR_OFFSET (offsetof(SvkVertex, Normal))
+#define SVK_VERT_TEX_OFFSET (offsetof(SvkVertex, TexCoord))
 
-#define VK_VERT_POS_LOC (0)
-#define VK_VERT_COL_LOC (1)
-#define VK_VERT_NOR_LOC (2)
-#define VK_VERT_TEX_LOC (3)
+#define SVK_VERT_POS_LOC (0)
+#define SVK_VERT_COL_LOC (1)
+#define SVK_VERT_NOR_LOC (2)
+#define SVK_VERT_TEX_LOC (3)
 
 
 #endif

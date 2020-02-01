@@ -14,6 +14,7 @@ VkShaderModule CGfxLibrary::CreateShaderModule(const uint32_t *spvCode, uint32_t
   moduleInfo.pCode = spvCode;
 
   r = vkCreateShaderModule(gl_VkDevice, &moduleInfo, nullptr, &shaderModule);
+  VK_CHECKERROR(r);
 
   return shaderModule;
 }
@@ -162,8 +163,8 @@ BOOL CGfxLibrary::GetQueues(VkPhysicalDevice physDevice,
     }
 
     bool found[] = {
-      (uint32_t)p.queueFlags & VK_QUEUE_GRAPHICS_BIT,
-      (uint32_t)p.queueFlags & VK_QUEUE_TRANSFER_BIT
+      ((uint32_t)p.queueFlags & VK_QUEUE_GRAPHICS_BIT) == VK_QUEUE_GRAPHICS_BIT,
+      ((uint32_t)p.queueFlags & VK_QUEUE_TRANSFER_BIT) == VK_QUEUE_TRANSFER_BIT
     };
 
     if (found[0] && found[1])
@@ -238,6 +239,60 @@ void CGfxLibrary::CreateSyncPrimitives()
     r = vkCreateFence(gl_VkDevice, &fenceInfo, nullptr, &gl_VkCmdFences[i]);
     VK_CHECKERROR(r);
   }
+}
+
+void CGfxLibrary::DestroySyncPrimitives()
+{
+  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
+  {
+    vkDestroySemaphore(gl_VkDevice, gl_VkImageAvailableSemaphores[i], nullptr);
+    vkDestroySemaphore(gl_VkDevice, gl_VkRenderFinishedSemaphores[i], nullptr);
+    vkDestroyFence(gl_VkDevice, gl_VkCmdFences[i], nullptr);
+
+    gl_VkImageAvailableSemaphores[i] = VK_NULL_HANDLE;
+    gl_VkRenderFinishedSemaphores[i] = VK_NULL_HANDLE;
+    gl_VkCmdFences[i] = VK_NULL_HANDLE;
+  }
+}
+
+void CGfxLibrary::CreateVertexLayouts()
+{
+  gl_VkDefaultVertexLayout = new SvkVertexLayout();
+  auto &binds = gl_VkDefaultVertexLayout->svl_Bindings;
+  auto &attrs = gl_VkDefaultVertexLayout->svl_Attributes;
+
+  binds.New(1);
+  attrs.New(4);
+
+  binds[0].binding = 0;
+  binds[0].stride = SVK_VERT_SIZE;
+  binds[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+  attrs[0].binding = 0;
+  attrs[0].location = SVK_VERT_POS_LOC;
+  attrs[0].format = SVK_VERT_POS_FORMAT;
+  attrs[0].offset = SVK_VERT_POS_OFFSET;
+
+  attrs[1].binding = 0;
+  attrs[1].location = SVK_VERT_COL_LOC;
+  attrs[1].format = SVK_VERT_COL_FORMAT;
+  attrs[1].offset = SVK_VERT_COL_OFFSET;
+
+  attrs[2].binding = 0;
+  attrs[2].location = SVK_VERT_NOR_LOC;
+  attrs[2].format = SVK_VERT_NOR_FORMAT;
+  attrs[2].offset = SVK_VERT_NOR_OFFSET;
+
+  attrs[3].binding = 0;
+  attrs[3].location = SVK_VERT_TEX_LOC;
+  attrs[3].format = SVK_VERT_TEX_FORMAT;
+  attrs[3].offset = SVK_VERT_TEX_OFFSET;
+}
+
+void CGfxLibrary::DestroyVertexLayouts()
+{
+  delete gl_VkDefaultVertexLayout;
+  gl_VkDefaultVertexLayout = nullptr;
 }
 
 BOOL CGfxLibrary::PickPhysicalDevice()

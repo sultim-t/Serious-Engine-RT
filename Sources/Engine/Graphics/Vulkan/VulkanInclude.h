@@ -7,22 +7,23 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
 #include <Engine/Graphics/Vulkan/SvkVertex.h>
+#include <Engine/Graphics/Vulkan/SvkPipelineStates.h>
+#include <Engine/Templates/StaticArray.h>
 
 #define gl_VkMaxCmdBufferCount                  2
 
-#define gl_VkMaxDescSetCount                    8192
-#define gl_VkMaxDescSamplerCount                8192
+#define SVK_PREFERRED_SWAPCHAIN_SIZE            2
 
-#define gl_VkMaxVertexCount                     65536
-#define gl_VkMaxIndexCount                      196608
+#define SVK_DESC_MAX_SET_COUNT                  8192
+#define SVK_DESC_MAX_SAMPLER_COUNT              8192
 
-#define gl_VkVerts_StartCount                   1024
-#define gl_VkVerts_AllocationStep               1024
+#define SVK_VERT_START_COUNT                    1024
+#define SVK_VERT_ALLOC_STEP                     1024
 
 #define SVK_DYNAMIC_VERTEX_BUFFER_START_SIZE	  (256 * 1024)
 #define SVK_DYNAMIC_INDEX_BUFFER_START_SIZE	    (1024 * 1024)
 #define SVK_DYNAMIC_UNIFORM_BUFFER_START_SIZE   (256 * 1024)
-#define SVK_DYNAMIC_UNIFORM_MAX_ALLOC_SIZE          1024
+#define SVK_DYNAMIC_UNIFORM_MAX_ALLOC_SIZE      1024
 
 struct SvkTextureObject
 {
@@ -58,6 +59,17 @@ struct SvkDynamicBufferGlobal
   VkDeviceMemory  sdg_DynamicBufferMemory;
 };
 
+struct SvkPipelineState
+{
+  SvkPipelineStateFlags   sps_Flags;
+  VkPipeline              sps_Pipeline;
+};
+
+struct SvkVertexLayout
+{
+  CStaticArray<VkVertexInputBindingDescription>    svl_Bindings;
+  CStaticArray<VkVertexInputAttributeDescription>  svl_Attributes;
+};
 
 void Svk_MatCopy(float *dest, const float *src);
 void Svk_MatSetIdentity(float *result);

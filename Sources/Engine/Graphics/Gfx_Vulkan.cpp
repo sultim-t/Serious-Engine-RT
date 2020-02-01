@@ -12,18 +12,8 @@
 #include <Engine/Templates/DynamicContainer.cpp>
 #include <Engine/Templates/Stock_CTextureData.h>
 
-#pragma region Shaders
-#include <Engine/Graphics/Vulkan/Shaders/Compiled/TexturedVertSpv.h>
-#include <Engine/Graphics/Vulkan/Shaders/Compiled/TexturedFragSpv.h>
-
-extern unsigned char TexturedVert_Spirv[];
-extern unsigned int TexturedVert_Size;
-extern unsigned char TexturedFrag_Spirv[];
-extern unsigned int TexturedFrag_Size;
-
 FLOAT	VkProjectionMatrix[16];
 FLOAT	VkViewMatrix[16];
-#pragma endregion
 
 
 #ifdef SE1_VULKAN
@@ -174,10 +164,12 @@ BOOL CGfxLibrary::InitDriver_Vulkan()
   CreateDescriptorPools();
   CreateCmdBuffers();
   CreateSyncPrimitives();
+  CreateVertexLayouts();
+  CreatePipelineCache();
   CreateRenderPass();
   CreateDescriptorSetLayouts();
+  CreateShaderModules();
   InitDynamicBuffers();
-  CreateGraphicsPipeline();
 
   return TRUE;
 }
@@ -189,43 +181,36 @@ void CGfxLibrary::EndDriver_Vulkan(void)
     return;
   }
 
-  gl_VkVerts.Clear();
-
   vkDeviceWaitIdle(gl_VkDevice);
 
+  gl_VkVerts.Clear();
+
   DestroySwapchain();
+  DestroySyncPrimitives();
 
-  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
-  {
-    vkDestroySemaphore(gl_VkDevice, gl_VkImageAvailableSemaphores[i], nullptr);
-    vkDestroySemaphore(gl_VkDevice, gl_VkRenderFinishedSemaphores[i], nullptr);
-    vkDestroyFence(gl_VkDevice, gl_VkCmdFences[i], nullptr);
+  DestroyDynamicBuffers();
+  DestroyCmdBuffers();
 
-    gl_VkImageAvailableSemaphores[i] = VK_NULL_HANDLE;
-    gl_VkRenderFinishedSemaphores[i] = VK_NULL_HANDLE;
-    gl_VkCmdFences[i] = VK_NULL_HANDLE;
-  }
+  DestroyDescriptorSetLayouts();
+  DestroyDescriptorPools();
+
+  DestroyPipelines();
+  DestroyVertexLayouts();
+  DestroyShaderModules();
+
+  vkDestroyPipelineCache(gl_VkDevice, gl_VkPipelineCache, nullptr);
+  vkDestroyRenderPass(gl_VkDevice, gl_VkRenderPass, nullptr);
+  vkDestroySurfaceKHR(gl_VkInstance, gl_VkSurface, nullptr);
+  vkDestroyDevice(gl_VkDevice, nullptr);
 
 #ifndef NDEBUG
   auto pfnDestroyDUMsg = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(gl_VkInstance, "vkDestroyDebugUtilsMessengerEXT");
-  if (pfnDestroyDUMsg != nullptr) 
+  if (pfnDestroyDUMsg != nullptr)
   {
     pfnDestroyDUMsg(gl_VkInstance, gl_VkDebugMessenger, nullptr);
   }
 #endif
 
-  DestroyDynamicBuffers();
-  DestroyCmdBuffers();
-
-  vkDestroyDescriptorSetLayout(gl_VkDevice, gl_VkDescriptorSetLayout, nullptr);
-  DestroyDescriptorPools();
-
-  vkDestroyPipelineLayout(gl_VkDevice, gl_VkPipelineLayout, nullptr);
-  vkDestroyPipeline(gl_VkDevice, gl_VkGraphicsPipeline, nullptr);
-
-  vkDestroyRenderPass(gl_VkDevice, gl_VkRenderPass, nullptr);
-  vkDestroySurfaceKHR(gl_VkInstance, gl_VkSurface, nullptr);
-  vkDestroyDevice(gl_VkDevice, nullptr);
   vkDestroyInstance(gl_VkInstance, nullptr);
 
   Reset_Vulkan();
@@ -255,7 +240,14 @@ void CGfxLibrary::Reset_Vulkan()
   gl_VkDescriptorPool = VK_NULL_HANDLE;
   gl_VkDescriptorSetLayout = VK_NULL_HANDLE;
   gl_VkPipelineLayout = VK_NULL_HANDLE;
-  gl_VkGraphicsPipeline = VK_NULL_HANDLE;
+  gl_VkPipelineCache = VK_NULL_HANDLE;
+  gl_VkDefaultVertexLayout = nullptr;
+  gl_VkShaderModuleVert = VK_NULL_HANDLE;
+  gl_VkShaderModuleFrag = VK_NULL_HANDLE;
+  gl_VkPreviousPipeline = nullptr;
+
+  // reset to default
+  gl_VkGlobalState = SVK_PLS_DEFAULT_FLAGS;
 
   gl_VkPhysDevice = VK_NULL_HANDLE;
   gl_VkPhMemoryProperties = {};
@@ -328,8 +320,8 @@ void CGfxLibrary::InitContext_Vulkan()
   gl_iTessellationLevel = 0;
   gl_iMaxTessellationLevel = 0;
   GFX_ctVertices = 0;
-  gl_VkVerts.New(gl_VkVerts_StartCount);
-  gl_VkVerts.SetAllocationStep(gl_VkVerts_AllocationStep);
+  gl_VkVerts.New(SVK_VERT_START_COUNT);
+  gl_VkVerts.SetAllocationStep(SVK_VERT_ALLOC_STEP);
 
   GFX_bColorArray = TRUE;
 
@@ -531,7 +523,7 @@ void CGfxLibrary::CreateRenderPass()
   colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // VK_IMAGE_LAYOUT_GENERAL;
 
   VkAttachmentDescription depthAttachment = {};
   depthAttachment.format = gl_VkSurfDepthFormat;
@@ -578,154 +570,6 @@ void CGfxLibrary::CreateRenderPass()
   if (vkCreateRenderPass(gl_VkDevice, &renderPassInfo, nullptr, &gl_VkRenderPass) != VK_SUCCESS) 
   {
     ASSERTALWAYS("Vulkan error: Can't create render pass.\n");
-  }
-}
-
-void CGfxLibrary::CreateGraphicsPipeline()
-{
-  VkShaderModule vertShaderModule = CreateShaderModule((uint32_t*)TexturedVert_Spirv, TexturedVert_Size);
-  VkShaderModule fragShaderModule = CreateShaderModule((uint32_t*)TexturedFrag_Spirv, TexturedFrag_Size);
-
-  VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
-  vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-  vertShaderStageInfo.module = vertShaderModule;
-  vertShaderStageInfo.pName = "main";
-
-  VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
-  fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-  fragShaderStageInfo.module = fragShaderModule;
-  fragShaderStageInfo.pName = "main";
-
-  VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
-
-  VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
-  vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-
-  VkVertexInputBindingDescription bindingDescriptions[1];
-  bindingDescriptions[0].binding = 0;
-  bindingDescriptions[0].stride = sizeof(SvkVertex);
-  bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-  VkVertexInputAttributeDescription attributeDescriptions[4];
-  attributeDescriptions[0].binding = 0;
-  attributeDescriptions[0].location = VK_VERT_POS_LOC;
-  attributeDescriptions[0].format = VK_VERT_POS_FORMAT;
-  attributeDescriptions[0].offset = VK_VERT_POS_OFFSET;
-
-  attributeDescriptions[1].binding = 0;
-  attributeDescriptions[1].location = VK_VERT_COL_LOC;
-  attributeDescriptions[1].format = VK_VERT_COL_FORMAT;
-  attributeDescriptions[1].offset = VK_VERT_COL_OFFSET;
-
-  attributeDescriptions[2].binding = 0;
-  attributeDescriptions[2].location = VK_VERT_NOR_LOC;
-  attributeDescriptions[2].format = VK_VERT_NOR_FORMAT;
-  attributeDescriptions[2].offset = VK_VERT_NOR_OFFSET;
-
-  attributeDescriptions[3].binding = 0;
-  attributeDescriptions[3].location = VK_VERT_TEX_LOC;
-  attributeDescriptions[3].format = VK_VERT_TEX_FORMAT;
-  attributeDescriptions[3].offset = VK_VERT_TEX_OFFSET;
-
-  vertexInputInfo.vertexBindingDescriptionCount = 1;
-  vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions;
-  vertexInputInfo.vertexAttributeDescriptionCount = 4;
-  vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions;
-
-  VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
-  inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-  inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-  inputAssembly.primitiveRestartEnable = VK_FALSE;
-
-  VkPipelineViewportStateCreateInfo viewportState = {};
-  viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-  viewportState.viewportCount = 1;
-  viewportState.pViewports = nullptr; // will be set dynamically
-  viewportState.scissorCount = 1;
-  viewportState.pScissors = nullptr; // will be set dynamically
-
-  VkPipelineRasterizationStateCreateInfo rasterizer = {};
-  rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-  rasterizer.depthClampEnable = VK_FALSE;
-  rasterizer.rasterizerDiscardEnable = VK_FALSE;
-  rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-  rasterizer.lineWidth = 1.0f;
-  rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-  rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-  rasterizer.depthBiasEnable = VK_FALSE;
-
-  VkPipelineMultisampleStateCreateInfo multisampling = {};
-  multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-  multisampling.sampleShadingEnable = VK_FALSE;
-  multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-
-  VkPipelineDepthStencilStateCreateInfo depthStencil = {};
-  depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-  depthStencil.depthTestEnable = VK_TRUE;
-  depthStencil.depthWriteEnable = VK_TRUE;
-  depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
-  depthStencil.depthBoundsTestEnable = VK_FALSE;
-  depthStencil.stencilTestEnable = VK_FALSE;
-
-  VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
-  colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-  colorBlendAttachment.blendEnable = VK_FALSE;
-
-  VkPipelineColorBlendStateCreateInfo colorBlending = {};
-  colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-  colorBlending.logicOpEnable = VK_FALSE;
-  colorBlending.logicOp = VK_LOGIC_OP_COPY;
-  colorBlending.attachmentCount = 1;
-  colorBlending.pAttachments = &colorBlendAttachment;
-  colorBlending.blendConstants[0] = 0.0f;
-  colorBlending.blendConstants[1] = 0.0f;
-  colorBlending.blendConstants[2] = 0.0f;
-  colorBlending.blendConstants[3] = 0.0f;
-
-  VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
-  pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  pipelineLayoutInfo.setLayoutCount = 1;
-  pipelineLayoutInfo.pSetLayouts = &gl_VkDescriptorSetLayout;
-
-  if (vkCreatePipelineLayout(gl_VkDevice, &pipelineLayoutInfo, nullptr, &gl_VkPipelineLayout) != VK_SUCCESS)
-  {
-    ASSERTALWAYS("Vulkan error: Can't create pipeline layout.\n");
-  }
-
-  VkDynamicState dynamicStates[3] = {
-    VK_DYNAMIC_STATE_VIEWPORT,
-    VK_DYNAMIC_STATE_SCISSOR,
-    VK_DYNAMIC_STATE_DEPTH_BOUNDS
-  };
-
-  VkPipelineDynamicStateCreateInfo dynamicInfo = {};
-  dynamicInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-  dynamicInfo.dynamicStateCount = 3;
-  dynamicInfo.pDynamicStates = dynamicStates;
-
-
-  VkGraphicsPipelineCreateInfo pipelineInfo = {};
-  pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-  pipelineInfo.stageCount = 2;
-  pipelineInfo.pStages = shaderStages;
-  pipelineInfo.pVertexInputState = &vertexInputInfo;
-  pipelineInfo.pInputAssemblyState = &inputAssembly;
-  pipelineInfo.pViewportState = &viewportState;
-  pipelineInfo.pRasterizationState = &rasterizer;
-  pipelineInfo.pMultisampleState = &multisampling;
-  pipelineInfo.pDepthStencilState = &depthStencil;
-  pipelineInfo.pColorBlendState = &colorBlending;
-  pipelineInfo.pDynamicState = &dynamicInfo;
-  pipelineInfo.layout = gl_VkPipelineLayout;
-  pipelineInfo.renderPass = gl_VkRenderPass;
-  pipelineInfo.subpass = 0;
-  pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-
-  if (vkCreateGraphicsPipelines(gl_VkDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &gl_VkGraphicsPipeline) != VK_SUCCESS)
-  {
-    ASSERTALWAYS("Vulkan error: Can't create graphics pipeline.\n");
   }
 }
 
@@ -818,6 +662,15 @@ void CGfxLibrary::StartFrame()
   // set 0 offsets to dynamic buffers for current cmd buffer
   ClearCurrentDynamicOffsets(gl_VkCmdBufferCurrent);
 
+  // do NOT reset full state
+  //gl_VkGlobalState = SVK_PLS_DEFAULT_FLAGS;
+  // reset only flags that can't be reset in Gfx_wrapper_Vulkan
+  gl_VkGlobalState &= ~SVK_PLS_DEPTH_BOUNDS_BOOL;
+  gl_VkGlobalState &= ~SVK_PLS_DEPTH_BIAS_BOOL;
+
+  // reset previous pipeline
+  gl_VkPreviousPipeline = nullptr;
+
   VkCommandBufferBeginInfo beginInfo = {};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -867,9 +720,7 @@ void CGfxLibrary::StartFrame()
     vkCmdSetScissor(cmd, 0, 1, &sc);
   }
 
-  // bind current pipeline
-  vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkGraphicsPipeline);
-
+  // vkCmdSetDepthBounds(cmd, 0.0f, 1.0f);
 }
 
 void CGfxLibrary::EndFrame()
@@ -880,9 +731,32 @@ void CGfxLibrary::EndFrame()
   FlushDynamicBuffersMemory();
 
   vkCmdEndRenderPass(cmd);
+
+  /*// transition from general layout to presentation
+  VkImageMemoryBarrier barrier = {};
+  barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.image = gl_VkSwapchainImages[gl_VkCurrentImageIndex];
+  barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barrier.subresourceRange.baseMipLevel = 0;
+  barrier.subresourceRange.levelCount = 1;
+  barrier.subresourceRange.baseArrayLayer = 0;
+  barrier.subresourceRange.layerCount = 1;
+  barrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
+  barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  barrier.dstAccessMask = 0;
+
+  vkCmdPipelineBarrier(
+    cmd,
+    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+    VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+    0, 0, NULL, 0, NULL, 1, &barrier);*/
+
   r = vkEndCommandBuffer(cmd);
   VK_CHECKERROR(r);
-  
+
   // wait until image will be avaialable
   VkSemaphore smpToWait = gl_VkImageAvailableSemaphores[gl_VkCmdBufferCurrent];
   // signal when it's finished
@@ -919,7 +793,7 @@ void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
   CStaticStackArray<SvkVertex> &verts = gl_VkVerts;
   ASSERT(verts.Count() > 0);
 
-  uint32_t vertsSize = verts.Count() * VK_VERT_SIZE;
+  uint32_t vertsSize = verts.Count() * SVK_VERT_SIZE;
   uint32_t indicesSize = indexCount * sizeof(UINT);
   uint32_t uniformSize = 16 * sizeof(FLOAT);
 
@@ -947,6 +821,16 @@ void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
   memcpy(uniformBuffer.sdb_Data, vp, uniformSize);
 
   uint32_t descSetOffset = (uint32_t)uniformBuffer.sdb_CurrentOffset;
+
+  // if previously not bound or flags don't match then bind new pipeline
+  if (gl_VkPreviousPipeline == nullptr || (gl_VkPreviousPipeline != nullptr && gl_VkPreviousPipeline->sps_Flags != gl_VkGlobalState))
+  {
+    // bind pipeline
+    SvkPipelineState &ps = GetPipeline(gl_VkGlobalState);
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ps.sps_Pipeline);
+    // save as it's most likely that next will be same
+    gl_VkPreviousPipeline = &ps;
+  }
 
   // bind descriptor set
   vkCmdBindDescriptorSets(
