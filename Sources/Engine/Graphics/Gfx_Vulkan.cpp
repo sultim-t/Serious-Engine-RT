@@ -946,12 +946,13 @@ void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
   memcpy(indexBuffer.sdb_Data, indices, indicesSize);
   memcpy(uniformBuffer.sdb_Data, vp, uniformSize);
 
+  uint32_t descSetOffset = (uint32_t)uniformBuffer.sdb_CurrentOffset;
+
   // bind descriptor set
   vkCmdBindDescriptorSets(
     cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkPipelineLayout,
     0, 1, &uniformBuffer.sdu_DescriptorSet,
-    // simple cast from VkDeviceSize to uint32_t as only 1 offset is used
-    1, (uint32_t*)&uniformBuffer.sdb_CurrentOffset);
+    1, &descSetOffset);
 
   // set mesh
   vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer.sdb_Buffer, &vertexBuffer.sdb_CurrentOffset);

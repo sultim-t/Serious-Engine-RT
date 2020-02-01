@@ -17,7 +17,8 @@ struct SvkVertex
   // default constructor
   SvkVertex()
   {
-    Position[0] = Position[1] = Position[2] = Position[3] = 0.0f;
+    Position[0] = Position[1] = Position[2] = 0.0f;
+    Position[3] = 1.0f;
     Color[0] = Color[1] = Color[2] = Color[3] = 1.0f;
     Normal[0] = Normal[2] = Normal[3] = 0.0f;
     Normal[1] = 1.0f;

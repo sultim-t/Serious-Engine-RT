@@ -807,7 +807,7 @@ static void svk_SetTexCoordArray(GFXTexCoord* ptex, BOOL b4/*=FALSE*/)
 
 
 // draw prepared arrays
-static void svk_DrawElements(INDEX ctElem, INDEX* pidx)
+static void svk_DrawElements(INDEX ctElem, INDEX *pidx)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
 #ifndef NDEBUG
@@ -818,20 +818,11 @@ static void svk_DrawElements(INDEX ctElem, INDEX* pidx)
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
   _pGfx->gl_ctTotalTriangles += ctElem / 3;  // for profiling
 
-  // arrays or elements
-  if (pidx == NULL)
-  {
-    ASSERTALWAYS("Vulkan error: QUADS drawing are not implemented.\n");
-    // pglDrawArrays(GL_QUADS, 0, ctElem);
-  }
-  else
-  {
-    ASSERT(_pGfx->gl_VkVerts.Count() > 0);
-    ASSERT(_pGfx->gl_VkVerts.Count() == GFX_ctVertices);
+  ASSERT(pidx != NULL); // draw quads only for OpenGL
+  ASSERT(_pGfx->gl_VkVerts.Count() > 0);
+  ASSERT(_pGfx->gl_VkVerts.Count() == GFX_ctVertices);
 
-    //pglDrawElements(GL_TRIANGLES, ctElem, GL_UNSIGNED_INT, pidx);
-    _pGfx->DrawTriangles(ctElem, (uint32_t*)pidx);
-  }
+  _pGfx->DrawTriangles(ctElem, (uint32_t *)pidx);
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -940,6 +931,7 @@ static void svk_DisableClipping(void)
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
 }
 
+// this is used for mirrors
 static void svk_EnableClipPlane(void)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
@@ -950,17 +942,20 @@ static void svk_DisableClipPlane(void)
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
 }
 
+// this is used for mirrors
+static void svk_ClipPlane(const DOUBLE *pdViewPlane)
+{
+  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+}
+
+// used only on some old gpus
 static void svk_EnableTruform(void)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
 }
 
+// used only on some old gpus
 static void svk_DisableTruform(void)
-{
-  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-}
-
-static void svk_ClipPlane(const DOUBLE* pdViewPlane)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
 }
