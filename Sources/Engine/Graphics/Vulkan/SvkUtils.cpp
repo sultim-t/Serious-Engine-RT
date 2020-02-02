@@ -379,4 +379,65 @@ BOOL CGfxLibrary::PickPhysicalDevice()
 
   return FALSE;
 }
+
+void CGfxLibrary::ClearColor(int32_t x, int32_t y, uint32_t width, uint32_t height, float *rgba)
+{
+  // must be in recording state
+  ASSERT(gl_VkCmdIsRecording);
+
+  VkClearAttachment ca = {};
+  ca.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  ca.colorAttachment = SVK_RENDERPASS_COLOR_ATTACHMENT_INDEX;
+
+  VkClearColorValue &cv = ca.clearValue.color;
+  cv.float32[0] = rgba[0];
+  cv.float32[1] = rgba[1];
+  cv.float32[2] = rgba[2];
+  cv.float32[3] = rgba[3];
+
+  VkClearRect cr = {};
+  cr.baseArrayLayer = 0;
+  cr.layerCount = 1;
+  cr.rect.extent.width = width;
+  cr.rect.extent.height = height;
+  cr.rect.offset.x = x;
+  cr.rect.offset.y = y;
+
+  vkCmdClearAttachments(GetCurrentCmdBuffer(), 1, &ca, 1, &cr);
+}
+
+void CGfxLibrary::ClearDepth(int32_t x, int32_t y, uint32_t width, uint32_t height, float depth)
+{
+  // must be in recording state
+  ASSERT(gl_VkCmdIsRecording);
+
+  VkClearAttachment ca = {};
+  ca.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+  VkClearDepthStencilValue &cd = ca.clearValue.depthStencil;
+  cd.depth = depth;
+
+  VkClearRect cr = {};
+  cr.baseArrayLayer = 0;
+  cr.layerCount = 1;
+  cr.rect.extent.width = width;
+  cr.rect.extent.height = height;
+  cr.rect.offset.x = x;
+  cr.rect.offset.y = y;
+
+  vkCmdClearAttachments(GetCurrentCmdBuffer(), 1, &ca, 1, &cr);
+}
+
+void CGfxLibrary::ClearColor(float *rgba)
+{
+  ClearColor(
+    gl_VkCurrentViewport.x, gl_VkCurrentViewport.y, 
+    gl_VkCurrentViewport.width, gl_VkCurrentViewport.height, rgba);
+}
+void CGfxLibrary::ClearDepth(float depth)
+{
+  ClearDepth(
+    gl_VkCurrentViewport.x, gl_VkCurrentViewport.y,
+    gl_VkCurrentViewport.width, gl_VkCurrentViewport.height, depth);
+}
 #endif

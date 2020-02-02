@@ -41,10 +41,13 @@ void CGfxLibrary::CreateDescriptorSetLayouts()
 void CGfxLibrary::DestroyDescriptorSetLayouts()
 {
   ASSERT(gl_VkDescriptorSetLayout != VK_NULL_HANDLE);
-  ASSERT(gl_VkDescriptorPool != VK_NULL_HANDLE);
+  ASSERT(gl_VkPipelineLayout != VK_NULL_HANDLE);
 
   vkDestroyDescriptorSetLayout(gl_VkDevice, gl_VkDescriptorSetLayout, nullptr);
   vkDestroyPipelineLayout(gl_VkDevice, gl_VkPipelineLayout, nullptr);
+
+  gl_VkDescriptorSetLayout = VK_NULL_HANDLE;
+  gl_VkPipelineLayout = VK_NULL_HANDLE;
 }
 
 void CGfxLibrary::CreateDescriptorPools()
@@ -79,9 +82,6 @@ void CGfxLibrary::DestroyDescriptorPools()
 {
   ASSERT(gl_VkDescriptorPool != VK_NULL_HANDLE);
 
-  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
-  {
-    vkDestroyDescriptorPool(gl_VkDevice, gl_VkDescriptorPool, nullptr);
-    gl_VkDescriptorPool = VK_NULL_HANDLE;
-  }
+  vkDestroyDescriptorPool(gl_VkDevice, gl_VkDescriptorPool, nullptr);
+  gl_VkDescriptorPool = VK_NULL_HANDLE;
 }

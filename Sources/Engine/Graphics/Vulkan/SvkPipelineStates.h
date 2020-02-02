@@ -68,6 +68,7 @@ static const SvkPipelineStateFlags SVK_PLS_DEPTH_TEST_BOOL                      
 static const SvkPipelineStateFlags SVK_PLS_DEPTH_WRITE_BOOL                         = 1 << 23;
 static const SvkPipelineStateFlags SVK_PLS_DEPTH_BOUNDS_BOOL                        = 1 << 24;
 static const SvkPipelineStateFlags SVK_PLS_BLEND_ENABLE_BOOL                        = 1 << 25;
+static const SvkPipelineStateFlags SVK_PLS_ALPHA_ENABLE_BOOL                        = 1 << 26;
 
 // additional
 static const SvkPipelineStateFlags SVK_PLS_COLOR_WRITE_MASK_RGB =

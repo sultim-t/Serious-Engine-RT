@@ -170,6 +170,7 @@ public:
 
   VkShaderModule                  gl_VkShaderModuleVert;
   VkShaderModule                  gl_VkShaderModuleFrag;
+  VkShaderModule                  gl_VkShaderModuleFragAlpha;
 
   VkRect2D                        gl_VkCurrentScissor;
   VkViewport                      gl_VkCurrentViewport;
@@ -177,6 +178,7 @@ public:
   uint32_t                        gl_VkCmdBufferCurrent;
   VkCommandPool                   gl_VkCmdPool;
   VkCommandBuffer                 gl_VkCmdBuffers[gl_VkMaxCmdBufferCount];
+  bool                            gl_VkCmdIsRecording;
 
   VkDescriptorPool                        gl_VkDescriptorPool;
 
@@ -401,6 +403,10 @@ public:
   VkCommandBuffer GetCurrentCmdBuffer();
   void DrawTriangles(uint32_t indexCount, const uint32_t *indices);
 
+  void ClearColor(int32_t x, int32_t y, uint32_t width, uint32_t height, float *rgba);
+  void ClearDepth(int32_t x, int32_t y, uint32_t width, uint32_t height, float depth);
+  void ClearColor(float *rgba);
+  void ClearDepth(float depth);
 #endif // SE1_VULKAN
 
 public:

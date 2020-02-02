@@ -67,6 +67,7 @@ static void svk_EnableDepthTest(void)
 }
 
 
+
 static void svk_DisableDepthTest(void)
 {
   // check consistency
@@ -77,16 +78,20 @@ static void svk_DisableDepthTest(void)
 }
 
 
+
 static void svk_EnableDepthBias(void)
 {
-  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);  
+  // must be in recording state
+  ASSERT(_pGfx->gl_VkCmdIsRecording);
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  //_pGfx->GetPipelineState() |= SVK_PLS_DEPTH_BIAS_BOOL;
-  //vkCmdSetDepthBias(_pGfx->GetCurrentCmdBuffer(), -2.0f, 0.0f, -1.0f);
+  _pGfx->GetPipelineState() |= SVK_PLS_DEPTH_BIAS_BOOL;
+  vkCmdSetDepthBias(_pGfx->GetCurrentCmdBuffer(), -2.0f, 0.0f, -1.0f);
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
+
 
 
 static void svk_DisableDepthBias(void)
@@ -123,23 +128,9 @@ static void svk_EnableAlphaTest(void)
 {
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  //BOOL bRes;
-  //bRes = pglIsEnabled(GL_ALPHA_TEST);
-  //VK_CHECKERROR1;
-  //ASSERT(!bRes == !GFX_bAlphaTest);
-#endif
 
-  // cached?
-  if (GFX_bAlphaTest && gap_bOptimizeStateChanges) return;
+  _pGfx->GetPipelineState() |= SVK_PLS_ALPHA_ENABLE_BOOL;
   GFX_bAlphaTest = TRUE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  //pglEnable(GL_ALPHA_TEST);
-  VK_CHECKERROR1;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
 
 
@@ -148,23 +139,9 @@ static void svk_DisableAlphaTest(void)
 {
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  //BOOL bRes;
-  //bRes = pglIsEnabled(GL_ALPHA_TEST);
-  //VK_CHECKERROR1;
-  //ASSERT(!bRes == !GFX_bAlphaTest);
-#endif
 
-  // cached?
-  if (!GFX_bAlphaTest && gap_bOptimizeStateChanges) return;
+  _pGfx->GetPipelineState() &= ~SVK_PLS_ALPHA_ENABLE_BOOL;
   GFX_bAlphaTest = FALSE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  //pglDisable(GL_ALPHA_TEST);
-  VK_CHECKERROR1;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
 
 
@@ -299,9 +276,8 @@ static void svk_DepthRange(FLOAT fMin, FLOAT fMax)
 {
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-
-  GFX_fMinDepthRange = fMin;
-  GFX_fMaxDepthRange = fMax;
+  // must be in recording state
+  ASSERT(_pGfx->gl_VkCmdIsRecording);
 
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
@@ -309,6 +285,9 @@ static void svk_DepthRange(FLOAT fMin, FLOAT fMax)
   //vkCmdSetDepthBounds(_pGfx->GetCurrentCmdBuffer(), fMin, fMax);
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+
+  GFX_fMinDepthRange = fMin;
+  GFX_fMaxDepthRange = fMax;
 }
 
 
@@ -440,12 +419,15 @@ static void svk_PolygonMode(GfxPolyMode ePolyMode)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
 
-  //switch (ePolyMode) {
-  //case GFX_POINT:  pglPolygonMode(GL_FRONT_AND_BACK, GL_POINT);  break;
-  //case GFX_LINE:   pglPolygonMode(GL_FRONT_AND_BACK, GL_LINE);   break;
-  //case GFX_FILL:   pglPolygonMode(GL_FRONT_AND_BACK, GL_FILL);   break;
-  //default:  ASSERTALWAYS("Wrong polygon mode!");
-  //} // check
+  _pGfx->GetPipelineState() &= ~SVK_PLS_POLYGON_MODE_BITS;
+
+  switch (ePolyMode) 
+  {
+  case GFX_POINT:  _pGfx->GetPipelineState() |= SVK_PLS_POLYGON_MODE_POINT; break;
+  case GFX_LINE:   _pGfx->GetPipelineState() |= SVK_PLS_POLYGON_MODE_LINE;   break;
+  case GFX_FILL:   _pGfx->GetPipelineState() |= SVK_PLS_POLYGON_MODE_FILL;   break;
+  default:  ASSERTALWAYS("Wrong polygon mode!");
+  }
 }
 
 

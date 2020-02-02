@@ -235,7 +235,7 @@ void CGfxLibrary::Reset_Vulkan()
   gl_VkSurfDepthFormat = VK_FORMAT_D16_UNORM;
   gl_VkSurfPresentMode = VK_PRESENT_MODE_FIFO_KHR;
   gl_VkCmdBufferCurrent = 0;
-  gl_VkCmdBufferCurrent = 0;
+  gl_VkCmdIsRecording = false;
 
   gl_VkDescriptorPool = VK_NULL_HANDLE;
   gl_VkDescriptorSetLayout = VK_NULL_HANDLE;
@@ -244,6 +244,7 @@ void CGfxLibrary::Reset_Vulkan()
   gl_VkDefaultVertexLayout = nullptr;
   gl_VkShaderModuleVert = VK_NULL_HANDLE;
   gl_VkShaderModuleFrag = VK_NULL_HANDLE;
+  gl_VkShaderModuleFragAlpha = VK_NULL_HANDLE;
   gl_VkPreviousPipeline = nullptr;
 
   // reset to default
@@ -299,6 +300,9 @@ void CGfxLibrary::Reset_Vulkan()
   gl_VkDynamicVBGlobal.sdg_CurrentDynamicBufferSize = 0;
   gl_VkDynamicIBGlobal.sdg_CurrentDynamicBufferSize = 0;
   gl_VkDynamicUBGlobal.sdg_CurrentDynamicBufferSize = 0;
+
+  Svk_MatSetIdentity(VkProjectionMatrix);
+  Svk_MatSetIdentity(VkViewMatrix);
 }
 
 // prepares Vulkan drawing context
@@ -536,11 +540,11 @@ void CGfxLibrary::CreateRenderPass()
   depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
   VkAttachmentReference colorAttachmentRef = {};
-  colorAttachmentRef.attachment = 0;
+  colorAttachmentRef.attachment = SVK_RENDERPASS_COLOR_ATTACHMENT_INDEX;
   colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
   VkAttachmentReference depthAttachmentRef = {};
-  depthAttachmentRef.attachment = 1;
+  depthAttachmentRef.attachment = SVK_RENDERPASS_DEPTH_ATTACHMENT_INDEX;
   depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
   VkSubpassDescription subpass = {};
@@ -665,8 +669,8 @@ void CGfxLibrary::StartFrame()
   // do NOT reset full state
   //gl_VkGlobalState = SVK_PLS_DEFAULT_FLAGS;
   // reset only flags that can't be reset in Gfx_wrapper_Vulkan
-  gl_VkGlobalState &= ~SVK_PLS_DEPTH_BOUNDS_BOOL;
-  gl_VkGlobalState &= ~SVK_PLS_DEPTH_BIAS_BOOL;
+  //gl_VkGlobalState &= ~SVK_PLS_DEPTH_BOUNDS_BOOL;
+  //gl_VkGlobalState &= ~SVK_PLS_DEPTH_BIAS_BOOL;
 
   // reset previous pipeline
   gl_VkPreviousPipeline = nullptr;
@@ -692,6 +696,8 @@ void CGfxLibrary::StartFrame()
   renderPassInfo.pClearValues = clearValues;
 
   vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+  gl_VkCmdIsRecording = true;
 
   // set viewport and scissor dynamically
   if (gl_VkCurrentViewport.width != 0 && gl_VkCurrentViewport.height != 0)
@@ -753,6 +759,8 @@ void CGfxLibrary::EndFrame()
     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
     VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
     0, 0, NULL, 0, NULL, 1, &barrier);*/
+
+  gl_VkCmdIsRecording = false;
 
   r = vkEndCommandBuffer(cmd);
   VK_CHECKERROR(r);

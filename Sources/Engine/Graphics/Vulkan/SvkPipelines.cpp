@@ -16,9 +16,12 @@ SvkPipelineState &CGfxLibrary::GetPipeline(SvkPipelineStateFlags flags)
     }
   }
 
+  VkShaderModule vert = gl_VkShaderModuleVert;
+  VkShaderModule frag = (flags & SVK_PLS_ALPHA_ENABLE_BOOL) ? gl_VkShaderModuleFragAlpha : gl_VkShaderModuleFrag;
+
   // if not found, create new pipeline with specified flags
   // TODO: other shaders?
-  return CreatePipeline(flags, *gl_VkDefaultVertexLayout, gl_VkShaderModuleVert, gl_VkShaderModuleFrag);
+  return CreatePipeline(flags, *gl_VkDefaultVertexLayout, vert, frag);
 }
 
 void CGfxLibrary::DestroyPipelines()

@@ -12,7 +12,7 @@
 
 #define gl_VkMaxCmdBufferCount                  2
 
-#define SVK_PREFERRED_SWAPCHAIN_SIZE            2
+#define SVK_PREFERRED_SWAPCHAIN_SIZE            3
 
 #define SVK_DESC_MAX_SET_COUNT                  8192
 #define SVK_DESC_MAX_SAMPLER_COUNT              8192
@@ -24,6 +24,9 @@
 #define SVK_DYNAMIC_INDEX_BUFFER_START_SIZE	    (1024 * 1024)
 #define SVK_DYNAMIC_UNIFORM_BUFFER_START_SIZE   (256 * 1024)
 #define SVK_DYNAMIC_UNIFORM_MAX_ALLOC_SIZE      1024
+
+#define SVK_RENDERPASS_COLOR_ATTACHMENT_INDEX   0
+#define SVK_RENDERPASS_DEPTH_ATTACHMENT_INDEX   1
 
 struct SvkTextureObject
 {

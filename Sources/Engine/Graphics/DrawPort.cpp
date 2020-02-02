@@ -697,9 +697,18 @@ void CDrawPort::DrawLine3D( FLOAT3D v0, FLOAT3D v1, COLOR col) const
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
+    /*gfxPolygonMode(GfxPolyMode::GFX_LINE);
+    GFXVertex4 verts[2];
+    verts[0].x = v0(1); verts[0].y = v0(2); verts[0].z = v0(3);
+    verts[1].x = v1(1); verts[1].y = v1(2); verts[1].z = v1(3);
+    GFXColor colors[] = { GFXColor(col), GFXColor(col) };
+    INDEX indices[] = { 0, 1 };
 
-    // TODO: Vulkan
-
+    // TODO: set primitive topology to lines
+    gfxSetVertexArray(verts, 2);
+    gfxSetColorArray(colors);
+    gfxDrawElements(2, indices);
+    // TODO: set primitive topology back to triangles*/
   }
 #endif // SE1_VULKAN
 }
@@ -858,9 +867,11 @@ void CDrawPort::Fill( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, COLOR col
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
+    UBYTE ubR, ubG, ubB;
+    ColorToRGB(col, ubR, ubG, ubB);
+    float rgba[] = { ubR / 255.0f, ubG / 255.0f, ubB / 255.0f, 1.0f };
 
-    // TODO: Vulkan
-
+    _pGfx->ClearColor(pixI, pixJ, pixWidth, pixHeight, rgba);
   }
 #endif // SE1_VULKAN
 }
@@ -902,7 +913,11 @@ void CDrawPort::Fill( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight,
   const FLOAT fJ0 = pixJ;  const FLOAT fJ1 = pixJ +pixHeight;
 
   // render rectangle
-  if( eAPI==GAT_OGL) {
+  if( eAPI==GAT_OGL
+#ifdef SE1_VULKAN
+    || eAPI == GAT_VK
+#endif // SE1_VULKAN
+    ) {
     // thru OpenGL
     gfxResetArrays();
     GFXVertex   *pvtx = _avtxCommon.Push(4);
@@ -932,14 +947,6 @@ void CDrawPort::Fill( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight,
     D3D_CHECKERROR(hr);
   }
 #endif // SE1_D3D
-#ifdef SE1_VULKAN
-  else if (eAPI == GAT_VK)
-  {
-
-    // TODO: Vulkan
-
-  }
-#endif // SE1_VULKAN
 }
 
 
@@ -989,9 +996,11 @@ void CDrawPort::Fill( COLOR col) const
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
+    UBYTE ubR, ubG, ubB;
+    ColorToRGB(col, ubR, ubG, ubB);
+    float rgba[] = { ubR / 255.0f, ubG / 255.0f, ubB / 255.0f, 1.0f };
 
-    // TODO: Vulkan
-
+    _pGfx->ClearColor(rgba);
   }
 #endif // SE1_VULKAN
 }
@@ -1042,7 +1051,7 @@ void CDrawPort::FillZBuffer( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, FL
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-    // TODO
+    _pGfx->ClearDepth(pixI, pixJ, pixWidth, pixHeight, zval);
   }
 #endif // SE1_VULKAN
 }
@@ -1083,9 +1092,7 @@ void CDrawPort::FillZBuffer( FLOAT zval) const
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-
-    // TODO: Vulkan
-
+    _pGfx->ClearDepth(zval);
   }
 #endif // SE1_VULKAN
 }
