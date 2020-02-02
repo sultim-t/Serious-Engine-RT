@@ -313,7 +313,7 @@ void CDrawPort::SetOrtho(void) const
    || (d3d_iFinish==3 && _pGfx->gl_eCurrentAPI==GAT_D3D)
 #endif // SE1_D3D
 #ifdef SE1_VULKAN
-    // TODO
+    // TODO: Vulkan: draw port set ortho: wait all cmds to finish?
 #endif // SE1_VULKAN
 
    ) gfxFinish();
@@ -498,9 +498,7 @@ void CDrawPort::DrawPoint( PIX pixI, PIX pixJ, COLOR col, PIX pixRadius/*=1*/) c
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-
-    // TODO: Vulkan
-
+    // TODO: Vulkan: draw point 2d
   }
 #endif // SE1_VULKAN
 }
@@ -558,9 +556,7 @@ void CDrawPort::DrawPoint3D( FLOAT3D v, COLOR col, FLOAT fRadius/*=1.0f*/) const
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-
-    // TODO: Vulkan
-
+    // TODO: Vulkan: draw point 3d
   }
 #endif // SE1_VULKAN
 }
@@ -637,9 +633,7 @@ void CDrawPort::DrawLine( PIX pixI0, PIX pixJ0, PIX pixI1, PIX pixJ1, COLOR col,
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-
-    // TODO: Vulkan
-
+    // TODO: Vulkan: draw line
   }
 #endif // SE1_VULKAN
   // revert to old filtering
@@ -704,11 +698,11 @@ void CDrawPort::DrawLine3D( FLOAT3D v0, FLOAT3D v1, COLOR col) const
     GFXColor colors[] = { GFXColor(col), GFXColor(col) };
     INDEX indices[] = { 0, 1 };
 
-    // TODO: set primitive topology to lines
+    // TODO: Vulkan: set primitive topology to lines
     gfxSetVertexArray(verts, 2);
     gfxSetColorArray(colors);
     gfxDrawElements(2, indices);
-    // TODO: set primitive topology back to triangles*/
+    // TODO: Vulkan: set primitive topology back to triangles*/
   }
 #endif // SE1_VULKAN
 }
@@ -792,9 +786,7 @@ void CDrawPort::DrawBorder( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, COL
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-
-    // TODO: Vulkan
-
+    // TODO: Vulkan: draw border
   }
 #endif // SE1_VULKAN
   // revert to old filtering
@@ -1199,7 +1191,7 @@ void CDrawPort::GrabScreen( class CImageInfo &iiGrabbedImage, INDEX iGrabZBuffer
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-    // TODO: Vulkan low prio
+    // TODO: Vulkan: screen grabbing
     CPrintF("Screen grabbing is not implemented for Vulkan.\n");
   }
 #endif // SE1_VULKAN

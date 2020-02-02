@@ -201,9 +201,7 @@ static void UpdateDepthPointsVisibility( const CDrawPort *pdp, const INDEX iMirr
 #ifdef SE1_VULKAN
   if (eAPI == GAT_VK)
   {
-
-    // TODO: Vulkan
-
+    // TODO: Vulkan: reading from depth buffer for flares
   }
 #endif // SE1_VULKAN
 }

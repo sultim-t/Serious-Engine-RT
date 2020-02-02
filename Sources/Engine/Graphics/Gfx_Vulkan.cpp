@@ -319,8 +319,8 @@ void CGfxLibrary::InitContext_Vulkan()
   gl_ctMaxStreams = 16;
   gl_ctTextureUnits = 4;
   gl_ctRealTextureUnits = 4;
-  gl_fMaxTextureLODBias = 0.0f;
-  gl_iMaxTextureAnisotropy = 16;
+  gl_fMaxTextureLODBias = gl_VkPhProperties.limits.maxSamplerLodBias;
+  gl_iMaxTextureAnisotropy = gl_VkPhProperties.limits.maxSamplerAnisotropy;
   gl_iTessellationLevel = 0;
   gl_iMaxTessellationLevel = 0;
   GFX_ctVertices = 0;
@@ -334,7 +334,7 @@ void CGfxLibrary::InitContext_Vulkan()
   gl_ulFlags |= GLF_VSYNC;
   gl_ulFlags &= ~GLF_TEXTURECOMPRESSION;
 
-  // TODO
+  // TODO: Vulkan: init context
 
   // mark pretouching and probing
   extern BOOL _bNeedPretouch;
@@ -629,7 +629,7 @@ void CGfxLibrary::AcquireNextImage()
 
   if (r == VK_ERROR_OUT_OF_DATE_KHR)
   {
-    // TODO: recreate swapchain
+    // TODO: Vulkan: recreate swapchain
   }
   else if (r != VK_SUCCESS && r != VK_SUBOPTIMAL_KHR)
   {

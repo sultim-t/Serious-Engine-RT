@@ -147,7 +147,7 @@ void CGfxLibrary::RecreateSwapchain(uint32_t newWidth, uint32_t newHeight)
     return;
   }
 
-  // TODO
+  // TODO: Vulkan: recreate swapchain
 
   gl_VkSwapChainExtent.width = newWidth;
   gl_VkSwapChainExtent.height = newHeight;

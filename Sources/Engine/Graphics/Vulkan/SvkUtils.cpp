@@ -371,7 +371,7 @@ BOOL CGfxLibrary::PickPhysicalDevice()
       VkFormat depthFormats[3] = { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT };
       gl_VkSurfDepthFormat = FindSupportedFormat(depthFormats, 3, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
-      // TODO: if not found
+      // TODO: Vulkan: if required format is not found
 
       return TRUE;
     }

@@ -260,7 +260,7 @@ extern void UpdateLODBias( const FLOAT fLODBias)
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-    // TODO
+    // TODO: Vulkan: texture lod
   }
 #endif // SE1_VULKAN
 

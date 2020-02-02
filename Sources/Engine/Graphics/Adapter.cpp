@@ -166,7 +166,7 @@ void CGfxLibrary::InitAPIs(void)
   VkPhysicalDevice physDevices[8];
   vkEnumeratePhysicalDevices(tempVkInstance, &ctMaxPhysDevices, physDevices);
 
-  // TODO: add only suitable devices, i.e. with:
+  // TODO: Vulkan: add only suitable devices, i.e. with:
   // * required formats
   // * queue family indices
   // * present modes

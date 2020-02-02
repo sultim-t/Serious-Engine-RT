@@ -22,7 +22,7 @@ void CGfxLibrary::CreateDescriptorSetLayouts()
   VkDescriptorSetLayoutBinding bindings[2] = { uniformBinding, samplerBinding };
   VkDescriptorSetLayoutCreateInfo layoutInfo = {};
   layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  // TODO: textures
+  // TODO: Vulkan: textures
   layoutInfo.bindingCount = 1;
   layoutInfo.pBindings = bindings;
 

@@ -281,6 +281,7 @@ static void svk_DepthRange(FLOAT fMin, FLOAT fMax)
 
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
+  // TODO: Vulkan: depth bounds
   //_pGfx->GetPipelineState() |= SVK_PLS_DEPTH_BOUNDS_BOOL;
   //vkCmdSetDepthBounds(_pGfx->GetCurrentCmdBuffer(), fMin, fMax);
 
