@@ -194,6 +194,7 @@ void CGfxLibrary::EndDriver_Vulkan(void)
   DestroyDescriptorSetLayouts();
   DestroyDescriptorPools();
 
+  DestroySamplers();
   DestroyPipelines();
   DestroyVertexLayouts();
   DestroyShaderModules();
@@ -247,8 +248,9 @@ void CGfxLibrary::Reset_Vulkan()
   gl_VkShaderModuleFragAlpha = VK_NULL_HANDLE;
   gl_VkPreviousPipeline = nullptr;
 
-  // reset to default
+  // reset states to default
   gl_VkGlobalState = SVK_PLS_DEFAULT_FLAGS;
+  gl_VkGlobalSamplerState = 0;
 
   gl_VkPhysDevice = VK_NULL_HANDLE;
   gl_VkPhMemoryProperties = {};
@@ -303,6 +305,8 @@ void CGfxLibrary::Reset_Vulkan()
 
   Svk_MatSetIdentity(VkProjectionMatrix);
   Svk_MatSetIdentity(VkViewMatrix);
+
+  GFX_iActiveTexUnit = 0;
 }
 
 // prepares Vulkan drawing context
@@ -494,11 +498,14 @@ BOOL CGfxLibrary::CreateDevice()
     qinfo.pQueuePriorities = priorities;
   }
 
+  VkPhysicalDeviceFeatures features = {};
+  features.samplerAnisotropy = VK_TRUE;
+
   VkDeviceCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
   createInfo.queueCreateInfoCount = (uint32_t)queueInfos.Count();
   createInfo.pQueueCreateInfos = &queueInfos[0];
-  createInfo.pEnabledFeatures = &gl_VkPhFeatures;
+  createInfo.pEnabledFeatures = &features;
   createInfo.enabledExtensionCount = (uint32_t)gl_VkPhysDeviceExtensions.Count();
   createInfo.ppEnabledExtensionNames = &gl_VkPhysDeviceExtensions[0];
   createInfo.enabledLayerCount = (uint32_t)gl_VkLayers.Count();

@@ -317,6 +317,7 @@ copy Release\$(TargetName).lib $(SolutionDir)..\Bin\ &gt;nul</Command>
     <ClCompile Include="Base\Updateable.cpp" />
     <ClCompile Include="GameAgent\GameAgent.cpp" />
     <ClCompile Include="Graphics\Gfx_Vulkan.cpp" />
+    <ClCompile Include="Graphics\Gfx_Vulkan_Textures.cpp" />
     <ClCompile Include="Graphics\Gfx_wrapper_Vulkan.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -757,6 +758,7 @@ copy Release\$(TargetName).lib $(SolutionDir)..\Bin\ &gt;nul</Command>
     <ClInclude Include="GameAgent\GameAgent.h" />
     <ClInclude Include="GameAgent\MSLegacy.h" />
     <ClInclude Include="Graphics\Vulkan\SvkPipelineStates.h" />
+    <ClInclude Include="Graphics\Vulkan\SvkSamplerStates.h" />
     <ClInclude Include="Graphics\Vulkan\VulkanInclude.h" />
     <ClInclude Include="Graphics\Vulkan\SvkVertex.h" />
     <ClInclude Include="Math\AABBox.h" />

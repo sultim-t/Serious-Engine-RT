@@ -93,7 +93,7 @@ SvkPipelineState &CGfxLibrary::CreatePipeline(
   case SVK_PLS_POLYGON_MODE_FILL:   rasterizer.polygonMode = VK_POLYGON_MODE_FILL;  break;
   case SVK_PLS_POLYGON_MODE_LINE:   rasterizer.polygonMode = VK_POLYGON_MODE_LINE;  break;
   case SVK_PLS_POLYGON_MODE_POINT:  rasterizer.polygonMode = VK_POLYGON_MODE_POINT; break;
-  default: ASSERTALWAYS("Incorrect flag"); break;
+  default: ASSERTALWAYS("Vulkan: incorrect pipeline state flag"); break;
   }
 
   switch (flags & SVK_PLS_CULL_MODE_BITS)
@@ -101,14 +101,14 @@ SvkPipelineState &CGfxLibrary::CreatePipeline(
   case SVK_PLS_CULL_MODE_BACK:      rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;  break;
   case SVK_PLS_CULL_MODE_FRONT:     rasterizer.cullMode = VK_CULL_MODE_FRONT_BIT; break;
   case SVK_PLS_CULL_MODE_NONE:      rasterizer.cullMode = VK_CULL_MODE_NONE;      break;
-  default: ASSERTALWAYS("Incorrect flag"); break;
+  default: ASSERTALWAYS("Vulkan: incorrect pipeline state flag"); break;
   }
 
   switch (flags & SVK_PLS_FRONT_FACE_BITS)
   {
   case SVK_PLS_FRONT_FACE_COUNTER_CLOCKWISE:  rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE; break;
   case SVK_PLS_FRONT_FACE_CLOCKWISE:          rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;         break;
-  default: ASSERTALWAYS("Incorrect flag"); break;
+  default: ASSERTALWAYS("Vulkan: incorrect pipeline state flag"); break;
   }
 
   VkPipelineMultisampleStateCreateInfo multisampling = {};
@@ -147,7 +147,7 @@ SvkPipelineState &CGfxLibrary::CreatePipeline(
   case SVK_PLS_DEPTH_COMPARE_OP_NOT_EQUAL:        depthStencil.depthCompareOp = VK_COMPARE_OP_NOT_EQUAL;        break;
   case SVK_PLS_DEPTH_COMPARE_OP_GREATER_OR_EQUAL: depthStencil.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL; break;
   case SVK_PLS_DEPTH_COMPARE_OP_ALWAYS:           depthStencil.depthCompareOp = VK_COMPARE_OP_ALWAYS;           break;
-  default: ASSERTALWAYS("Incorrect flag"); break;
+  default: ASSERTALWAYS("Vulkan: incorrect pipeline state flag"); break;
   }
 
   VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
@@ -172,7 +172,7 @@ SvkPipelineState &CGfxLibrary::CreatePipeline(
   case SVK_PLS_SRC_BLEND_FACTOR_ONE_MINUS_DST_COLOR:  srcFactor = VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;  break;
   case SVK_PLS_SRC_BLEND_FACTOR_SRC_ALPHA:            srcFactor = VK_BLEND_FACTOR_SRC_ALPHA;            break;
   case SVK_PLS_SRC_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA:  srcFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;  break;
-  default: ASSERTALWAYS("Incorrect flag"); break;
+  default: ASSERTALWAYS("Vulkan: incorrect pipeline state flag"); break;
   }
 
   switch (flags & SVK_PLS_DST_BLEND_FACTOR_BITS)
@@ -185,7 +185,7 @@ SvkPipelineState &CGfxLibrary::CreatePipeline(
   case SVK_PLS_DST_BLEND_FACTOR_ONE_MINUS_DST_COLOR:  dstFactor = VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;  break;
   case SVK_PLS_DST_BLEND_FACTOR_SRC_ALPHA:            dstFactor = VK_BLEND_FACTOR_SRC_ALPHA;            break;
   case SVK_PLS_DST_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA:  dstFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;  break;
-  default: ASSERTALWAYS("Incorrect flag"); break;
+  default: ASSERTALWAYS("Vulkan: incorrect pipeline state flag"); break;
   }
 
   switch (flags & SVK_PLS_BLEND_OP_BITS)
@@ -195,7 +195,7 @@ SvkPipelineState &CGfxLibrary::CreatePipeline(
   case SVK_PLS_BLEND_OP_REVERSE_SUBTRACT:             blendOp = VK_BLEND_OP_REVERSE_SUBTRACT; break;
   case SVK_PLS_BLEND_OP_MIN:                          blendOp = VK_BLEND_OP_MIN;              break;
   case SVK_PLS_BLEND_OP_MAX:                          blendOp = VK_BLEND_OP_MAX;              break;
-  default: ASSERTALWAYS("Incorrect flag"); break;
+  default: ASSERTALWAYS("Vulkan: incorrect pipeline state flag"); break;
   }
 
   colorBlendAttachment.srcColorBlendFactor  = colorBlendAttachment.srcAlphaBlendFactor  = srcFactor;

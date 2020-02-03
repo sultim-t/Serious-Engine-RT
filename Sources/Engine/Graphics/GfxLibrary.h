@@ -194,6 +194,13 @@ public:
   // dynamic buffers to delete
   CStaticStackArray<SvkDBufferToDelete>   gl_VkDynamicToDelete[gl_VkMaxCmdBufferCount];
 
+  SvkSamplerFlags                         gl_VkGlobalSamplerState;
+  CStaticStackArray<SvkSampler>           gl_VkSamplers;
+  // all loaded textures
+  CStaticStackArray<SvkTextureObject>     gl_VkTextures;
+  // pointers to currently active textures
+  SvkActivatableTexture                   gl_VkActiveTextures[GFX_MAXTEXUNITS];
+
   SvkPipelineStateFlags                   gl_VkGlobalState;
   SvkPipelineState                        *gl_VkPreviousPipeline;
   CStaticStackArray<SvkPipelineState>     gl_VkPipelines;
@@ -374,6 +381,10 @@ private:
   // destroy all dynamic buffers data, including unused
   void DestroyDynamicBuffers();
 
+  VkSampler GetSampler(SvkSamplerFlags flags);
+  VkSampler CreateSampler(SvkSamplerFlags flags);
+  void DestroySamplers();
+
   void AcquireNextImage();
   void StartFrame();
   void EndFrame();
@@ -402,6 +413,8 @@ public:
   // Get current started cmd buffer to write in
   VkCommandBuffer GetCurrentCmdBuffer();
   void DrawTriangles(uint32_t indexCount, const uint32_t *indices);
+
+  void SetTexture(uint32_t textureUnit, uint32_t textureId, SvkSamplerFlags samplerFlags);
 
   void ClearColor(int32_t x, int32_t y, uint32_t width, uint32_t height, float *rgba);
   void ClearDepth(int32_t x, int32_t y, uint32_t width, uint32_t height, float depth);

@@ -8,6 +8,7 @@
 #include <vulkan/vulkan.h>
 #include <Engine/Graphics/Vulkan/SvkVertex.h>
 #include <Engine/Graphics/Vulkan/SvkPipelineStates.h>
+#include <Engine/Graphics/Vulkan/SvkSamplerStates.h>
 #include <Engine/Templates/StaticArray.h>
 
 #define gl_VkMaxCmdBufferCount                  2
@@ -27,6 +28,8 @@
 
 #define SVK_RENDERPASS_COLOR_ATTACHMENT_INDEX   0
 #define SVK_RENDERPASS_DEPTH_ATTACHMENT_INDEX   1
+
+#define SVK_SAMPLER_LOD_BIAS                    (0.0f)
 
 struct SvkTextureObject
 {
@@ -72,6 +75,18 @@ struct SvkVertexLayout
 {
   CStaticArray<VkVertexInputBindingDescription>    svl_Bindings;
   CStaticArray<VkVertexInputAttributeDescription>  svl_Attributes;
+};
+
+struct SvkSampler
+{
+  SvkSamplerFlags   sv_Flags;
+  VkSampler         sv_Sampler;
+};
+
+struct SvkActivatableTexture
+{
+  uint32_t  sat_TextureID;
+  bool      sat_IsActivated;
 };
 
 void Svk_MatCopy(float *dest, const float *src);

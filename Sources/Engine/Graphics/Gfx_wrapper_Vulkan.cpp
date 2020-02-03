@@ -10,23 +10,7 @@ static void svk_EnableTexture(void)
 {
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  //BOOL bRes;
-  //bRes = pglIsEnabled(GL_TEXTURE_2D);
-  //VK_CHECKERROR1;
-  //ASSERT(!bRes == !GFX_abTexture[GFX_iActiveTexUnit]);
-#endif
-
-  // cached?
-  if (GFX_abTexture[GFX_iActiveTexUnit] && gap_bOptimizeStateChanges) return;
   GFX_abTexture[GFX_iActiveTexUnit] = TRUE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  //pglEnable(GL_TEXTURE_2D);
-  VK_CHECKERROR1;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
 
 
@@ -35,24 +19,7 @@ static void svk_DisableTexture(void)
 {
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  //BOOL bRes;
-  //bRes = pglIsEnabled(GL_TEXTURE_2D);
-  //VK_CHECKERROR1;
-  //ASSERT(!bRes == !GFX_abTexture[GFX_iActiveTexUnit]);
-#endif
-
-  // cached?
-  if (!GFX_abTexture[GFX_iActiveTexUnit] && gap_bOptimizeStateChanges) return;
   GFX_abTexture[GFX_iActiveTexUnit] = FALSE;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  //pglDisable(GL_TEXTURE_2D);
-  //pglDisableClientState(GL_TEXTURE_COORD_ARRAY);
-  VK_CHECKERROR1;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
 
 
@@ -437,57 +404,14 @@ static void svk_PolygonMode(GfxPolyMode ePolyMode)
 // TEXTURE MANAGEMENT
 
 
-// set texture wrapping mode
+// set texture custom wrapping mode, that can differ from original texture's wrapping
 static void svk_SetTextureWrapping(enum GfxWrap eWrapU, enum GfxWrap eWrapV)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG
-  //// check texture unit consistency
-  //GLint gliRet;
-  //pglGetIntegerv(GL_ACTIVE_TEXTURE_ARB, &gliRet);
-  //ASSERT(GFX_iActiveTexUnit == (gliRet - GL_TEXTURE0_ARB));
-  //pglGetIntegerv(GL_CLIENT_ACTIVE_TEXTURE_ARB, &gliRet);
-  //ASSERT(GFX_iActiveTexUnit == (gliRet - GL_TEXTURE0_ARB));
-#endif
 
+  // just set, it will be processed when texture will be set
   _tpGlobal[GFX_iActiveTexUnit].tp_eWrapU = eWrapU;
   _tpGlobal[GFX_iActiveTexUnit].tp_eWrapV = eWrapV;
-}
-
-
-
-// set texture modulation mode
-static void svk_SetTextureModulation(INDEX iScale)
-{
-  // check consistency
-  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-#ifndef NDEBUG                 
-  //// check current modulation
-  //GLint iRet;
-  //pglGetTexEnviv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &iRet);
-  //ASSERT((GFX_iTexModulation[GFX_iActiveTexUnit] == 1 && iRet == GL_MODULATE)
-  //  || (GFX_iTexModulation[GFX_iActiveTexUnit] == 2 && iRet == GL_COMBINE_EXT));
-  //VK_CHECKERROR1;
-#endif
-
-  // cached?
-  ASSERT(iScale == 1 || iScale == 2);
-  if (GFX_iTexModulation[GFX_iActiveTexUnit] == iScale) return;
-  GFX_iTexModulation[GFX_iActiveTexUnit] = iScale;
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  //if (iScale == 2) {
-  //  pglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
-  //  pglTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
-  //  pglTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
-  //}
-  //else {
-  //  pglTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-  //} 
-  //VK_CHECKERROR1;
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
 
 
@@ -499,7 +423,8 @@ static void svk_GenerateTexture(ULONG& ulTexObject)
   _sfStats.StartTimer(CStatForm::STI_BINDTEXTURE);
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  // generate one dummy texture that'll be entirely replaced upon 1st upload
+  // TODO: vulkan texture handlers
+// generate one dummy texture that'll be entirely replaced upon 1st upload
   //pglGenTextures(1, (GLuint*)&ulTexObject);
   ulTexObject = 1;
   VK_CHECKERROR1;
@@ -520,6 +445,7 @@ static void svk_DeleteTexture(ULONG& ulTexObject)
   _sfStats.StartTimer(CStatForm::STI_BINDTEXTURE);
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
+  // TODO: vulkan texture handlers
   //pglDeleteTextures(1, (GLuint*)&ulTexObject);
   ulTexObject = NONE;
 
@@ -691,32 +617,38 @@ static void svk_LockArrays(void)
 static void svk_EnableDither(void)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+  GFX_bDithering = FALSE;
 }
 
 static void svk_DisableDither(void)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+  GFX_bDithering = FALSE;
 }
 
 static void svk_EnableClipping(void)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+  GFX_bClipping = FALSE;
 }
 
 static void svk_DisableClipping(void)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+  GFX_bClipping = FALSE;
 }
 
 // this is used for mirrors
 static void svk_EnableClipPlane(void)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+  GFX_bClipPlane = FALSE;
 }
 
 static void svk_DisableClipPlane(void)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+  GFX_bClipPlane = FALSE;
 }
 
 // this is used for mirrors
@@ -729,12 +661,14 @@ static void svk_ClipPlane(const DOUBLE *pdViewPlane)
 static void svk_EnableTruform(void)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+  GFX_bTruform = FALSE;
 }
 
 // used only on some old gpus
 static void svk_DisableTruform(void)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+  GFX_bTruform = FALSE;
 }
 
 static void svk_SetTextureMatrix(const FLOAT* pfMatrix/*=NULL*/)
@@ -747,6 +681,14 @@ static void svk_SetConstantColor(COLOR col)
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
 }
 
+static void svk_SetTextureModulation(INDEX iScale)
+{
+  // check consistency
+  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+
+  ASSERT(iScale == 1 || iScale == 2);
+  GFX_iTexModulation[GFX_iActiveTexUnit] = iScale;
+}
 #pragma endregion
 
 #endif // SE1_VULKAN

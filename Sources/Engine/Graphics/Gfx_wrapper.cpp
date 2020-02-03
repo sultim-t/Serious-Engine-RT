@@ -209,6 +209,13 @@ extern void  UploadTexture_D3D( LPDIRECT3DTEXTURE8 *ppd3dTexture, ULONG *pulText
                                 PIX pixSizeU, PIX pixSizeV, D3DFORMAT eInternalFormat, BOOL bDiscard);
 #endif // SE1_D3D
 
+#ifdef SE1_VULKAN
+extern SvkSamplerFlags UnpackFilter_Vulkan(INDEX iFilter);
+extern SvkSamplerFlags MimicTexParams_Vulkan(CTexParams &tpLocal);
+extern void  UploadTexture_Vulkan(SvkTextureObject *pTexture, ULONG *pulTexture,
+  PIX pixSizeU, PIX pixSizeV, VkFormat eInternalFormat, BOOL bDiscard);
+#endif
+
 // update texture LOD bias
 extern FLOAT _fCurrentLODBias = 0;  // LOD bias adjuster
 extern void UpdateLODBias( const FLOAT fLODBias)
@@ -222,6 +229,17 @@ extern void UpdateLODBias( const FLOAT fLODBias)
 #else // SE1_D3D
   ASSERT( eAPI==GAT_OGL || eAPI==GAT_NONE);
 #endif // SE1_D3D
+
+#ifdef SE1_VULKAN
+  if (eAPI == GAT_VK)
+  {
+    // TODO: Vulkan: texture lod
+    // force default lod bias
+    _fCurrentLODBias = SVK_SAMPLER_LOD_BIAS;
+    return;
+  }
+#endif // SE1_VULKAN
+
   // only if supported and needed
   if( _fCurrentLODBias==fLODBias && _pGfx->gl_fMaxTextureLODBias==0) return;
   _fCurrentLODBias = fLODBias;
@@ -257,12 +275,6 @@ extern void UpdateLODBias( const FLOAT fLODBias)
     }
   }
 #endif // SE1_D3D
-#ifdef SE1_VULKAN
-  else if (eAPI == GAT_VK)
-  {
-    // TODO: Vulkan: texture lod
-  }
-#endif // SE1_VULKAN
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -292,7 +304,8 @@ extern void gfxSetTextureFiltering( INDEX &iFilterType, INDEX &iAnisotropyDegree
   _tpGlobal[0].tp_iFilter = iFilterType;
   _tpGlobal[0].tp_iAnisotropy = iAnisotropyDegree;
 
-  // for OpenGL, that's about it
+  // for OpenGL, that's about it.
+  // for Vulkan too, it will be processed in MimicTexParams_Vulkan(..)
 #ifdef SE1_D3D
   if( _pGfx->gl_eCurrentAPI!=GAT_D3D) return;
 
@@ -418,7 +431,8 @@ extern void gfxSetTexture( ULONG &ulTexObject, CTexParams &tpLocal)
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-
+    SvkSamplerFlags samplerFlags = MimicTexParams_Vulkan(tpLocal);
+    _pGfx->SetTexture(GFX_iActiveTexUnit, ulTexObject, samplerFlags);
   }
 #endif // SE1_VULKAN
 
@@ -459,6 +473,13 @@ extern void gfxUploadTexture( ULONG *pulTexture, PIX pixWidth, PIX pixHeight, UL
     }
   } 
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  else if (eAPI == GAT_VK)
+  {
+    // TODO: Vulkan: upload textures
+    UploadTexture_Vulkan(, pulTexture, pixWidth, pixHeight, (VkFormat)ulFormat, bNoDiscard);
+  }
+#endif // SE1_VULKAN
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
 
@@ -519,6 +540,13 @@ extern SLONG gfxGetTextureSize( ULONG ulTexObject, BOOL bHasMipmaps/*=TRUE*/)
     slMipSize = d3dSurfDesc.Size;
   }
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  else if (eAPI == GAT_VK)
+  {
+    CPrintF("Vulkan: Getting loaded texture size is not available now.\n");
+    slMipSize = 0;
+  }
+#endif // SE1_VULKAN
 
   // eventually count in all the mipmaps (takes extra 33% of texture size)
   extern INDEX gap_bAllowSingleMipmap;
@@ -548,6 +576,13 @@ extern INDEX gfxGetTexturePixRatio( ULONG ulTextureObject)
 #ifdef SE1_D3D
   else if( eAPI==GAT_D3D) return GetTexturePixRatio_D3D( (LPDIRECT3DTEXTURE8)ulTextureObject);
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  else if (eAPI == GAT_VK)
+  {
+    CPrintF("Vulkan: Getting loaded texture bytes/pixex ratio is not available now.\n");
+    return 0;
+  }
+#endif // SE1_VULKAN
   else return 0;
 }
 
@@ -570,6 +605,13 @@ extern INDEX gfxGetFormatPixRatio( ULONG ulTextureFormat)
 #ifdef SE1_D3D
   else if( eAPI==GAT_D3D) return GetFormatPixRatio_D3D( (D3DFORMAT)ulTextureFormat);
 #endif // SE1_D3D
+#ifdef SE1_VULKAN
+  else if (eAPI == GAT_VK)
+  {
+    CPrintF("Vulkan: Getting format size is not available now.\n");
+    return 0;
+  }
+#endif // SE1_VULKAN
   else return 0;
 }
 

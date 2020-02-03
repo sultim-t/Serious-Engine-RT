@@ -80,15 +80,15 @@ extern void DetermineSupportedTextureFormats( GfxAPIType eAPI)
 #endif // SE1_D3D
 #ifdef SE1_VULKAN
   if (eAPI == GAT_VK) {
-    TS.ts_tfRGBA8 = VK_FORMAT_R8G8B8A8_UNORM;
-    TS.ts_tfRGB8 = VK_FORMAT_R8G8B8_UNORM;
-    // to RGB565
-    TS.ts_tfRGB5 = VK_FORMAT_R5G6B5_UNORM_PACK16;
-    TS.ts_tfRGBA4 = VK_FORMAT_R4G4B4A4_UNORM_PACK16;
-    TS.ts_tfRGB5A1 = VK_FORMAT_R5G5B5A1_UNORM_PACK16;
-    // luminance to rgba8
-    TS.ts_tfLA8 = VK_FORMAT_R8G8B8A8_UNORM;
-    TS.ts_tfL8 = VK_FORMAT_R8G8B8A8_UNORM;
+    TS.ts_tfRGBA8   = VK_FORMAT_R8G8B8A8_UNORM;
+    TS.ts_tfRGB8    = VK_FORMAT_R8G8B8_UNORM;
+    TS.ts_tfRGB5    = VK_FORMAT_R5G6B5_UNORM_PACK16;
+    TS.ts_tfRGBA4   = VK_FORMAT_R4G4B4A4_UNORM_PACK16;
+    TS.ts_tfRGB5A1  = VK_FORMAT_R5G5B5A1_UNORM_PACK16;
+    // grayscale with alpha
+    TS.ts_tfLA8     = VK_FORMAT_R8G8_UNORM;
+    // grayscale
+    TS.ts_tfL8      = VK_FORMAT_R8_UNORM;
   }
 #endif // SE1_VULKAN
 }
