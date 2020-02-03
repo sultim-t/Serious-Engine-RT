@@ -441,7 +441,7 @@ static void svk_DeleteTexture(ULONG& ulTexObject)
   _sfStats.StartTimer(CStatForm::STI_BINDTEXTURE);
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  _pGfx->DeleteTexture(ulTexObject);
+  _pGfx->AddTextureToDeletion(ulTexObject);
   ulTexObject = NONE;
 
   _sfStats.StopTimer(CStatForm::STI_BINDTEXTURE);

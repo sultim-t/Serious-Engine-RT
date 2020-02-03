@@ -480,6 +480,9 @@ extern void gfxUploadTexture( ULONG *pulTexture, PIX pixWidth, PIX pixHeight, UL
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
+    // check if no texture was bound
+    ASSERT(_vkCurrentTextureId == 0);
+
     UploadTexture_Vulkan(_vkCurrentTextureId, pulTexture, pixWidth, pixHeight, (VkFormat)ulFormat, bNoDiscard != 0);
   }
 #endif // SE1_VULKAN

@@ -18,10 +18,21 @@ void CGfxLibrary::DestroyTexturesDataStructure()
   // TODO: Vulkan: texture has table
   for (uint32_t i = 1; i < gl_VkTextures.Count(); i++)
   {
-    DeleteTexture(i);
+    gl_VkTextures[i].Destroy(gl_VkDevice, gl_VkDescriptorPool);
+  }
+
+  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
+  {
+    gl_VkTexturesToDelete[i].Clear();
   }
 
   gl_VkTextures.Clear();
+}
+
+SvkTextureObject &CGfxLibrary::GetTextureObject(uint32_t textureId)
+{
+  ASSERT(textureId < gl_VkTextures.Count());
+  return gl_VkTextures[textureId];
 }
 
 void CGfxLibrary::SetTextureParams(uint32_t textureUnit, uint32_t textureId, SvkSamplerFlags samplerFlags)
@@ -30,7 +41,7 @@ void CGfxLibrary::SetTextureParams(uint32_t textureUnit, uint32_t textureId, Svk
 
   // set new sampler
   // TODO: hash table
-  gl_VkTextures[textureId].sto_Sampler = GetSampler(samplerFlags);
+  GetTextureObject(textureId).sto_Sampler = GetSampler(samplerFlags);
 
   gl_VkActiveTextures[textureUnit].sat_IsActivated = true;
   gl_VkActiveTextures[textureUnit].sat_TextureID = textureId;
@@ -38,7 +49,13 @@ void CGfxLibrary::SetTextureParams(uint32_t textureUnit, uint32_t textureId, Svk
 
 VkDescriptorSet CGfxLibrary::GetTextureDescriptor(uint32_t textureId)
 {
-  const SvkTextureObject &sto = gl_VkTextures[textureId];
+  SvkTextureObject &sto = GetTextureObject(textureId);
+
+  // if descriptor set is usable, otherwise allocate new
+  if (!sto.IsDescSetOutdated())
+  {
+    return sto.sto_DescSet;
+  }
 
   VkDescriptorSetAllocateInfo setAllocInfo = {};
   setAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -47,7 +64,9 @@ VkDescriptorSet CGfxLibrary::GetTextureDescriptor(uint32_t textureId)
   setAllocInfo.descriptorSetCount = 1;
   setAllocInfo.pSetLayouts = &gl_VkDescSetLayoutTexture;
 
+  //VkDescriptorSet &descSet = gl_VkTextureDescSets[gl_VkCmdBufferCurrent].Push();
   VkDescriptorSet descSet;
+
   VkResult r = vkAllocateDescriptorSets(gl_VkDevice, &setAllocInfo, &descSet);
   VK_CHECKERROR(r);
 
@@ -66,7 +85,22 @@ VkDescriptorSet CGfxLibrary::GetTextureDescriptor(uint32_t textureId)
 
   vkUpdateDescriptorSets(gl_VkDevice, 1, &write, 0, nullptr);
 
+  sto.SetDescriptorSet(descSet);
+
   return descSet;
+}
+
+void CGfxLibrary::FreeDeletedTextures(uint32_t cmdBufferIndex)
+{
+  auto &toDelete = gl_VkTexturesToDelete[cmdBufferIndex];
+
+  for (INDEX i = 0; i < toDelete.Count(); i++)
+  {
+    SvkTextureObject &sto = GetTextureObject(toDelete[i]);
+    sto.Destroy(gl_VkDevice, gl_VkDescriptorPool);
+  }
+
+  toDelete.PopAll();
 }
 
 uint32_t CGfxLibrary::CreateTexture()
@@ -92,14 +126,16 @@ void CGfxLibrary::InitTexture32Bit(
 
   VkResult r;
   VkMemoryRequirements memoryReq;
-  SvkTextureObject &sto = gl_VkTextures[textureId];
+  SvkTextureObject &sto = GetTextureObject(textureId);
 
   ASSERT(mipLevelsCount > 0 && mipLevelsCount < MaxMipLevelsCount);
-  ASSERT(sto.sto_Image == VK_NULL_HANDLE);
-  ASSERT(sto.sto_ImageView == VK_NULL_HANDLE);
-  ASSERT(sto.sto_Memory == VK_NULL_HANDLE);
-  ASSERT(sto.sto_Format == VK_FORMAT_UNDEFINED);
-  ASSERT(sto.sto_Layout == VK_IMAGE_LAYOUT_UNDEFINED);
+  if (sto.sto_Image != VK_NULL_HANDLE || sto.sto_ImageView != VK_NULL_HANDLE || sto.sto_Memory != VK_NULL_HANDLE)
+  {
+    // in that case must be all null
+    ASSERT(sto.sto_Image == VK_NULL_HANDLE && sto.sto_ImageView == VK_NULL_HANDLE && sto.sto_Memory == VK_NULL_HANDLE);
+    // descriptor set will be deleted too, if exist
+    sto.Destroy(gl_VkDevice, gl_VkDescriptorPool);
+  }
 
   sto.sto_Format = format;
   sto.sto_Layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -315,28 +351,10 @@ void CGfxLibrary::InitTexture32Bit(
   VK_CHECKERROR(r);
 }
 
-void CGfxLibrary::DeleteTexture(uint32_t textureId)
+void CGfxLibrary::AddTextureToDeletion(uint32_t textureId)
 {
   ASSERT(textureId != 0);
-
-  // TODO: Vulkan: hash table for textures
-
-  uint32_t count = gl_VkTextures.Count();
-
-  if (textureId >= count)
-  {
-    // silently ignore (like OpenGL)
-    return;
-  }
-
-  SvkTextureObject &sto = gl_VkTextures[textureId];
-
-  // destroy everything except sampler, as texture object doesn't own it
-  vkDestroyImage(gl_VkDevice, sto.sto_Image, nullptr);
-  vkDestroyImageView(gl_VkDevice, sto.sto_ImageView, nullptr);
-  vkFreeMemory(gl_VkDevice, sto.sto_Memory, nullptr);
-  
-  sto.Reset();
+  gl_VkTexturesToDelete[gl_VkCmdBufferCurrent].Push() = textureId;
 }
 
 #endif

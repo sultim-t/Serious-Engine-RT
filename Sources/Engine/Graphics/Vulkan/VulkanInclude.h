@@ -20,10 +20,10 @@
 #define SVK_DESCRIPTOR_MAX_SET_COUNT            8192
 #define SVK_DESCRIPTOR_MAX_SAMPLER_COUNT        8192
 
-#define SVK_VERT_START_COUNT                    1024
-#define SVK_VERT_ALLOC_STEP                     1024
+#define SVK_VERT_START_COUNT                    4096
+#define SVK_VERT_ALLOC_STEP                     4096
 
-#define SVK_DYNAMIC_VERTEX_BUFFER_START_SIZE	  (256 * 1024)
+#define SVK_DYNAMIC_VERTEX_BUFFER_START_SIZE	  (8192 * 1024)
 #define SVK_DYNAMIC_INDEX_BUFFER_START_SIZE	    (1024 * 1024)
 #define SVK_DYNAMIC_UNIFORM_BUFFER_START_SIZE   (256 * 1024)
 #define SVK_DYNAMIC_UNIFORM_MAX_ALLOC_SIZE      1024
@@ -35,6 +35,7 @@
 
 struct SvkTextureObject
 {
+public:
   uint32_t        sto_Width;
   uint32_t        sto_Height;
   VkFormat        sto_Format;
@@ -44,6 +45,29 @@ struct SvkTextureObject
   VkSampler       sto_Sampler;
   VkImageLayout   sto_Layout;
   VkDeviceMemory  sto_Memory;
+  VkDescriptorSet sto_DescSet;
+
+private:
+  // sampler flags when desc set was created;
+  // required to determine if desc set must be recreated,
+  // as other texture object params will not be changed
+  SvkSamplerFlags sto_DescSetSamplerFlags;
+
+public:
+  void Destroy(VkDevice device, VkDescriptorPool pool)
+  {
+    // destroy everything except sampler, as texture object doesn't own it
+    if (sto_DescSet != VK_NULL_HANDLE)
+    {
+      vkFreeDescriptorSets(device, pool, 1, &sto_DescSet);
+    }
+
+    vkDestroyImage(device, sto_Image, nullptr);
+    vkDestroyImageView(device, sto_ImageView, nullptr);
+    vkFreeMemory(device, sto_Memory, nullptr);
+
+    Reset();
+  }
 
   void Reset()
   {
@@ -53,8 +77,22 @@ struct SvkTextureObject
     sto_ImageView = VK_NULL_HANDLE;
     sto_Sampler = VK_NULL_HANDLE;
     sto_Memory = VK_NULL_HANDLE;
+    sto_DescSet = VK_NULL_HANDLE;
     sto_Layout = VK_IMAGE_LAYOUT_UNDEFINED;
+    // different values so for first time set will be marked as outdated
     sto_SamplerFlags = 0;
+    sto_DescSetSamplerFlags = UINT32_MAX;
+  }
+
+  bool IsDescSetOutdated()
+  {
+    return sto_DescSetSamplerFlags != sto_SamplerFlags;
+  }
+
+  void SetDescriptorSet(const VkDescriptorSet &newDescSet)
+  {
+    sto_DescSet = newDescSet;
+    sto_DescSetSamplerFlags = sto_SamplerFlags;
   }
 };
 

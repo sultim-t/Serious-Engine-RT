@@ -199,6 +199,7 @@ public:
   CStaticStackArray<SvkSampler>           gl_VkSamplers;
   // all loaded textures
   CStaticStackArray<SvkTextureObject>     gl_VkTextures;
+  CStaticStackArray<uint32_t>             gl_VkTexturesToDelete[gl_VkMaxCmdBufferCount];
   // pointers to currently active textures
   SvkActivatableTexture                   gl_VkActiveTextures[GFX_MAXTEXUNITS];
 
@@ -389,7 +390,9 @@ private:
   void CreateTexturesDataStructure();
   void DestroyTexturesDataStructure();
 
+  SvkTextureObject &GetTextureObject(uint32_t textureId);
   VkDescriptorSet GetTextureDescriptor(uint32_t textureId);
+  void FreeDeletedTextures(uint32_t cmdBufferIndex);
 
   void AcquireNextImage();
   void StartFrame();
@@ -428,7 +431,7 @@ public:
     uint32_t textureId, VkFormat format, void *textureData,
     VkExtent2D *mipLevels, uint32_t mipLevelsCount);
   // delete texture
-  void DeleteTexture(uint32_t textureId);
+  void AddTextureToDeletion(uint32_t textureId);
 
   void ClearColor(int32_t x, int32_t y, uint32_t width, uint32_t height, float *rgba);
   void ClearDepth(int32_t x, int32_t y, uint32_t width, uint32_t height, float depth);

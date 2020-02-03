@@ -18,6 +18,10 @@ FLOAT	VkViewMatrix[16];
 
 #ifdef SE1_VULKAN
 
+// fog/haze textures
+extern ULONG _fog_ulTexture;
+extern ULONG _haze_ulTexture;
+
 extern BOOL GFX_bDepthTest;
 extern BOOL GFX_bDepthWrite;
 extern BOOL GFX_bAlphaTest;
@@ -296,6 +300,11 @@ void CGfxLibrary::Reset_Vulkan()
     gl_VkDynamicToDelete[i].sa_Count = 0;
     gl_VkDynamicToDelete[i].sa_UsedCount = 0;
     gl_VkDynamicToDelete[i].sa_ctAllocationStep = 256;
+
+    gl_VkTexturesToDelete[i].sa_Array = nullptr;
+    gl_VkTexturesToDelete[i].sa_Count = 0;
+    gl_VkTexturesToDelete[i].sa_UsedCount = 0;
+    gl_VkTexturesToDelete[i].sa_ctAllocationStep = 2048;
   }
 
   gl_VkDynamicVBGlobal.sdg_DynamicBufferMemory = VK_NULL_HANDLE;
@@ -318,27 +327,62 @@ void CGfxLibrary::Reset_Vulkan()
   }
 }
 
-// prepares Vulkan drawing context
+// prepares Vulkan drawing context, almost everything copied from OpenGL
 void CGfxLibrary::InitContext_Vulkan()
 {
   // must have context
   ASSERT(gl_pvpActive != NULL);
+  // reset engine's internal state variables
+  extern BOOL GFX_abTexture[GFX_MAXTEXUNITS];
+  for (INDEX iUnit = 0; iUnit < GFX_MAXTEXUNITS; iUnit++) {
+    GFX_abTexture[iUnit] = FALSE;
+    GFX_iTexModulation[iUnit] = 1;
+  }
+  // set default texture unit and modulation mode
+  GFX_iActiveTexUnit = 0;
+  gl_ctMaxStreams = 16;
+  extern FLOAT GFX_fLastL, GFX_fLastR, GFX_fLastT, GFX_fLastB, GFX_fLastN, GFX_fLastF;
+  GFX_fLastL = GFX_fLastR = GFX_fLastT = GFX_fLastB = GFX_fLastN = GFX_fLastF = 0;
+  GFX_bViewMatrix = TRUE;
+  GFX_bTruform = FALSE;
+  GFX_bClipping = TRUE;
+
+  // reset global state for pipeline
+  gl_VkGlobalState = SVK_PLS_DEFAULT_FLAGS;
+
+  GFX_abTexture[0] = TRUE;
+  GFX_bDithering = TRUE;
+  GFX_bBlending = FALSE;
+  GFX_bDepthTest = FALSE;
+  GFX_bAlphaTest = FALSE;
+  GFX_bClipPlane = FALSE;
+  GFX_eCullFace = GFX_NONE;
+  GFX_bFrontFace = TRUE;
+  GFX_bDepthWrite = FALSE;
+  GFX_eDepthFunc = GFX_LESS_EQUAL;
+  GFX_eBlendSrc = GFX_eBlendDst = GFX_ONE;
+  GFX_fMinDepthRange = 0.0f;
+  GFX_fMaxDepthRange = 1.0f;
+
+  // vertices array for Vulkan
+  gl_VkVerts.New(SVK_VERT_START_COUNT);
+  gl_VkVerts.SetAllocationStep(SVK_VERT_ALLOC_STEP);
+  // always true on Vulkan
+  GFX_bColorArray = TRUE;
 
   // report header
   CPrintF(TRANS("\n* Vulkan context created: *------------------------------------\n"));
   CDisplayAdapter &da = gl_gaAPI[GAT_VK].ga_adaAdapter[gl_iCurrentAdapter];
   CPrintF("  (%s, %s, %s)\n\n", da.da_strVendor, da.da_strRenderer, da.da_strVersion);
 
-  gl_ctMaxStreams = 16;
   gl_ctTextureUnits = 4;
   gl_ctRealTextureUnits = 4;
+
   gl_fMaxTextureLODBias = gl_VkPhProperties.limits.maxSamplerLodBias;
   gl_iMaxTextureAnisotropy = gl_VkPhProperties.limits.maxSamplerAnisotropy;
+
   gl_iTessellationLevel = 0;
   gl_iMaxTessellationLevel = 0;
-  GFX_ctVertices = 0;
-  gl_VkVerts.New(SVK_VERT_START_COUNT);
-  gl_VkVerts.SetAllocationStep(SVK_VERT_ALLOC_STEP);
 
   GFX_bColorArray = TRUE;
 
@@ -347,7 +391,38 @@ void CGfxLibrary::InitContext_Vulkan()
   gl_ulFlags |= GLF_VSYNC;
   gl_ulFlags &= ~GLF_TEXTURECOMPRESSION;
 
-  // TODO: Vulkan: init context
+  // setup fog and haze textures
+  extern PIX _fog_pixSizeH;
+  extern PIX _fog_pixSizeL;
+  extern PIX _haze_pixSize;
+  // create texture objects for Vulkan
+  _fog_ulTexture = CreateTexture();
+  _haze_ulTexture = CreateTexture();
+  _fog_pixSizeH = 0;
+  _fog_pixSizeL = 0;
+  _haze_pixSize = 0;
+
+  // prepare pattern texture
+  extern CTexParams _tpPattern;
+  extern ULONG _ulPatternTexture;
+  extern ULONG _ulLastUploadedPattern;
+  _ulPatternTexture = CreateTexture();
+  _ulLastUploadedPattern = 0;
+  _tpPattern.Clear();
+
+  // reset texture filtering and array locking
+  _tpGlobal[0].Clear();
+  _tpGlobal[1].Clear();
+  _tpGlobal[2].Clear();
+  _tpGlobal[3].Clear();
+  GFX_ctVertices = 0;
+  gl_dwVertexShader = NONE;
+
+  extern INDEX gap_iTextureFiltering;
+  extern INDEX gap_iTextureAnisotropy;
+  //extern FLOAT gap_fTextureLODBias;
+  gfxSetTextureFiltering(gap_iTextureFiltering, gap_iTextureAnisotropy);
+  //gfxSetTextureBiasing(gap_fTextureLODBias);
 
   // mark pretouching and probing
   extern BOOL _bNeedPretouch;
@@ -682,6 +757,8 @@ void CGfxLibrary::StartFrame()
   // set 0 offsets to dynamic buffers for current cmd buffer
   ClearCurrentDynamicOffsets(gl_VkCmdBufferCurrent);
 
+  FreeDeletedTextures(gl_VkCmdBufferCurrent);
+
   // do NOT reset full state
   //gl_VkGlobalState = SVK_PLS_DEFAULT_FLAGS;
   // reset only flags that can't be reset in Gfx_wrapper_Vulkan
@@ -868,8 +945,6 @@ void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
     if (gl_VkActiveTextures[i].sat_IsActivated)
     {
       // TODO: Vulkan: more compact structure
-      SvkTextureObject &sto = gl_VkTextures[gl_VkActiveTextures[i].sat_TextureID];
-
       // TODO: remove passing gl_VkPreviousPipeline to this func
       VkDescriptorSet textureDescSet = GetTextureDescriptor(gl_VkActiveTextures[i].sat_TextureID);
 
