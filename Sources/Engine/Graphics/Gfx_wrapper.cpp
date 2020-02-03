@@ -210,10 +210,11 @@ extern void  UploadTexture_D3D( LPDIRECT3DTEXTURE8 *ppd3dTexture, ULONG *pulText
 #endif // SE1_D3D
 
 #ifdef SE1_VULKAN
+static uint32_t _vkCurrentTextureId;
 extern SvkSamplerFlags UnpackFilter_Vulkan(INDEX iFilter);
 extern SvkSamplerFlags MimicTexParams_Vulkan(CTexParams &tpLocal);
-extern void  UploadTexture_Vulkan(SvkTextureObject *pTexture, ULONG *pulTexture,
-  PIX pixSizeU, PIX pixSizeV, VkFormat eInternalFormat, BOOL bDiscard);
+extern void UploadTexture_Vulkan(uint32_t iTexture, ULONG *pulTexture,
+  PIX pixSizeU, PIX pixSizeV, VkFormat eInternalFormat, BOOL bUseSubImage);
 #endif
 
 // update texture LOD bias
@@ -431,8 +432,11 @@ extern void gfxSetTexture( ULONG &ulTexObject, CTexParams &tpLocal)
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
+    // get sampler flags, so texture can choose its VkSampler
     SvkSamplerFlags samplerFlags = MimicTexParams_Vulkan(tpLocal);
-    _pGfx->SetTexture(GFX_iActiveTexUnit, ulTexObject, samplerFlags);
+    // save id to upload texture
+    _vkCurrentTextureId = ulTexObject;
+    _pGfx->SetTextureParams(GFX_iActiveTexUnit, ulTexObject, samplerFlags);
   }
 #endif // SE1_VULKAN
 
@@ -476,8 +480,7 @@ extern void gfxUploadTexture( ULONG *pulTexture, PIX pixWidth, PIX pixHeight, UL
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-    // TODO: Vulkan: upload textures
-    UploadTexture_Vulkan(, pulTexture, pixWidth, pixHeight, (VkFormat)ulFormat, bNoDiscard);
+    UploadTexture_Vulkan(_vkCurrentTextureId, pulTexture, pixWidth, pixHeight, (VkFormat)ulFormat, bNoDiscard != 0);
   }
 #endif // SE1_VULKAN
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
@@ -543,8 +546,8 @@ extern SLONG gfxGetTextureSize( ULONG ulTexObject, BOOL bHasMipmaps/*=TRUE*/)
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-    CPrintF("Vulkan: Getting loaded texture size is not available now.\n");
-    slMipSize = 0;
+    const SvkTextureObject &t = _pGfx->gl_VkTextures[ulTexObject];
+    slMipSize = t.sto_Width * t.sto_Height * gfxGetTexturePixRatio(ulTexObject);
   }
 #endif // SE1_VULKAN
 
@@ -579,8 +582,8 @@ extern INDEX gfxGetTexturePixRatio( ULONG ulTextureObject)
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-    CPrintF("Vulkan: Getting loaded texture bytes/pixex ratio is not available now.\n");
-    return 0;
+    // TODO (statistics): Vulkan bytes/pixels ratio for uploaded texture 
+    return 4;
   }
 #endif // SE1_VULKAN
   else return 0;
@@ -608,8 +611,8 @@ extern INDEX gfxGetFormatPixRatio( ULONG ulTextureFormat)
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-    CPrintF("Vulkan: Getting format size is not available now.\n");
-    return 0;
+    // TODO (statistics): Vulkan format size for statistics
+    return 4;
   }
 #endif // SE1_VULKAN
   else return 0;

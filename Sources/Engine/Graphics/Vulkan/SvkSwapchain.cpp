@@ -1,6 +1,8 @@
 #include "stdh.h"
 #include <Engine/Graphics/GfxLibrary.h>
 
+#ifdef SE1_VULKAN
+
 void CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
 {
   // check consistency
@@ -295,3 +297,5 @@ BOOL CGfxLibrary::CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t
 
   return TRUE;
 }
+
+#endif

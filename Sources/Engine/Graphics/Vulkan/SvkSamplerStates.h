@@ -4,6 +4,8 @@
 #pragma once
 #endif
 
+#ifdef SE1_VULKAN
+
 typedef uint32_t SvkSamplerFlags;
 
 static const SvkSamplerFlags SVK_TSS_FILTER_MIN_LINEAR      = 0 << 0;
@@ -33,4 +35,5 @@ static const SvkSamplerFlags SVK_TSS_ANISOTROPY_8           = 3 << 5;
 static const SvkSamplerFlags SVK_TSS_ANISOTROPY_16          = 4 << 5;
 static const SvkSamplerFlags SVK_TSS_ANISOTROPY_BITS        = 7 << 5;
 
+#endif
 #endif

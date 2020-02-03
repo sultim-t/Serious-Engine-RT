@@ -161,6 +161,7 @@ BOOL CGfxLibrary::InitDriver_Vulkan()
     return FALSE;
   }
 
+  CreateTexturesDataStructure();
   CreateDescriptorPools();
   CreateCmdBuffers();
   CreateSyncPrimitives();
@@ -194,6 +195,7 @@ void CGfxLibrary::EndDriver_Vulkan(void)
   DestroyDescriptorSetLayouts();
   DestroyDescriptorPools();
 
+  DestroyTexturesDataStructure();
   DestroySamplers();
   DestroyPipelines();
   DestroyVertexLayouts();
@@ -239,6 +241,7 @@ void CGfxLibrary::Reset_Vulkan()
   gl_VkCmdIsRecording = false;
 
   gl_VkDescriptorPool = VK_NULL_HANDLE;
+  gl_VkDescSetLayoutTexture = VK_NULL_HANDLE;
   gl_VkDescriptorSetLayout = VK_NULL_HANDLE;
   gl_VkPipelineLayout = VK_NULL_HANDLE;
   gl_VkPipelineCache = VK_NULL_HANDLE;
@@ -307,6 +310,12 @@ void CGfxLibrary::Reset_Vulkan()
   Svk_MatSetIdentity(VkViewMatrix);
 
   GFX_iActiveTexUnit = 0;
+
+  for (uint32_t i = 0; i < GFX_MAXTEXUNITS; i++)
+  {
+    gl_VkActiveTextures[i].sat_IsActivated = false;
+    gl_VkActiveTextures[i].sat_TextureID = 0;
+  }
 }
 
 // prepares Vulkan drawing context
@@ -847,11 +856,37 @@ void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
     gl_VkPreviousPipeline = &ps;
   }
 
-  // bind descriptor set
-  vkCmdBindDescriptorSets(
+  // bind uniform descriptor set
+  /*vkCmdBindDescriptorSets(
     cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkPipelineLayout,
     0, 1, &uniformBuffer.sdu_DescriptorSet,
-    1, &descSetOffset);
+    1, &descSetOffset);*/
+
+  // bind texture descriptors
+  for (uint32_t i = 0; i < GFX_MAXTEXUNITS; i++)
+  {
+    if (gl_VkActiveTextures[i].sat_IsActivated)
+    {
+      // TODO: Vulkan: more compact structure
+      SvkTextureObject &sto = gl_VkTextures[gl_VkActiveTextures[i].sat_TextureID];
+
+      // TODO: remove passing gl_VkPreviousPipeline to this func
+      VkDescriptorSet textureDescSet = GetTextureDescriptor(gl_VkActiveTextures[i].sat_TextureID);
+
+      /*vkCmdBindDescriptorSets(
+        cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkPipelineLayout,
+        0, 1, &textureDescSet, 0, nullptr);*/
+
+      VkDescriptorSet sets[] = { uniformBuffer.sdu_DescriptorSet, textureDescSet };
+      vkCmdBindDescriptorSets(
+        cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkPipelineLayout,
+        0, 2, sets,
+        1, &descSetOffset);
+
+      // TODO: Vulkan: remove this line for several textures
+      break;
+    }
+  }
 
   // set mesh
   vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer.sdb_Buffer, &vertexBuffer.sdb_CurrentOffset);

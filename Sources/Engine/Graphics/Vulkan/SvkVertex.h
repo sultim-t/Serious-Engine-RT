@@ -6,6 +6,8 @@
 
 #include <Engine/Graphics/Color.h>
 
+#ifdef SE1_VULKAN
+
 // Vertex structure that will be used in shaders
 struct SvkVertex
 {
@@ -105,4 +107,5 @@ struct SvkVertex
 #define SVK_VERT_TEX_LOC (3)
 
 
+#endif
 #endif

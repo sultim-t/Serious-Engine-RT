@@ -1,6 +1,8 @@
 #include "stdh.h"
 #include <Engine/Graphics/GfxLibrary.h>
 
+#ifdef SE1_VULKAN
+
 SvkPipelineStateFlags &CGfxLibrary::GetPipelineState()
 {
   return gl_VkGlobalState;
@@ -246,3 +248,5 @@ void CGfxLibrary::CreatePipelineCache()
 
   VkResult r = vkCreatePipelineCache(gl_VkDevice, &cacheInfo, nullptr, &gl_VkPipelineCache);
 }
+
+#endif

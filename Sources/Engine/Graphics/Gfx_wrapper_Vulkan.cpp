@@ -423,11 +423,7 @@ static void svk_GenerateTexture(ULONG& ulTexObject)
   _sfStats.StartTimer(CStatForm::STI_BINDTEXTURE);
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  // TODO: vulkan texture handlers
-// generate one dummy texture that'll be entirely replaced upon 1st upload
-  //pglGenTextures(1, (GLuint*)&ulTexObject);
-  ulTexObject = 1;
-  VK_CHECKERROR1;
+  ulTexObject = _pGfx->CreateTexture();
 
   _sfStats.StopTimer(CStatForm::STI_BINDTEXTURE);
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
@@ -445,8 +441,7 @@ static void svk_DeleteTexture(ULONG& ulTexObject)
   _sfStats.StartTimer(CStatForm::STI_BINDTEXTURE);
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  // TODO: vulkan texture handlers
-  //pglDeleteTextures(1, (GLuint*)&ulTexObject);
+  _pGfx->DeleteTexture(ulTexObject);
   ulTexObject = NONE;
 
   _sfStats.StopTimer(CStatForm::STI_BINDTEXTURE);

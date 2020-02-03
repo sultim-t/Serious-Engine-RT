@@ -1,6 +1,8 @@
 #include "StdH.h"
 #include <Engine/Graphics/GfxLibrary.h>
 
+#ifdef SE1_VULKAN
+
 void CGfxLibrary::InitDynamicBuffers()
 {
 #ifndef NDEBUG
@@ -351,3 +353,5 @@ void CGfxLibrary::DestroyDynamicBuffers()
   gl_VkDynamicIBGlobal.sdg_CurrentDynamicBufferSize = 0;
   gl_VkDynamicUBGlobal.sdg_CurrentDynamicBufferSize = 0;
 }
+
+#endif

@@ -4,6 +4,8 @@
 #pragma once
 #endif
 
+#ifdef SE1_VULKAN
+
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
 #include <Engine/Graphics/Vulkan/SvkVertex.h>
@@ -15,8 +17,8 @@
 
 #define SVK_PREFERRED_SWAPCHAIN_SIZE            3
 
-#define SVK_DESC_MAX_SET_COUNT                  8192
-#define SVK_DESC_MAX_SAMPLER_COUNT              8192
+#define SVK_DESCRIPTOR_MAX_SET_COUNT            8192
+#define SVK_DESCRIPTOR_MAX_SAMPLER_COUNT        8192
 
 #define SVK_VERT_START_COUNT                    1024
 #define SVK_VERT_ALLOC_STEP                     1024
@@ -33,9 +35,27 @@
 
 struct SvkTextureObject
 {
+  uint32_t        sto_Width;
+  uint32_t        sto_Height;
+  VkFormat        sto_Format;
   VkImage         sto_Image;
   VkImageView     sto_ImageView;
+  SvkSamplerFlags sto_SamplerFlags;
   VkSampler       sto_Sampler;
+  VkImageLayout   sto_Layout;
+  VkDeviceMemory  sto_Memory;
+
+  void Reset()
+  {
+    sto_Width = sto_Height = 0;
+    sto_Format = VK_FORMAT_UNDEFINED;
+    sto_Image = VK_NULL_HANDLE;
+    sto_ImageView = VK_NULL_HANDLE;
+    sto_Sampler = VK_NULL_HANDLE;
+    sto_Memory = VK_NULL_HANDLE;
+    sto_Layout = VK_IMAGE_LAYOUT_UNDEFINED;
+    sto_SamplerFlags = 0;
+  }
 };
 
 struct SvkDynamicBuffer
@@ -95,4 +115,5 @@ void Svk_MatMultiply(float *result, const float *a, const float *b);
 void Svk_MatFrustum(float *result, float fLeft, float fRight, float fBottom, float fTop, float fNear, float fFar);
 void Svk_MatOrtho(float *result, float fLeft, float fRight, float fBottom, float fTop, float fNear, float fFar);
 
+#endif
 #endif

@@ -326,8 +326,10 @@ copy Release\$(TargetName).lib $(SolutionDir)..\Bin\ &gt;nul</Command>
     <ClCompile Include="Graphics\Vulkan\SvkDynamicBuffers.cpp" />
     <ClCompile Include="Graphics\Vulkan\SvkMatrix.cpp" />
     <ClCompile Include="Graphics\Vulkan\SvkPipelines.cpp" />
+    <ClCompile Include="Graphics\Vulkan\SvkSamplers.cpp" />
     <ClCompile Include="Graphics\Vulkan\SvkShaders.cpp" />
     <ClCompile Include="Graphics\Vulkan\SvkSwapchain.cpp" />
+    <ClCompile Include="Graphics\Vulkan\SvkTextures.cpp" />
     <ClCompile Include="Graphics\Vulkan\SvkUtils.cpp" />
     <ClCompile Include="Math\Float.cpp" />
     <ClCompile Include="Math\Functions.cpp" />
@@ -757,6 +759,7 @@ copy Release\$(TargetName).lib $(SolutionDir)..\Bin\ &gt;nul</Command>
     <ClInclude Include="Base\UpdateableRT.h" />
     <ClInclude Include="GameAgent\GameAgent.h" />
     <ClInclude Include="GameAgent\MSLegacy.h" />
+    <ClInclude Include="Graphics\Vulkan\SvkHashTable.h" />
     <ClInclude Include="Graphics\Vulkan\SvkPipelineStates.h" />
     <ClInclude Include="Graphics\Vulkan\SvkSamplerStates.h" />
     <ClInclude Include="Graphics\Vulkan\VulkanInclude.h" />

@@ -20,48 +20,25 @@ static SvkSamplerFlags UnpackFilter_Vulkan(INDEX iFilter)
   switch (iFilter)
   {
   case 110:  case 10:
-  case 111:  case 11:  flags |= SVK_TSS_FILTER_MAG_NEAREST | SVK_TSS_FILTER_MIN_NEAREST | SVK_TSS_FILTER_MIPMAP_NEAREST; break;
-  case 112:  case 12:  flags |= SVK_TSS_FILTER_MAG_NEAREST | SVK_TSS_FILTER_MIN_NEAREST | SVK_TSS_FILTER_MIPMAP_LINEAR; break;
+  case 111:  case 11:  flags |= SVK_TSS_FILTER_MAG_NEAREST | SVK_TSS_FILTER_MIN_NEAREST | SVK_TSS_MIPMAP_NEAREST; break;
+  case 112:  case 12:  flags |= SVK_TSS_FILTER_MAG_NEAREST | SVK_TSS_FILTER_MIN_NEAREST | SVK_TSS_MIPMAP_LINEAR; break;
 
   case 220:  case 20:
-  case 221:  case 21:  flags |= SVK_TSS_FILTER_MAG_LINEAR | SVK_TSS_FILTER_MIN_LINEAR | SVK_TSS_FILTER_MIPMAP_NEAREST; break;
-  case 222:  case 22:  flags |= SVK_TSS_FILTER_MAG_LINEAR | SVK_TSS_FILTER_MIN_LINEAR | SVK_TSS_FILTER_MIPMAP_LINEAR; break;
+  case 221:  case 21:  flags |= SVK_TSS_FILTER_MAG_LINEAR | SVK_TSS_FILTER_MIN_LINEAR | SVK_TSS_MIPMAP_NEAREST; break;
+  case 222:  case 22:  flags |= SVK_TSS_FILTER_MAG_LINEAR | SVK_TSS_FILTER_MIN_LINEAR | SVK_TSS_MIPMAP_LINEAR; break;
 
   case 120:
-  case 121:            flags |= SVK_TSS_FILTER_MAG_NEAREST | SVK_TSS_FILTER_MIN_LINEAR | SVK_TSS_FILTER_MIPMAP_NEAREST; break;
-  case 122:            flags |= SVK_TSS_FILTER_MAG_NEAREST | SVK_TSS_FILTER_MIN_LINEAR | SVK_TSS_FILTER_MIPMAP_LINEAR; break;
+  case 121:            flags |= SVK_TSS_FILTER_MAG_NEAREST | SVK_TSS_FILTER_MIN_LINEAR | SVK_TSS_MIPMAP_NEAREST; break;
+  case 122:            flags |= SVK_TSS_FILTER_MAG_NEAREST | SVK_TSS_FILTER_MIN_LINEAR | SVK_TSS_MIPMAP_LINEAR; break;
 
   case 210:
-  case 211:            flags |= SVK_TSS_FILTER_MAG_LINEAR | SVK_TSS_FILTER_MIN_NEAREST | SVK_TSS_FILTER_MIPMAP_NEAREST; break;
-  case 212:            flags |= SVK_TSS_FILTER_MAG_LINEAR | SVK_TSS_FILTER_MIN_NEAREST | SVK_TSS_FILTER_MIPMAP_LINEAR; break;
+  case 211:            flags |= SVK_TSS_FILTER_MAG_LINEAR | SVK_TSS_FILTER_MIN_NEAREST | SVK_TSS_MIPMAP_NEAREST; break;
+  case 212:            flags |= SVK_TSS_FILTER_MAG_LINEAR | SVK_TSS_FILTER_MIN_NEAREST | SVK_TSS_MIPMAP_LINEAR; break;
   default: ASSERTALWAYS("Illegal Vulkan texture filtering mode."); break;
   }
 
   return flags;
 }
-
-/*static void UnpackFilter_Vulkan(INDEX iFilter, VkFilter &eMagFilter, VkFilter &eMinFilter, VkSamplerMipmapMode &eMipMapMode)
-{
-  switch (iFilter) 
-  {
-  case 110:  case 10:
-  case 111:  case 11:  eMagFilter = VK_FILTER_NEAREST;  eMinFilter = VK_FILTER_NEAREST; eMipMapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST; break;
-  case 112:  case 12:  eMagFilter = VK_FILTER_NEAREST;  eMinFilter = VK_FILTER_NEAREST; eMipMapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;  break;
-
-  case 220:  case 20:
-  case 221:  case 21:  eMagFilter = VK_FILTER_LINEAR;   eMinFilter = VK_FILTER_LINEAR;  eMipMapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST; break;
-  case 222:  case 22:  eMagFilter = VK_FILTER_LINEAR;   eMinFilter = VK_FILTER_LINEAR;  eMipMapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;  break;
-
-  case 120:
-  case 121:            eMagFilter = VK_FILTER_NEAREST;  eMinFilter = VK_FILTER_LINEAR;  eMipMapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST; break;
-  case 122:            eMagFilter = VK_FILTER_NEAREST;  eMinFilter = VK_FILTER_LINEAR;  eMipMapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;  break;
-
-  case 210:
-  case 211:            eMagFilter = VK_FILTER_LINEAR;   eMinFilter = VK_FILTER_NEAREST; eMipMapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST; break;
-  case 212:            eMagFilter = VK_FILTER_LINEAR;   eMinFilter = VK_FILTER_NEAREST; eMipMapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;  break;
-  default: ASSERTALWAYS("Illegal Vulkan texture filtering mode."); break;
-  }
-}*/
 
 SvkSamplerFlags MimicTexParams_Vulkan(CTexParams &tpLocal)
 {
@@ -113,6 +90,111 @@ SvkSamplerFlags MimicTexParams_Vulkan(CTexParams &tpLocal)
   return flags;
 }
 
-void UploadTexture_Vulkan(SvkTextureObject *pTexture, ULONG *pulTexture, PIX pixSizeU, PIX pixSizeV, VkFormat eInternalFormat, BOOL bDiscard)
-{
+void UploadTexture_Vulkan(uint32_t iTexture, ULONG *pulTexture, PIX pixSizeU, PIX pixSizeV, VkFormat eInternalFormat, BOOL bUseSubImage)
+{  // safeties
+  ASSERT(pulTexture != NULL);
+  ASSERT(pixSizeU > 0 && pixSizeV > 0);
+  _sfStats.StartTimer(CStatForm::STI_BINDTEXTURE);
+  _pfGfxProfile.StartTimer(CGfxProfile::PTI_TEXTUREUPLOADING);
+
+  uint32_t mipmapCount = 1;
+  VkExtent2D mipmapSizes[32];
+  // first in mipmapSizes is base texture size
+  mipmapSizes[0].width = pixSizeU;
+  mipmapSizes[0].height = pixSizeV;
+  
+  // upload each original mip-map
+  INDEX iMip = 0;
+  PIX pixOffset = 0;
+  while (pixSizeU > 0 && pixSizeV > 0)
+  {
+    // check that memory is readable
+    ASSERT(pulTexture[pixOffset + pixSizeU * pixSizeV - 1] != 0xDEADBEEF);
+    // upload mipmap as fast as possible
+    if (bUseSubImage) {
+      //pglTexSubImage2D(GL_TEXTURE_2D, iMip, 0, 0, pixSizeU, pixSizeV,
+      //  GL_RGBA, GL_UNSIGNED_BYTE, pulTexture + pixOffset);
+    }
+    else {
+      //pglTexImage2D(GL_TEXTURE_2D, iMip, eInternalFormat, pixSizeU, pixSizeV, 0,
+      //  GL_RGBA, GL_UNSIGNED_BYTE, pulTexture + pixOffset);
+    };
+    // advance to next mip-map
+    pixOffset += pixSizeU * pixSizeV;
+    pixSizeU >>= 1;
+    pixSizeV >>= 1;
+    iMip++;
+
+    if (pixSizeU > 0 && pixSizeV > 0)
+    {
+      mipmapSizes[mipmapCount].width = pixSizeU;
+      mipmapSizes[mipmapCount].height = pixSizeV;
+      mipmapCount++;
+    }
+
+    // end here if there is only one mip-map to upload
+    if (_tpCurrent->tp_bSingleMipmap) break;
+  }
+
+  // see if we need to generate and upload additional mipmaps (those under 1*N or N*1)
+  /*if (!_tpCurrent->tp_bSingleMipmap && pixSizeU != pixSizeV)
+  { // prepare variables
+    PIX pixSize = Max(pixSizeU, pixSizeV);
+    ASSERT(pixSize <= 2048);
+    ULONG *pulSrc = pulTexture + pixOffset - pixSize * 2;
+    ULONG *pulDst = _aulLastMipmaps;
+    // loop thru mipmaps
+    while (pixSizeU > 0 || pixSizeV > 0)
+    { // make next mipmap
+      if (pixSizeU == 0) pixSizeU = 1;
+      if (pixSizeV == 0) pixSizeV = 1;
+      pixSize = pixSizeU * pixSizeV;
+      __asm {
+        pxor    mm0, mm0
+        mov     esi, D[pulSrc]
+        mov     edi, D[pulDst]
+        mov     ecx, D[pixSize]
+        pixLoop:
+        movd    mm1, D[esi + 0]
+          movd    mm2, D[esi + 4]
+          punpcklbw mm1, mm0
+          punpcklbw mm2, mm0
+          paddw   mm1, mm2
+          psrlw   mm1, 1
+          packuswb mm1, mm0
+          movd    D[edi], mm1
+          add     esi, 4 * 2
+          add     edi, 4
+          dec     ecx
+          jnz     pixLoop
+          emms
+      }
+      // upload mipmap
+      if (bUseSubImage) {
+        pglTexSubImage2D(GL_TEXTURE_2D, iMip, 0, 0, pixSizeU, pixSizeV,
+          GL_RGBA, GL_UNSIGNED_BYTE, pulDst);
+      }
+      else {
+        pglTexImage2D(GL_TEXTURE_2D, iMip, eInternalFormat, pixSizeU, pixSizeV, 0,
+          GL_RGBA, GL_UNSIGNED_BYTE, pulDst);
+      } OGL_CHECKERROR;
+      // advance to next mip-map
+      pulSrc = pulDst;
+      pulDst += pixSize;
+      pixOffset += pixSize;
+      pixSizeU >>= 1;
+      pixSizeV >>= 1;
+      iMip++;
+    }
+  }*/
+
+  _pGfx->InitTexture32Bit(iTexture, eInternalFormat, pulTexture, mipmapSizes, mipmapCount);
+
+  // all done
+  _pfGfxProfile.IncrementCounter(CGfxProfile::PCI_TEXTUREUPLOADS, 1);
+  _pfGfxProfile.IncrementCounter(CGfxProfile::PCI_TEXTUREUPLOADBYTES, pixOffset * 4);
+  _sfStats.IncrementCounter(CStatForm::SCI_TEXTUREUPLOADS, 1);
+  _sfStats.IncrementCounter(CStatForm::SCI_TEXTUREUPLOADBYTES, pixOffset * 4);
+  _pfGfxProfile.StopTimer(CGfxProfile::PTI_TEXTUREUPLOADING);
+  _sfStats.StopTimer(CStatForm::STI_BINDTEXTURE);
 }

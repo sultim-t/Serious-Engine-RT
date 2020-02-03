@@ -4,6 +4,8 @@
 #pragma once
 #endif
 
+#ifdef SE1_VULKAN
+
 typedef uint32_t SvkPipelineStateFlags;
 
 static const SvkPipelineStateFlags SVK_PLS_POLYGON_MODE_FILL                        = 0 << 0;
@@ -80,4 +82,5 @@ static const SvkPipelineStateFlags SVK_PLS_DEFAULT_FLAGS =
   SVK_PLS_COLOR_WRITE_MASK_RGBA | SVK_PLS_DEPTH_COMPARE_OP_LESS |
   SVK_PLS_DEPTH_TEST_BOOL | SVK_PLS_DEPTH_WRITE_BOOL;
 
+#endif
 #endif
