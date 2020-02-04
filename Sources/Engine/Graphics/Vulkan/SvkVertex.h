@@ -63,7 +63,7 @@ struct SvkVertex
     Color[0] = r;
     Color[1] = g;
     Color[2] = b;
-    Color[2] = a;
+    Color[3] = a;
   }
 
   inline void SetColorRGBA(COLOR col)

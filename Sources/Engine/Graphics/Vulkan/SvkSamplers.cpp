@@ -26,6 +26,8 @@ VkSampler CGfxLibrary::CreateSampler(SvkSamplerFlags flags)
   VkSamplerCreateInfo samplerInfo = {};
   samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
   samplerInfo.mipLodBias = SVK_SAMPLER_LOD_BIAS;
+  samplerInfo.minLod = 0;
+  samplerInfo.maxLod = FLT_MAX;
 
   switch (flags & SVK_TSS_FILTER_MIN_BITS)
   {

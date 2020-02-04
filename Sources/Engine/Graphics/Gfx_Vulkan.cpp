@@ -21,6 +21,7 @@ FLOAT	VkViewMatrix[16];
 // fog/haze textures
 extern ULONG _fog_ulTexture;
 extern ULONG _haze_ulTexture;
+static uint32_t _no_ulTexture;
 
 extern BOOL GFX_abTexture[GFX_MAXTEXUNITS];
 
@@ -405,6 +406,11 @@ void CGfxLibrary::InitContext_Vulkan()
   _fog_pixSizeH = 0;
   _fog_pixSizeL = 0;
   _haze_pixSize = 0;
+
+  uint32_t noTexturePixels[] = { 0, 0 };
+  VkExtent2D noTextureSize = { 1, 1 };
+  _no_ulTexture = CreateTexture();
+  InitTexture32Bit(_no_ulTexture, VK_FORMAT_R8G8B8A8_UNORM, noTexturePixels, &noTextureSize, 1, false);
 
   // prepare pattern texture
   extern CTexParams _tpPattern;
@@ -943,14 +949,12 @@ void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
     gl_VkPreviousPipeline = &ps;
   }
 
-  uint32_t setCount = 1;
-  VkDescriptorSet sets[] = { uniformBuffer.sdu_DescriptorSet, 0 };
+  VkDescriptorSet sets[] = { uniformBuffer.sdu_DescriptorSet, VK_NULL_HANDLE };
 
   // bind texture descriptors
   for (uint32_t i = 0; i < GFX_MAXTEXUNITS; i++)
   {
     if (gl_VkActiveTextures[i].sat_IsActivated)
-    //if (gl_VkActiveTextures[i].sat_IsActivated)
     {
       // TODO: Vulkan: more compact structure
       // TODO: remove passing gl_VkPreviousPipeline to this func
@@ -961,7 +965,6 @@ void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
         continue;
       }
 
-      setCount = 2;
       sets[1] = textureDescSet;
 
       // TODO: Vulkan: remove this line for several textures
@@ -969,9 +972,14 @@ void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
     }
   }
 
+  if (sets[1] == VK_NULL_HANDLE)
+  {
+    sets[1] = GetTextureDescriptor(_no_ulTexture);    
+  }
+
   vkCmdBindDescriptorSets(
     cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkPipelineLayout,
-    0, setCount, sets,
+    0, 2, sets,
     1, &descSetOffset);
 
   // set mesh

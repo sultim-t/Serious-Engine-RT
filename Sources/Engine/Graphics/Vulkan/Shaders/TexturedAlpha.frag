@@ -21,5 +21,5 @@ void main()
        discard;
    }
 
-   outColor = inColor;
+   outColor = c;
 }

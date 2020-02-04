@@ -469,6 +469,8 @@ static void svk_SetVertexArray(GFXVertex4* pvtx, INDEX ctVtx)
   for (INDEX i = 0; i < ctVtx; i++)
   {
     pushed[i].SetPosition(pvtx[i].x, pvtx[i].y, pvtx[i].z);
+    pushed[i].SetColorRGBA(1.0f, 1.0f, 1.0f, 1.0f);
+    pushed[i].SetTexCoord(0.0f, 1.0f);
   }
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
