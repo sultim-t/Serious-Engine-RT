@@ -4,14 +4,8 @@
 #pragma once
 #endif
 
-#include <StdH.h>
 #include <Engine/Base/Memory.h>
 #include <Engine/Templates/StaticStackArray.cpp>
-
-INDEX SvkDefaultHash(INDEX key)
-{
-  return key;
-}
 
 template <class T>
 class SvkStaticHashTable
@@ -31,10 +25,14 @@ private:
   CStaticStackArray<SvkBucketElement>   *ht_Buckets;
   INDEX                                 ht_BucketCount;
 
+  INDEX (*hashFunction) (INDEX key);
+
 public:
   SvkStaticHashTable();
   // Bucket size must be as small as possible as linear search is applied to it
   void New(INDEX bucketCount = 128, INDEX defaultBucketSize = 32);
+  void SetHashFunction(INDEX(*func) (INDEX key));
+  bool IsAllocated();
 
   // Value will be copied to hash table
   void Add(INDEX key, const T &value);
@@ -55,6 +53,7 @@ inline SvkStaticHashTable<T>::SvkStaticHashTable()
 {
   ht_Buckets = nullptr;
   ht_BucketCount = 0;
+  hashFunction = nullptr;
 }
 
 template<class T>
@@ -72,11 +71,23 @@ inline void SvkStaticHashTable<T>::New(INDEX bucketCount, INDEX defaultBucketSiz
 }
 
 template<class T>
+inline void SvkStaticHashTable<T>::SetHashFunction(INDEX(*func)(INDEX key))
+{
+  hashFunction = func;
+}
+
+template<class T>
+inline bool SvkStaticHashTable<T>::IsAllocated()
+{
+  return ht_Buckets != nullptr;
+}
+
+template<class T>
 inline void SvkStaticHashTable<T>::Add(INDEX key, const T &value)
 {
   ASSERT(ht_Buckets != nullptr && ht_BucketCount != 0);
   
-  INDEX hash = SvkDefaultHash(key);
+  INDEX hash = hashFunction == nullptr ? key : hashFunction(key);
   INDEX bucketIndex = hash % ht_BucketCount;
 
   auto &added = ht_Buckets[bucketIndex].Push();
@@ -124,6 +135,9 @@ inline void SvkStaticHashTable<T>::Clear()
   }
 
   delete[] ht_Buckets;
+
+  ht_Buckets = nullptr;
+  ht_BucketCount = 0;
 }
 
 template<class T>
@@ -147,7 +161,7 @@ inline void SvkStaticHashTable<T>::Map(void(*func)(T &))
 template<class T>
 inline void SvkStaticHashTable<T>::FindElement(INDEX key, INDEX &outBucketIndex, INDEX &outElemIndex)
 {
-  INDEX hash = SvkDefaultHash(key);
+  INDEX hash = hashFunction == nullptr ? key : hashFunction(key);
   INDEX bucketIndex = hash % ht_BucketCount;
   auto &bucket = ht_Buckets[bucketIndex];
 

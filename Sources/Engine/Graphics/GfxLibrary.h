@@ -32,6 +32,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #ifdef SE1_VULKAN
 #include <Engine/Graphics/Vulkan/VulkanInclude.h>
+#include <Engine/Graphics/Vulkan/SvkStaticHashTable.h>
 #endif // SE1_VULKAN
 
 #include <Engine/Graphics/Color.h>
@@ -198,8 +199,11 @@ public:
   SvkSamplerFlags                         gl_VkGlobalSamplerState;
   CStaticStackArray<SvkSampler>           gl_VkSamplers;
   // all loaded textures
-  CStaticStackArray<SvkTextureObject>     gl_VkTextures;
+  SvkStaticHashTable<SvkTextureObject>    gl_VkTextures;
+  uint32_t                                gl_VkLastTextureId;
+
   CStaticStackArray<uint32_t>             gl_VkTexturesToDelete[gl_VkMaxCmdBufferCount];
+
   // pointers to currently active textures
   SvkActivatableTexture                   gl_VkActiveTextures[GFX_MAXTEXUNITS];
 
@@ -416,22 +420,28 @@ public:
   void RecreateSwapchain(uint32_t newWidth, uint32_t newHeight);
   void DestroySwapchain();
 
+
   // get current global pipeline state
   SvkPipelineStateFlags &GetPipelineState();
+
 
   // Get current started cmd buffer to write in
   VkCommandBuffer GetCurrentCmdBuffer();
   void DrawTriangles(uint32_t indexCount, const uint32_t *indices);
 
-  void SetTextureParams(uint32_t textureUnit, uint32_t textureId, SvkSamplerFlags samplerFlags);
+
+  void SetTexture(uint32_t textureUnit, uint32_t textureId, SvkSamplerFlags samplerFlags);
   // create texture handler, texture IDs starts with 1, not 0
   uint32_t CreateTexture();
-  // init texture
+  // init texture; if onlyUpdate is true, texture will not be allocated
   void InitTexture32Bit(
-    uint32_t textureId, VkFormat format, void *textureData,
-    VkExtent2D *mipLevels, uint32_t mipLevelsCount);
+    uint32_t &textureId, VkFormat format, void *textureData,
+    VkExtent2D *mipLevels, uint32_t mipLevelsCount, bool onlyUpdate);
   // delete texture
   void AddTextureToDeletion(uint32_t textureId);
+  // for statistics
+  uint32_t GetTexturePixCount(uint32_t textureId);
+
 
   void ClearColor(int32_t x, int32_t y, uint32_t width, uint32_t height, float *rgba);
   void ClearDepth(int32_t x, int32_t y, uint32_t width, uint32_t height, float depth);

@@ -22,6 +22,8 @@ FLOAT	VkViewMatrix[16];
 extern ULONG _fog_ulTexture;
 extern ULONG _haze_ulTexture;
 
+extern BOOL GFX_abTexture[GFX_MAXTEXUNITS];
+
 extern BOOL GFX_bDepthTest;
 extern BOOL GFX_bDepthWrite;
 extern BOOL GFX_bAlphaTest;
@@ -190,6 +192,8 @@ void CGfxLibrary::EndDriver_Vulkan(void)
 
   gl_VkVerts.Clear();
 
+  DestroyTexturesDataStructure();
+
   DestroySwapchain();
   DestroySyncPrimitives();
 
@@ -199,7 +203,6 @@ void CGfxLibrary::EndDriver_Vulkan(void)
   DestroyDescriptorSetLayouts();
   DestroyDescriptorPools();
 
-  DestroyTexturesDataStructure();
   DestroySamplers();
   DestroyPipelines();
   DestroyVertexLayouts();
@@ -258,6 +261,8 @@ void CGfxLibrary::Reset_Vulkan()
   // reset states to default
   gl_VkGlobalState = SVK_PLS_DEFAULT_FLAGS;
   gl_VkGlobalSamplerState = 0;
+
+  gl_VkLastTextureId = 1;
 
   gl_VkPhysDevice = VK_NULL_HANDLE;
   gl_VkPhMemoryProperties = {};
@@ -333,7 +338,6 @@ void CGfxLibrary::InitContext_Vulkan()
   // must have context
   ASSERT(gl_pvpActive != NULL);
   // reset engine's internal state variables
-  extern BOOL GFX_abTexture[GFX_MAXTEXUNITS];
   for (INDEX iUnit = 0; iUnit < GFX_MAXTEXUNITS; iUnit++) {
     GFX_abTexture[iUnit] = FALSE;
     GFX_iTexModulation[iUnit] = 1;
@@ -613,7 +617,7 @@ void CGfxLibrary::CreateRenderPass()
   VkAttachmentDescription colorAttachment = {};
   colorAttachment.format = gl_VkSurfColorFormat;
   colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-  colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
   colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -758,6 +762,12 @@ void CGfxLibrary::StartFrame()
   ClearCurrentDynamicOffsets(gl_VkCmdBufferCurrent);
 
   FreeDeletedTextures(gl_VkCmdBufferCurrent);
+
+  for (uint32_t i = 0; i < GFX_MAXTEXUNITS; i++)
+  {
+    gl_VkActiveTextures[i].sat_IsActivated = false;
+    gl_VkActiveTextures[i].sat_TextureID = 0;
+  }
 
   // do NOT reset full state
   //gl_VkGlobalState = SVK_PLS_DEFAULT_FLAGS;
@@ -933,35 +943,36 @@ void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
     gl_VkPreviousPipeline = &ps;
   }
 
-  // bind uniform descriptor set
-  /*vkCmdBindDescriptorSets(
-    cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkPipelineLayout,
-    0, 1, &uniformBuffer.sdu_DescriptorSet,
-    1, &descSetOffset);*/
+  uint32_t setCount = 1;
+  VkDescriptorSet sets[] = { uniformBuffer.sdu_DescriptorSet, 0 };
 
   // bind texture descriptors
   for (uint32_t i = 0; i < GFX_MAXTEXUNITS; i++)
   {
     if (gl_VkActiveTextures[i].sat_IsActivated)
+    //if (gl_VkActiveTextures[i].sat_IsActivated)
     {
       // TODO: Vulkan: more compact structure
       // TODO: remove passing gl_VkPreviousPipeline to this func
       VkDescriptorSet textureDescSet = GetTextureDescriptor(gl_VkActiveTextures[i].sat_TextureID);
 
-      /*vkCmdBindDescriptorSets(
-        cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkPipelineLayout,
-        0, 1, &textureDescSet, 0, nullptr);*/
+      if (textureDescSet == VK_NULL_HANDLE)
+      {
+        continue;
+      }
 
-      VkDescriptorSet sets[] = { uniformBuffer.sdu_DescriptorSet, textureDescSet };
-      vkCmdBindDescriptorSets(
-        cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkPipelineLayout,
-        0, 2, sets,
-        1, &descSetOffset);
+      setCount = 2;
+      sets[1] = textureDescSet;
 
       // TODO: Vulkan: remove this line for several textures
       break;
     }
   }
+
+  vkCmdBindDescriptorSets(
+    cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkPipelineLayout,
+    0, setCount, sets,
+    1, &descSetOffset);
 
   // set mesh
   vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer.sdb_Buffer, &vertexBuffer.sdb_CurrentOffset);

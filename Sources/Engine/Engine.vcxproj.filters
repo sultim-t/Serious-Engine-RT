@@ -1416,7 +1416,7 @@
     <ClInclude Include="Graphics\Vulkan\SvkSamplerStates.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\Vulkan\SvkHashTable.h">
+    <ClInclude Include="Graphics\Vulkan\SvkStaticHashTable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -90,7 +90,7 @@ SvkSamplerFlags MimicTexParams_Vulkan(CTexParams &tpLocal)
   return flags;
 }
 
-void UploadTexture_Vulkan(uint32_t iTexture, ULONG *pulTexture, PIX pixSizeU, PIX pixSizeV, VkFormat eInternalFormat, BOOL bUseSubImage)
+void UploadTexture_Vulkan(uint32_t *iTexture, ULONG *pulTexture, PIX pixSizeU, PIX pixSizeV, VkFormat eInternalFormat, BOOL bUseSubImage)
 {  // safeties
   ASSERT(pulTexture != NULL);
   ASSERT(pixSizeU > 0 && pixSizeV > 0);
@@ -188,7 +188,7 @@ void UploadTexture_Vulkan(uint32_t iTexture, ULONG *pulTexture, PIX pixSizeU, PI
     }
   }*/
 
-  _pGfx->InitTexture32Bit(iTexture, eInternalFormat, pulTexture, mipmapSizes, mipmapCount);
+  _pGfx->InitTexture32Bit(*iTexture, eInternalFormat, pulTexture, mipmapSizes, mipmapCount, bUseSubImage);
 
   // all done
   _pfGfxProfile.IncrementCounter(CGfxProfile::PCI_TEXTUREUPLOADS, 1);

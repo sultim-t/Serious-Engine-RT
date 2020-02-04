@@ -210,10 +210,10 @@ extern void  UploadTexture_D3D( LPDIRECT3DTEXTURE8 *ppd3dTexture, ULONG *pulText
 #endif // SE1_D3D
 
 #ifdef SE1_VULKAN
-static uint32_t _vkCurrentTextureId;
+static uint32_t *_vkCurrentTextureId = nullptr;
 extern SvkSamplerFlags UnpackFilter_Vulkan(INDEX iFilter);
 extern SvkSamplerFlags MimicTexParams_Vulkan(CTexParams &tpLocal);
-extern void UploadTexture_Vulkan(uint32_t iTexture, ULONG *pulTexture,
+extern void UploadTexture_Vulkan(uint32_t *iTexture, ULONG *pulTexture,
   PIX pixSizeU, PIX pixSizeV, VkFormat eInternalFormat, BOOL bUseSubImage);
 #endif
 
@@ -435,8 +435,8 @@ extern void gfxSetTexture( ULONG &ulTexObject, CTexParams &tpLocal)
     // get sampler flags, so texture can choose its VkSampler
     SvkSamplerFlags samplerFlags = MimicTexParams_Vulkan(tpLocal);
     // save id to upload texture
-    _vkCurrentTextureId = ulTexObject;
-    _pGfx->SetTextureParams(GFX_iActiveTexUnit, ulTexObject, samplerFlags);
+    _vkCurrentTextureId = (uint32_t*)&ulTexObject;
+    _pGfx->SetTexture(GFX_iActiveTexUnit, ulTexObject, samplerFlags);
   }
 #endif // SE1_VULKAN
 
@@ -481,9 +481,17 @@ extern void gfxUploadTexture( ULONG *pulTexture, PIX pixWidth, PIX pixHeight, UL
   else if (eAPI == GAT_VK)
   {
     // check if no texture was bound
-    ASSERT(_vkCurrentTextureId == 0);
+    ASSERT(_vkCurrentTextureId != nullptr);
 
+    const uint32_t lastTextureId = *_vkCurrentTextureId;
     UploadTexture_Vulkan(_vkCurrentTextureId, pulTexture, pixWidth, pixHeight, (VkFormat)ulFormat, bNoDiscard != 0);
+
+    /*// in case that texture has been changed, must re-set it as current
+    if (lastTextureId != *_vkCurrentTextureId)
+    {
+      ULONG cur = *_vkCurrentTextureId;
+      _vkCurrentTextureId = (uint32_t *)&ulTexObject;
+    }*/
   }
 #endif // SE1_VULKAN
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
@@ -549,8 +557,7 @@ extern SLONG gfxGetTextureSize( ULONG ulTexObject, BOOL bHasMipmaps/*=TRUE*/)
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-    const SvkTextureObject &t = _pGfx->gl_VkTextures[ulTexObject];
-    slMipSize = t.sto_Width * t.sto_Height * gfxGetTexturePixRatio(ulTexObject);
+    slMipSize = _pGfx->GetTexturePixCount(ulTexObject) * gfxGetTexturePixRatio(ulTexObject);
   }
 #endif // SE1_VULKAN
 

@@ -528,11 +528,11 @@ static void svk_SetTexCoordArray(GFXTexCoord* ptex, BOOL b4/*=FALSE*/)
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
   ASSERT(ptex != NULL);
   
-  if (!b4)
-  {
-    // ignore projective tex coords for now
-    return;
-  }
+  //if (!b4)
+  //{
+  //  // ignore projective tex coords for now
+  //  return;
+  //}
 
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
@@ -540,7 +540,9 @@ static void svk_SetTexCoordArray(GFXTexCoord* ptex, BOOL b4/*=FALSE*/)
   INDEX ctVtx = verts.Count();
   ASSERT(ctVtx > 0);
 
-  for (INDEX i = 0; i < ctVtx; i++)
+  const int inc = b4 ? 2 : 1;
+
+  for (INDEX i = 0; i < ctVtx; i += inc)
   {
     verts[i].SetTexCoord(ptex[i].u, ptex[i].v);
   }
