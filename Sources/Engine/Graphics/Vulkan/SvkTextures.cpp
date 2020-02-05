@@ -58,6 +58,7 @@ void CGfxLibrary::SetTexture(uint32_t textureUnit, uint32_t textureId, SvkSample
   ASSERT(textureUnit >= 0 && textureUnit < GFX_MAXTEXUNITS);
 
   gl_VkActiveTextures[textureUnit] = textureId;
+  GetTextureObject(textureId).sto_SamplerFlags = samplerFlags;
 }
 
 VkDescriptorSet CGfxLibrary::GetTextureDescriptor(uint32_t textureId)
@@ -72,6 +73,14 @@ VkDescriptorSet CGfxLibrary::GetTextureDescriptor(uint32_t textureId)
 
   if (sto.sto_Image == VK_NULL_HANDLE)
   {
+#ifndef NDEBUG
+    auto &list = gl_VkTexturesToDelete[gl_VkCmdBufferCurrent];
+    for (uint32_t i = 0; i < list.Count(); i++)
+    {
+      ASSERT(list[i] != textureId);
+    }
+#endif // !NDEBUG
+
     return VK_NULL_HANDLE;
   }
 

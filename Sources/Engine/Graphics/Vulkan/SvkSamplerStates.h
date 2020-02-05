@@ -33,22 +33,24 @@ static const SvkSamplerFlags SVK_TSS_FILTER_MAG_BITS        = 1 << 1;
 
 static const SvkSamplerFlags SVK_TSS_WRAP_U_REPEAT          = 0 << 2;
 static const SvkSamplerFlags SVK_TSS_WRAP_U_CLAMP           = 1 << 2;
-static const SvkSamplerFlags SVK_TSS_WRAP_U_BITS            = 1 << 2;
+static const SvkSamplerFlags SVK_TSS_WRAP_U_CLAMP_EDGE      = 2 << 2;
+static const SvkSamplerFlags SVK_TSS_WRAP_U_BITS            = 3 << 2;
 
-static const SvkSamplerFlags SVK_TSS_WRAP_V_REPEAT          = 0 << 3;
-static const SvkSamplerFlags SVK_TSS_WRAP_V_CLAMP           = 1 << 3;
-static const SvkSamplerFlags SVK_TSS_WRAP_V_BITS            = 1 << 3;
+static const SvkSamplerFlags SVK_TSS_WRAP_V_REPEAT          = 0 << 4;
+static const SvkSamplerFlags SVK_TSS_WRAP_V_CLAMP           = 1 << 4;
+static const SvkSamplerFlags SVK_TSS_WRAP_V_CLAMP_EDGE      = 2 << 4;
+static const SvkSamplerFlags SVK_TSS_WRAP_V_BITS            = 3 << 4;
 
-static const SvkSamplerFlags SVK_TSS_MIPMAP_LINEAR          = 0 << 4;
-static const SvkSamplerFlags SVK_TSS_MIPMAP_NEAREST         = 1 << 4;
-static const SvkSamplerFlags SVK_TSS_MIPMAP_BITS            = 1 << 4;
+static const SvkSamplerFlags SVK_TSS_MIPMAP_LINEAR          = 0 << 6;
+static const SvkSamplerFlags SVK_TSS_MIPMAP_NEAREST         = 1 << 6;
+static const SvkSamplerFlags SVK_TSS_MIPMAP_BITS            = 1 << 6;
 
-static const SvkSamplerFlags SVK_TSS_ANISOTROPY_0           = 0 << 5;
-static const SvkSamplerFlags SVK_TSS_ANISOTROPY_2           = 1 << 5;
-static const SvkSamplerFlags SVK_TSS_ANISOTROPY_4           = 2 << 5;
-static const SvkSamplerFlags SVK_TSS_ANISOTROPY_8           = 3 << 5;
-static const SvkSamplerFlags SVK_TSS_ANISOTROPY_16          = 4 << 5;
-static const SvkSamplerFlags SVK_TSS_ANISOTROPY_BITS        = 7 << 5;
+static const SvkSamplerFlags SVK_TSS_ANISOTROPY_16          = 0 << 7;
+static const SvkSamplerFlags SVK_TSS_ANISOTROPY_8           = 1 << 7;
+static const SvkSamplerFlags SVK_TSS_ANISOTROPY_4           = 2 << 7;
+static const SvkSamplerFlags SVK_TSS_ANISOTROPY_2           = 3 << 7;
+static const SvkSamplerFlags SVK_TSS_ANISOTROPY_0           = 4 << 7;
+static const SvkSamplerFlags SVK_TSS_ANISOTROPY_BITS        = 7 << 7;
 
 #endif
 #endif

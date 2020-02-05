@@ -206,7 +206,7 @@ void CGfxLibrary::GetVertexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer)
 
     vkUnmapMemory(gl_VkDevice, dynBufferGlobal.sdg_DynamicBufferMemory);
 
-    uint32_t newSize = dynBufferGlobal.sdg_CurrentDynamicBufferSize * 2;
+    uint32_t newSize = dynBufferGlobal.sdg_CurrentDynamicBufferSize + SVK_DYNAMIC_VERTEX_BUFFER_START_SIZE;
     InitDynamicVertexBuffers(newSize);
   }
 
@@ -229,7 +229,7 @@ void CGfxLibrary::GetIndexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer)
 
     vkUnmapMemory(gl_VkDevice, dynBufferGlobal.sdg_DynamicBufferMemory);
 
-    uint32_t newSize = dynBufferGlobal.sdg_CurrentDynamicBufferSize * 2;
+    uint32_t newSize = dynBufferGlobal.sdg_CurrentDynamicBufferSize + SVK_DYNAMIC_INDEX_BUFFER_START_SIZE;
     InitDynamicIndexBuffers(newSize);
   }
 
@@ -259,7 +259,7 @@ void CGfxLibrary::GetUniformBuffer(uint32_t size, SvkDynamicUniform &outDynUnifo
 
     vkUnmapMemory(gl_VkDevice, dynBufferGlobal.sdg_DynamicBufferMemory);
 
-    uint32_t newSize = dynBufferGlobal.sdg_CurrentDynamicBufferSize * 2;
+    uint32_t newSize = dynBufferGlobal.sdg_CurrentDynamicBufferSize + SVK_DYNAMIC_UNIFORM_BUFFER_START_SIZE;
     InitDynamicUniformBuffers(newSize);
   }
 

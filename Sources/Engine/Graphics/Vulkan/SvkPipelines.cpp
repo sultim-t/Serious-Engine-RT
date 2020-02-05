@@ -104,6 +104,12 @@ SvkPipelineState &CGfxLibrary::CreatePipeline(
   rasterizer.rasterizerDiscardEnable = VK_FALSE;
   rasterizer.lineWidth = 1.0f;
   rasterizer.depthBiasEnable = (flags & SVK_PLS_DEPTH_BIAS_BOOL) ? VK_TRUE : VK_FALSE;
+ 
+  if (rasterizer.depthBiasEnable)
+  {
+    rasterizer.depthBiasConstantFactor = -1.0f;
+    rasterizer.depthBiasSlopeFactor = -2.0f;
+  }
 
   switch (flags & SVK_PLS_POLYGON_MODE_BITS)
   {
@@ -147,8 +153,6 @@ SvkPipelineState &CGfxLibrary::CreatePipeline(
   else
   {
     depthStencil.depthBoundsTestEnable = VK_FALSE;
-    depthStencil.minDepthBounds = 0.0f;
-    depthStencil.minDepthBounds = 1.0f;
   }
 
   switch (flags & SVK_PLS_DEPTH_COMPARE_OP_BITS)

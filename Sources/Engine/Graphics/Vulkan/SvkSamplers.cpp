@@ -68,14 +68,16 @@ VkSampler CGfxLibrary::CreateSampler(SvkSamplerFlags flags)
   switch (flags & SVK_TSS_WRAP_U_BITS)
   {
   case SVK_TSS_WRAP_U_REPEAT: samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT; break;
-  case SVK_TSS_WRAP_U_CLAMP: samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE; break;
+  case SVK_TSS_WRAP_U_CLAMP: samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER; break;
+  case SVK_TSS_WRAP_U_CLAMP_EDGE: samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE; break;
   default: ASSERTALWAYS("Vulkan: incorrect pipeline state flag");
   }
 
   switch (flags & SVK_TSS_WRAP_V_BITS)
   {
   case SVK_TSS_WRAP_V_REPEAT: samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT; break;
-  case SVK_TSS_WRAP_V_CLAMP: samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE; break;
+  case SVK_TSS_WRAP_V_CLAMP: samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER; break;
+  case SVK_TSS_WRAP_V_CLAMP_EDGE: samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE; break;
   default: ASSERTALWAYS("Vulkan: incorrect pipeline state flag");
   }
 
@@ -83,11 +85,11 @@ VkSampler CGfxLibrary::CreateSampler(SvkSamplerFlags flags)
 
   switch (flags & SVK_TSS_ANISOTROPY_BITS)
   {
-  case SVK_TSS_ANISOTROPY_0: samplerInfo.maxAnisotropy = 0; break;
-  case SVK_TSS_ANISOTROPY_2: samplerInfo.maxAnisotropy = 2; break;
-  case SVK_TSS_ANISOTROPY_4: samplerInfo.maxAnisotropy = 4; break;
-  case SVK_TSS_ANISOTROPY_8: samplerInfo.maxAnisotropy = 8; break;
   case SVK_TSS_ANISOTROPY_16: samplerInfo.maxAnisotropy = 16; break;
+  case SVK_TSS_ANISOTROPY_8: samplerInfo.maxAnisotropy = 8; break;
+  case SVK_TSS_ANISOTROPY_4: samplerInfo.maxAnisotropy = 4; break;
+  case SVK_TSS_ANISOTROPY_2: samplerInfo.maxAnisotropy = 2; break;
+  case SVK_TSS_ANISOTROPY_0: samplerInfo.maxAnisotropy = 0; break;
   }
 
   if (samplerInfo.maxAnisotropy > gl_VkPhProperties.limits.maxSamplerAnisotropy)

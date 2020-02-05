@@ -64,40 +64,60 @@ SvkSamplerFlags MimicTexParams_Vulkan(CTexParams &tpLocal)
   if (tpLocal.tp_iFilter != _tpGlobal[0].tp_iFilter)
   {
     tpLocal.tp_iFilter = _tpGlobal[0].tp_iFilter;
-
-    //flags &= ~SVK_TSS_FILTER_MAG_BITS;
-    //flags &= ~SVK_TSS_FILTER_MIN_BITS;
-    //flags &= ~SVK_TSS_MIPMAP_BITS;
-
-    flags |= UnpackFilter_Vulkan(tpLocal.tp_iFilter);
   };
 
   if (tpLocal.tp_iAnisotropy != _tpGlobal[0].tp_iAnisotropy)
   {
     tpLocal.tp_iAnisotropy = _tpGlobal[0].tp_iAnisotropy;
-
-    //flags &= ~SVK_TSS_ANISOTROPY_BITS;
-
-    if (tpLocal.tp_iAnisotropy > 8)       { flags |= SVK_TSS_ANISOTROPY_16; }
-    else if (tpLocal.tp_iAnisotropy > 4)  { flags |= SVK_TSS_ANISOTROPY_8; }
-    else if (tpLocal.tp_iAnisotropy > 2)  { flags |= SVK_TSS_ANISOTROPY_4; }
-    else if (tpLocal.tp_iAnisotropy > 1)  { flags |= SVK_TSS_ANISOTROPY_2; }
-    else                                  { flags |= SVK_TSS_ANISOTROPY_0; }
   }
 
   if (tpLocal.tp_eWrapU != _tpGlobal[GFX_iActiveTexUnit].tp_eWrapU || tpLocal.tp_eWrapV != _tpGlobal[GFX_iActiveTexUnit].tp_eWrapV)
   {
     tpLocal.tp_eWrapU = _tpGlobal[GFX_iActiveTexUnit].tp_eWrapU;
     tpLocal.tp_eWrapV = _tpGlobal[GFX_iActiveTexUnit].tp_eWrapV;
+  }
 
-    //flags &= ~SVK_TSS_WRAP_U_BITS;
-    //flags &= ~SVK_TSS_WRAP_V_BITS;
+  //flags &= ~SVK_TSS_FILTER_MAG_BITS;
+  //flags &= ~SVK_TSS_FILTER_MIN_BITS;
+  //flags &= ~SVK_TSS_MIPMAP_BITS;
 
-    if (tpLocal.tp_eWrapU == GFX_REPEAT) { flags |= SVK_TSS_WRAP_U_REPEAT; }
-    else { flags |= SVK_TSS_WRAP_U_CLAMP; }
+  flags |= UnpackFilter_Vulkan(tpLocal.tp_iFilter);
+  
+  //flags &= ~SVK_TSS_ANISOTROPY_BITS;
 
-    if (tpLocal.tp_eWrapV == GFX_REPEAT) { flags |= SVK_TSS_WRAP_V_REPEAT; }
-    else { flags |= SVK_TSS_WRAP_V_CLAMP; }
+  if (tpLocal.tp_iAnisotropy > 8)       { flags |= SVK_TSS_ANISOTROPY_16; }
+  else if (tpLocal.tp_iAnisotropy > 4)  { flags |= SVK_TSS_ANISOTROPY_8;  }
+  else if (tpLocal.tp_iAnisotropy > 2)  { flags |= SVK_TSS_ANISOTROPY_4;  }
+  else if (tpLocal.tp_iAnisotropy > 1)  { flags |= SVK_TSS_ANISOTROPY_2;  }
+  else                                  { flags |= SVK_TSS_ANISOTROPY_0;  }
+
+  //flags &= ~SVK_TSS_WRAP_U_BITS;
+  //flags &= ~SVK_TSS_WRAP_V_BITS;
+
+  if (tpLocal.tp_eWrapU == GFX_REPEAT)
+  {
+    flags |= SVK_TSS_WRAP_U_REPEAT; 
+  }
+  else if (_pGfx->gl_ulFlags & GLF_EXT_EDGECLAMP)
+  {
+    flags |= SVK_TSS_WRAP_U_CLAMP_EDGE;
+  }
+  else
+  {
+    flags |= SVK_TSS_WRAP_U_CLAMP; 
+  }
+
+  if (tpLocal.tp_eWrapV == GFX_REPEAT)
+  { 
+    flags |= SVK_TSS_WRAP_V_REPEAT; 
+  }
+  else if (_pGfx->gl_ulFlags & GLF_EXT_EDGECLAMP)
+  {
+    flags |= SVK_TSS_WRAP_V_CLAMP_EDGE;
+  }
+  else
+  { 
+    flags |= SVK_TSS_WRAP_V_CLAMP; 
   }
 
   _tpCurrent = &tpLocal;

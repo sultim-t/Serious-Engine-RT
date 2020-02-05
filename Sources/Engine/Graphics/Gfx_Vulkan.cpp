@@ -839,8 +839,6 @@ void CGfxLibrary::StartFrame()
     sc.extent = { gl_VkSwapChainExtent.width, gl_VkSwapChainExtent.height };
     vkCmdSetScissor(cmd, 0, 1, &sc);
   }
-
-  // vkCmdSetDepthBounds(cmd, 0.0f, 1.0f);
 }
 
 void CGfxLibrary::EndFrame()
@@ -921,6 +919,11 @@ void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
   memcpy(uniformBuffer.sdb_Data, mvp, uniformSize);
 
   uint32_t descSetOffset = (uint32_t)uniformBuffer.sdb_CurrentOffset;
+
+  if (gl_VkGlobalState & ~SVK_PLS_DEPTH_WRITE_BOOL)
+  {
+    int a = 0;
+  }
 
   // if previously not bound or flags don't match then bind new pipeline
   if (gl_VkPreviousPipeline == nullptr || (gl_VkPreviousPipeline != nullptr && gl_VkPreviousPipeline->sps_Flags != gl_VkGlobalState))
