@@ -11,15 +11,16 @@ layout (set = 3, binding = 0) uniform sampler2D aTexture2;
 layout (set = 4, binding = 0) uniform sampler2D aTexture3;
 
 layout (location = 0) in vec4 inColor;
-layout (location = 1) in vec2 inTexCoord;
+layout (location = 1) in vec4 inTexCoord01;
+layout (location = 2) in vec4 inTexCoord23;
 
 layout (location = 0) out vec4 outColor;
 
 void main()
 {
    vec4 c = 
-     texture(aTexture0, inTexCoord) * texture(aTexture1, inTexCoord) *
-     texture(aTexture2, inTexCoord) * texture(aTexture3, inTexCoord) *
+     texture(aTexture0, inTexCoord01.xy) * texture(aTexture1, inTexCoord01.zw) *
+     texture(aTexture2, inTexCoord23.xy) * texture(aTexture3, inTexCoord23.zw) *
      inColor;
 
    if (c.a < ALPHA_THRESHOLD)

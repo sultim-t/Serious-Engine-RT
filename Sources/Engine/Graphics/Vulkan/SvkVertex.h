@@ -29,7 +29,7 @@ struct SvkVertex
   FLOAT Position[4];
   FLOAT Color[4];
   FLOAT Normal[4];
-  FLOAT TexCoord[2];
+  FLOAT TexCoord[8];
 
   // default constructor
   SvkVertex()
@@ -39,7 +39,8 @@ struct SvkVertex
     Color[0] = Color[1] = Color[2] = Color[3] = 1.0f;
     Normal[0] = Normal[2] = Normal[3] = 0.0f;
     Normal[1] = 1.0f;
-    TexCoord[0] = TexCoord[1] = 0.0f;
+    TexCoord[0] = TexCoord[1] = TexCoord[2] = TexCoord[3] =
+      TexCoord[4] = TexCoord[5] = TexCoord[6] = TexCoord[7] = 0.0f;
   }
 
   inline void SetPosition(FLOAT px, FLOAT py, FLOAT pz)
@@ -92,34 +93,38 @@ struct SvkVertex
     Color[3] = colBytes[3] / 255.0f;
   }
 
-  inline void SetTexCoord(FLOAT tx, FLOAT ty)
+  inline void SetTexCoord(INDEX tIndex, FLOAT tx, FLOAT ty)
   {
-    TexCoord[0] = tx;
-    TexCoord[1] = ty;
+    TexCoord[tIndex * 2 + 0] = tx;
+    TexCoord[tIndex * 2 + 1] = ty;
   }
 };
 
 #define SVK_VERT_SIZE (sizeof(SvkVertex))
 
-#define SVK_VERT_POS_SIZE (4*sizeof(FLOAT))
-#define SVK_VERT_COL_SIZE (4*sizeof(FLOAT))
-#define SVK_VERT_NOR_SIZE (4*sizeof(FLOAT))
-#define SVK_VERT_TEX_SIZE (2*sizeof(FLOAT))
+#define SVK_VERT_POS_SIZE       (4 * sizeof(FLOAT))
+#define SVK_VERT_COL_SIZE       (4 * sizeof(FLOAT))
+#define SVK_VERT_NOR_SIZE       (4 * sizeof(FLOAT))
+#define SVK_VERT_TEX01_SIZE     (4 * sizeof(FLOAT))
+#define SVK_VERT_TEX23_SIZE     (4 * sizeof(FLOAT))
 
-#define SVK_VERT_POS_FORMAT VK_FORMAT_R32G32B32A32_SFLOAT
-#define SVK_VERT_COL_FORMAT VK_FORMAT_R32G32B32A32_SFLOAT
-#define SVK_VERT_NOR_FORMAT VK_FORMAT_R32G32B32A32_SFLOAT
-#define SVK_VERT_TEX_FORMAT VK_FORMAT_R32G32_SFLOAT
+#define SVK_VERT_POS_FORMAT     VK_FORMAT_R32G32B32A32_SFLOAT
+#define SVK_VERT_COL_FORMAT     VK_FORMAT_R32G32B32A32_SFLOAT
+#define SVK_VERT_NOR_FORMAT     VK_FORMAT_R32G32B32A32_SFLOAT
+#define SVK_VERT_TEX01_FORMAT   VK_FORMAT_R32G32B32A32_SFLOAT
+#define SVK_VERT_TEX23_FORMAT   VK_FORMAT_R32G32B32A32_SFLOAT
 
-#define SVK_VERT_POS_OFFSET (offsetof(SvkVertex, Position))
-#define SVK_VERT_COL_OFFSET (offsetof(SvkVertex, Color))
-#define SVK_VERT_NOR_OFFSET (offsetof(SvkVertex, Normal))
-#define SVK_VERT_TEX_OFFSET (offsetof(SvkVertex, TexCoord))
+#define SVK_VERT_POS_OFFSET     (offsetof(SvkVertex, Position))
+#define SVK_VERT_COL_OFFSET     (offsetof(SvkVertex, Color))
+#define SVK_VERT_NOR_OFFSET     (offsetof(SvkVertex, Normal))
+#define SVK_VERT_TEX01_OFFSET   (offsetof(SvkVertex, TexCoord) + 0)
+#define SVK_VERT_TEX23_OFFSET   (offsetof(SvkVertex, TexCoord) + 4 * sizeof(FLOAT))
 
-#define SVK_VERT_POS_LOC (0)
-#define SVK_VERT_COL_LOC (1)
-#define SVK_VERT_NOR_LOC (2)
-#define SVK_VERT_TEX_LOC (3)
+#define SVK_VERT_POS_LOC        (0)
+#define SVK_VERT_COL_LOC        (1)
+#define SVK_VERT_NOR_LOC        (2)
+#define SVK_VERT_TEX01_LOC      (3)
+#define SVK_VERT_TEX23_LOC      (4)
 
 
 #endif

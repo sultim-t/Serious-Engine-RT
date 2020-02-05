@@ -277,7 +277,7 @@ void CGfxLibrary::CreateVertexLayouts()
   auto &attrs = gl_VkDefaultVertexLayout->svl_Attributes;
 
   binds.New(1);
-  attrs.New(4);
+  attrs.New(5);
 
   binds[0].binding = 0;
   binds[0].stride = SVK_VERT_SIZE;
@@ -299,9 +299,14 @@ void CGfxLibrary::CreateVertexLayouts()
   attrs[2].offset = SVK_VERT_NOR_OFFSET;
 
   attrs[3].binding = 0;
-  attrs[3].location = SVK_VERT_TEX_LOC;
-  attrs[3].format = SVK_VERT_TEX_FORMAT;
-  attrs[3].offset = SVK_VERT_TEX_OFFSET;
+  attrs[3].location = SVK_VERT_TEX01_LOC;
+  attrs[3].format = SVK_VERT_TEX01_FORMAT;
+  attrs[3].offset = SVK_VERT_TEX01_OFFSET;
+
+  attrs[4].binding = 0;
+  attrs[4].location = SVK_VERT_TEX23_LOC;
+  attrs[4].format = SVK_VERT_TEX23_FORMAT;
+  attrs[4].offset = SVK_VERT_TEX23_OFFSET;
 }
 
 void CGfxLibrary::DestroyVertexLayouts()
