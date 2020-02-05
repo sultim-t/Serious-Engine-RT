@@ -577,6 +577,17 @@ static void svk_SetTexCoordArray(GFXTexCoord* ptex, BOOL b4/*=FALSE*/)
 
 
 
+static void svk_SetTextureModulation(INDEX iScale)
+{
+  // check consistency
+  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+
+  ASSERT(iScale == 1 || iScale == 2);
+  GFX_iTexModulation[GFX_iActiveTexUnit] = iScale;
+}
+
+
+
 // draw prepared arrays
 static void svk_DrawElements(INDEX ctElem, INDEX *pidx)
 {
@@ -701,15 +712,6 @@ static void svk_SetTextureMatrix(const FLOAT* pfMatrix/*=NULL*/)
 static void svk_SetConstantColor(COLOR col)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-}
-
-static void svk_SetTextureModulation(INDEX iScale)
-{
-  // check consistency
-  ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-
-  ASSERT(iScale == 1 || iScale == 2);
-  GFX_iTexModulation[GFX_iActiveTexUnit] = iScale;
 }
 #pragma endregion
 

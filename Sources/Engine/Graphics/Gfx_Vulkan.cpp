@@ -897,14 +897,14 @@ void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
   uint32_t indicesSize = indexCount * sizeof(UINT);
   uint32_t uniformSize = 16 * sizeof(FLOAT);
 
-  FLOAT vp[16];
+  FLOAT mvp[16];
   if (GFX_bViewMatrix)
   {
-    Svk_MatMultiply(vp, VkViewMatrix, VkProjectionMatrix);
+    Svk_MatMultiply(mvp, VkViewMatrix, VkProjectionMatrix);
   }
   else
   {
-    Svk_MatCopy(vp, VkProjectionMatrix);
+    Svk_MatCopy(mvp, VkProjectionMatrix);
   }
 
   // get buffers
@@ -918,7 +918,7 @@ void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
   // copy data
   memcpy(vertexBuffer.sdb_Data, &verts[0], vertsSize);
   memcpy(indexBuffer.sdb_Data, indices, indicesSize);
-  memcpy(uniformBuffer.sdb_Data, vp, uniformSize);
+  memcpy(uniformBuffer.sdb_Data, mvp, uniformSize);
 
   uint32_t descSetOffset = (uint32_t)uniformBuffer.sdb_CurrentOffset;
 
@@ -933,19 +933,21 @@ void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
   }
 
   VkDescriptorSet sets[5] = { uniformBuffer.sdu_DescriptorSet };
+  float textureColorScale = 1.0f;
 
   // bind texture descriptors
   for (uint32_t i = 0; i < GFX_MAXTEXUNITS; i++)
   {
     if (GFX_abTexture[i])
     {
-      // TODO: Vulkan: more compact structure
-      // TODO: remove passing gl_VkPreviousPipeline to this func
       VkDescriptorSet textureDescSet = GetTextureDescriptor(gl_VkActiveTextures[i]);
      
       if (textureDescSet != VK_NULL_HANDLE)
       {
         sets[i + 1] = textureDescSet;
+
+        ASSERT(GFX_iTexModulation[i] == 1 || GFX_iTexModulation[i] == 2);
+        textureColorScale *= GFX_iTexModulation[i];
         continue;
       }
     }
@@ -953,10 +955,15 @@ void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
     sets[i + 1] = _no_ulTextureDescSet;
   }
 
+  // set uniform and textures
   vkCmdBindDescriptorSets(
     cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkPipelineLayout,
     0, 5, sets,
     1, &descSetOffset);
+
+  // set texture color scales
+  vkCmdPushConstants(cmd, gl_VkPipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 
+    0, sizeof(float), &textureColorScale);
 
   // set mesh
   vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer.sdb_Buffer, &vertexBuffer.sdb_CurrentOffset);

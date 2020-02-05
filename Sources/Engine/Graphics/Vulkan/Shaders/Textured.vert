@@ -14,14 +14,14 @@ layout (location = 2) out vec4 outTexCoord23;
 
 layout (std140, set = 0, binding = 0) uniform MainBuffer
 {
-	mat4 MVP;
+    mat4 MVP;
 } unBuffer;
 
 void main() 
 {
-	outColor = inColor;
-	outTexCoord01 = inTexCoord01;
-	outTexCoord23 = inTexCoord23;
+    outColor = inColor;
+    outTexCoord01 = inTexCoord01;
+    outTexCoord23 = inTexCoord23;
 
-	gl_Position = unBuffer.MVP * inPosition;
+    gl_Position = unBuffer.MVP * inPosition;
 }

@@ -14,10 +14,15 @@ layout (location = 2) in vec4 inTexCoord23;
 
 layout (location = 0) out vec4 outColor;
 
+layout(push_constant) uniform ColorScale
+{
+   float scale;
+} colorScale;
+
 void main()
 {
    outColor = 
      texture(aTexture0, inTexCoord01.xy) * texture(aTexture1, inTexCoord01.zw) *
      texture(aTexture2, inTexCoord23.xy) * texture(aTexture3, inTexCoord23.zw) *
-     inColor;
+     inColor * colorScale.scale;
 }

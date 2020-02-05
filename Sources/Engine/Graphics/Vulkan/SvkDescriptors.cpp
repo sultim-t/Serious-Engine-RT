@@ -61,10 +61,17 @@ void CGfxLibrary::CreateDescriptorSetLayouts()
     gl_VkDescSetLayoutTexture
   };
 
+  VkPushConstantRange colorScalePushConstant = {};
+  colorScalePushConstant.offset = 0;
+  colorScalePushConstant.size = sizeof(float);
+  colorScalePushConstant.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
   VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipelineLayoutInfo.setLayoutCount = 5;
   pipelineLayoutInfo.pSetLayouts = setLayouts;
+  pipelineLayoutInfo.pushConstantRangeCount = 1;
+  pipelineLayoutInfo.pPushConstantRanges = &colorScalePushConstant;
 
   r = vkCreatePipelineLayout(gl_VkDevice, &pipelineLayoutInfo, nullptr, &gl_VkPipelineLayout);
   VK_CHECKERROR(r);

@@ -393,6 +393,9 @@ BOOL CGfxLibrary::PickPhysicalDevice()
 
       // TODO: Vulkan: if required format is not found
 
+      // it's guaranteed that maxPushConstantSize will be >=128
+      ASSERT(gl_VkPhProperties.limits.maxPushConstantsSize >= 128);
+
       return TRUE;
     }
   }
