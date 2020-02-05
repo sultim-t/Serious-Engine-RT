@@ -153,12 +153,6 @@ struct SvkSampler
   VkSampler         sv_Sampler;
 };
 
-struct SvkActivatableTexture
-{
-  uint32_t  sat_TextureID;
-  bool      sat_IsActivated;
-};
-
 void Svk_MatCopy(float *dest, const float *src);
 void Svk_MatSetIdentity(float *result);
 void Svk_MatMultiply(float *result, const float *a, const float *b);

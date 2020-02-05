@@ -120,23 +120,20 @@ SvkPipelineState &CGfxLibrary::CreatePipeline(
 
   VkPipelineDepthStencilStateCreateInfo depthStencil = {};
   depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-  depthStencil.depthTestEnable = (flags & SVK_PLS_DEPTH_TEST_BOOL) ? VK_TRUE : VK_FALSE;;
-  depthStencil.depthWriteEnable = (flags & SVK_PLS_DEPTH_WRITE_BOOL) ? VK_TRUE : VK_FALSE;;
+  depthStencil.depthTestEnable = (flags & SVK_PLS_DEPTH_TEST_BOOL) ? VK_TRUE : VK_FALSE;
+  depthStencil.depthWriteEnable = (flags & SVK_PLS_DEPTH_WRITE_BOOL) ? VK_TRUE : VK_FALSE;
   depthStencil.stencilTestEnable = VK_FALSE;
 
-  if (gl_VkPhFeatures.depthBounds)
+  if (flags & SVK_PLS_DEPTH_BOUNDS_BOOL)
   {
-    if (flags & SVK_PLS_DEPTH_BOUNDS_BOOL)
-    {
-      depthStencil.depthBoundsTestEnable = VK_TRUE;
-      dynamicStatesCount++;
-    }
-    else
-    {
-      depthStencil.depthBoundsTestEnable = VK_FALSE;
-      depthStencil.minDepthBounds = 0.0f;
-      depthStencil.minDepthBounds = 1.0f;
-    }
+    depthStencil.depthBoundsTestEnable = VK_TRUE;
+    dynamicStatesCount++;
+  }
+  else
+  {
+    depthStencil.depthBoundsTestEnable = VK_FALSE;
+    depthStencil.minDepthBounds = 0.0f;
+    depthStencil.minDepthBounds = 1.0f;
   }
 
   switch (flags & SVK_PLS_DEPTH_COMPARE_OP_BITS)

@@ -1,4 +1,3 @@
-@echo off
 
 if not exist %cd%\Compiled mkdir Compiled
 if not exist %cd%\CompiledSpirv mkdir CompiledSpirv

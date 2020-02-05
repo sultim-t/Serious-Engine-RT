@@ -22,6 +22,7 @@ FLOAT	VkViewMatrix[16];
 extern ULONG _fog_ulTexture;
 extern ULONG _haze_ulTexture;
 static uint32_t _no_ulTexture;
+static uint64_t _no_ulTextureDescSet;
 
 extern BOOL GFX_abTexture[GFX_MAXTEXUNITS];
 
@@ -325,12 +326,6 @@ void CGfxLibrary::Reset_Vulkan()
   Svk_MatSetIdentity(VkViewMatrix);
 
   GFX_iActiveTexUnit = 0;
-
-  for (uint32_t i = 0; i < GFX_MAXTEXUNITS; i++)
-  {
-    gl_VkActiveTextures[i].sat_IsActivated = false;
-    gl_VkActiveTextures[i].sat_TextureID = 0;
-  }
 }
 
 // prepares Vulkan drawing context, almost everything copied from OpenGL
@@ -407,7 +402,7 @@ void CGfxLibrary::InitContext_Vulkan()
   _fog_pixSizeL = 0;
   _haze_pixSize = 0;
 
-  uint32_t noTexturePixels[] = { 0, 0 };
+  uint32_t noTexturePixels[] = { 0xFFFFFFFF, 0xFFFFFFFF };
   VkExtent2D noTextureSize = { 1, 1 };
   _no_ulTexture = CreateTexture();
   InitTexture32Bit(_no_ulTexture, VK_FORMAT_R8G8B8A8_UNORM, noTexturePixels, &noTextureSize, 1, false);
@@ -430,6 +425,10 @@ void CGfxLibrary::InitContext_Vulkan()
 
   extern INDEX gap_iTextureFiltering;
   extern INDEX gap_iTextureAnisotropy;
+
+  // set 16x anisotropy as default for Vulkan
+  gap_iTextureAnisotropy = 16;
+
   //extern FLOAT gap_fTextureLODBias;
   gfxSetTextureFiltering(gap_iTextureFiltering, gap_iTextureAnisotropy);
   //gfxSetTextureBiasing(gap_fTextureLODBias);
@@ -594,6 +593,7 @@ BOOL CGfxLibrary::CreateDevice()
 
   VkPhysicalDeviceFeatures features = {};
   features.samplerAnisotropy = VK_TRUE;
+  features.depthBounds = VK_TRUE;
 
   VkDeviceCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -769,20 +769,10 @@ void CGfxLibrary::StartFrame()
 
   FreeDeletedTextures(gl_VkCmdBufferCurrent);
 
-  for (uint32_t i = 0; i < GFX_MAXTEXUNITS; i++)
-  {
-    gl_VkActiveTextures[i].sat_IsActivated = false;
-    gl_VkActiveTextures[i].sat_TextureID = 0;
-  }
-
-  // do NOT reset full state
-  //gl_VkGlobalState = SVK_PLS_DEFAULT_FLAGS;
-  // reset only flags that can't be reset in Gfx_wrapper_Vulkan
-  //gl_VkGlobalState &= ~SVK_PLS_DEPTH_BOUNDS_BOOL;
-  //gl_VkGlobalState &= ~SVK_PLS_DEPTH_BIAS_BOOL;
-
   // reset previous pipeline
   gl_VkPreviousPipeline = nullptr;
+
+  _no_ulTextureDescSet = GetTextureDescriptor(_no_ulTexture);
 
   VkCommandBufferBeginInfo beginInfo = {};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -846,28 +836,6 @@ void CGfxLibrary::EndFrame()
   FlushDynamicBuffersMemory();
 
   vkCmdEndRenderPass(cmd);
-
-  /*// transition from general layout to presentation
-  VkImageMemoryBarrier barrier = {};
-  barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-  barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-  barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-  barrier.image = gl_VkSwapchainImages[gl_VkCurrentImageIndex];
-  barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  barrier.subresourceRange.baseMipLevel = 0;
-  barrier.subresourceRange.levelCount = 1;
-  barrier.subresourceRange.baseArrayLayer = 0;
-  barrier.subresourceRange.layerCount = 1;
-  barrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
-  barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-  barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  barrier.dstAccessMask = 0;
-
-  vkCmdPipelineBarrier(
-    cmd,
-    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-    VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-    0, 0, NULL, 0, NULL, 1, &barrier);*/
 
   gl_VkCmdIsRecording = false;
 
@@ -949,44 +917,37 @@ void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
     gl_VkPreviousPipeline = &ps;
   }
 
-  VkDescriptorSet sets[] = { uniformBuffer.sdu_DescriptorSet, VK_NULL_HANDLE };
+  VkDescriptorSet sets[5] = { uniformBuffer.sdu_DescriptorSet };
 
   // bind texture descriptors
   for (uint32_t i = 0; i < GFX_MAXTEXUNITS; i++)
   {
-    if (gl_VkActiveTextures[i].sat_IsActivated)
+    if (GFX_abTexture[i])
     {
       // TODO: Vulkan: more compact structure
       // TODO: remove passing gl_VkPreviousPipeline to this func
-      VkDescriptorSet textureDescSet = GetTextureDescriptor(gl_VkActiveTextures[i].sat_TextureID);
-
-      if (textureDescSet == VK_NULL_HANDLE)
+      VkDescriptorSet textureDescSet = GetTextureDescriptor(gl_VkActiveTextures[i]);
+     
+      if (textureDescSet != VK_NULL_HANDLE)
       {
+        sets[i + 1] = textureDescSet;
         continue;
       }
-
-      sets[1] = textureDescSet;
-
-      // TODO: Vulkan: remove this line for several textures
-      break;
     }
-  }
 
-  if (sets[1] == VK_NULL_HANDLE)
-  {
-    sets[1] = GetTextureDescriptor(_no_ulTexture);    
+    sets[i + 1] = _no_ulTextureDescSet;
   }
 
   vkCmdBindDescriptorSets(
     cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkPipelineLayout,
-    0, 2, sets,
+    0, 5, sets,
     1, &descSetOffset);
 
   // set mesh
   vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer.sdb_Buffer, &vertexBuffer.sdb_CurrentOffset);
   vkCmdBindIndexBuffer(cmd, indexBuffer.sdb_Buffer, indexBuffer.sdb_CurrentOffset, VK_INDEX_TYPE_UINT32);
 
-  //// draw
+  // draw
   vkCmdDrawIndexed(cmd, indexCount, 1, 0, 0, 0);
 }
 #endif // SE1_VULKAN

@@ -42,8 +42,7 @@ void CGfxLibrary::SetTexture(uint32_t textureUnit, uint32_t textureId, SvkSample
 {
   ASSERT(textureUnit >= 0 && textureUnit < GFX_MAXTEXUNITS);
 
-  gl_VkActiveTextures[textureUnit].sat_IsActivated = true;
-  gl_VkActiveTextures[textureUnit].sat_TextureID = textureId;
+  gl_VkActiveTextures[textureUnit] = textureId;
 }
 
 VkDescriptorSet CGfxLibrary::GetTextureDescriptor(uint32_t textureId)
@@ -251,6 +250,8 @@ void CGfxLibrary::InitTexture32Bit(
     imageMemoryReq.size : imageMemoryReq.size + imageMemoryReq.alignment - imageMemoryReq.size % imageMemoryReq.alignment;
   imageAllocInfo.memoryTypeIndex = GetMemoryTypeIndex(imageMemoryReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
+  static int a = 0;
+  a++;
   r = vkAllocateMemory(gl_VkDevice, &imageAllocInfo, nullptr, &sto.sto_Memory);
   VK_CHECKERROR(r);
   r = vkBindImageMemory(gl_VkDevice, sto.sto_Image, sto.sto_Memory, 0);

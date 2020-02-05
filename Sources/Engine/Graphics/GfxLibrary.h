@@ -205,7 +205,7 @@ public:
   CStaticStackArray<uint32_t>             gl_VkTexturesToDelete[gl_VkMaxCmdBufferCount];
 
   // pointers to currently active textures
-  SvkActivatableTexture                   gl_VkActiveTextures[GFX_MAXTEXUNITS];
+  uint32_t                                gl_VkActiveTextures[GFX_MAXTEXUNITS];
 
   SvkPipelineStateFlags                   gl_VkGlobalState;
   SvkPipelineState                        *gl_VkPreviousPipeline;

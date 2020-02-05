@@ -37,11 +37,18 @@ void CGfxLibrary::CreateDescriptorSetLayouts()
   r = vkCreateDescriptorSetLayout(gl_VkDevice, &samplerLayoutInfo, nullptr, &gl_VkDescSetLayoutTexture);
   VK_CHECKERROR(r);
 
-  VkDescriptorSetLayout setLayouts[] = { gl_VkDescriptorSetLayout, gl_VkDescSetLayoutTexture };
+  VkDescriptorSetLayout setLayouts[] = 
+  { 
+    gl_VkDescriptorSetLayout, 
+    gl_VkDescSetLayoutTexture,
+    gl_VkDescSetLayoutTexture,
+    gl_VkDescSetLayoutTexture,
+    gl_VkDescSetLayoutTexture
+  };
 
   VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  pipelineLayoutInfo.setLayoutCount = 2;
+  pipelineLayoutInfo.setLayoutCount = 5;
   pipelineLayoutInfo.pSetLayouts = setLayouts;
 
   r = vkCreatePipelineLayout(gl_VkDevice, &pipelineLayoutInfo, nullptr, &gl_VkPipelineLayout);
