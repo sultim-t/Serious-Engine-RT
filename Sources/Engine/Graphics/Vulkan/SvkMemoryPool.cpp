@@ -112,15 +112,13 @@ uint32_t SvkMemoryPool::Allocate(VkMemoryAllocateInfo allocInfo, VkDeviceMemory 
       {
         if (prevNode == -1 && smp_Nodes[curNode].nextNodeIndex == -1)
         {
-          // if only head
-          smp_Nodes[curNode].blockIndex += reqBlockCount;
-          smp_Nodes[curNode].blockCount -= reqBlockCount;
+          // if only head, destroy it
+          smp_FreeListHeadIndex = -1;
         }
         else if (prevNode != -1 && smp_Nodes[curNode].nextNodeIndex == -1)
         {
           // if there is prev, but not next
           smp_Nodes[prevNode].nextNodeIndex = -1;
-          smp_Nodes[prevNode].blockCount -= reqBlockCount;
         }
         else if (prevNode == -1 && smp_Nodes[curNode].nextNodeIndex != -1)
         {
@@ -150,6 +148,10 @@ uint32_t SvkMemoryPool::Allocate(VkMemoryAllocateInfo allocInfo, VkDeviceMemory 
   //return smp_pNext->Allocate(allocInfo, outMemory, outOffset);
 }
 
+int32_t AddNode()
+{
+}
+
 void SvkMemoryPool::Free(uint32_t handle)
 {
   bool found = false;
@@ -162,7 +164,7 @@ void SvkMemoryPool::Free(uint32_t handle)
       blockIndex = smp_Handles[i].blockIndex;
       blockCount = smp_Handles[i].blockCount;
 
-      // replace this with last and pop previous last
+      // remove handle: just replace this with last and pop to remove duplicate
       smp_Handles[i] = smp_Handles[smp_Handles.Count() - 1];
       smp_Handles.Pop();
 
@@ -173,7 +175,104 @@ void SvkMemoryPool::Free(uint32_t handle)
 
   ASSERT(found);
 
-  // TODO
+  // if there is no head, then just create it
+  if (smp_FreeListHeadIndex == -1)
+  {
+    smp_FreeListHeadIndex = 0;
+    smp_Nodes[smp_FreeListHeadIndex].blockCount = blockCount;
+    smp_Nodes[smp_FreeListHeadIndex].blockIndex = blockIndex;
+    smp_Nodes[smp_FreeListHeadIndex].nextNodeIndex = -1;
 
+    return;
+  }
 
+  // find node that has block index less than given
+  int32_t prevNode = -1;
+  int32_t curNode = smp_FreeListHeadIndex;
+
+  while (curNode != -1)
+  {
+    // don't free already freed
+    ASSERT(smp_Nodes[curNode].blockIndex != blockIndex);
+
+    if (smp_Nodes[curNode].blockIndex > blockIndex)
+    {
+      break;
+    }
+
+    prevNode = curNode;
+    curNode = smp_Nodes[curNode].nextNodeIndex;
+  }
+
+  // if last is one that must be added to free list
+  if (curNode == -1)
+  {
+    ASSERT(prevNode != -1);
+
+    // if can merge with previous
+    if (smp_Nodes[prevNode].blockIndex + smp_Nodes[prevNode].blockCount == blockIndex)
+    {
+      smp_Nodes[prevNode].blockCount += blockCount;
+      return;
+    }
+    else
+    {
+      // otherwise, create new block and link prev with it
+      int32_t newNode = AddNode();
+      smp_Nodes[newNode].blockIndex = blockIndex;
+      smp_Nodes[newNode].blockCount = blockCount;
+      smp_Nodes[newNode].nextNodeIndex = -1;
+
+      smp_Nodes[prevNode].nextNodeIndex = newNode;
+
+      return;
+    }
+  }
+
+  ASSERT(blockIndex + blockCount <= smp_Nodes[curNode].blockIndex);
+
+  // if head is one that must be added to free list
+  if (prevNode == -1)
+  {
+    ASSERT(curNode == smp_FreeListHeadIndex);
+
+    // check if can merge
+    if (blockIndex + blockCount == smp_Nodes[curNode].blockIndex)
+    {
+      // then update existing
+      smp_Nodes[curNode].blockIndex = blockIndex;
+      smp_Nodes[curNode].blockCount += blockCount;
+    }
+    else
+    {
+      // new separate node is required, then update head
+      smp_FreeListHeadIndex = AddNode();
+      smp_Nodes[smp_FreeListHeadIndex].blockIndex = blockIndex;
+      smp_Nodes[smp_FreeListHeadIndex].blockCount = blockCount;
+      smp_Nodes[smp_FreeListHeadIndex].nextNodeIndex = curNode;
+    }
+  }
+  else
+  {
+    // if not head and not last,
+    // check if can merge with prev or next
+    if (smp_Nodes[prevNode].blockIndex + smp_Nodes[prevNode].blockCount == blockIndex)
+    {
+      smp_Nodes[prevNode].blockCount += blockCount;
+    }
+    else if (blockIndex + blockCount == smp_Nodes[curNode].blockIndex)
+    {
+      smp_Nodes[curNode].blockIndex = blockIndex;
+      smp_Nodes[curNode].blockCount += blockCount;
+    }
+    else
+    {
+      int32_t newNode = AddNode();
+      smp_Nodes[newNode].blockIndex = blockIndex;
+      smp_Nodes[newNode].blockCount = blockCount;
+      smp_Nodes[newNode].nextNodeIndex = curNode;
+
+      smp_Nodes[prevNode].nextNodeIndex = newNode;
+    }
+  }
 }
