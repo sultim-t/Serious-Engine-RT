@@ -1,21 +1,20 @@
 #include "StdH.h"
 #include "SvkMemoryPool.h"
 
-SvkMemoryPool::SvkMemoryPool(VkDevice device, uint32_t preferredBlockSize, uint32_t blockCount)
+SvkMemoryPool::SvkMemoryPool(VkDevice device, uint32_t preferredSize)
 {
-  ASSERT(smp_VkDevice == VK_NULL_HANDLE);
-  ASSERT(smp_VkMemory == VK_NULL_HANDLE);
-
   smp_VkDevice = device;
-  smp_BlockCount = blockCount;
-  smp_BlockSize = preferredBlockSize;
+  smp_PreferredSize = preferredSize;
 
+  smp_BlockCount = 0;
+  smp_BlockSize = 0;
   smp_VkMemory = VK_NULL_HANDLE;
   smp_pNext = nullptr;
   smp_FreeListHeadIndex = 0;
   smp_AllocationCount = 0;
   smp_VkMemoryTypeIndex = 0;
   smp_HandleLastIndex = 0;
+  smp_NodeLastIndex = 0;
 }
 
 SvkMemoryPool::~SvkMemoryPool()
@@ -35,17 +34,22 @@ SvkMemoryPool::~SvkMemoryPool()
   smp_Nodes.Clear();
   smp_Handles.Clear();
 
+  smp_PreferredSize = 0;
   smp_FreeListHeadIndex = 0;
   smp_BlockCount = 0;
   smp_BlockSize = 0;
   smp_AllocationCount = 0;
   smp_VkMemoryTypeIndex = 0;
   smp_HandleLastIndex = 0;
+  smp_NodeLastIndex = 0;
 }
 
-void SvkMemoryPool::Init(uint32_t memoryTypeIndex)
+void SvkMemoryPool::Init(uint32_t memoryTypeIndex, uint32_t alignment)
 {
   ASSERT(smp_VkMemory == VK_NULL_HANDLE);
+
+  smp_BlockSize = alignment;
+  smp_BlockCount = smp_PreferredSize / alignment + 1;
 
   smp_VkMemoryTypeIndex = memoryTypeIndex;
 
@@ -60,28 +64,69 @@ void SvkMemoryPool::Init(uint32_t memoryTypeIndex)
   // allocate max node amount which is the same as block count
   smp_Nodes.New(smp_BlockCount);
 
-  smp_FreeListHeadIndex = 0;
+  smp_FreeListHeadIndex = AddNode();
   smp_Nodes[smp_FreeListHeadIndex].blockCount = smp_BlockCount;
   smp_Nodes[smp_FreeListHeadIndex].blockIndex = 0;
   smp_Nodes[smp_FreeListHeadIndex].nextNodeIndex = -1;
 }
 
-uint32_t SvkMemoryPool::Allocate(VkMemoryAllocateInfo allocInfo, VkDeviceMemory &outMemory, uint32_t &outOffset)
+int32_t SvkMemoryPool::AddNode()
 {
+  if (smp_RemovedIndices.Count() > 0)
+  {
+    return smp_RemovedIndices.Pop();
+  }
+
+  // smp_Nodes count is the same as smp_BlockCount
+  ASSERT(smp_NodeLastIndex + 1 < smp_Nodes.Count());
+
+  return smp_NodeLastIndex++;
+}
+
+void SvkMemoryPool::RemoveNode(int32_t removed)
+{
+  smp_RemovedIndices.Push() = removed;
+}
+
+uint32_t SvkMemoryPool::Allocate(VkMemoryAllocateInfo allocInfo, VkMemoryRequirements memReqs, VkDeviceMemory &outMemory, uint32_t &outOffset)
+{
+  smp_AllocationCount++;
+
   ASSERT(allocInfo.sType == VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO);
   ASSERT(allocInfo.allocationSize > 0);
+  ASSERT(allocInfo.allocationSize % memReqs.alignment == 0);
 
   if (smp_VkMemory == VK_NULL_HANDLE)
   {
-    Init(allocInfo.memoryTypeIndex);
+    Init(allocInfo.memoryTypeIndex, memReqs.alignment);
+  }
+
+  ASSERT(smp_BlockSize > memReqs.alignment ?
+    smp_BlockSize % memReqs.alignment == 0 :
+    memReqs.alignment % smp_BlockSize == 0);
+
+  // align size
+  uint32_t allocSize = allocInfo.allocationSize;
+  uint32_t alignmentBlockCount = 0;
+  const uint32_t plAlgn = smp_BlockSize;
+  const uint32_t rqAlgn = memReqs.alignment;
+
+  if (plAlgn >= rqAlgn)
+  {
+    ASSERT(plAlgn % rqAlgn == 0);
+  }
+  else
+  {
+    ASSERT(rqAlgn % plAlgn == 0);
+    alignmentBlockCount = rqAlgn / plAlgn;
   }
 
   // make sure that memory types are same
   ASSERTMSG(smp_VkMemoryTypeIndex == allocInfo.memoryTypeIndex, "Create new SvkMemoryPool with another memory type index");
   // check sizes
-  ASSERT(smp_BlockCount * smp_BlockSize >= allocInfo.allocationSize);
+  ASSERT(smp_BlockCount * smp_BlockSize >= allocSize);
 
-  uint32_t reqBlockCount = allocInfo.allocationSize / smp_BlockSize + 1;
+  uint32_t reqBlockCount = allocSize / smp_BlockSize + (allocSize % smp_BlockSize > 0 ? 1 : 0);
 
   int32_t prevNode = -1;
   int32_t curNode = smp_FreeListHeadIndex;
@@ -89,9 +134,45 @@ uint32_t SvkMemoryPool::Allocate(VkMemoryAllocateInfo allocInfo, VkDeviceMemory 
   while (curNode != -1)
   {
     // find first suitable
-    if (smp_Nodes[curNode].blockCount > reqBlockCount)
+    if (smp_Nodes[curNode].blockCount >= reqBlockCount)
     {
-      int32_t diff = smp_Nodes[curNode].blockCount - reqBlockCount;
+      if (alignmentBlockCount > 0)
+      {
+        uint32_t nextAlignment = smp_Nodes[curNode].blockIndex / alignmentBlockCount
+          + (smp_Nodes[curNode].blockIndex % alignmentBlockCount > 0 ? 1 : 0);
+
+        nextAlignment *= alignmentBlockCount;
+        uint32_t blocksToAlign = nextAlignment - smp_Nodes[curNode].blockIndex;
+
+        if (blocksToAlign > 0)
+        {
+          uint32_t alignedBlockCount = smp_Nodes[curNode].blockCount - blocksToAlign;
+
+          if (alignedBlockCount >= reqBlockCount)
+          {
+            // if aligned is suitable, then add new node after cur
+            int32_t alignedNode = AddNode();
+            smp_Nodes[alignedNode].blockIndex = nextAlignment;
+            smp_Nodes[alignedNode].blockCount = alignedBlockCount;
+            smp_Nodes[alignedNode].nextNodeIndex = smp_Nodes[curNode].nextNodeIndex;
+
+            smp_Nodes[curNode].nextNodeIndex = alignedNode;
+            smp_Nodes[curNode].blockCount = blocksToAlign;
+
+            prevNode = curNode;
+            curNode = alignedNode;
+          }
+          else
+          {
+            prevNode = curNode;
+            curNode = smp_Nodes[curNode].nextNodeIndex;
+
+            continue;
+          }
+        }
+      }
+
+      uint32_t diff = smp_Nodes[curNode].blockCount - reqBlockCount;
 
       AllocHandle &handle = smp_Handles.Push();
       handle.id = smp_HandleLastIndex++;
@@ -113,6 +194,7 @@ uint32_t SvkMemoryPool::Allocate(VkMemoryAllocateInfo allocInfo, VkDeviceMemory 
         if (prevNode == -1 && smp_Nodes[curNode].nextNodeIndex == -1)
         {
           // if only head, destroy it
+          ASSERT(curNode == smp_FreeListHeadIndex);
           smp_FreeListHeadIndex = -1;
         }
         else if (prevNode != -1 && smp_Nodes[curNode].nextNodeIndex == -1)
@@ -131,6 +213,8 @@ uint32_t SvkMemoryPool::Allocate(VkMemoryAllocateInfo allocInfo, VkDeviceMemory 
           // if there are prev and next, skip current
           smp_Nodes[prevNode].nextNodeIndex = smp_Nodes[curNode].nextNodeIndex;
         }
+
+        RemoveNode(curNode);
       }
 
       return handle.id;
@@ -145,15 +229,16 @@ uint32_t SvkMemoryPool::Allocate(VkMemoryAllocateInfo allocInfo, VkDeviceMemory 
   // TODO: memory pool chain: what pool check on freeing?
   // if free list is empty or none is found, create new and slightly bigger
   //smp_pNext = new SvkMemoryPool(smp_VkDevice, smp_BlockSize, (uint32_t)(smp_BlockCount * 1.25f));
+  //?allocInfo.allocationSize = allocSize;
   //return smp_pNext->Allocate(allocInfo, outMemory, outOffset);
-}
 
-int32_t AddNode()
-{
+  return 0;
 }
 
 void SvkMemoryPool::Free(uint32_t handle)
 {
+  smp_AllocationCount--;
+
   bool found = false;
   uint32_t blockIndex, blockCount;
 
@@ -178,7 +263,7 @@ void SvkMemoryPool::Free(uint32_t handle)
   // if there is no head, then just create it
   if (smp_FreeListHeadIndex == -1)
   {
-    smp_FreeListHeadIndex = 0;
+    smp_FreeListHeadIndex = AddNode();
     smp_Nodes[smp_FreeListHeadIndex].blockCount = blockCount;
     smp_Nodes[smp_FreeListHeadIndex].blockIndex = blockIndex;
     smp_Nodes[smp_FreeListHeadIndex].nextNodeIndex = -1;
@@ -254,13 +339,23 @@ void SvkMemoryPool::Free(uint32_t handle)
   }
   else
   {
-    // if not head and not last,
-    // check if can merge with prev or next
-    if (smp_Nodes[prevNode].blockIndex + smp_Nodes[prevNode].blockCount == blockIndex)
+    // if not head and not last;
+    // check if can merge with prev or next (relatively to new node)
+    bool withPrev = smp_Nodes[prevNode].blockIndex + smp_Nodes[prevNode].blockCount == blockIndex;
+    bool withNext = blockIndex + blockCount == smp_Nodes[curNode].blockIndex;
+
+    if (withPrev && withNext)
+    {
+      RemoveNode(curNode);
+
+      smp_Nodes[prevNode].blockCount += blockCount + smp_Nodes[curNode].blockIndex;
+      smp_Nodes[prevNode].nextNodeIndex = smp_Nodes[curNode].nextNodeIndex;
+    }
+    else if (withPrev)
     {
       smp_Nodes[prevNode].blockCount += blockCount;
     }
-    else if (blockIndex + blockCount == smp_Nodes[curNode].blockIndex)
+    else if (withNext)
     {
       smp_Nodes[curNode].blockIndex = blockIndex;
       smp_Nodes[curNode].blockCount += blockCount;

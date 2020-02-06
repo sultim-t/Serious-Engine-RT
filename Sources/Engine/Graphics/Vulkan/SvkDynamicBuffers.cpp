@@ -42,7 +42,7 @@ void CGfxLibrary::InitDynamicVertexBuffers(uint32_t newSize)
   InitDynamicBuffer(gl_VkDynamicVBGlobal, gl_VkDynamicVB, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 
 #ifndef NDEBUG
-  CPrintF("SVK: Allocated dynamic vertex buffer: %u KB.\n", gl_VkDynamicVBGlobal.sdg_CurrentDynamicBufferSize / 1024);
+  CPrintF("SVK: Allocated dynamic vertex buffer: %u MB.\n", gl_VkDynamicVBGlobal.sdg_CurrentDynamicBufferSize / 1024 / 1024);
 #endif // !NDEBUG
 }
 
@@ -54,7 +54,7 @@ void CGfxLibrary::InitDynamicIndexBuffers(uint32_t newSize)
   InitDynamicBuffer(gl_VkDynamicIBGlobal, gl_VkDynamicIB, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
 #ifndef NDEBUG
-  CPrintF("SVK: Allocated dynamic index buffer: %u KB.\n", gl_VkDynamicIBGlobal.sdg_CurrentDynamicBufferSize / 1024);
+  CPrintF("SVK: Allocated dynamic index buffer: %u MB.\n", gl_VkDynamicIBGlobal.sdg_CurrentDynamicBufferSize / 1024 / 1024);
 #endif // !NDEBUG
 }
 
@@ -206,7 +206,7 @@ void CGfxLibrary::GetVertexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer)
 
     vkUnmapMemory(gl_VkDevice, dynBufferGlobal.sdg_DynamicBufferMemory);
 
-    uint32_t newSize = dynBufferGlobal.sdg_CurrentDynamicBufferSize + SVK_DYNAMIC_VERTEX_BUFFER_START_SIZE;
+    uint32_t newSize = dynBufferGlobal.sdg_CurrentDynamicBufferSize + 2 * SVK_DYNAMIC_VERTEX_BUFFER_START_SIZE;
     InitDynamicVertexBuffers(newSize);
   }
 

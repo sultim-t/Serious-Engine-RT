@@ -34,6 +34,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #ifdef SE1_VULKAN
 #include <Engine/Graphics/Vulkan/VulkanInclude.h>
 #include <Engine/Graphics/Vulkan/SvkStaticHashTable.h>
+#include <Engine/Graphics/Vulkan/SvkMemoryPool.h>
 #endif // SE1_VULKAN
 
 #include <Engine/Graphics/Color.h>
@@ -202,6 +203,7 @@ public:
   // all loaded textures
   SvkStaticHashTable<SvkTextureObject>    gl_VkTextures;
   uint32_t                                gl_VkLastTextureId;
+  SvkMemoryPool                           *gl_VkImageMemPool;
 
   CStaticStackArray<uint32_t>             gl_VkTexturesToDelete[gl_VkMaxCmdBufferCount];
 
@@ -398,6 +400,7 @@ private:
   SvkTextureObject &GetTextureObject(uint32_t textureId);
   VkDescriptorSet GetTextureDescriptor(uint32_t textureId);
   void FreeDeletedTextures(uint32_t cmdBufferIndex);
+  static void DestroyTextureObject(SvkTextureObject &sto);
 
   void AcquireNextImage();
   void StartFrame();

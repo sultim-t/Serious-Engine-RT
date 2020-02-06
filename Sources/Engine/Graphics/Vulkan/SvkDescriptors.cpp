@@ -106,7 +106,7 @@ void CGfxLibrary::CreateDescriptorPools()
   poolSizes[0].descriptorCount = gl_VkMaxCmdBufferCount;
 
   poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  poolSizes[1].descriptorCount = SVK_DESCRIPTOR_MAX_SAMPLER_COUNT;
+  poolSizes[1].descriptorCount = SVK_DESCRIPTOR_MAX_SAMPLER_COUNT * 2;
 
   VkDescriptorPoolCreateInfo descPoolInfo = {};
   descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -114,7 +114,7 @@ void CGfxLibrary::CreateDescriptorPools()
   descPoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
   descPoolInfo.poolSizeCount = poolSizeCount;
   descPoolInfo.pPoolSizes = poolSizes;
-  descPoolInfo.maxSets = SVK_DESCRIPTOR_MAX_SET_COUNT;
+  descPoolInfo.maxSets = SVK_DESCRIPTOR_MAX_SET_COUNT * 2;
 
   r = vkCreateDescriptorPool(gl_VkDevice, &descPoolInfo, nullptr, &gl_VkDescriptorPool);
   VK_CHECKERROR(r);

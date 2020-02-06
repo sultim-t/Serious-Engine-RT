@@ -25,19 +25,19 @@ void CGfxLibrary::CreateTexturesDataStructure()
   // make hash table tall to reduce linear searches
   gl_VkTextures.New(512, 8);
   gl_VkLastTextureId = 1;
+
+  // average texture size with mipmaps in bytes
+  const uint32_t AvgTextureSize = 192 * 192 * 4 * 4 / 3;
+  gl_VkImageMemPool = new SvkMemoryPool(gl_VkDevice, AvgTextureSize * 512);
 }
 
 void CGfxLibrary::DestroyTexturesDataStructure()
 {
-  // TODO: Vulkan: texture has table
-  
-  VkDevice &device = gl_VkDevice;
-  VkDescriptorPool &descPool = gl_VkDescriptorPool;
+  delete gl_VkImageMemPool;
 
-  gl_VkTextures.Map([](SvkTextureObject &t)
-    {
-      t.Destroy();
-    });
+  // destroy all texture objects; memory handles will be ignored
+  // as image memory pool is freed already
+  gl_VkTextures.Map(DestroyTextureObject);
 
   for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
   {
@@ -71,6 +71,7 @@ VkDescriptorSet CGfxLibrary::GetTextureDescriptor(uint32_t textureId)
     return sto.sto_DescSet;
   }
 
+  // if wasn't uploaded
   if (sto.sto_Image == VK_NULL_HANDLE)
   {
 #ifndef NDEBUG
@@ -127,6 +128,7 @@ VkDescriptorSet CGfxLibrary::GetTextureDescriptor(uint32_t textureId)
 
 void CGfxLibrary::AddTextureToDeletion(uint32_t textureId)
 {
+  // TODO: not texture id, but image, imageview, desc set and memory handler
   ASSERT(textureId != 0);
   gl_VkTexturesToDelete[gl_VkCmdBufferCurrent].Push() = textureId;
 }
@@ -134,7 +136,7 @@ void CGfxLibrary::AddTextureToDeletion(uint32_t textureId)
 uint32_t CGfxLibrary::GetTexturePixCount(uint32_t textureId)
 {
   auto &sto = GetTextureObject(textureId);
-  return sto.sto_Width *sto.sto_Height;
+  return sto.sto_Width * sto.sto_Height;
 }
 
 void CGfxLibrary::FreeDeletedTextures(uint32_t cmdBufferIndex)
@@ -144,10 +146,40 @@ void CGfxLibrary::FreeDeletedTextures(uint32_t cmdBufferIndex)
   for (INDEX i = 0; i < toDelete.Count(); i++)
   {
     SvkTextureObject &sto = GetTextureObject(toDelete[i]);
-    sto.Destroy();
+
+    // only if was uploaded
+    if (sto.sto_Image != VK_NULL_HANDLE)
+    {
+      // free image memory from pool
+      gl_VkImageMemPool->Free(sto.sto_MemoryHandle);
+
+      // free image, image view and desc set, if exist
+      DestroyTextureObject(sto);
+    }
+
+    // remove from hash table
+    gl_VkTextures.Delete(toDelete[i]);
   }
 
   toDelete.PopAll();
+}
+
+void CGfxLibrary::DestroyTextureObject(SvkTextureObject &sto)
+{  
+  // destroy everything except sampler, as texture object doesn't own it
+  if (sto.sto_DescSet != VK_NULL_HANDLE)
+  {
+    vkFreeDescriptorSets(sto.sto_VkDevice, sto.sto_DescPool, 1, &sto.sto_DescSet);
+  }
+
+  // if was uploaded
+  if (sto.sto_Image != VK_NULL_HANDLE)
+  {
+    vkDestroyImage(sto.sto_VkDevice, sto.sto_Image, nullptr);
+    vkDestroyImageView(sto.sto_VkDevice, sto.sto_ImageView, nullptr);
+  }
+
+  sto.Reset();
 }
 
 uint32_t CGfxLibrary::CreateTexture()
@@ -176,13 +208,9 @@ void CGfxLibrary::InitTexture32Bit(
 
   ASSERT(mipLevelsCount > 0 && mipLevelsCount < MaxMipLevelsCount);
 
-  if (sto.sto_Image != VK_NULL_HANDLE || sto.sto_ImageView != VK_NULL_HANDLE || sto.sto_Memory != VK_NULL_HANDLE)
+  // if was uploaded, delete it
+  if (sto.sto_Image != VK_NULL_HANDLE)
   {
-    // if texture is not null, then it must be updated without allocation
-    //ASSERT(onlyUpdate);
-
-    // TODO: update image without allocation
-
     // send old texture to deletion
     SvkSamplerFlags samplerFlags = sto.sto_SamplerFlags;
     AddTextureToDeletion(textureId);
@@ -274,9 +302,11 @@ void CGfxLibrary::InitTexture32Bit(
     imageMemoryReq.size : imageMemoryReq.size + imageMemoryReq.alignment - imageMemoryReq.size % imageMemoryReq.alignment;
   imageAllocInfo.memoryTypeIndex = GetMemoryTypeIndex(imageMemoryReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-  r = vkAllocateMemory(gl_VkDevice, &imageAllocInfo, nullptr, &sto.sto_Memory);
+  //r = vkAllocateMemory(gl_VkDevice, &imageAllocInfo, nullptr, &sto.sto_Memory);
+  uint32_t imageMemoryOffset;
+  sto.sto_MemoryHandle = gl_VkImageMemPool->Allocate(imageAllocInfo, imageMemoryReq, sto.sto_Memory, imageMemoryOffset);
   VK_CHECKERROR(r);
-  r = vkBindImageMemory(gl_VkDevice, sto.sto_Image, sto.sto_Memory, 0);
+  r = vkBindImageMemory(gl_VkDevice, sto.sto_Image, sto.sto_Memory, imageMemoryOffset);
   VK_CHECKERROR(r);
 
   // prepare regions for copying

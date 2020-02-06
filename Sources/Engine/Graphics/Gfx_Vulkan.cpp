@@ -280,6 +280,7 @@ void CGfxLibrary::Reset_Vulkan()
   gl_VkGlobalSamplerState = 0;
 
   gl_VkLastTextureId = 1;
+  gl_VkImageMemPool = nullptr;
 
   gl_VkPhysDevice = VK_NULL_HANDLE;
   gl_VkPhMemoryProperties = {};

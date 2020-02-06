@@ -64,11 +64,14 @@ private:
   CStaticArray<FreeListNode> smp_Nodes;
   // head of the free ranges list; -1 if none
   int32_t         smp_FreeListHeadIndex;
+  int32_t         smp_NodeLastIndex;
+  CStaticStackArray<int32_t> smp_RemovedIndices;
 
   // handles for freeing
   CStaticStackArray<AllocHandle> smp_Handles;
   uint32_t        smp_HandleLastIndex;
 
+  uint32_t        smp_PreferredSize;
   // overall block count
   uint32_t        smp_BlockCount;
   // size of one block in bytes, aligned
@@ -77,15 +80,17 @@ private:
   uint32_t        smp_AllocationCount;
 
 private:
-  void Init(uint32_t memoryTypeIndex);
+  void Init(uint32_t memoryTypeIndex, uint32_t alignment);
+  int32_t AddNode();
+  void RemoveNode(int32_t removed);
 
 public:
-  SvkMemoryPool(VkDevice device, uint32_t preferredBlockSize, uint32_t blockCount);
+  SvkMemoryPool(VkDevice device, uint32_t preferredSize);
   ~SvkMemoryPool();
 
   // Allocate memory with specified size, out params are memory and offset in it.
   // Returns handle which must be used to free memory.
-  uint32_t Allocate(VkMemoryAllocateInfo allocInfo, VkDeviceMemory &outMemory, uint32_t &outOffset);
+  uint32_t Allocate(VkMemoryAllocateInfo allocInfo, VkMemoryRequirements memReqs, VkDeviceMemory &outMemory, uint32_t &outOffset);
 
   // Free allocated memory. Handle is a number that was returned in Allocate.
   void Free(uint32_t handle);

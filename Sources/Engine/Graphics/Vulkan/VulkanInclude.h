@@ -39,7 +39,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define SVK_VERT_ALLOC_STEP                     4096
 
 #define SVK_DYNAMIC_VERTEX_BUFFER_START_SIZE	  (8192 * 1024)
-#define SVK_DYNAMIC_INDEX_BUFFER_START_SIZE	    (1024 * 1024)
+#define SVK_DYNAMIC_INDEX_BUFFER_START_SIZE	    (2048 * 1024)
 #define SVK_DYNAMIC_UNIFORM_BUFFER_START_SIZE   (256 * 1024)
 #define SVK_DYNAMIC_UNIFORM_MAX_ALLOC_SIZE      1024
 
@@ -54,12 +54,16 @@ public:
   uint32_t          sto_Width;
   uint32_t          sto_Height;
   VkFormat          sto_Format;
+
   VkImage           sto_Image;
   VkImageView       sto_ImageView;
-  SvkSamplerFlags   sto_SamplerFlags;
-  VkSampler         sto_Sampler;
   VkImageLayout     sto_Layout;
   VkDeviceMemory    sto_Memory;
+  uint32_t          sto_MemoryHandle;
+
+  SvkSamplerFlags   sto_SamplerFlags;
+  VkSampler         sto_Sampler;
+
   VkDescriptorSet   sto_DescSet;
   VkDescriptorPool  sto_DescPool;
   VkDevice          sto_VkDevice;
@@ -76,24 +80,6 @@ public:
     Reset();
   }
 
-  void Destroy()
-  {
-    // destroy everything except sampler, as texture object doesn't own it
-    if (sto_DescSet != VK_NULL_HANDLE)
-    {
-      vkFreeDescriptorSets(sto_VkDevice, sto_DescPool, 1, &sto_DescSet);
-    }
-
-    if (sto_Image != VK_NULL_HANDLE)
-    {
-      vkDestroyImage(sto_VkDevice, sto_Image, nullptr);
-      vkDestroyImageView(sto_VkDevice, sto_ImageView, nullptr);
-      vkFreeMemory(sto_VkDevice, sto_Memory, nullptr);
-    }
-
-    Reset();
-  }
-
   void Reset()
   {
     sto_Width = sto_Height = 0;
@@ -101,6 +87,7 @@ public:
     sto_Image = VK_NULL_HANDLE;
     sto_ImageView = VK_NULL_HANDLE;
     sto_Sampler = VK_NULL_HANDLE;
+    sto_MemoryHandle = 0;
     sto_Memory = VK_NULL_HANDLE;
     sto_DescSet = VK_NULL_HANDLE;
     sto_DescPool = VK_NULL_HANDLE;
