@@ -787,6 +787,9 @@
     <ClCompile Include="Graphics\Vulkan\SvkSamplers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\Vulkan\SvkMemoryPool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Base\Anim.h">
@@ -1419,7 +1422,7 @@
     <ClInclude Include="Graphics\Vulkan\SvkStaticHashTable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\Vulkan\SvkStaging.h">
+    <ClInclude Include="Graphics\Vulkan\SvkMemoryPool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -274,14 +274,10 @@ void CGfxLibrary::InitTexture32Bit(
     imageMemoryReq.size : imageMemoryReq.size + imageMemoryReq.alignment - imageMemoryReq.size % imageMemoryReq.alignment;
   imageAllocInfo.memoryTypeIndex = GetMemoryTypeIndex(imageMemoryReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-  static int a = 0;
-  a++;
   r = vkAllocateMemory(gl_VkDevice, &imageAllocInfo, nullptr, &sto.sto_Memory);
   VK_CHECKERROR(r);
   r = vkBindImageMemory(gl_VkDevice, sto.sto_Image, sto.sto_Memory, 0);
   VK_CHECKERROR(r);
-
-  // ASSERT(!(imageAllocInfo.allocationSize == 0x16000 || imageAllocInfo.allocationSize == 0x18000));
 
   // prepare regions for copying
   VkBufferImageCopy bufferCopyRegions[MaxMipLevelsCount];
