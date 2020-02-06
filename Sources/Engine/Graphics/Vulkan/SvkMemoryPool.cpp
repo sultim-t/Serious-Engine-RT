@@ -235,6 +235,37 @@ uint32_t SvkMemoryPool::Allocate(VkMemoryAllocateInfo allocInfo, VkMemoryRequire
   return 0;
 }
 
+#ifndef NDEBUG
+struct DebugFreeListNode
+{
+  int32_t       nextNodeIndex;
+  uint32_t      blockIndex;
+  uint32_t      blockCount;
+};
+
+void CheckConsistency(int32_t smp_FreeListHeadIndex, void *psmp_Nodes)
+{
+  CStaticArray<DebugFreeListNode> &smp_Nodes = *((CStaticArray<DebugFreeListNode>*)psmp_Nodes);
+
+  int32_t prevNodeD = -1;
+  int32_t curNodeD = smp_FreeListHeadIndex;
+  while (curNodeD != -1)
+  {
+    ASSERT(smp_Nodes[curNodeD].blockCount != 0);
+    if (prevNodeD != -1)
+    {
+      if (!(smp_Nodes[prevNodeD].blockIndex + smp_Nodes[prevNodeD].blockCount <= smp_Nodes[curNodeD].blockIndex))
+      {
+        int breakpoint = 0;
+      }
+    }
+
+    prevNodeD = curNodeD;
+    curNodeD = smp_Nodes[curNodeD].nextNodeIndex;
+  }
+}
+#endif // !NDEBUG
+
 void SvkMemoryPool::Free(uint32_t handle)
 {
   smp_AllocationCount--;
@@ -268,6 +299,10 @@ void SvkMemoryPool::Free(uint32_t handle)
     smp_Nodes[smp_FreeListHeadIndex].blockIndex = blockIndex;
     smp_Nodes[smp_FreeListHeadIndex].nextNodeIndex = -1;
 
+#ifndef NDEBUG
+    CheckConsistency(smp_FreeListHeadIndex, &smp_Nodes);
+#endif // !NDEBUG
+
     return;
   }
 
@@ -298,6 +333,10 @@ void SvkMemoryPool::Free(uint32_t handle)
     if (smp_Nodes[prevNode].blockIndex + smp_Nodes[prevNode].blockCount == blockIndex)
     {
       smp_Nodes[prevNode].blockCount += blockCount;
+
+#ifndef NDEBUG
+      CheckConsistency(smp_FreeListHeadIndex, &smp_Nodes);
+#endif // !NDEBUG
       return;
     }
     else
@@ -310,6 +349,10 @@ void SvkMemoryPool::Free(uint32_t handle)
 
       smp_Nodes[prevNode].nextNodeIndex = newNode;
 
+
+#ifndef NDEBUG
+      CheckConsistency(smp_FreeListHeadIndex, &smp_Nodes);
+#endif // !NDEBUG
       return;
     }
   }
@@ -327,6 +370,10 @@ void SvkMemoryPool::Free(uint32_t handle)
       // then update existing
       smp_Nodes[curNode].blockIndex = blockIndex;
       smp_Nodes[curNode].blockCount += blockCount;
+
+#ifndef NDEBUG
+      CheckConsistency(smp_FreeListHeadIndex, &smp_Nodes);
+#endif // !NDEBUG
     }
     else
     {
@@ -335,6 +382,10 @@ void SvkMemoryPool::Free(uint32_t handle)
       smp_Nodes[smp_FreeListHeadIndex].blockIndex = blockIndex;
       smp_Nodes[smp_FreeListHeadIndex].blockCount = blockCount;
       smp_Nodes[smp_FreeListHeadIndex].nextNodeIndex = curNode;
+
+#ifndef NDEBUG
+      CheckConsistency(smp_FreeListHeadIndex, &smp_Nodes);
+#endif // !NDEBUG
     }
   }
   else
@@ -348,17 +399,29 @@ void SvkMemoryPool::Free(uint32_t handle)
     {
       RemoveNode(curNode);
 
-      smp_Nodes[prevNode].blockCount += blockCount + smp_Nodes[curNode].blockIndex;
+      smp_Nodes[prevNode].blockCount += blockCount + smp_Nodes[curNode].blockCount;
       smp_Nodes[prevNode].nextNodeIndex = smp_Nodes[curNode].nextNodeIndex;
+
+#ifndef NDEBUG
+      CheckConsistency(smp_FreeListHeadIndex, &smp_Nodes);
+#endif // !NDEBUG
     }
     else if (withPrev)
     {
       smp_Nodes[prevNode].blockCount += blockCount;
+
+#ifndef NDEBUG
+      CheckConsistency(smp_FreeListHeadIndex, &smp_Nodes);
+#endif // !NDEBUG
     }
     else if (withNext)
     {
       smp_Nodes[curNode].blockIndex = blockIndex;
       smp_Nodes[curNode].blockCount += blockCount;
+
+#ifndef NDEBUG
+      CheckConsistency(smp_FreeListHeadIndex, &smp_Nodes);
+#endif // !NDEBUG
     }
     else
     {
@@ -368,6 +431,10 @@ void SvkMemoryPool::Free(uint32_t handle)
       smp_Nodes[newNode].nextNodeIndex = curNode;
 
       smp_Nodes[prevNode].nextNodeIndex = newNode;
+
+#ifndef NDEBUG
+      CheckConsistency(smp_FreeListHeadIndex, &smp_Nodes);
+#endif // !NDEBUG
     }
   }
 }

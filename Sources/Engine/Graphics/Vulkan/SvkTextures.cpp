@@ -27,7 +27,7 @@ void CGfxLibrary::CreateTexturesDataStructure()
   gl_VkLastTextureId = 1;
 
   // average texture size with mipmaps in bytes
-  const uint32_t AvgTextureSize = 192 * 192 * 4 * 4 / 3;
+  const uint32_t AvgTextureSize = 256 * 256 * 4 * 4 / 3;
   gl_VkImageMemPool = new SvkMemoryPool(gl_VkDevice, AvgTextureSize * 512);
 }
 
