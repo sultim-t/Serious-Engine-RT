@@ -1419,6 +1419,9 @@
     <ClInclude Include="Graphics\Vulkan\SvkStaticHashTable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\Vulkan\SvkStaging.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Base\CTString.inl">

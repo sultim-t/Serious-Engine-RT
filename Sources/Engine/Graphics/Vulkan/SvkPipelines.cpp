@@ -107,8 +107,8 @@ SvkPipelineState &CGfxLibrary::CreatePipeline(
  
   if (rasterizer.depthBiasEnable)
   {
-    rasterizer.depthBiasConstantFactor = -1.0f;
-    rasterizer.depthBiasSlopeFactor = -2.0f;
+    rasterizer.depthBiasConstantFactor = -2.0f;
+    rasterizer.depthBiasSlopeFactor = -1.0f;
   }
 
   switch (flags & SVK_PLS_POLYGON_MODE_BITS)
@@ -144,6 +144,13 @@ SvkPipelineState &CGfxLibrary::CreatePipeline(
   depthStencil.depthTestEnable = (flags & SVK_PLS_DEPTH_TEST_BOOL) ? VK_TRUE : VK_FALSE;
   depthStencil.depthWriteEnable = (flags & SVK_PLS_DEPTH_WRITE_BOOL) ? VK_TRUE : VK_FALSE;
   depthStencil.stencilTestEnable = VK_FALSE;
+
+  if (depthStencil.depthWriteEnable && !depthStencil.depthTestEnable)
+  {
+    // depth writes are always disabled when depthTestEnable is VK_FALSE,
+    // so depthTestEnable must be VK_TRUE
+    depthStencil.depthTestEnable = VK_TRUE;
+  }
 
   if (flags & SVK_PLS_DEPTH_BOUNDS_BOOL)
   {

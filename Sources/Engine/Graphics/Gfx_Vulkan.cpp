@@ -405,6 +405,7 @@ void CGfxLibrary::InitContext_Vulkan()
   gl_ulFlags |= GLF_32BITTEXTURES;
   gl_ulFlags |= GLF_VSYNC;
   gl_ulFlags &= ~GLF_TEXTURECOMPRESSION;
+  gl_ulFlags |= GLF_EXT_EDGECLAMP;
 
   // setup fog and haze textures
   extern PIX _fog_pixSizeH;
@@ -564,6 +565,11 @@ void CGfxLibrary::SetViewport_Vulkan(float leftUpperX, float leftUpperY, float w
   gl_VkCurrentScissor.extent.height = height;
   gl_VkCurrentScissor.offset.x = leftUpperX;
   gl_VkCurrentScissor.offset.y = leftUpperY;
+
+  ASSERT(gl_VkCmdIsRecording);
+  
+  vkCmdSetViewport(GetCurrentCmdBuffer(), 0, 1, &gl_VkCurrentViewport);
+  vkCmdSetScissor(GetCurrentCmdBuffer(), 0, 1, &gl_VkCurrentScissor);
 }
 
 BOOL CGfxLibrary::InitSurface_Win32(HINSTANCE hinstance, HWND hwnd)
@@ -813,32 +819,7 @@ void CGfxLibrary::StartFrame()
 
   gl_VkCmdIsRecording = true;
 
-  // set viewport and scissor dynamically
-  if (gl_VkCurrentViewport.width != 0 && gl_VkCurrentViewport.height != 0)
-  {
-    vkCmdSetViewport(cmd, 0, 1, &gl_VkCurrentViewport);
-  }
-  else
-  {
-    // use default if wasn't set
-    VkViewport vp;
-    vp.minDepth = 0; vp.maxDepth = 1; vp.x = 0; vp.y = 0;
-    vp.width = gl_VkSwapChainExtent.width; vp.height = gl_VkSwapChainExtent.height;
-    vkCmdSetViewport(cmd, 0, 1, &vp);
-  }
-
-  if (gl_VkCurrentScissor.extent.width != 0 && gl_VkCurrentScissor.extent.height != 0)
-  {
-    vkCmdSetScissor(cmd, 0, 1, &gl_VkCurrentScissor);
-  }
-  else
-  {
-    // use default if wasn't set
-    VkRect2D sc;
-    sc.offset = { 0, 0 };
-    sc.extent = { gl_VkSwapChainExtent.width, gl_VkSwapChainExtent.height };
-    vkCmdSetScissor(cmd, 0, 1, &sc);
-  }
+  // it is guaranteed that viewport and scissor will be set dynamically
 }
 
 void CGfxLibrary::EndFrame()
