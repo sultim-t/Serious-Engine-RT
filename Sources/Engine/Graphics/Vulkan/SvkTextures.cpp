@@ -211,6 +211,7 @@ void CGfxLibrary::InitTexture32Bit(
   // if was uploaded, delete it
   if (sto.sto_Image != VK_NULL_HANDLE)
   {
+      return;
     // send old texture to deletion
     SvkSamplerFlags samplerFlags = sto.sto_SamplerFlags;
     AddTextureToDeletion(textureId);

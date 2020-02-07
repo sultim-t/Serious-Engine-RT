@@ -226,7 +226,7 @@ uint32_t SvkMemoryPool::Allocate(VkMemoryAllocateInfo allocInfo, VkMemoryRequire
 
   ASSERTALWAYS("Increase SvkMemoryPool block count or block size");
 
-  // TODO: memory pool chain: what pool check on freeing?
+  // TODO: memory pool chain
   // if free list is empty or none is found, create new and slightly bigger
   //smp_pNext = new SvkMemoryPool(smp_VkDevice, smp_BlockSize, (uint32_t)(smp_BlockCount * 1.25f));
   //?allocInfo.allocationSize = allocSize;
@@ -254,10 +254,7 @@ void CheckConsistency(int32_t smp_FreeListHeadIndex, void *psmp_Nodes)
     ASSERT(smp_Nodes[curNodeD].blockCount != 0);
     if (prevNodeD != -1)
     {
-      if (!(smp_Nodes[prevNodeD].blockIndex + smp_Nodes[prevNodeD].blockCount <= smp_Nodes[curNodeD].blockIndex))
-      {
-        int breakpoint = 0;
-      }
+      ASSERT(smp_Nodes[prevNodeD].blockIndex + smp_Nodes[prevNodeD].blockCount <= smp_Nodes[curNodeD].blockIndex);
     }
 
     prevNodeD = curNodeD;

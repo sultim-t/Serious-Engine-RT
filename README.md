@@ -2,6 +2,12 @@
 
 Vulkan Serious Engine port based on [open source version](https://github.com/Croteam-official/Serious-Engine).
 
+![Screenshot 00](/Github/Vulkan_Screenshot_0.png)
+![Screenshot 01](/Github/Vulkan_Screenshot_1.png)
+![Screenshot 02](/Github/Vulkan_Screenshot_2.png)
+![Screenshot 03](/Github/Vulkan_Screenshot_3.png)
+![Screenshot 04](/Github/Vulkan_Screenshot_4.png)
+
 ## Building
 
 ### Windows
@@ -35,10 +41,10 @@ And its working directory:
 
 ## Future work
 
-* draw ports
-* depth write fix
+* window recreation (errors occur on textures reloading)
 * features like lens flares, screenshots etc
-* more optimal memory usage
+* more optimal memory usage: descriptor sets, memory pool chain, etc
+* texture reuploading (for dynamic textures like fire, lava, etc) (currently disabled to prevent flickering)
 * ...
 
 ## License
