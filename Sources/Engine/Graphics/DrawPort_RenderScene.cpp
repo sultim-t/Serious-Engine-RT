@@ -1704,7 +1704,7 @@ static void RSEnd(void)
 
 
 void RenderScene( CDrawPort *pDP, ScenePolygon *pspoFirst, CAnyProjection3D &prProjection,
-                  COLOR colSelection, BOOL bTranslucent)
+                  COLOR colSelection, BOOL bTranslucent, BOOL bBackground)
 {
   // check API
   eAPI = _pGfx->gl_eCurrentAPI;
@@ -1769,7 +1769,7 @@ void RenderScene( CDrawPort *pDP, ScenePolygon *pspoFirst, CAnyProjection3D &prP
   RSPrepare();
 
   // turn depth buffer writing on or off
-  if( bTranslucent) gfxDisableDepthWrite();
+  if( bTranslucent || bBackground) gfxDisableDepthWrite();
   else gfxEnableDepthWrite();
 
   // remove all polygons with no triangles from the polygon list

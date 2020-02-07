@@ -902,11 +902,6 @@ void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
 
   uint32_t descSetOffset = (uint32_t)uniformBuffer.sdb_CurrentOffset;
 
-  if (gl_VkGlobalState & ~SVK_PLS_DEPTH_WRITE_BOOL)
-  {
-    int a = 0;
-  }
-
   // if previously not bound or flags don't match then bind new pipeline
   if (gl_VkPreviousPipeline == nullptr || (gl_VkPreviousPipeline != nullptr && gl_VkPreviousPipeline->sps_Flags != gl_VkGlobalState))
   {
