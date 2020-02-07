@@ -369,21 +369,21 @@ BOOL CGfxLibrary::PickPhysicalDevice()
       // now select preferred settings
       gl_VkSurfColorFormat = VK_FORMAT_UNDEFINED;
 
-      for (uint32_t i = 0; i < formatsCount; i++)
+      for (uint32_t j = 0; j < formatsCount; j++)
       {
-        if (gl_VkPhSurfFormats[i].format == VK_FORMAT_R8G8B8A8_UNORM)
+        if (gl_VkPhSurfFormats[j].format == VK_FORMAT_R8G8B8A8_UNORM)
         {
-          gl_VkSurfColorFormat = gl_VkPhSurfFormats[i].format;
-          gl_VkSurfColorSpace = gl_VkPhSurfFormats[i].colorSpace;
+          gl_VkSurfColorFormat = gl_VkPhSurfFormats[j].format;
+          gl_VkSurfColorSpace = gl_VkPhSurfFormats[j].colorSpace;
           break;
         }
       }
 
-      for (uint32_t i = 0; i < presentModesCount; i++)
+      for (uint32_t j = 0; j < presentModesCount; j++)
       {
-        if (gl_VkPhSurfPresentModes[i] == VK_PRESENT_MODE_FIFO_KHR)
+        if (gl_VkPhSurfPresentModes[j] == VK_PRESENT_MODE_IMMEDIATE_KHR)
         {
-          gl_VkSurfPresentMode = gl_VkPhSurfPresentModes[i];
+          gl_VkSurfPresentMode = gl_VkPhSurfPresentModes[j];
           break;
         }
       }
@@ -391,7 +391,11 @@ BOOL CGfxLibrary::PickPhysicalDevice()
       VkFormat depthFormats[3] = { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT };
       gl_VkSurfDepthFormat = FindSupportedFormat(depthFormats, 3, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
-      // TODO: Vulkan: if required format is not found
+      if (gl_VkSurfColorFormat == VK_FORMAT_UNDEFINED)
+      {
+        gl_VkSurfColorFormat = gl_VkPhSurfFormats[0].format;
+        gl_VkSurfColorSpace = gl_VkPhSurfFormats[0].colorSpace;
+      }
 
       // it's guaranteed that maxPushConstantSize will be >=128
       ASSERT(gl_VkPhProperties.limits.maxPushConstantsSize >= 128);
