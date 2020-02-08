@@ -81,8 +81,6 @@ VkSampler CGfxLibrary::CreateSampler(SvkSamplerFlags flags)
   default: ASSERTALWAYS("Vulkan: incorrect pipeline state flag");
   }
 
-  samplerInfo.anisotropyEnable = (flags & SVK_TSS_ANISOTROPY_BITS) != 0;
-
   switch (flags & SVK_TSS_ANISOTROPY_BITS)
   {
   case SVK_TSS_ANISOTROPY_16: samplerInfo.maxAnisotropy = 16; break;
@@ -91,6 +89,8 @@ VkSampler CGfxLibrary::CreateSampler(SvkSamplerFlags flags)
   case SVK_TSS_ANISOTROPY_2: samplerInfo.maxAnisotropy = 2; break;
   case SVK_TSS_ANISOTROPY_0: samplerInfo.maxAnisotropy = 0; break;
   }
+
+  samplerInfo.anisotropyEnable = samplerInfo.maxAnisotropy > 0;
 
   if (samplerInfo.maxAnisotropy > gl_VkPhProperties.limits.maxSamplerAnisotropy)
   {

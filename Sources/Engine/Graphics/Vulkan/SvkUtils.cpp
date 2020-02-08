@@ -379,9 +379,19 @@ BOOL CGfxLibrary::PickPhysicalDevice()
         }
       }
 
+      extern INDEX gfx_vk_iPresentMode;
+      VkPresentModeKHR preferredPresentMode;
+
+      switch (gfx_vk_iPresentMode)
+      {
+      case 1: preferredPresentMode = VK_PRESENT_MODE_MAILBOX_KHR; break;
+      case 2: preferredPresentMode = VK_PRESENT_MODE_IMMEDIATE_KHR; break;
+      default: preferredPresentMode = VK_PRESENT_MODE_FIFO_KHR; break;
+      }
+
       for (uint32_t j = 0; j < presentModesCount; j++)
       {
-        if (gl_VkPhSurfPresentModes[j] == VK_PRESENT_MODE_IMMEDIATE_KHR)
+        if (gl_VkPhSurfPresentModes[j] == preferredPresentMode)
         {
           gl_VkSurfPresentMode = gl_VkPhSurfPresentModes[j];
           break;

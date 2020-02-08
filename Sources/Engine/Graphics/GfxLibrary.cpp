@@ -170,6 +170,9 @@ extern INDEX d3d_bFastUpload = TRUE;            // use internal format conversio
 extern INDEX d3d_iMaxBurstSize = 0;             // 0=unlimited
 extern INDEX d3d_iFinish = 0;
 
+// Vulkan control
+extern INDEX gfx_vk_iPresentMode = 0;           // what present mode to use: 0=FIFO, 1=Mailbox, 2=Immediate
+
 // API common controls
 extern INDEX gap_iUseTextureUnits = 4;
 extern INDEX gap_iTextureFiltering  = 21;       // bilinear by default
@@ -1123,6 +1126,8 @@ void CGfxLibrary::Init(void)
   _pShell->DeclareSymbol("persistent user INDEX d3d_bAlternateDepthReads;", &d3d_bAlternateDepthReads);
   _pShell->DeclareSymbol("persistent      INDEX d3d_bFastUpload;", &d3d_bFastUpload);
   _pShell->DeclareSymbol("persistent user INDEX d3d_iFinish;", &d3d_iFinish);
+
+  _pShell->DeclareSymbol("persistent user INDEX gfx_vk_iPresentMode;", &gfx_vk_iPresentMode);
 
   _pShell->DeclareSymbol("persistent user INDEX gap_iUseTextureUnits;",   &gap_iUseTextureUnits);
   _pShell->DeclareSymbol("persistent user INDEX gap_iTextureFiltering;",  &gap_iTextureFiltering);
