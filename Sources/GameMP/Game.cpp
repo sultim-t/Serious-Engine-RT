@@ -2773,8 +2773,8 @@ void CGame::LCDInit(void)
     _toPointer.SetData_t(CTFILENAME("TexturesMP\\General\\Pointer.tex"));
     _toBcgGrid.SetData_t(CTFILENAME("TexturesMP\\General\\grid.tex"));
     _toBackdrop.SetData_t(CTFILENAME("TexturesMP\\General\\MenuBack.tex"));
-    _toSamU.SetData_t(CTFILENAME("TexturesMP\\General\\SamU.tex"));
-    _toSamD.SetData_t(CTFILENAME("TexturesMP\\General\\SamD.tex"));
+    //_toSamU.SetData_t(CTFILENAME("TexturesMP\\General\\SamU.tex"));
+    //_toSamD.SetData_t(CTFILENAME("TexturesMP\\General\\SamD.tex"));
     _toLeftU.SetData_t(CTFILENAME("TexturesMP\\General\\LeftU.tex"));
     _toLeftD.SetData_t(CTFILENAME("TexturesMP\\General\\LeftD.tex"));
     // force constant textures
@@ -2782,8 +2782,8 @@ void CGame::LCDInit(void)
     ((CTextureData*)_toPointer  .GetData())->Force(TEX_CONSTANT);
     ((CTextureData*)_toBcgGrid  .GetData())->Force(TEX_CONSTANT);
     ((CTextureData*)_toBackdrop .GetData())->Force(TEX_CONSTANT);
-    ((CTextureData*)_toSamU     .GetData())->Force(TEX_CONSTANT);
-    ((CTextureData*)_toSamD     .GetData())->Force(TEX_CONSTANT);
+    //((CTextureData*)_toSamU     .GetData())->Force(TEX_CONSTANT);
+    //((CTextureData*)_toSamD     .GetData())->Force(TEX_CONSTANT);
     ((CTextureData*)_toLeftU    .GetData())->Force(TEX_CONSTANT);
     ((CTextureData*)_toLeftD    .GetData())->Force(TEX_CONSTANT);
 
@@ -2859,12 +2859,12 @@ void CGame::LCDRenderClouds1(void)
     INDEX iXL = 420;
     INDEX iXR = iXL + iSize*_pdp_SE->dp_fWideAdjustment;
     
-    box = PIXaabbox2D( PIX2D( iXL*_pdp_SE->GetWidth()/640, iYU*_pdp_SE->GetHeight()/480) ,
-                       PIX2D( iXR*_pdp_SE->GetWidth()/640, iYM*_pdp_SE->GetHeight()/480));
-    _pdp_SE->PutTexture(&_toSamU, box, SE_COL_BLUE_NEUTRAL|255);
-    box = PIXaabbox2D( PIX2D( iXL*_pdp_SE->GetWidth()/640, iYM*_pdp_SE->GetHeight()/480) ,
-                       PIX2D( iXR*_pdp_SE->GetWidth()/640, iYB*_pdp_SE->GetHeight()/480));
-    _pdp_SE->PutTexture(&_toSamD, box, SE_COL_BLUE_NEUTRAL|255);
+    //box = PIXaabbox2D( PIX2D( iXL*_pdp_SE->GetWidth()/640, iYU*_pdp_SE->GetHeight()/480) ,
+    //                   PIX2D( iXR*_pdp_SE->GetWidth()/640, iYM*_pdp_SE->GetHeight()/480));
+    //_pdp_SE->PutTexture(&_toSamU, box, SE_COL_BLUE_NEUTRAL|255);
+    //box = PIXaabbox2D( PIX2D( iXL*_pdp_SE->GetWidth()/640, iYM*_pdp_SE->GetHeight()/480) ,
+    //                   PIX2D( iXR*_pdp_SE->GetWidth()/640, iYB*_pdp_SE->GetHeight()/480));
+    //_pdp_SE->PutTexture(&_toSamD, box, SE_COL_BLUE_NEUTRAL|255);
 
     iSize = 120;
     iYU = 0;
