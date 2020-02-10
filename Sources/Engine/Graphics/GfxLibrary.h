@@ -184,7 +184,7 @@ public:
   VkCommandBuffer                 gl_VkCmdBuffers[gl_VkMaxCmdBufferCount];
   bool                            gl_VkCmdIsRecording;
 
-  VkDescriptorPool                        gl_VkDescriptorPool;
+  VkDescriptorPool                        gl_VkUniformDescPool;
 
   SvkDynamicBufferGlobal                  gl_VkDynamicVBGlobal;
   SvkDynamicBuffer                        gl_VkDynamicVB[gl_VkMaxCmdBufferCount];
@@ -199,11 +199,16 @@ public:
   CStaticStackArray<SvkDBufferToDelete>   gl_VkDynamicToDelete[gl_VkMaxCmdBufferCount];
 
   SvkSamplerFlags                         gl_VkGlobalSamplerState;
-  CStaticStackArray<SvkSampler>           gl_VkSamplers;
+  SvkStaticHashTable<SvkSamplerObject>    gl_VkSamplers;
+
   // all loaded textures
   SvkStaticHashTable<SvkTextureObject>    gl_VkTextures;
   uint32_t                                gl_VkLastTextureId;
   SvkMemoryPool                           *gl_VkImageMemPool;
+
+  VkDescriptorPool                        gl_VkTextureDescPools[gl_VkMaxCmdBufferCount];
+  SvkStaticHashTable<SvkTextureDescSet>   *gl_VkTextureDescSets[gl_VkMaxCmdBufferCount];
+
 
   CStaticStackArray<uint32_t>             gl_VkTexturesToDelete[gl_VkMaxCmdBufferCount];
 
@@ -358,6 +363,7 @@ private:
 
   void CreateDescriptorPools();
   void DestroyDescriptorPools();
+  void PrepareDescriptorSets(uint32_t cmdBufferIndex);
 
   SvkPipelineState &GetPipeline(SvkPipelineStateFlags flags);
   // create new pipeline and add it to list
@@ -392,6 +398,8 @@ private:
 
   VkSampler GetSampler(SvkSamplerFlags flags);
   VkSampler CreateSampler(SvkSamplerFlags flags);
+
+  void InitSamplers();
   void DestroySamplers();
 
   void CreateTexturesDataStructure();

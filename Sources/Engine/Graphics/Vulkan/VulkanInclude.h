@@ -62,17 +62,9 @@ public:
   uint32_t          sto_MemoryHandle;
 
   SvkSamplerFlags   sto_SamplerFlags;
-  VkSampler         sto_Sampler;
 
-  VkDescriptorSet   sto_DescSet;
-  VkDescriptorPool  sto_DescPool;
+  // for destruction
   VkDevice          sto_VkDevice;
-
-private:
-  // sampler flags when desc set was created;
-  // required to determine if desc set must be recreated,
-  // as other texture object params will not be changed
-  SvkSamplerFlags sto_DescSetSamplerFlags;
 
 public:
   SvkTextureObject()
@@ -86,27 +78,11 @@ public:
     sto_Format = VK_FORMAT_UNDEFINED;
     sto_Image = VK_NULL_HANDLE;
     sto_ImageView = VK_NULL_HANDLE;
-    sto_Sampler = VK_NULL_HANDLE;
     sto_MemoryHandle = 0;
     sto_Memory = VK_NULL_HANDLE;
-    sto_DescSet = VK_NULL_HANDLE;
-    sto_DescPool = VK_NULL_HANDLE;
     sto_VkDevice = VK_NULL_HANDLE;
     sto_Layout = VK_IMAGE_LAYOUT_UNDEFINED;
-    // different values so for first time set will be marked as outdated
     sto_SamplerFlags = 0;
-    sto_DescSetSamplerFlags = UINT32_MAX;
-  }
-
-  bool IsDescSetOutdated()
-  {
-    return sto_DescSetSamplerFlags != sto_SamplerFlags;
-  }
-
-  void SetDescriptorSet(const VkDescriptorSet &newDescSet)
-  {
-    sto_DescSet = newDescSet;
-    sto_DescSetSamplerFlags = sto_SamplerFlags;
   }
 };
 
@@ -143,16 +119,24 @@ struct SvkPipelineState
   VkPipeline              sps_Pipeline;
 };
 
+struct SvkSamplerObject
+{
+  VkDevice    sso_Device;
+  VkSampler   sso_Sampler;
+};
+
+struct SvkTextureDescSet
+{
+  VkImageView       sds_ImageView;
+  VkImageLayout     sds_Layout;
+  SvkSamplerFlags   sds_SamplerFlags;
+  VkDescriptorSet   sds_DescSet;
+};
+
 struct SvkVertexLayout
 {
   CStaticArray<VkVertexInputBindingDescription>    svl_Bindings;
   CStaticArray<VkVertexInputAttributeDescription>  svl_Attributes;
-};
-
-struct SvkSampler
-{
-  SvkSamplerFlags   sv_Flags;
-  VkSampler         sv_Sampler;
 };
 
 void Svk_MatCopy(float *dest, const float *src);

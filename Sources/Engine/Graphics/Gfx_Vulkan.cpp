@@ -184,6 +184,7 @@ BOOL CGfxLibrary::InitDriver_Vulkan()
     return FALSE;
   }
 
+  InitSamplers();
   CreateTexturesDataStructure();
   CreateDescriptorPools();
   CreateCmdBuffers();
@@ -264,7 +265,7 @@ void CGfxLibrary::Reset_Vulkan()
   gl_VkCmdBufferCurrent = 0;
   gl_VkCmdIsRecording = false;
 
-  gl_VkDescriptorPool = VK_NULL_HANDLE;
+  gl_VkUniformDescPool = VK_NULL_HANDLE;
   gl_VkDescSetLayoutTexture = VK_NULL_HANDLE;
   gl_VkDescriptorSetLayout = VK_NULL_HANDLE;
   gl_VkPipelineLayout = VK_NULL_HANDLE;
@@ -299,6 +300,9 @@ void CGfxLibrary::Reset_Vulkan()
 
   for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
   {
+    gl_VkTextureDescPools[i] = VK_NULL_HANDLE;
+    gl_VkTextureDescSets[i] = nullptr;
+
     gl_VkCmdBuffers[i] = VK_NULL_HANDLE;
     gl_VkImageAvailableSemaphores[i] = VK_NULL_HANDLE;
     gl_VkRenderFinishedSemaphores[i] = VK_NULL_HANDLE;
@@ -442,9 +446,6 @@ void CGfxLibrary::InitContext_Vulkan()
 
   extern INDEX gap_iTextureFiltering;
   extern INDEX gap_iTextureAnisotropy;
-
-  // set 16x anisotropy as default for Vulkan
-  gap_iTextureAnisotropy = 16;
 
   //extern FLOAT gap_fTextureLODBias;
   gfxSetTextureFiltering(gap_iTextureFiltering, gap_iTextureAnisotropy);
@@ -793,6 +794,8 @@ void CGfxLibrary::StartFrame()
 
   // reset previous pipeline
   gl_VkPreviousPipeline = nullptr;
+
+  PrepareDescriptorSets(gl_VkCmdBufferCurrent);
 
   _no_ulTextureDescSet = GetTextureDescriptor(_no_ulTexture);
 

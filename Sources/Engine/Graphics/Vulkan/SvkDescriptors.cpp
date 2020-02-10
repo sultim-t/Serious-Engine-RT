@@ -94,38 +94,90 @@ void CGfxLibrary::DestroyDescriptorSetLayouts()
 
 void CGfxLibrary::CreateDescriptorPools()
 {
-  ASSERT(gl_VkDescriptorPool == VK_NULL_HANDLE);
+#ifndef NDEBUG
+  ASSERT(gl_VkUniformDescPool == VK_NULL_HANDLE);
+  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
+  {
+    ASSERT(gl_VkTextureDescPools[i] == VK_NULL_HANDLE);
+  }
+#endif // !NDEBUG
 
   VkResult r;
 
-  const uint32_t poolSizeCount = 2;
-  VkDescriptorPoolSize poolSizes[poolSizeCount];
 
-  // dynamic buffers count same as cmd buffers
-  poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-  poolSizes[0].descriptorCount = gl_VkMaxCmdBufferCount;
+  // one dynamic buffer per command buffer
+  VkDescriptorPoolSize unPoolSize;
+  unPoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+  unPoolSize.descriptorCount = gl_VkMaxCmdBufferCount;
 
-  poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  poolSizes[1].descriptorCount = SVK_DESCRIPTOR_MAX_SAMPLER_COUNT * 2;
-
-  VkDescriptorPoolCreateInfo descPoolInfo = {};
-  descPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  VkDescriptorPoolCreateInfo unDescPoolInfo = {};
+  unDescPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   // to deallocate unused desc sets in dynamic buffers
-  descPoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-  descPoolInfo.poolSizeCount = poolSizeCount;
-  descPoolInfo.pPoolSizes = poolSizes;
-  descPoolInfo.maxSets = SVK_DESCRIPTOR_MAX_SET_COUNT * 2;
+  unDescPoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+  unDescPoolInfo.poolSizeCount = 1;
+  unDescPoolInfo.pPoolSizes = &unPoolSize;
+  unDescPoolInfo.maxSets = SVK_DESCRIPTOR_MAX_SET_COUNT;
 
-  r = vkCreateDescriptorPool(gl_VkDevice, &descPoolInfo, nullptr, &gl_VkDescriptorPool);
+  r = vkCreateDescriptorPool(gl_VkDevice, &unDescPoolInfo, nullptr, &gl_VkUniformDescPool);
   VK_CHECKERROR(r);
+
+
+  // create one pool per command buffer to prevent descriptor set update collisions
+  VkDescriptorPoolSize smPoolSize;
+  smPoolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  smPoolSize.descriptorCount = SVK_DESCRIPTOR_MAX_SAMPLER_COUNT;
+
+  VkDescriptorPoolCreateInfo smDescPoolInfo = {};
+  smDescPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  // no flags are set to make set allocation faster
+  smDescPoolInfo.flags = 0;
+  smDescPoolInfo.poolSizeCount = 1;
+  smDescPoolInfo.pPoolSizes = &smPoolSize;
+  smDescPoolInfo.maxSets = SVK_DESCRIPTOR_MAX_SET_COUNT;
+
+  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
+  {
+    r = vkCreateDescriptorPool(gl_VkDevice, &smDescPoolInfo, nullptr, &gl_VkTextureDescPools[i]);
+    VK_CHECKERROR(r);
+
+    // and allocate desc set hash tables
+    gl_VkTextureDescSets[i] = new SvkStaticHashTable<SvkTextureDescSet>();
+    gl_VkTextureDescSets[i]->New(16, 256);
+  }
 }
 
 void CGfxLibrary::DestroyDescriptorPools()
 {
-  ASSERT(gl_VkDescriptorPool != VK_NULL_HANDLE);
+#ifndef NDEBUG
+  ASSERT(gl_VkUniformDescPool != VK_NULL_HANDLE);
+  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
+  {
+    ASSERT(gl_VkTextureDescPools[i] != VK_NULL_HANDLE);
+  }
+#endif // !NDEBUG
 
-  vkDestroyDescriptorPool(gl_VkDevice, gl_VkDescriptorPool, nullptr);
-  gl_VkDescriptorPool = VK_NULL_HANDLE;
+  vkDestroyDescriptorPool(gl_VkDevice, gl_VkUniformDescPool, nullptr);
+  gl_VkUniformDescPool = VK_NULL_HANDLE;
+
+  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
+  {
+    vkDestroyDescriptorPool(gl_VkDevice, gl_VkTextureDescPools[i], nullptr);
+    gl_VkTextureDescPools[i] = VK_NULL_HANDLE;
+
+    delete gl_VkTextureDescSets[i];
+    gl_VkTextureDescSets[i] = VK_NULL_HANDLE;
+  }
+}
+
+void CGfxLibrary::PrepareDescriptorSets(uint32_t cmdBufferIndex)
+{
+  //if (gl_VkTextureDescSets[cmdBufferIndex]->Count() > SVK_DESCRIPTOR_MAX_SET_COUNT * 2.0f / 3.0f)
+  //{
+  //  gl_VkTextureDescSets[cmdBufferIndex]->Clear();
+
+  //  VkResult r = vkResetDescriptorPool(gl_VkDevice, gl_VkTextureDescPools[cmdBufferIndex], 0);
+  //  VK_CHECKERROR(r);
+  //}
 }
 
 #endif

@@ -74,7 +74,7 @@ void CGfxLibrary::InitDynamicUniformBuffers(uint32_t newSize)
   // allocate descriptor sets for uniform buffers
   VkDescriptorSetAllocateInfo descAllocInfo = {};
   descAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-  descAllocInfo.descriptorPool = gl_VkDescriptorPool;
+  descAllocInfo.descriptorPool = gl_VkUniformDescPool;
   descAllocInfo.descriptorSetCount = 1;
   descAllocInfo.pSetLayouts = &gl_VkDescriptorSetLayout;
 
@@ -305,7 +305,7 @@ void CGfxLibrary::FreeUnusedDynamicBuffers(uint32_t cmdBufferIndex)
 
       if (toDelete[i].sdd_DescriptorSets[j] != VK_NULL_HANDLE)
       {
-        r = vkFreeDescriptorSets(gl_VkDevice, gl_VkDescriptorPool, 1, &toDelete[i].sdd_DescriptorSets[j]);
+        r = vkFreeDescriptorSets(gl_VkDevice, gl_VkUniformDescPool, 1, &toDelete[i].sdd_DescriptorSets[j]);
         VK_CHECKERROR(r);
       }
     }
@@ -347,7 +347,7 @@ void CGfxLibrary::DestroyDynamicBuffers()
     gl_VkDynamicIB[i].sdb_Data = nullptr;
     gl_VkDynamicUB[i].sdb_Data = nullptr;
 
-    r = vkFreeDescriptorSets(gl_VkDevice, gl_VkDescriptorPool, 1, &gl_VkDynamicUB[i].sdu_DescriptorSet);
+    r = vkFreeDescriptorSets(gl_VkDevice, gl_VkUniformDescPool, 1, &gl_VkDynamicUB[i].sdu_DescriptorSet);
     VK_CHECKERROR(r);
     gl_VkDynamicUB[i].sdu_DescriptorSet = VK_NULL_HANDLE;
   }

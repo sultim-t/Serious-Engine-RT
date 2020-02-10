@@ -24,7 +24,7 @@ void CGfxLibrary::CreateTexturesDataStructure()
 
   // make hash table tall to reduce linear searches
   gl_VkTextures.New(512, 8);
-  gl_VkLastTextureId = 1;
+  gl_VkLastTextureId = 0;
 
   // average texture size with mipmaps in bytes
   const uint32_t AvgTextureSize = 256 * 256 * 4 * 4 / 3;
@@ -45,7 +45,7 @@ void CGfxLibrary::DestroyTexturesDataStructure()
   }
 
   gl_VkTextures.Clear();
-  gl_VkLastTextureId = 1;
+  gl_VkLastTextureId = 0;
 }
 
 SvkTextureObject &CGfxLibrary::GetTextureObject(uint32_t textureId)
@@ -65,12 +65,6 @@ VkDescriptorSet CGfxLibrary::GetTextureDescriptor(uint32_t textureId)
 {
   SvkTextureObject &sto = GetTextureObject(textureId);
 
-  // if descriptor set is usable, otherwise allocate new
-  if (!sto.IsDescSetOutdated() && sto.sto_DescSet != VK_NULL_HANDLE)
-  {
-    return sto.sto_DescSet;
-  }
-
   // if wasn't uploaded
   if (sto.sto_Image == VK_NULL_HANDLE)
   {
@@ -85,35 +79,54 @@ VkDescriptorSet CGfxLibrary::GetTextureDescriptor(uint32_t textureId)
     return VK_NULL_HANDLE;
   }
 
-  VkDescriptorSetAllocateInfo setAllocInfo = {};
-  setAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-  setAllocInfo.pNext = nullptr;
-  setAllocInfo.descriptorPool = gl_VkDescriptorPool;
-  setAllocInfo.descriptorSetCount = 1;
-  setAllocInfo.pSetLayouts = &gl_VkDescSetLayoutTexture;
+  // check if cached for this cmd buffer
+  SvkTextureDescSet *cachedDescSet = gl_VkTextureDescSets[gl_VkCmdBufferCurrent]->TryGet(textureId);
 
-  //VkDescriptorSet &descSet = gl_VkTextureDescSets[gl_VkCmdBufferCurrent].Push();
-  VkDescriptorSet descSet;
+  if (cachedDescSet != nullptr)
+  {
+    // if cached and properties are the same, return it
+    if (cachedDescSet->sds_ImageView == sto.sto_ImageView &&
+      cachedDescSet->sds_Layout == sto.sto_Layout /*&& cachedDescSet->sds_SamplerFlags == sto.sto_SamplerFlags*/)
+    {
+      return cachedDescSet->sds_DescSet;
+    }
+  }
 
-  VkResult r = vkAllocateDescriptorSets(gl_VkDevice, &setAllocInfo, &descSet);
-  VK_CHECKERROR(r);
+  // if not found create new table element
+  if (cachedDescSet == nullptr)
+  {
+    SvkTextureDescSet newDescSet = {};
+    newDescSet.sds_ImageView = sto.sto_ImageView;
+    newDescSet.sds_Layout = sto.sto_Layout;
+    newDescSet.sds_SamplerFlags = sto.sto_SamplerFlags;
 
+    // allocate new
+    VkDescriptorSetAllocateInfo setAllocInfo = {};
+    setAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    setAllocInfo.pNext = nullptr;
+    setAllocInfo.descriptorPool = gl_VkTextureDescPools[gl_VkCmdBufferCurrent];
+    setAllocInfo.descriptorSetCount = 1;
+    setAllocInfo.pSetLayouts = &gl_VkDescSetLayoutTexture;
+
+    VkResult r = vkAllocateDescriptorSets(gl_VkDevice, &setAllocInfo, &newDescSet.sds_DescSet);
+    VK_CHECKERROR(r);
+
+    gl_VkTextureDescSets[gl_VkCmdBufferCurrent]->Add(textureId, newDescSet);
+
+    // update pointer
+    cachedDescSet = gl_VkTextureDescSets[gl_VkCmdBufferCurrent]->TryGet(textureId);
+    ASSERT(cachedDescSet != nullptr);
+  }
+
+  // prepare info for desc set update
   VkDescriptorImageInfo imageInfo = {};
   imageInfo.imageLayout = sto.sto_Layout;
   imageInfo.imageView = sto.sto_ImageView;
-
-  if (sto.sto_Sampler != VK_NULL_HANDLE)
-  {
-    imageInfo.sampler = sto.sto_Sampler;
-  }
-  else
-  {
-    imageInfo.sampler = GetSampler(sto.sto_SamplerFlags);
-  }
+  imageInfo.sampler = GetSampler(sto.sto_SamplerFlags);
 
   VkWriteDescriptorSet write = {};
   write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  write.dstSet = descSet;
+  write.dstSet = cachedDescSet->sds_DescSet;
   write.dstBinding = 0;
   write.descriptorCount = 1;
   write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -121,9 +134,7 @@ VkDescriptorSet CGfxLibrary::GetTextureDescriptor(uint32_t textureId)
 
   vkUpdateDescriptorSets(gl_VkDevice, 1, &write, 0, nullptr);
 
-  sto.SetDescriptorSet(descSet);
-
-  return descSet;
+  return cachedDescSet->sds_DescSet;
 }
 
 void CGfxLibrary::AddTextureToDeletion(uint32_t textureId)
@@ -166,12 +177,6 @@ void CGfxLibrary::FreeDeletedTextures(uint32_t cmdBufferIndex)
 
 void CGfxLibrary::DestroyTextureObject(SvkTextureObject &sto)
 {  
-  // destroy everything except sampler, as texture object doesn't own it
-  if (sto.sto_DescSet != VK_NULL_HANDLE)
-  {
-    vkFreeDescriptorSets(sto.sto_VkDevice, sto.sto_DescPool, 1, &sto.sto_DescSet);
-  }
-
   // if was uploaded
   if (sto.sto_Image != VK_NULL_HANDLE)
   {
@@ -188,11 +193,8 @@ uint32_t CGfxLibrary::CreateTexture()
 
   SvkTextureObject sto = {};
   sto.sto_VkDevice = gl_VkDevice;
-  sto.sto_DescPool = gl_VkDescriptorPool;
   gl_VkTextures.Add(textureId, sto);
 
-  // texture IDs start with 1, not 0
-  ASSERT(textureId != 0);
   return textureId;
 }
 

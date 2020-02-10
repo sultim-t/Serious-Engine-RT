@@ -51,14 +51,17 @@ public:
 
   // Value will be copied to hash table
   void Add(INDEX key, const T &value);
+  // Get value by its key
   T &Get(INDEX key);
+  // Try to find value by its key, returns nullptr if not found
+  T *TryGet(INDEX key);
   void Delete(INDEX key);
   void Clear();
   // Apply function to each element in each bucket
   void Map(void (*func) (T&));
 
 private:
-  void FindElement(INDEX key, INDEX &outBucketIndex, INDEX &outElemIndex);
+  bool FindElement(INDEX key, INDEX &outBucketIndex, INDEX &outElemIndex);
 };
 
 
@@ -116,9 +119,28 @@ inline T &SvkStaticHashTable<T>::Get(INDEX key)
   ASSERT(ht_Buckets != nullptr && ht_BucketCount != 0);
 
   INDEX bucketIndex, index;
-  FindElement(key, bucketIndex, index);
+  bool found = FindElement(key, bucketIndex, index);
+  ASSERTMSG(found, "SvkHashTable: Can't find element with specified key");
 
   return ht_Buckets[bucketIndex][index].Value;
+}
+
+template<class T>
+inline T *SvkStaticHashTable<T>::TryGet(INDEX key)
+{
+  ASSERT(ht_Buckets != nullptr && ht_BucketCount != 0);
+
+  INDEX bucketIndex, index;
+  bool found = FindElement(key, bucketIndex, index);
+
+  if (found)
+  {
+    return &ht_Buckets[bucketIndex][index].Value;
+  }
+  else
+  {
+    return nullptr;
+  }
 }
 
 template<class T>
@@ -127,7 +149,8 @@ inline void SvkStaticHashTable<T>::Delete(INDEX key)
   ASSERT(ht_Buckets != nullptr && ht_BucketCount != 0);
 
   INDEX bucketIndex, index;
-  FindElement(key, bucketIndex, index);
+  bool found = FindElement(key, bucketIndex, index);
+  ASSERTMSG(found, "SvkHashTable: Can't find element with specified key");
 
   auto &bucket = ht_Buckets[bucketIndex];
 
@@ -174,7 +197,7 @@ inline void SvkStaticHashTable<T>::Map(void(*func)(T &))
 }
 
 template<class T>
-inline void SvkStaticHashTable<T>::FindElement(INDEX key, INDEX &outBucketIndex, INDEX &outElemIndex)
+inline bool SvkStaticHashTable<T>::FindElement(INDEX key, INDEX &outBucketIndex, INDEX &outElemIndex)
 {
   INDEX hash = hashFunction == nullptr ? key : hashFunction(key);
   INDEX bucketIndex = hash % ht_BucketCount;
@@ -187,11 +210,11 @@ inline void SvkStaticHashTable<T>::FindElement(INDEX key, INDEX &outBucketIndex,
     {
       outElemIndex = i;
       outBucketIndex = bucketIndex;
-      return;
+      return true;
     }
   }
 
-  ASSERTALWAYS("SvkHashTable: Can't find element with specified key");
+  return false;
 }
 #endif
 

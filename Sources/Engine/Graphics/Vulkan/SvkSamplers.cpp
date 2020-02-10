@@ -20,24 +20,27 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 VkSampler CGfxLibrary::GetSampler(SvkSamplerFlags flags)
 {
-  // TODO: Vulkan: more optimal structure for sampler list
-  for (INDEX i = 0; i < gl_VkSamplers.Count(); i++)
-  {
-    if (gl_VkSamplers[i].sv_Flags == flags)
-    {
-      return gl_VkSamplers[i].sv_Sampler;
-    }
-  }
+  SvkSamplerObject *sampler = gl_VkSamplers.TryGet(flags);
 
-  // create sampler and add it to list
-  return CreateSampler(flags);
+  if (sampler != nullptr)
+  {
+    return sampler->sso_Sampler;
+  }
+  else
+  {
+    // create new sampler and add it to table
+    SvkSamplerObject newSampler = {};
+    newSampler.sso_Device = gl_VkDevice;
+    newSampler.sso_Sampler = CreateSampler(flags);
+
+    gl_VkSamplers.Add(flags, newSampler);
+
+    return newSampler.sso_Sampler;
+  }
 }
 
 VkSampler CGfxLibrary::CreateSampler(SvkSamplerFlags flags)
 {
-  SvkSampler &ss = gl_VkSamplers.Push();
-  ss.sv_Flags = flags;
-
   VkSamplerCreateInfo samplerInfo = {};
   samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
   samplerInfo.mipLodBias = SVK_SAMPLER_LOD_BIAS;
@@ -97,18 +100,24 @@ VkSampler CGfxLibrary::CreateSampler(SvkSamplerFlags flags)
     samplerInfo.maxAnisotropy = gl_VkPhProperties.limits.maxSamplerAnisotropy;
   }
 
-  VkResult r = vkCreateSampler(gl_VkDevice, &samplerInfo, nullptr, &ss.sv_Sampler);
+  VkSampler sampler;
+  VkResult r = vkCreateSampler(gl_VkDevice, &samplerInfo, nullptr, &sampler);
   VK_CHECKERROR(r);
 
-  return ss.sv_Sampler;
+  return sampler;
+}
+
+void CGfxLibrary::InitSamplers()
+{
+  gl_VkSamplers.New(128, 16);
 }
 
 void CGfxLibrary::DestroySamplers()
 {
-  for (INDEX i = 0; i < gl_VkSamplers.Count(); i++)
-  {
-    vkDestroySampler(gl_VkDevice, gl_VkSamplers[i].sv_Sampler, nullptr);
-  }
+  gl_VkSamplers.Map([](SvkSamplerObject &sso)
+    {
+      vkDestroySampler(sso.sso_Device, sso.sso_Sampler, nullptr);
+    });
 
   gl_VkSamplers.Clear();
 }
