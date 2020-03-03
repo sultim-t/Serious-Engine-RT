@@ -22,6 +22,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Graphics/GfxLibrary.h>
 #include <Engine/Base/Statistics_internal.h>
 
+#ifdef SE1_VULKAN
+#include <Engine/Graphics/Vulkan/SvkMain.h>
+#endif
+
 extern INDEX ogl_bExclusive;
 
 
@@ -198,7 +202,7 @@ void CViewPort::OpenCanvas(void)
 #ifdef SE1_VULKAN
   if (_pGfx->gl_eCurrentAPI == GAT_VK && !bFullScreen)
   {
-    _pGfx->CreateSwapchain(pixWinSizeI, pixWinSizeJ);
+    _pGfx->gl_SvkMain->CreateSwapchain(pixWinSizeI, pixWinSizeJ);
   }
 #endif // SE1_VULKAN
 
@@ -231,7 +235,7 @@ void CViewPort::CloseCanvas( BOOL bRelease/*=FALSE*/)
 #ifdef SE1_VULKAN
   if (_pGfx->gl_eCurrentAPI == GAT_VK && bRelease) 
   {
-    _pGfx->DestroySwapchain();
+    _pGfx->gl_SvkMain->DestroySwapchain();
   }
 #endif // SE1_VULKAN
 
@@ -287,7 +291,7 @@ void CViewPort::Resize(void)
 #ifdef SE1_VULKAN
   if (_pGfx->gl_eCurrentAPI == GAT_VK)
   {
-    _pGfx->RecreateSwapchain(pixNewWidth, pixNewHeight);
+    _pGfx->gl_SvkMain->RecreateSwapchain(pixNewWidth, pixNewHeight);
   }
 #endif // SE1_VULKAN
 }

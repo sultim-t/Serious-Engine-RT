@@ -16,6 +16,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "stdh.h"
 
 #include <Engine/Graphics/GfxLibrary.h>
+#include <Engine/Graphics/Vulkan/SvkMain.h>
 
 #include <Engine/Base/Statistics_internal.h>
 #include <Engine/Math/Functions.h>
@@ -223,7 +224,7 @@ void UploadTexture_Vulkan(uint32_t *iTexture, ULONG *pulTexture, PIX pixSizeU, P
     }
   }*/
 
-  _pGfx->InitTexture32Bit(*iTexture, eInternalFormat, pulTexture, mipmapSizes, mipmapCount, bUseSubImage);
+  _pGfx->gl_SvkMain->InitTexture32Bit(*iTexture, eInternalFormat, pulTexture, mipmapSizes, mipmapCount, bUseSubImage);
 
   // all done
   _pfGfxProfile.IncrementCounter(CGfxProfile::PCI_TEXTUREUPLOADS, 1);

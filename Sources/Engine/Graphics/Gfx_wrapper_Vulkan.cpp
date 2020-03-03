@@ -44,7 +44,7 @@ static void svk_EnableDepthTest(void)
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
 
-  _pGfx->GetPipelineState() |= SVK_PLS_DEPTH_TEST_BOOL;
+  _pGfx->gl_SvkMain->GetPipelineState() |= SVK_PLS_DEPTH_TEST_BOOL;
   GFX_bDepthTest = TRUE;
 }
 
@@ -55,7 +55,7 @@ static void svk_DisableDepthTest(void)
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
 
-  _pGfx->GetPipelineState() &= ~SVK_PLS_DEPTH_TEST_BOOL;
+  _pGfx->gl_SvkMain->GetPipelineState() &= ~SVK_PLS_DEPTH_TEST_BOOL;
   GFX_bDepthTest = FALSE;
 }
 
@@ -64,7 +64,7 @@ static void svk_DisableDepthTest(void)
 static void svk_EnableDepthBias(void)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);  
-  _pGfx->GetPipelineState() |= SVK_PLS_DEPTH_BIAS_BOOL;
+  _pGfx->gl_SvkMain->GetPipelineState() |= SVK_PLS_DEPTH_BIAS_BOOL;
 }
 
 
@@ -72,7 +72,7 @@ static void svk_EnableDepthBias(void)
 static void svk_DisableDepthBias(void)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-  _pGfx->GetPipelineState() &= ~SVK_PLS_DEPTH_BIAS_BOOL;
+  _pGfx->gl_SvkMain->GetPipelineState() &= ~SVK_PLS_DEPTH_BIAS_BOOL;
 }
 
 
@@ -82,7 +82,7 @@ static void svk_EnableDepthWrite(void)
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
 
-  _pGfx->GetPipelineState() |= SVK_PLS_DEPTH_WRITE_BOOL;
+  _pGfx->gl_SvkMain->GetPipelineState() |= SVK_PLS_DEPTH_WRITE_BOOL;
   GFX_bDepthWrite = TRUE;
 }
 
@@ -93,7 +93,7 @@ static void svk_DisableDepthWrite(void)
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
 
-  _pGfx->GetPipelineState() &= ~SVK_PLS_DEPTH_WRITE_BOOL;
+  _pGfx->gl_SvkMain->GetPipelineState() &= ~SVK_PLS_DEPTH_WRITE_BOOL;
   GFX_bDepthWrite = FALSE;
 }
 
@@ -104,7 +104,7 @@ static void svk_EnableAlphaTest(void)
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
 
-  _pGfx->GetPipelineState() |= SVK_PLS_ALPHA_ENABLE_BOOL;
+  _pGfx->gl_SvkMain->GetPipelineState() |= SVK_PLS_ALPHA_ENABLE_BOOL;
   GFX_bAlphaTest = TRUE;
 }
 
@@ -115,7 +115,7 @@ static void svk_DisableAlphaTest(void)
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
 
-  _pGfx->GetPipelineState() &= ~SVK_PLS_ALPHA_ENABLE_BOOL;
+  _pGfx->gl_SvkMain->GetPipelineState() &= ~SVK_PLS_ALPHA_ENABLE_BOOL;
   GFX_bAlphaTest = FALSE;
 }
 
@@ -126,7 +126,7 @@ static void svk_EnableBlend(void)
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
 
-  _pGfx->GetPipelineState() |= SVK_PLS_BLEND_ENABLE_BOOL;
+  _pGfx->gl_SvkMain->GetPipelineState() |= SVK_PLS_BLEND_ENABLE_BOOL;
   GFX_bBlending = TRUE;
 }
 
@@ -137,7 +137,7 @@ static void svk_DisableBlend(void)
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
 
-  _pGfx->GetPipelineState() &= ~SVK_PLS_BLEND_ENABLE_BOOL;
+  _pGfx->gl_SvkMain->GetPipelineState() &= ~SVK_PLS_BLEND_ENABLE_BOOL;
   GFX_bBlending = FALSE;
 }
 
@@ -180,11 +180,11 @@ static void svk_BlendFunc(GfxBlend eSrc, GfxBlend eDst)
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
 
   // disable all bits and set one
-  _pGfx->GetPipelineState() &= ~SVK_PLS_SRC_BLEND_FACTOR_BITS;
-  _pGfx->GetPipelineState() &= ~SVK_PLS_DST_BLEND_FACTOR_BITS;
+  _pGfx->gl_SvkMain->GetPipelineState() &= ~SVK_PLS_SRC_BLEND_FACTOR_BITS;
+  _pGfx->gl_SvkMain->GetPipelineState() &= ~SVK_PLS_DST_BLEND_FACTOR_BITS;
 
-  _pGfx->GetPipelineState() |= BlendToSvkSrcFlag(eSrc);
-  _pGfx->GetPipelineState() |= BlendToSvkDstFlag(eDst);
+  _pGfx->gl_SvkMain->GetPipelineState() |= BlendToSvkSrcFlag(eSrc);
+  _pGfx->gl_SvkMain->GetPipelineState() |= BlendToSvkDstFlag(eDst);
 
   GFX_eBlendSrc = eSrc;
   GFX_eBlendDst = eDst;
@@ -204,12 +204,12 @@ static void svk_SetColorMask(ULONG ulColorMask)
   const BOOL bA = (ulColorMask&CT_AMASK) == CT_AMASK;
 
   // disable all and set specific
-  _pGfx->GetPipelineState() &= ~SVK_PLS_COLOR_WRITE_MASK_RGBA;
+  _pGfx->gl_SvkMain->GetPipelineState() &= ~SVK_PLS_COLOR_WRITE_MASK_RGBA;
 
-  if (bR) { _pGfx->GetPipelineState() |= SVK_PLS_COLOR_WRITE_MASK_R_BIT; }
-  if (bG) { _pGfx->GetPipelineState() |= SVK_PLS_COLOR_WRITE_MASK_G_BIT; }
-  if (bB) { _pGfx->GetPipelineState() |= SVK_PLS_COLOR_WRITE_MASK_B_BIT; }
-  if (bA) { _pGfx->GetPipelineState() |= SVK_PLS_COLOR_WRITE_MASK_A_BIT; }
+  if (bR) { _pGfx->gl_SvkMain->GetPipelineState() |= SVK_PLS_COLOR_WRITE_MASK_R_BIT; }
+  if (bG) { _pGfx->gl_SvkMain->GetPipelineState() |= SVK_PLS_COLOR_WRITE_MASK_G_BIT; }
+  if (bB) { _pGfx->gl_SvkMain->GetPipelineState() |= SVK_PLS_COLOR_WRITE_MASK_B_BIT; }
+  if (bA) { _pGfx->gl_SvkMain->GetPipelineState() |= SVK_PLS_COLOR_WRITE_MASK_A_BIT; }
 }
 
 
@@ -238,9 +238,9 @@ static void svk_DepthFunc(GfxComp eFunc)
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
 
   // disable all bits and set one
-  _pGfx->GetPipelineState() &= ~SVK_PLS_DEPTH_COMPARE_OP_BITS;
+  _pGfx->gl_SvkMain->GetPipelineState() &= ~SVK_PLS_DEPTH_COMPARE_OP_BITS;
 
-  _pGfx->GetPipelineState() |= CompToSvkSrcFlag(eFunc);
+  _pGfx->gl_SvkMain->GetPipelineState() |= CompToSvkSrcFlag(eFunc);
   GFX_eDepthFunc = eFunc;
 }
 
@@ -252,22 +252,22 @@ static void svk_DepthRange(FLOAT fMin, FLOAT fMax)
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
   // must be in recording state
-  ASSERT(_pGfx->gl_VkCmdIsRecording);
+  ASSERT(_pGfx->gl_SvkMain->gl_VkCmdIsRecording);
 
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   // TODO: Vulkan: depth bounds
   if (true /*fMin == 0.0f && fMax == 1.0f*/)
   {
-    _pGfx->GetPipelineState() &= ~SVK_PLS_DEPTH_BOUNDS_BOOL;
+    _pGfx->gl_SvkMain->GetPipelineState() &= ~SVK_PLS_DEPTH_BOUNDS_BOOL;
   }
   else
   {
-    _pGfx->GetPipelineState() |= SVK_PLS_DEPTH_BOUNDS_BOOL;
+    _pGfx->gl_SvkMain->GetPipelineState() |= SVK_PLS_DEPTH_BOUNDS_BOOL;
 
-    if (_pGfx->GetPipelineState() & SVK_PLS_DEPTH_BOUNDS_BOOL)
+    if (_pGfx->gl_SvkMain->GetPipelineState() & SVK_PLS_DEPTH_BOUNDS_BOOL)
     {
-      vkCmdSetDepthBounds(_pGfx->GetCurrentCmdBuffer(), fMin, fMax);
+      vkCmdSetDepthBounds(_pGfx->gl_SvkMain->GetCurrentCmdBuffer(), fMin, fMax);
     }
   }
 
@@ -286,19 +286,19 @@ static void svk_CullFace(GfxFace eFace)
   ASSERT(eFace == GFX_FRONT || eFace == GFX_BACK || eFace == GFX_NONE);
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
 
-  _pGfx->GetPipelineState() &= ~SVK_PLS_CULL_MODE_BITS;
+  _pGfx->gl_SvkMain->GetPipelineState() &= ~SVK_PLS_CULL_MODE_BITS;
 
   if (eFace == GFX_FRONT)
   {
-    _pGfx->GetPipelineState() |= SVK_PLS_CULL_MODE_FRONT;
+    _pGfx->gl_SvkMain->GetPipelineState() |= SVK_PLS_CULL_MODE_FRONT;
   }
   else if (eFace == GFX_BACK) 
   {
-    _pGfx->GetPipelineState() |= SVK_PLS_CULL_MODE_BACK;
+    _pGfx->gl_SvkMain->GetPipelineState() |= SVK_PLS_CULL_MODE_BACK;
   }
   else
   {
-    _pGfx->GetPipelineState() |= SVK_PLS_CULL_MODE_NONE;
+    _pGfx->gl_SvkMain->GetPipelineState() |= SVK_PLS_CULL_MODE_NONE;
   }
 
   GFX_eCullFace = eFace;
@@ -313,15 +313,15 @@ static void svk_FrontFace(GfxFace eFace)
   ASSERT(eFace == GFX_CW || eFace == GFX_CCW);
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
 
-  _pGfx->GetPipelineState() &= ~SVK_PLS_FRONT_FACE_BITS;
+  _pGfx->gl_SvkMain->GetPipelineState() &= ~SVK_PLS_FRONT_FACE_BITS;
 
   if (eFace == GFX_CCW)
   {
-    _pGfx->GetPipelineState() |= SVK_PLS_FRONT_FACE_COUNTER_CLOCKWISE;
+    _pGfx->gl_SvkMain->GetPipelineState() |= SVK_PLS_FRONT_FACE_COUNTER_CLOCKWISE;
   }
   else
   {
-    _pGfx->GetPipelineState() |= SVK_PLS_FRONT_FACE_CLOCKWISE;
+    _pGfx->gl_SvkMain->GetPipelineState() |= SVK_PLS_FRONT_FACE_CLOCKWISE;
   }
 
   GFX_bFrontFace = eFace == GFX_CCW;
@@ -406,13 +406,13 @@ static void svk_PolygonMode(GfxPolyMode ePolyMode)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
 
-  _pGfx->GetPipelineState() &= ~SVK_PLS_POLYGON_MODE_BITS;
+  _pGfx->gl_SvkMain->GetPipelineState() &= ~SVK_PLS_POLYGON_MODE_BITS;
 
   switch (ePolyMode) 
   {
-  case GFX_POINT:  _pGfx->GetPipelineState() |= SVK_PLS_POLYGON_MODE_POINT; break;
-  case GFX_LINE:   _pGfx->GetPipelineState() |= SVK_PLS_POLYGON_MODE_LINE;   break;
-  case GFX_FILL:   _pGfx->GetPipelineState() |= SVK_PLS_POLYGON_MODE_FILL;   break;
+  case GFX_POINT:  _pGfx->gl_SvkMain->GetPipelineState() |= SVK_PLS_POLYGON_MODE_POINT; break;
+  case GFX_LINE:   _pGfx->gl_SvkMain->GetPipelineState() |= SVK_PLS_POLYGON_MODE_LINE;   break;
+  case GFX_FILL:   _pGfx->gl_SvkMain->GetPipelineState() |= SVK_PLS_POLYGON_MODE_FILL;   break;
   default:  ASSERTALWAYS("Wrong polygon mode!");
   }
 }
@@ -442,7 +442,7 @@ static void svk_GenerateTexture(ULONG& ulTexObject)
   _sfStats.StartTimer(CStatForm::STI_BINDTEXTURE);
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  ulTexObject = _pGfx->CreateTexture();
+  ulTexObject = _pGfx->gl_SvkMain->CreateTexture();
 
   _sfStats.StopTimer(CStatForm::STI_BINDTEXTURE);
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
@@ -460,7 +460,7 @@ static void svk_DeleteTexture(ULONG& ulTexObject)
   _sfStats.StartTimer(CStatForm::STI_BINDTEXTURE);
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  _pGfx->AddTextureToDeletion(ulTexObject);
+  _pGfx->gl_SvkMain->AddTextureToDeletion(ulTexObject);
   ulTexObject = NONE;
 
   _sfStats.StopTimer(CStatForm::STI_BINDTEXTURE);
@@ -480,7 +480,7 @@ static void svk_SetVertexArray(GFXVertex4* pvtx, INDEX ctVtx)
   GFX_ctVertices = ctVtx;
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  CStaticStackArray<SvkVertex> &verts = _pGfx->gl_VkVerts;
+  CStaticStackArray<SvkVertex> &verts = _pGfx->gl_SvkMain->gl_VkVerts;
 
   verts.PopAll();
   SvkVertex *pushed = verts.Push(ctVtx);
@@ -505,7 +505,7 @@ static void svk_SetNormalArray(GFXNormal* pnor)
   ASSERT(GFX_ctVertices > 0);
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  CStaticStackArray<SvkVertex> &verts = _pGfx->gl_VkVerts;
+  CStaticStackArray<SvkVertex> &verts = _pGfx->gl_SvkMain->gl_VkVerts;
   INDEX ctVtx = verts.Count();
   ASSERT(ctVtx > 0);
   ASSERT(ctVtx == GFX_ctVertices);
@@ -528,7 +528,7 @@ static void svk_SetColorArray(GFXColor* pcol)
 
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  CStaticStackArray<SvkVertex> &verts = _pGfx->gl_VkVerts;
+  CStaticStackArray<SvkVertex> &verts = _pGfx->gl_SvkMain->gl_VkVerts;
   INDEX ctVtx = verts.Count();
   ASSERT(ctVtx > 0);
   ASSERT(ctVtx == GFX_ctVertices);
@@ -557,7 +557,7 @@ static void svk_SetTexCoordArray(GFXTexCoord* ptex, BOOL b4/*=FALSE*/)
 
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
-  CStaticStackArray<SvkVertex> &verts = _pGfx->gl_VkVerts;
+  CStaticStackArray<SvkVertex> &verts = _pGfx->gl_SvkMain->gl_VkVerts;
   INDEX ctVtx = verts.Count();
   ASSERT(ctVtx > 0);
 
@@ -598,10 +598,10 @@ static void svk_DrawElements(INDEX ctElem, INDEX *pidx)
   _pGfx->gl_ctTotalTriangles += ctElem / 3;  // for profiling
 
   ASSERT(pidx != NULL); // draw quads only for OpenGL
-  ASSERT(_pGfx->gl_VkVerts.Count() > 0);
-  ASSERT(_pGfx->gl_VkVerts.Count() == GFX_ctVertices);
+  ASSERT(_pGfx->gl_SvkMain->gl_VkVerts.Count() > 0);
+  ASSERT(_pGfx->gl_SvkMain->gl_VkVerts.Count() == GFX_ctVertices);
 
-  _pGfx->DrawTriangles(ctElem, (uint32_t *)pidx);
+  _pGfx->gl_SvkMain->DrawTriangles(ctElem, (uint32_t *)pidx);
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 }
@@ -614,7 +614,7 @@ static void svk_Finish(void)
   _sfStats.StartTimer(CStatForm::STI_GFXAPI);
 
   // force finish of API rendering queue
-  VkResult r = vkQueueWaitIdle(_pGfx->gl_VkQueueGraphics);
+  VkResult r = vkQueueWaitIdle(_pGfx->gl_SvkMain->gl_VkQueueGraphics);
   VK_CHECKERROR(r);
 
   _sfStats.StopTimer(CStatForm::STI_GFXAPI);

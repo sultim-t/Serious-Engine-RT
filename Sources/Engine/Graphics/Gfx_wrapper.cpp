@@ -23,7 +23,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Base/Statistics_internal.h>
 
 #ifdef SE1_VULKAN
-#include <Engine/Graphics/Vulkan/VulkanInclude.h>
+#include <Engine/Graphics/Vulkan/SvkMain.h>
 #endif
 
 //#include <d3dx8math.h>
@@ -437,7 +437,7 @@ extern void gfxSetTexture( ULONG &ulTexObject, CTexParams &tpLocal)
     SvkSamplerFlags samplerFlags = MimicTexParams_Vulkan(tpLocal);
     // save id to upload texture
     _vkCurrentTextureId = (uint32_t*)&ulTexObject;
-    _pGfx->SetTexture(GFX_iActiveTexUnit, ulTexObject, samplerFlags);
+    _pGfx->gl_SvkMain->SetTexture(GFX_iActiveTexUnit, ulTexObject, samplerFlags);
   }
 #endif // SE1_VULKAN
 
@@ -558,7 +558,7 @@ extern SLONG gfxGetTextureSize( ULONG ulTexObject, BOOL bHasMipmaps/*=TRUE*/)
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-    slMipSize = _pGfx->GetTexturePixCount(ulTexObject) * gfxGetTexturePixRatio(ulTexObject);
+    slMipSize = _pGfx->gl_SvkMain->GetTexturePixCount(ulTexObject) * gfxGetTexturePixRatio(ulTexObject);
   }
 #endif // SE1_VULKAN
 

@@ -46,6 +46,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Templates/DynamicContainer.cpp>
 #include <Engine/Templates/Stock_CTextureData.h>
 
+#ifdef SE1_VULKAN
+#include <Engine/Graphics/Vulkan/SvkMain.h>
+#endif
 
 // control for partial usage of compiled vertex arrays
 extern BOOL CVA_b2D     = FALSE;
@@ -502,7 +505,7 @@ static void GAPInfo(void)
     && _pGfx->gl_pd3dDevice==NULL
 #endif // SE1_D3D
 #ifdef SE1_VULKAN
-    && _pGfx->gl_VkInstance==VK_NULL_HANDLE
+    && _pGfx->gl_SvkMain->gl_VkInstance==VK_NULL_HANDLE
 #endif // SE1_VULKAN
 
     ) || eAPI==GAT_NONE) {
@@ -1015,7 +1018,7 @@ CGfxLibrary::CGfxLibrary(void)
   gl_ctIndices  = 0;
 
 #ifdef SE1_VULKAN
-  Reset_Vulkan();
+  gl_SvkMain = nullptr;
 #endif // SE1_VULKAN
 
   // reset profiling counters
@@ -1918,7 +1921,7 @@ void CGfxLibrary::SwapBuffers(CViewPort *pvp)
     // end recording to cmd buffers
     if (GFX_bRenderingScene) 
     {
-      EndFrame();
+      gl_SvkMain->EndFrame();
     }
 
     SwapBuffers_Vulkan();
@@ -2052,7 +2055,7 @@ BOOL CGfxLibrary::LockRaster( CRaster *praToLock)
 #ifdef SE1_VULKAN
     if (gl_eCurrentAPI == GAT_VK && !GFX_bRenderingScene)
     {
-      StartFrame();
+      gl_SvkMain->StartFrame();
     }
 #endif // SE1_VULKAN
 

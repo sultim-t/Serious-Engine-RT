@@ -14,11 +14,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
 #include "stdh.h"
-#include <Engine/Graphics/GfxLibrary.h>
+#include <Engine/Graphics/Vulkan/SvkMain.h>
 
 #ifdef SE1_VULKAN
 
-void CGfxLibrary::CreateDescriptorSetLayouts()
+void SvkMain::CreateDescriptorSetLayouts()
 {
   VkResult r;
 
@@ -77,7 +77,7 @@ void CGfxLibrary::CreateDescriptorSetLayouts()
   VK_CHECKERROR(r);
 }
 
-void CGfxLibrary::DestroyDescriptorSetLayouts()
+void SvkMain::DestroyDescriptorSetLayouts()
 {
   ASSERT(gl_VkDescriptorSetLayout != VK_NULL_HANDLE);
   ASSERT(gl_VkDescSetLayoutTexture != VK_NULL_HANDLE);
@@ -92,7 +92,7 @@ void CGfxLibrary::DestroyDescriptorSetLayouts()
   gl_VkPipelineLayout = VK_NULL_HANDLE;
 }
 
-void CGfxLibrary::CreateDescriptorPools()
+void SvkMain::CreateDescriptorPools()
 {
 #ifndef NDEBUG
   ASSERT(gl_VkUniformDescPool == VK_NULL_HANDLE);
@@ -146,7 +146,7 @@ void CGfxLibrary::CreateDescriptorPools()
   }
 }
 
-void CGfxLibrary::DestroyDescriptorPools()
+void SvkMain::DestroyDescriptorPools()
 {
 #ifndef NDEBUG
   ASSERT(gl_VkUniformDescPool != VK_NULL_HANDLE);
@@ -169,7 +169,7 @@ void CGfxLibrary::DestroyDescriptorPools()
   }
 }
 
-void CGfxLibrary::PrepareDescriptorSets(uint32_t cmdBufferIndex)
+void SvkMain::PrepareDescriptorSets(uint32_t cmdBufferIndex)
 {
   //if (gl_VkTextureDescSets[cmdBufferIndex]->Count() > SVK_DESCRIPTOR_MAX_SET_COUNT * 2.0f / 3.0f)
   //{

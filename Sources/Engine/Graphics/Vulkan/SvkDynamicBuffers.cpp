@@ -14,11 +14,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
 #include "StdH.h"
-#include <Engine/Graphics/GfxLibrary.h>
+#include <Engine/Graphics/Vulkan/SvkMain.h>
 
 #ifdef SE1_VULKAN
 
-void CGfxLibrary::InitDynamicBuffers()
+void SvkMain::InitDynamicBuffers()
 {
 #ifndef NDEBUG
   for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
@@ -34,7 +34,7 @@ void CGfxLibrary::InitDynamicBuffers()
   InitDynamicUniformBuffers(SVK_DYNAMIC_UNIFORM_BUFFER_START_SIZE);
 }
 
-void CGfxLibrary::InitDynamicVertexBuffers(uint32_t newSize)
+void SvkMain::InitDynamicVertexBuffers(uint32_t newSize)
 {
   // ASSERT(newSize < gl_VkPhProperties.limits.);
 
@@ -46,7 +46,7 @@ void CGfxLibrary::InitDynamicVertexBuffers(uint32_t newSize)
 #endif // !NDEBUG
 }
 
-void CGfxLibrary::InitDynamicIndexBuffers(uint32_t newSize)
+void SvkMain::InitDynamicIndexBuffers(uint32_t newSize)
 {
   // ASSERT(newSize < gl_VkPhProperties.limits.);
 
@@ -58,7 +58,7 @@ void CGfxLibrary::InitDynamicIndexBuffers(uint32_t newSize)
 #endif // !NDEBUG
 }
 
-void CGfxLibrary::InitDynamicUniformBuffers(uint32_t newSize)
+void SvkMain::InitDynamicUniformBuffers(uint32_t newSize)
 {
   // ASSERT(newSize < gl_VkPhProperties.limits.);
 
@@ -109,7 +109,7 @@ void CGfxLibrary::InitDynamicUniformBuffers(uint32_t newSize)
   }
 }
 
-void CGfxLibrary::InitDynamicBuffer(SvkDynamicBufferGlobal &dynBufferGlobal, SvkDynamicBuffer *buffers, VkBufferUsageFlags usage)
+void SvkMain::InitDynamicBuffer(SvkDynamicBufferGlobal &dynBufferGlobal, SvkDynamicBuffer *buffers, VkBufferUsageFlags usage)
 {
   VkResult r;
 
@@ -163,7 +163,7 @@ void CGfxLibrary::InitDynamicBuffer(SvkDynamicBufferGlobal &dynBufferGlobal, Svk
   }
 }
 
-void CGfxLibrary::AddDynamicBufferToDeletion(SvkDynamicBufferGlobal &dynBufferGlobal, SvkDynamicBuffer *buffers)
+void SvkMain::AddDynamicBufferToDeletion(SvkDynamicBufferGlobal &dynBufferGlobal, SvkDynamicBuffer *buffers)
 {
   auto &toDelete = gl_VkDynamicToDelete[gl_VkCmdBufferCurrent].Push();
   toDelete.sdd_Memory = dynBufferGlobal.sdg_DynamicBufferMemory;
@@ -175,7 +175,7 @@ void CGfxLibrary::AddDynamicBufferToDeletion(SvkDynamicBufferGlobal &dynBufferGl
   }
 }
 
-void CGfxLibrary::AddDynamicUniformToDeletion(SvkDynamicBufferGlobal &dynBufferGlobal, SvkDynamicUniform *buffers)
+void SvkMain::AddDynamicUniformToDeletion(SvkDynamicBufferGlobal &dynBufferGlobal, SvkDynamicUniform *buffers)
 {
   auto &toDelete = gl_VkDynamicToDelete[gl_VkCmdBufferCurrent].Push();
   toDelete.sdd_Memory = dynBufferGlobal.sdg_DynamicBufferMemory;
@@ -187,14 +187,14 @@ void CGfxLibrary::AddDynamicUniformToDeletion(SvkDynamicBufferGlobal &dynBufferG
   }
 }
 
-void CGfxLibrary::ClearCurrentDynamicOffsets(uint32_t cmdBufferIndex)
+void SvkMain::ClearCurrentDynamicOffsets(uint32_t cmdBufferIndex)
 {
   gl_VkDynamicVB[cmdBufferIndex].sdb_CurrentOffset = 0;
   gl_VkDynamicIB[cmdBufferIndex].sdb_CurrentOffset = 0;
   gl_VkDynamicUB[cmdBufferIndex].sdb_CurrentOffset = 0;
 }
 
-void CGfxLibrary::GetVertexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer)
+void SvkMain::GetVertexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer)
 {
   SvkDynamicBuffer &commonBuffer = gl_VkDynamicVB[gl_VkCmdBufferCurrent];
   SvkDynamicBufferGlobal &dynBufferGlobal = gl_VkDynamicVBGlobal;
@@ -217,7 +217,7 @@ void CGfxLibrary::GetVertexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer)
   commonBuffer.sdb_CurrentOffset += size;
 }
 
-void CGfxLibrary::GetIndexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer)
+void SvkMain::GetIndexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer)
 {
   SvkDynamicBuffer &commonBuffer = gl_VkDynamicIB[gl_VkCmdBufferCurrent];
   SvkDynamicBufferGlobal &dynBufferGlobal = gl_VkDynamicIBGlobal;
@@ -240,7 +240,7 @@ void CGfxLibrary::GetIndexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer)
   commonBuffer.sdb_CurrentOffset += size;
 }
 
-void CGfxLibrary::GetUniformBuffer(uint32_t size, SvkDynamicUniform &outDynUniform)
+void SvkMain::GetUniformBuffer(uint32_t size, SvkDynamicUniform &outDynUniform)
 {
   // size must be aligned by min uniform offset alignment
   uint32_t alignment = gl_VkPhProperties.limits.minUniformBufferOffsetAlignment;
@@ -272,7 +272,7 @@ void CGfxLibrary::GetUniformBuffer(uint32_t size, SvkDynamicUniform &outDynUnifo
   commonBuffer.sdb_CurrentOffset += alignedSize;
 }
 
-void CGfxLibrary::FlushDynamicBuffersMemory()
+void SvkMain::FlushDynamicBuffersMemory()
 {
   VkMappedMemoryRange ranges[3];
   memset(&ranges, 0, sizeof(ranges));
@@ -292,7 +292,7 @@ void CGfxLibrary::FlushDynamicBuffersMemory()
   vkFlushMappedMemoryRanges(gl_VkDevice, 3, ranges);
 }
 
-void CGfxLibrary::FreeUnusedDynamicBuffers(uint32_t cmdBufferIndex)
+void SvkMain::FreeUnusedDynamicBuffers(uint32_t cmdBufferIndex)
 {
   VkResult r;
   auto &toDelete = gl_VkDynamicToDelete[cmdBufferIndex];
@@ -316,7 +316,7 @@ void CGfxLibrary::FreeUnusedDynamicBuffers(uint32_t cmdBufferIndex)
   toDelete.PopAll();
 }
 
-void CGfxLibrary::DestroyDynamicBuffers()
+void SvkMain::DestroyDynamicBuffers()
 {
   ASSERT(gl_VkDynamicVBGlobal.sdg_DynamicBufferMemory != VK_NULL_HANDLE);
   ASSERT(gl_VkDynamicIBGlobal.sdg_DynamicBufferMemory != VK_NULL_HANDLE);

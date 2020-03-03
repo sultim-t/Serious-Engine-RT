@@ -14,11 +14,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
 #include "stdh.h"
-#include <Engine/Graphics/GfxLibrary.h>
+#include <Engine/Graphics/Vulkan/SvkMain.h>
 
 #ifdef SE1_VULKAN
 
-VkShaderModule CGfxLibrary::CreateShaderModule(const uint32_t *spvCode, uint32_t codeSize)
+VkShaderModule SvkMain::CreateShaderModule(const uint32_t *spvCode, uint32_t codeSize)
 {
   VkResult r;
   VkShaderModule shaderModule;
@@ -34,7 +34,7 @@ VkShaderModule CGfxLibrary::CreateShaderModule(const uint32_t *spvCode, uint32_t
   return shaderModule;
 }
 
-uint32_t CGfxLibrary::GetMemoryTypeIndex(uint32_t memoryTypeBits, VkFlags requirementsMask)
+uint32_t SvkMain::GetMemoryTypeIndex(uint32_t memoryTypeBits, VkFlags requirementsMask)
 {
   // for each memory type available for this device
   for (uint32_t i = 0; i < gl_VkPhMemoryProperties.memoryTypeCount; i++)
@@ -55,7 +55,7 @@ uint32_t CGfxLibrary::GetMemoryTypeIndex(uint32_t memoryTypeBits, VkFlags requir
   return 0;
 }
 
-uint32_t CGfxLibrary::GetMemoryTypeIndex(uint32_t memoryTypeBits, VkFlags requirementsMask, VkFlags preferredMask)
+uint32_t SvkMain::GetMemoryTypeIndex(uint32_t memoryTypeBits, VkFlags requirementsMask, VkFlags preferredMask)
 {
   // for each memory type available for this device
   for (uint32_t i = 0; i < gl_VkPhMemoryProperties.memoryTypeCount; i++)
@@ -90,7 +90,7 @@ uint32_t CGfxLibrary::GetMemoryTypeIndex(uint32_t memoryTypeBits, VkFlags requir
   return 0;
 }
 
-VkFormat CGfxLibrary::FindSupportedFormat(const VkFormat *formats, uint32_t formatCount, VkImageTiling tiling, VkFormatFeatureFlags features)
+VkFormat SvkMain::FindSupportedFormat(const VkFormat *formats, uint32_t formatCount, VkImageTiling tiling, VkFormatFeatureFlags features)
 {
   for (uint32_t i = 0; i < formatCount; i++)
   {
@@ -114,7 +114,7 @@ VkFormat CGfxLibrary::FindSupportedFormat(const VkFormat *formats, uint32_t form
   return VK_FORMAT_UNDEFINED;
 }
 
-void CGfxLibrary::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory)
+void SvkMain::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory)
 {
   VkResult r;
 
@@ -141,7 +141,7 @@ void CGfxLibrary::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMe
   vkBindBufferMemory(gl_VkDevice, buffer, bufferMemory, 0);
 }
 
-void CGfxLibrary::CopyToDeviceMemory(VkDeviceMemory deviceMemory, const void *data, VkDeviceSize size)
+void SvkMain::CopyToDeviceMemory(VkDeviceMemory deviceMemory, const void *data, VkDeviceSize size)
 {
   void *mapped;
   vkMapMemory(gl_VkDevice, deviceMemory, 0, size, 0, &mapped);
@@ -149,7 +149,7 @@ void CGfxLibrary::CopyToDeviceMemory(VkDeviceMemory deviceMemory, const void *da
   vkUnmapMemory(gl_VkDevice, deviceMemory);
 }
 
-BOOL CGfxLibrary::GetQueues(VkPhysicalDevice physDevice,
+BOOL SvkMain::GetQueues(VkPhysicalDevice physDevice,
   uint32_t &graphicsFamily, uint32_t &transferFamily, uint32_t &presentQueueFamily)
 {
   uint32_t queueFamilyCount = 0;
@@ -192,7 +192,7 @@ BOOL CGfxLibrary::GetQueues(VkPhysicalDevice physDevice,
   return FALSE;
 }
 
-BOOL CGfxLibrary::CheckDeviceExtensions(VkPhysicalDevice physDevice, const CStaticArray<const char *> &requiredExtensions)
+BOOL SvkMain::CheckDeviceExtensions(VkPhysicalDevice physDevice, const CStaticArray<const char *> &requiredExtensions)
 {
   uint32_t deviceExtCount;
   vkEnumerateDeviceExtensionProperties(physDevice, nullptr, &deviceExtCount, nullptr);
@@ -223,7 +223,7 @@ BOOL CGfxLibrary::CheckDeviceExtensions(VkPhysicalDevice physDevice, const CStat
 }
 
 
-void CGfxLibrary::CreateSyncPrimitives()
+void SvkMain::CreateSyncPrimitives()
 {
   VkResult r;
 
@@ -256,7 +256,7 @@ void CGfxLibrary::CreateSyncPrimitives()
   }
 }
 
-void CGfxLibrary::DestroySyncPrimitives()
+void SvkMain::DestroySyncPrimitives()
 {
   for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
   {
@@ -270,7 +270,7 @@ void CGfxLibrary::DestroySyncPrimitives()
   }
 }
 
-void CGfxLibrary::CreateVertexLayouts()
+void SvkMain::CreateVertexLayouts()
 {
   gl_VkDefaultVertexLayout = new SvkVertexLayout();
   auto &binds = gl_VkDefaultVertexLayout->svl_Bindings;
@@ -309,13 +309,13 @@ void CGfxLibrary::CreateVertexLayouts()
   attrs[4].offset = SVK_VERT_TEX23_OFFSET;
 }
 
-void CGfxLibrary::DestroyVertexLayouts()
+void SvkMain::DestroyVertexLayouts()
 {
   delete gl_VkDefaultVertexLayout;
   gl_VkDefaultVertexLayout = nullptr;
 }
 
-BOOL CGfxLibrary::PickPhysicalDevice()
+BOOL SvkMain::PickPhysicalDevice()
 {
   VkResult r;
   uint32_t physDeviceCount = 0;
@@ -417,7 +417,7 @@ BOOL CGfxLibrary::PickPhysicalDevice()
   return FALSE;
 }
 
-void CGfxLibrary::ClearColor(int32_t x, int32_t y, uint32_t width, uint32_t height, float *rgba)
+void SvkMain::ClearColor(int32_t x, int32_t y, uint32_t width, uint32_t height, float *rgba)
 {
   // must be in recording state
   ASSERT(gl_VkCmdIsRecording);
@@ -443,7 +443,7 @@ void CGfxLibrary::ClearColor(int32_t x, int32_t y, uint32_t width, uint32_t heig
   vkCmdClearAttachments(GetCurrentCmdBuffer(), 1, &ca, 1, &cr);
 }
 
-void CGfxLibrary::ClearDepth(int32_t x, int32_t y, uint32_t width, uint32_t height, float depth)
+void SvkMain::ClearDepth(int32_t x, int32_t y, uint32_t width, uint32_t height, float depth)
 {
   // must be in recording state
   ASSERT(gl_VkCmdIsRecording);
@@ -465,13 +465,13 @@ void CGfxLibrary::ClearDepth(int32_t x, int32_t y, uint32_t width, uint32_t heig
   vkCmdClearAttachments(GetCurrentCmdBuffer(), 1, &ca, 1, &cr);
 }
 
-void CGfxLibrary::ClearColor(float *rgba)
+void SvkMain::ClearColor(float *rgba)
 {
   ClearColor(
     gl_VkCurrentViewport.x, gl_VkCurrentViewport.y, 
     gl_VkCurrentViewport.width, gl_VkCurrentViewport.height, rgba);
 }
-void CGfxLibrary::ClearDepth(float depth)
+void SvkMain::ClearDepth(float depth)
 {
   ClearDepth(
     gl_VkCurrentViewport.x, gl_VkCurrentViewport.y,

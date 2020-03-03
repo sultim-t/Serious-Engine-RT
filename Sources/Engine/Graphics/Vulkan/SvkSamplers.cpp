@@ -14,11 +14,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
 #include "stdh.h"
-#include <Engine/Graphics/GfxLibrary.h>
+#include <Engine/Graphics/Vulkan/SvkMain.h>
 
 #ifdef SE1_VULKAN
 
-VkSampler CGfxLibrary::GetSampler(SvkSamplerFlags flags)
+VkSampler SvkMain::GetSampler(SvkSamplerFlags flags)
 {
   SvkSamplerObject *sampler = gl_VkSamplers.TryGet(flags);
 
@@ -39,7 +39,7 @@ VkSampler CGfxLibrary::GetSampler(SvkSamplerFlags flags)
   }
 }
 
-VkSampler CGfxLibrary::CreateSampler(SvkSamplerFlags flags)
+VkSampler SvkMain::CreateSampler(SvkSamplerFlags flags)
 {
   VkSamplerCreateInfo samplerInfo = {};
   samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -107,12 +107,12 @@ VkSampler CGfxLibrary::CreateSampler(SvkSamplerFlags flags)
   return sampler;
 }
 
-void CGfxLibrary::InitSamplers()
+void SvkMain::InitSamplers()
 {
   gl_VkSamplers.New(128, 16);
 }
 
-void CGfxLibrary::DestroySamplers()
+void SvkMain::DestroySamplers()
 {
   gl_VkSamplers.Map([](SvkSamplerObject &sso)
     {

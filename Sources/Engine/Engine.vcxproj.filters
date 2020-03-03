@@ -1425,6 +1425,9 @@
     <ClInclude Include="Graphics\Vulkan\SvkMemoryPool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\Vulkan\SvkMain.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Base\CTString.inl">

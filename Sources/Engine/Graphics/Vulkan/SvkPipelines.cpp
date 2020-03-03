@@ -14,16 +14,16 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
 #include "stdh.h"
-#include <Engine/Graphics/GfxLibrary.h>
+#include <Engine/Graphics/Vulkan/SvkMain.h>
 
 #ifdef SE1_VULKAN
 
-SvkPipelineStateFlags &CGfxLibrary::GetPipelineState()
+SvkPipelineStateFlags &SvkMain::GetPipelineState()
 {
   return gl_VkGlobalState;
 }
 
-SvkPipelineState &CGfxLibrary::GetPipeline(SvkPipelineStateFlags flags)
+SvkPipelineState &SvkMain::GetPipeline(SvkPipelineStateFlags flags)
 {
   for (INDEX i = 0; i < gl_VkPipelines.Count(); i++)
   {
@@ -40,7 +40,7 @@ SvkPipelineState &CGfxLibrary::GetPipeline(SvkPipelineStateFlags flags)
   return CreatePipeline(flags, *gl_VkDefaultVertexLayout, vert, frag);
 }
 
-void CGfxLibrary::DestroyPipelines()
+void SvkMain::DestroyPipelines()
 {
   for (INDEX i = 0; i < gl_VkPipelines.Count(); i++)
   {
@@ -50,7 +50,7 @@ void CGfxLibrary::DestroyPipelines()
   gl_VkPipelines.Clear();
 }
 
-SvkPipelineState &CGfxLibrary::CreatePipeline(
+SvkPipelineState &SvkMain::CreatePipeline(
   SvkPipelineStateFlags flags, const SvkVertexLayout &vertLayout,
   VkShaderModule vertShaderModule, VkShaderModule fragShaderModule)
 {
@@ -262,7 +262,7 @@ SvkPipelineState &CGfxLibrary::CreatePipeline(
   return newState;
 }
 
-void CGfxLibrary::CreatePipelineCache()
+void SvkMain::CreatePipelineCache()
 {
   ASSERT(gl_VkPipelineCache == VK_NULL_HANDLE);
 

@@ -21,6 +21,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Base/Console.h>
 
 #include <Engine/Graphics/GfxLibrary.h>
+#include <Engine/Graphics/Vulkan/SvkMain.h>
 #include <Engine/Graphics/ViewPort.h>
 
 #include <Engine/Templates/StaticStackArray.cpp>
@@ -79,10 +80,59 @@ void GetDebugMsgCreateInfo(VkDebugUtilsMessengerCreateInfoEXT &outInfo)
 }
 #pragma endregion
 
-// initialize Vulkan driver
 BOOL CGfxLibrary::InitDriver_Vulkan()
 {
-  gl_hiDriver = NONE; // must be initialized?
+  ASSERT(gl_SvkMain == nullptr);
+
+  gl_SvkMain = new SvkMain();
+  return gl_SvkMain->InitDriver_Vulkan();
+}
+
+void CGfxLibrary::EndDriver_Vulkan(void)
+{
+  ASSERT(gl_SvkMain != nullptr);
+
+  gl_SvkMain->EndDriver_Vulkan();
+  delete gl_SvkMain;
+
+  gl_SvkMain = nullptr;
+}
+
+void CGfxLibrary::Reset_Vulkan()
+{
+  gl_SvkMain->Reset_Vulkan();
+}
+
+void CGfxLibrary::InitContext_Vulkan() 
+{
+  gl_SvkMain->InitContext_Vulkan();
+}
+
+BOOL CGfxLibrary::SetCurrentViewport_Vulkan(CViewPort *pvp) 
+{
+  return gl_SvkMain->SetCurrentViewport_Vulkan(pvp);
+}
+
+void CGfxLibrary::SwapBuffers_Vulkan()
+{
+  gl_SvkMain->SwapBuffers_Vulkan();
+}
+
+void CGfxLibrary::SetViewport_Vulkan(float leftUpperX, float leftUpperY, float width, float height, float minDepth, float maxDepth)
+{
+  gl_SvkMain->SetViewport_Vulkan(leftUpperX, leftUpperY, width, height, minDepth, maxDepth);
+}
+
+
+SvkMain::SvkMain()
+{
+  Reset_Vulkan();
+}
+
+// initialize Vulkan driver
+BOOL SvkMain::InitDriver_Vulkan()
+{
+  _pGfx->gl_hiDriver = NONE; // must be initialized?
 
   ASSERT(gl_VkInstance == VK_NULL_HANDLE);
   ASSERT(gl_VkDevice == VK_NULL_HANDLE);
@@ -199,7 +249,7 @@ BOOL CGfxLibrary::InitDriver_Vulkan()
   return TRUE;
 }
 
-void CGfxLibrary::EndDriver_Vulkan(void)
+void SvkMain::EndDriver_Vulkan(void)
 {
   if (gl_VkInstance == VK_NULL_HANDLE)
   {
@@ -244,7 +294,7 @@ void CGfxLibrary::EndDriver_Vulkan(void)
   Reset_Vulkan();
 }
 
-void CGfxLibrary::Reset_Vulkan()
+void SvkMain::Reset_Vulkan()
 {
   gl_VkInstance = VK_NULL_HANDLE;
   gl_VkDevice = VK_NULL_HANDLE;
@@ -349,10 +399,10 @@ void CGfxLibrary::Reset_Vulkan()
 }
 
 // prepares Vulkan drawing context, almost everything copied from OpenGL
-void CGfxLibrary::InitContext_Vulkan()
+void SvkMain::InitContext_Vulkan()
 {
   // must have context
-  ASSERT(gl_pvpActive != NULL);
+  ASSERT(_pGfx->gl_pvpActive != NULL);
   // reset engine's internal state variables
   for (INDEX iUnit = 0; iUnit < GFX_MAXTEXUNITS; iUnit++) {
     GFX_abTexture[iUnit] = FALSE;
@@ -360,7 +410,7 @@ void CGfxLibrary::InitContext_Vulkan()
   }
   // set default texture unit and modulation mode
   GFX_iActiveTexUnit = 0;
-  gl_ctMaxStreams = 16;
+  _pGfx->gl_ctMaxStreams = 16;
   extern FLOAT GFX_fLastL, GFX_fLastR, GFX_fLastT, GFX_fLastB, GFX_fLastN, GFX_fLastF;
   GFX_fLastL = GFX_fLastR = GFX_fLastT = GFX_fLastB = GFX_fLastN = GFX_fLastF = 0;
   GFX_bViewMatrix = TRUE;
@@ -392,25 +442,25 @@ void CGfxLibrary::InitContext_Vulkan()
 
   // report header
   CPrintF(TRANS("\n* Vulkan context created: *------------------------------------\n"));
-  CDisplayAdapter &da = gl_gaAPI[GAT_VK].ga_adaAdapter[gl_iCurrentAdapter];
+  CDisplayAdapter &da = _pGfx->gl_gaAPI[GAT_VK].ga_adaAdapter[_pGfx->gl_iCurrentAdapter];
   CPrintF("  (%s, %s, %s)\n\n", da.da_strVendor, da.da_strRenderer, da.da_strVersion);
 
-  gl_ctTextureUnits = 4;
-  gl_ctRealTextureUnits = 4;
+  _pGfx->gl_ctTextureUnits = 4;
+  _pGfx->gl_ctRealTextureUnits = 4;
 
-  gl_fMaxTextureLODBias = gl_VkPhProperties.limits.maxSamplerLodBias;
-  gl_iMaxTextureAnisotropy = gl_VkPhProperties.limits.maxSamplerAnisotropy;
+  _pGfx->gl_fMaxTextureLODBias = gl_VkPhProperties.limits.maxSamplerLodBias;
+  _pGfx->gl_iMaxTextureAnisotropy = gl_VkPhProperties.limits.maxSamplerAnisotropy;
 
-  gl_iTessellationLevel = 0;
-  gl_iMaxTessellationLevel = 0;
+  _pGfx->gl_iTessellationLevel = 0;
+  _pGfx->gl_iMaxTessellationLevel = 0;
 
   GFX_bColorArray = TRUE;
 
-  gl_ulFlags |= GLF_HASACCELERATION;
-  gl_ulFlags |= GLF_32BITTEXTURES;
-  gl_ulFlags |= GLF_VSYNC;
-  gl_ulFlags &= ~GLF_TEXTURECOMPRESSION;
-  gl_ulFlags |= GLF_EXT_EDGECLAMP;
+  _pGfx->gl_ulFlags |= GLF_HASACCELERATION;
+  _pGfx->gl_ulFlags |= GLF_32BITTEXTURES;
+  _pGfx->gl_ulFlags |= GLF_VSYNC;
+  _pGfx->gl_ulFlags &= ~GLF_TEXTURECOMPRESSION;
+  _pGfx->gl_ulFlags |= GLF_EXT_EDGECLAMP;
 
   // setup fog and haze textures
   extern PIX _fog_pixSizeH;
@@ -442,7 +492,7 @@ void CGfxLibrary::InitContext_Vulkan()
   _tpGlobal[2].Clear();
   _tpGlobal[3].Clear();
   GFX_ctVertices = 0;
-  gl_dwVertexShader = NONE;
+  _pGfx->gl_dwVertexShader = NONE;
 
   extern INDEX gap_iTextureFiltering;
   extern INDEX gap_iTextureAnisotropy;
@@ -454,7 +504,7 @@ void CGfxLibrary::InitContext_Vulkan()
   // mark pretouching and probing
   extern BOOL _bNeedPretouch;
   _bNeedPretouch = TRUE;
-  gl_bAllowProbing = FALSE;
+  _pGfx->gl_bAllowProbing = FALSE;
 
   // update console system vars
   extern void UpdateGfxSysCVars(void);
@@ -468,7 +518,7 @@ void CGfxLibrary::InitContext_Vulkan()
   if (shd_bCacheAll) CacheShadows();
 }
 
-BOOL CGfxLibrary::SetCurrentViewport_Vulkan(CViewPort* pvp)
+BOOL SvkMain::SetCurrentViewport_Vulkan(CViewPort* pvp)
 {
   // determine full screen mode
   CDisplayMode dm;
@@ -482,36 +532,36 @@ BOOL CGfxLibrary::SetCurrentViewport_Vulkan(CViewPort* pvp)
   // full screen allows only one window (main one, which has already been initialized)
   if (dm.dm_pixSizeI == pixWinSizeI && dm.dm_pixSizeJ == pixWinSizeJ) 
   {
-    gl_pvpActive = pvp;  // remember as current viewport (must do that BEFORE InitContext)
-    if (gl_ulFlags & GLF_INITONNEXTWINDOW) InitContext_Vulkan();
-    gl_ulFlags &= ~GLF_INITONNEXTWINDOW;
+    _pGfx->gl_pvpActive = pvp;  // remember as current viewport (must do that BEFORE InitContext)
+    if (_pGfx->gl_ulFlags & GLF_INITONNEXTWINDOW) InitContext_Vulkan();
+    _pGfx->gl_ulFlags &= ~GLF_INITONNEXTWINDOW;
     return TRUE;
   }
 
   // if must init entire Vulkan
-  if (gl_ulFlags & GLF_INITONNEXTWINDOW) {
-    gl_ulFlags &= ~GLF_INITONNEXTWINDOW;
+  if (_pGfx->gl_ulFlags & GLF_INITONNEXTWINDOW) {
+    _pGfx->gl_ulFlags &= ~GLF_INITONNEXTWINDOW;
     // reopen window
     pvp->CloseCanvas();
     pvp->OpenCanvas();
-    gl_pvpActive = pvp;
+    _pGfx->gl_pvpActive = pvp;
     InitContext_Vulkan();
-    pvp->vp_ctDisplayChanges = gl_ctDriverChanges;
+    pvp->vp_ctDisplayChanges = _pGfx->gl_ctDriverChanges;
     return TRUE;
   }
 
   // if window was not set for this driver
-  if (pvp->vp_ctDisplayChanges < gl_ctDriverChanges) {
+  if (pvp->vp_ctDisplayChanges < _pGfx->gl_ctDriverChanges) {
     // reopen window
     pvp->CloseCanvas();
     pvp->OpenCanvas();
-    pvp->vp_ctDisplayChanges = gl_ctDriverChanges;
-    gl_pvpActive = pvp;
+    pvp->vp_ctDisplayChanges = _pGfx->gl_ctDriverChanges;
+    _pGfx->gl_pvpActive = pvp;
     return TRUE;
   }
 
   // no need to set context if it is the same window as last time
-  if (gl_pvpActive != NULL && gl_pvpActive->vp_hWnd == pvp->vp_hWnd) return TRUE;
+  if (_pGfx->gl_pvpActive != NULL && _pGfx->gl_pvpActive->vp_hWnd == pvp->vp_hWnd) return TRUE;
 
   // set rendering target
   //HRESULT hr;
@@ -523,11 +573,11 @@ BOOL CGfxLibrary::SetCurrentViewport_Vulkan(CViewPort* pvp)
   //if (hr != D3D_OK) return FALSE;
 
   // remember as current window
-  gl_pvpActive = pvp;
+  _pGfx->gl_pvpActive = pvp;
   return TRUE;
 }
 
-void CGfxLibrary::SwapBuffers_Vulkan()
+void SvkMain::SwapBuffers_Vulkan()
 {
   VkResult r;
 
@@ -554,7 +604,7 @@ void CGfxLibrary::SwapBuffers_Vulkan()
   }
 }
 
-void CGfxLibrary::SetViewport_Vulkan(float leftUpperX, float leftUpperY, float width, float height, float minDepth, float maxDepth)
+void SvkMain::SetViewport_Vulkan(float leftUpperX, float leftUpperY, float width, float height, float minDepth, float maxDepth)
 {
   gl_VkCurrentViewport.x = leftUpperX;
   gl_VkCurrentViewport.y = leftUpperY;
@@ -574,7 +624,7 @@ void CGfxLibrary::SetViewport_Vulkan(float leftUpperX, float leftUpperY, float w
   vkCmdSetScissor(GetCurrentCmdBuffer(), 0, 1, &gl_VkCurrentScissor);
 }
 
-BOOL CGfxLibrary::InitSurface_Win32(HINSTANCE hinstance, HWND hwnd)
+BOOL SvkMain::InitSurface_Win32(HINSTANCE hinstance, HWND hwnd)
 {
   VkWin32SurfaceCreateInfoKHR createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
@@ -588,7 +638,7 @@ BOOL CGfxLibrary::InitSurface_Win32(HINSTANCE hinstance, HWND hwnd)
   // const BOOL bFullScreen = (pixSizeI > 0 && pixSizeJ > 0);
 }
 
-BOOL CGfxLibrary::CreateDevice()
+BOOL SvkMain::CreateDevice()
 {
   // temporary, graphics and transfer are the same family
   ASSERT(gl_VkQueueFamGraphics == gl_VkQueueFamTransfer);
@@ -641,7 +691,7 @@ BOOL CGfxLibrary::CreateDevice()
   return TRUE;
 }
 
-void CGfxLibrary::CreateRenderPass()
+void SvkMain::CreateRenderPass()
 {
   VkAttachmentDescription colorAttachment = {};
   colorAttachment.format = gl_VkSurfColorFormat;
@@ -701,7 +751,7 @@ void CGfxLibrary::CreateRenderPass()
   }
 }
 
-void CGfxLibrary::CreateCmdBuffers()
+void SvkMain::CreateCmdBuffers()
 {
 #ifndef NDEBUG
   for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
@@ -732,7 +782,7 @@ void CGfxLibrary::CreateCmdBuffers()
   VK_CHECKERROR(r);
 }
 
-void CGfxLibrary::DestroyCmdBuffers()
+void SvkMain::DestroyCmdBuffers()
 {
   for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
   {
@@ -742,7 +792,7 @@ void CGfxLibrary::DestroyCmdBuffers()
   vkDestroyCommandPool(gl_VkDevice, gl_VkCmdPool, nullptr);
 }
 
-void CGfxLibrary::AcquireNextImage()
+void SvkMain::AcquireNextImage()
 {
   VkResult r;
   uint32_t nextImageIndex;
@@ -764,7 +814,7 @@ void CGfxLibrary::AcquireNextImage()
   gl_VkCurrentImageIndex = nextImageIndex;
 }
 
-void CGfxLibrary::StartFrame()
+void SvkMain::StartFrame()
 {
   VkResult r;
 
@@ -826,7 +876,7 @@ void CGfxLibrary::StartFrame()
   // it is guaranteed that viewport and scissor will be set dynamically
 }
 
-void CGfxLibrary::EndFrame()
+void SvkMain::EndFrame()
 {
   VkResult r;
   VkCommandBuffer cmd = gl_VkCmdBuffers[gl_VkCmdBufferCurrent];
@@ -863,12 +913,12 @@ void CGfxLibrary::EndFrame()
   VK_CHECKERROR(r);
 }
 
-VkCommandBuffer CGfxLibrary::GetCurrentCmdBuffer()
+VkCommandBuffer SvkMain::GetCurrentCmdBuffer()
 {
   return gl_VkCmdBuffers[gl_VkCmdBufferCurrent];
 }
 
-void CGfxLibrary::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
+void SvkMain::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
 {
   VkCommandBuffer cmd = gl_VkCmdBuffers[gl_VkCmdBufferCurrent];
 

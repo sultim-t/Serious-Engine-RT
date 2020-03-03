@@ -15,10 +15,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "stdh.h"
 #include <Engine/Graphics/GfxLibrary.h>
+#include <Engine/Graphics/Vulkan/SvkMain.h>
 
 #ifdef SE1_VULKAN
 
-void CGfxLibrary::CreateTexturesDataStructure()
+void SvkMain::CreateTexturesDataStructure()
 {
   ASSERT(!gl_VkTextures.IsAllocated());
 
@@ -31,7 +32,7 @@ void CGfxLibrary::CreateTexturesDataStructure()
   gl_VkImageMemPool = new SvkMemoryPool(gl_VkDevice, AvgTextureSize * 512);
 }
 
-void CGfxLibrary::DestroyTexturesDataStructure()
+void SvkMain::DestroyTexturesDataStructure()
 {
   delete gl_VkImageMemPool;
 
@@ -48,12 +49,12 @@ void CGfxLibrary::DestroyTexturesDataStructure()
   gl_VkLastTextureId = 0;
 }
 
-SvkTextureObject &CGfxLibrary::GetTextureObject(uint32_t textureId)
+SvkTextureObject &SvkMain::GetTextureObject(uint32_t textureId)
 {
   return gl_VkTextures.Get(textureId);
 }
 
-void CGfxLibrary::SetTexture(uint32_t textureUnit, uint32_t textureId, SvkSamplerFlags samplerFlags)
+void SvkMain::SetTexture(uint32_t textureUnit, uint32_t textureId, SvkSamplerFlags samplerFlags)
 {
   ASSERT(textureUnit >= 0 && textureUnit < GFX_MAXTEXUNITS);
 
@@ -61,7 +62,7 @@ void CGfxLibrary::SetTexture(uint32_t textureUnit, uint32_t textureId, SvkSample
   GetTextureObject(textureId).sto_SamplerFlags = samplerFlags;
 }
 
-VkDescriptorSet CGfxLibrary::GetTextureDescriptor(uint32_t textureId)
+VkDescriptorSet SvkMain::GetTextureDescriptor(uint32_t textureId)
 {
   SvkTextureObject &sto = GetTextureObject(textureId);
 
@@ -137,20 +138,20 @@ VkDescriptorSet CGfxLibrary::GetTextureDescriptor(uint32_t textureId)
   return cachedDescSet->sds_DescSet;
 }
 
-void CGfxLibrary::AddTextureToDeletion(uint32_t textureId)
+void SvkMain::AddTextureToDeletion(uint32_t textureId)
 {
   // TODO: not texture id, but image, imageview, desc set and memory handler
   ASSERT(textureId != 0);
   gl_VkTexturesToDelete[gl_VkCmdBufferCurrent].Push() = textureId;
 }
 
-uint32_t CGfxLibrary::GetTexturePixCount(uint32_t textureId)
+uint32_t SvkMain::GetTexturePixCount(uint32_t textureId)
 {
   auto &sto = GetTextureObject(textureId);
   return sto.sto_Width * sto.sto_Height;
 }
 
-void CGfxLibrary::FreeDeletedTextures(uint32_t cmdBufferIndex)
+void SvkMain::FreeDeletedTextures(uint32_t cmdBufferIndex)
 {
   auto &toDelete = gl_VkTexturesToDelete[cmdBufferIndex];
 
@@ -175,7 +176,7 @@ void CGfxLibrary::FreeDeletedTextures(uint32_t cmdBufferIndex)
   toDelete.PopAll();
 }
 
-void CGfxLibrary::DestroyTextureObject(SvkTextureObject &sto)
+void SvkMain::DestroyTextureObject(SvkTextureObject &sto)
 {  
   // if was uploaded
   if (sto.sto_Image != VK_NULL_HANDLE)
@@ -187,7 +188,7 @@ void CGfxLibrary::DestroyTextureObject(SvkTextureObject &sto)
   sto.Reset();
 }
 
-uint32_t CGfxLibrary::CreateTexture()
+uint32_t SvkMain::CreateTexture()
 {
   uint32_t textureId = gl_VkLastTextureId++;
 
@@ -198,7 +199,7 @@ uint32_t CGfxLibrary::CreateTexture()
   return textureId;
 }
 
-void CGfxLibrary::InitTexture32Bit(
+void SvkMain::InitTexture32Bit(
   uint32_t &textureId, VkFormat format, void *textureData,
   VkExtent2D *mipLevels, uint32_t mipLevelsCount, bool onlyUpdate)
 {

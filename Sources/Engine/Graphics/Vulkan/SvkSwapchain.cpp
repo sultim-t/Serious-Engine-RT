@@ -14,11 +14,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
 #include "stdh.h"
-#include <Engine/Graphics/GfxLibrary.h>
+#include <Engine/Graphics/Vulkan/SvkMain.h>
 
 #ifdef SE1_VULKAN
 
-void CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
+void SvkMain::CreateSwapchain(uint32_t width, uint32_t height)
 {
   // check consistency
   ASSERT(gl_VkSwapchainImages.Count() == gl_VkSwapchainImageViews.Count());
@@ -157,7 +157,7 @@ void CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
   }
 }
 
-void CGfxLibrary::RecreateSwapchain(uint32_t newWidth, uint32_t newHeight)
+void SvkMain::RecreateSwapchain(uint32_t newWidth, uint32_t newHeight)
 {
   if (gl_VkSwapChainExtent.width == newWidth && gl_VkSwapChainExtent.height == newHeight)
   {
@@ -170,7 +170,7 @@ void CGfxLibrary::RecreateSwapchain(uint32_t newWidth, uint32_t newHeight)
   gl_VkSwapChainExtent.height = newHeight;
 }
 
-void CGfxLibrary::DestroySwapchain()
+void SvkMain::DestroySwapchain()
 {
   if (gl_VkDevice == VK_NULL_HANDLE || gl_VkSwapchain == VK_NULL_HANDLE)
   {
@@ -212,7 +212,7 @@ void CGfxLibrary::DestroySwapchain()
   gl_VkFramebuffers.Clear();
 }
 
-VkExtent2D CGfxLibrary::GetSwapchainExtent(uint32_t width, uint32_t height)
+VkExtent2D SvkMain::GetSwapchainExtent(uint32_t width, uint32_t height)
 {
   vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gl_VkPhysDevice, gl_VkSurface, &gl_VkPhSurfCapabilities);
 
@@ -237,7 +237,7 @@ VkExtent2D CGfxLibrary::GetSwapchainExtent(uint32_t width, uint32_t height)
   }
 }
 
-BOOL CGfxLibrary::CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t imageIndex)
+BOOL SvkMain::CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t imageIndex)
 {
   VkImageCreateInfo depthImageInfo = {};
 

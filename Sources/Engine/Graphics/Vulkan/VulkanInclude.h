@@ -28,7 +28,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Graphics/Vulkan/SvkSamplerStates.h>
 #include <Engine/Templates/StaticArray.h>
 
-#define gl_VkMaxCmdBufferCount                  2
+#define gl_VkMaxCmdBufferCount                  3
 
 #define SVK_PREFERRED_SWAPCHAIN_SIZE            3
 
@@ -38,8 +38,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define SVK_VERT_START_COUNT                    4096
 #define SVK_VERT_ALLOC_STEP                     4096
 
-#define SVK_DYNAMIC_VERTEX_BUFFER_START_SIZE	  (8192 * 1024)
-#define SVK_DYNAMIC_INDEX_BUFFER_START_SIZE	    (2048 * 1024)
+#define SVK_DYNAMIC_VERTEX_BUFFER_START_SIZE	  (8 * 1024 * 1024)
+#define SVK_DYNAMIC_INDEX_BUFFER_START_SIZE	    (2 * 1024 * 1024)
 #define SVK_DYNAMIC_UNIFORM_BUFFER_START_SIZE   (256 * 1024)
 #define SVK_DYNAMIC_UNIFORM_MAX_ALLOC_SIZE      1024
 

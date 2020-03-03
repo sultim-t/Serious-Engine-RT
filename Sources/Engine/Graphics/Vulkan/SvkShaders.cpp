@@ -14,7 +14,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
 #include "stdh.h"
-#include <Engine/Graphics/GfxLibrary.h>
+#include <Engine/Graphics/Vulkan/SvkMain.h>
 
 #ifdef SE1_VULKAN
 
@@ -32,14 +32,14 @@ extern unsigned char TexturedAlphaFrag_Spirv[];
 extern unsigned int TexturedAlphaFrag_Size;
 #pragma endregion
 
-void CGfxLibrary::CreateShaderModules()
+void SvkMain::CreateShaderModules()
 {
   gl_VkShaderModuleVert = CreateShaderModule((uint32_t *)TexturedVert_Spirv, TexturedVert_Size);
   gl_VkShaderModuleFrag = CreateShaderModule((uint32_t *)TexturedFrag_Spirv, TexturedFrag_Size);
   gl_VkShaderModuleFragAlpha = CreateShaderModule((uint32_t *)TexturedAlphaFrag_Spirv, TexturedAlphaFrag_Size);
 }
 
-void CGfxLibrary::DestroyShaderModules()
+void SvkMain::DestroyShaderModules()
 {
   vkDestroyShaderModule(gl_VkDevice, gl_VkShaderModuleVert, nullptr);
   vkDestroyShaderModule(gl_VkDevice, gl_VkShaderModuleFrag, nullptr);

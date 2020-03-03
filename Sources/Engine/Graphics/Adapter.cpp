@@ -21,6 +21,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Base/Translation.h>
 #include <Engine/Base/Console.h>
 
+#ifdef SE1_VULKAN
+#include <Engine/Graphics/Vulkan/VulkanInclude.h>
+#endif
+
 
 extern BOOL _bDedicatedServer;
 #ifdef SE1_D3D
