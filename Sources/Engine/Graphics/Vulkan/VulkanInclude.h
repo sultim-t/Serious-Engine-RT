@@ -28,7 +28,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Graphics/Vulkan/SvkSamplerStates.h>
 #include <Engine/Templates/StaticArray.h>
 
-#define gl_VkMaxCmdBufferCount                  3
+#define gl_VkMaxCmdBufferCount                  2
 
 #define SVK_PREFERRED_SWAPCHAIN_SIZE            3
 
