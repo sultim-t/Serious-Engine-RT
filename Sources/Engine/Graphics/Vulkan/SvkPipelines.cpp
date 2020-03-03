@@ -152,7 +152,7 @@ SvkPipelineState &SvkMain::CreatePipeline(
     depthStencil.depthTestEnable = VK_TRUE;
   }
 
-  if (flags & SVK_PLS_DEPTH_BOUNDS_BOOL)
+  if (false) // (flags & SVK_PLS_DEPTH_BOUNDS_BOOL)
   {
     depthStencil.depthBoundsTestEnable = VK_TRUE;
     dynamicStatesCount++;

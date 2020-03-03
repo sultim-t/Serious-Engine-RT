@@ -876,6 +876,16 @@ void SvkMain::StartFrame()
   // it is guaranteed that viewport and scissor will be set dynamically
 }
 
+void SvkMain::UpdateViewportDepth(float minDepth, float maxDepth)
+{
+  gl_VkCurrentViewport.minDepth = minDepth;
+  gl_VkCurrentViewport.maxDepth = maxDepth;
+
+  ASSERT(gl_VkCmdIsRecording);
+
+  vkCmdSetViewport(GetCurrentCmdBuffer(), 0, 1, &gl_VkCurrentViewport);
+}
+
 void SvkMain::EndFrame()
 {
   VkResult r;

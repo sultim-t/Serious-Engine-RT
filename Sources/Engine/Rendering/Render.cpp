@@ -543,7 +543,7 @@ void CRenderer::DrawToScreen(void)
       CPerspectiveProjection3D *pprPerspective =
           (CPerspectiveProjection3D *)(CProjection3D *)(re_prBackgroundProjection);
       pprPerspective->Prepare();
-      RenderScene( re_pdpDrawPort, re_pspoFirstBackground, re_prBackgroundProjection, re_colSelection, FALSE, TRUE);
+      RenderScene( re_pdpDrawPort, re_pspoFirstBackground, re_prBackgroundProjection, re_colSelection, FALSE);
     } else {
       // this is just for far sentinel
       RenderSceneBackground( re_pdpDrawPort, re_spoFarSentinel.spo_spoScenePolygon.spo_cColor);

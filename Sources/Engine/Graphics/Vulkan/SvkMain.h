@@ -239,6 +239,7 @@ public:
   // get current global pipeline state
   SvkPipelineStateFlags &GetPipelineState();
 
+  void UpdateViewportDepth(float minDepth, float maxDepth);
 
   // Get current started cmd buffer to write in
   VkCommandBuffer GetCurrentCmdBuffer();
@@ -262,8 +263,6 @@ public:
   void ClearDepth(int32_t x, int32_t y, uint32_t width, uint32_t height, float depth);
   void ClearColor(float *rgba);
   void ClearDepth(float depth);
-
-
 };
 
 #endif

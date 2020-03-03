@@ -251,30 +251,11 @@ static void svk_DepthRange(FLOAT fMin, FLOAT fMax)
 {
   // check consistency
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
-  // must be in recording state
-  ASSERT(_pGfx->gl_SvkMain->gl_VkCmdIsRecording);
-
-  _sfStats.StartTimer(CStatForm::STI_GFXAPI);
-
-  // TODO: Vulkan: depth bounds
-  if (true /*fMin == 0.0f && fMax == 1.0f*/)
-  {
-    _pGfx->gl_SvkMain->GetPipelineState() &= ~SVK_PLS_DEPTH_BOUNDS_BOOL;
-  }
-  else
-  {
-    _pGfx->gl_SvkMain->GetPipelineState() |= SVK_PLS_DEPTH_BOUNDS_BOOL;
-
-    if (_pGfx->gl_SvkMain->GetPipelineState() & SVK_PLS_DEPTH_BOUNDS_BOOL)
-    {
-      vkCmdSetDepthBounds(_pGfx->gl_SvkMain->GetCurrentCmdBuffer(), fMin, fMax);
-    }
-  }
-
-  _sfStats.StopTimer(CStatForm::STI_GFXAPI);
 
   GFX_fMinDepthRange = fMin;
   GFX_fMaxDepthRange = fMax;
+
+  _pGfx->gl_SvkMain->UpdateViewportDepth(fMin, fMax);
 }
 
 
