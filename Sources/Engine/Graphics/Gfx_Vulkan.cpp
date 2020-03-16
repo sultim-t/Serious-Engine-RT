@@ -693,25 +693,37 @@ BOOL SvkMain::CreateDevice()
 
 void SvkMain::CreateRenderPass()
 {
+  VkSampleCountFlagBits sampleCount = gl_VkMaxSampleCount;
+
   VkAttachmentDescription colorAttachment = {};
   colorAttachment.format = gl_VkSurfColorFormat;
-  colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  colorAttachment.samples = sampleCount;
   colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
   colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // VK_IMAGE_LAYOUT_GENERAL;
+  colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
   VkAttachmentDescription depthAttachment = {};
   depthAttachment.format = gl_VkSurfDepthFormat;
-  depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  depthAttachment.samples = sampleCount;
   depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+  VkAttachmentDescription colorAttachmentPresent = {};
+  colorAttachmentPresent.format = gl_VkSurfColorFormat;
+  colorAttachmentPresent.samples = VK_SAMPLE_COUNT_1_BIT;
+  colorAttachmentPresent.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  colorAttachmentPresent.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  colorAttachmentPresent.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  colorAttachmentPresent.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  colorAttachmentPresent.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  colorAttachmentPresent.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // VK_IMAGE_LAYOUT_GENERAL;
 
   VkAttachmentReference colorAttachmentRef = {};
   colorAttachmentRef.attachment = SVK_RENDERPASS_COLOR_ATTACHMENT_INDEX;
@@ -721,11 +733,16 @@ void SvkMain::CreateRenderPass()
   depthAttachmentRef.attachment = SVK_RENDERPASS_DEPTH_ATTACHMENT_INDEX;
   depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
+  VkAttachmentReference colorAttachmentPresentRef = {};
+  colorAttachmentPresentRef.attachment = SVK_RENDERPASS_DEPTH_ATTACHMENT_INDEX + 1;
+  colorAttachmentPresentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
   VkSubpassDescription subpass = {};
   subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
   subpass.colorAttachmentCount = 1;
   subpass.pColorAttachments = &colorAttachmentRef;
   subpass.pDepthStencilAttachment = &depthAttachmentRef;
+  subpass.pResolveAttachments = &colorAttachmentPresentRef;
 
   VkSubpassDependency dependency = {};
   dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -735,10 +752,10 @@ void SvkMain::CreateRenderPass()
   dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
   dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-  VkAttachmentDescription attachments[2] = { colorAttachment, depthAttachment };
+  VkAttachmentDescription attachments[3] = { colorAttachment, depthAttachment, colorAttachmentPresent };
   VkRenderPassCreateInfo renderPassInfo = {};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-  renderPassInfo.attachmentCount = 2;
+  renderPassInfo.attachmentCount = 3;
   renderPassInfo.pAttachments = attachments;
   renderPassInfo.subpassCount = 1;
   renderPassInfo.pSubpasses = &subpass;

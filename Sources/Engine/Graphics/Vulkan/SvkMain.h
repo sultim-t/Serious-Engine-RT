@@ -44,11 +44,18 @@ public:
   VkColorSpaceKHR                 gl_VkSurfColorSpace;
   VkFormat                        gl_VkSurfDepthFormat;
   VkPresentModeKHR                gl_VkSurfPresentMode;
+
   CStaticArray<VkImage>           gl_VkSwapchainImages;
   CStaticArray<VkImageView>       gl_VkSwapchainImageViews;
+
+  CStaticArray<VkImage>           gl_VkSwapchainColorImages;
+  CStaticArray<VkDeviceMemory>    gl_VkSwapchainColorMemory;
+  CStaticArray<VkImageView>       gl_VkSwapchainColorImageViews;
+
   CStaticArray<VkImage>           gl_VkSwapchainDepthImages;
   CStaticArray<VkDeviceMemory>    gl_VkSwapchainDepthMemory;
   CStaticArray<VkImageView>       gl_VkSwapchainDepthImageViews;
+
   CStaticArray<VkFramebuffer>     gl_VkFramebuffers;
 
   VkSemaphore                     gl_VkImageAvailableSemaphores[gl_VkMaxCmdBufferCount];
@@ -120,6 +127,7 @@ public:
 
   CStaticArray<const char *>              gl_VkPhysDeviceExtensions;
   CStaticArray<const char *>              gl_VkLayers;
+  VkSampleCountFlagBits                   gl_VkMaxSampleCount;
 
   uint32_t                        gl_VkQueueFamGraphics;
   uint32_t                        gl_VkQueueFamTransfer;
@@ -175,7 +183,8 @@ public:
   void CreatePipelineCache();
   void DestroyPipelines();
 
-  BOOL CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t imageIndex);
+  BOOL CreateSwapchainColor(uint32_t width, uint32_t height, uint32_t imageIndex, VkSampleCountFlagBits sampleCount);
+  BOOL CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t imageIndex, VkSampleCountFlagBits sampleCount);
 
   void CreateCmdBuffers();
   void DestroyCmdBuffers();

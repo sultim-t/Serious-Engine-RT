@@ -410,6 +410,28 @@ BOOL SvkMain::PickPhysicalDevice()
       // it's guaranteed that maxPushConstantSize will be >=128
       ASSERT(gl_VkPhProperties.limits.maxPushConstantsSize >= 128);
 
+      // get max sample count
+      VkSampleCountFlags counts = gl_VkPhProperties.limits.framebufferColorSampleCounts & gl_VkPhProperties.limits.framebufferDepthSampleCounts;
+      
+      extern INDEX gfx_vk_iMSAA;
+
+      if (counts & VK_SAMPLE_COUNT_8_BIT && gfx_vk_iMSAA >= 3)
+      {
+        gl_VkMaxSampleCount = VK_SAMPLE_COUNT_8_BIT;
+      }
+      else if (counts & VK_SAMPLE_COUNT_4_BIT && gfx_vk_iMSAA >= 2)
+      {
+        gl_VkMaxSampleCount = VK_SAMPLE_COUNT_4_BIT;
+      }
+      else if (counts & VK_SAMPLE_COUNT_2_BIT && gfx_vk_iMSAA >= 1)
+      {
+        gl_VkMaxSampleCount = VK_SAMPLE_COUNT_2_BIT;
+      }
+      else
+      {
+        gl_VkMaxSampleCount = VK_SAMPLE_COUNT_1_BIT;
+      }
+      
       return TRUE;
     }
   }
