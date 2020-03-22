@@ -125,14 +125,6 @@ struct SvkSamplerObject
   VkSampler   sso_Sampler;
 };
 
-struct SvkTextureDescSet
-{
-  VkImageView       sds_ImageView;
-  VkImageLayout     sds_Layout;
-  SvkSamplerFlags   sds_SamplerFlags;
-  VkDescriptorSet   sds_DescSet;
-};
-
 struct SvkVertexLayout
 {
   CStaticArray<VkVertexInputBindingDescription>    svl_Bindings;

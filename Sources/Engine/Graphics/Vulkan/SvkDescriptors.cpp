@@ -139,10 +139,6 @@ void SvkMain::CreateDescriptorPools()
   {
     r = vkCreateDescriptorPool(gl_VkDevice, &smDescPoolInfo, nullptr, &gl_VkTextureDescPools[i]);
     VK_CHECKERROR(r);
-
-    // and allocate desc set hash tables
-    gl_VkTextureDescSets[i] = new SvkStaticHashTable<SvkTextureDescSet>();
-    gl_VkTextureDescSets[i]->New(16, 256);
   }
 }
 
@@ -163,21 +159,13 @@ void SvkMain::DestroyDescriptorPools()
   {
     vkDestroyDescriptorPool(gl_VkDevice, gl_VkTextureDescPools[i], nullptr);
     gl_VkTextureDescPools[i] = VK_NULL_HANDLE;
-
-    delete gl_VkTextureDescSets[i];
-    gl_VkTextureDescSets[i] = VK_NULL_HANDLE;
   }
 }
 
 void SvkMain::PrepareDescriptorSets(uint32_t cmdBufferIndex)
 {
-  //if (gl_VkTextureDescSets[cmdBufferIndex]->Count() > SVK_DESCRIPTOR_MAX_SET_COUNT * 2.0f / 3.0f)
-  //{
-  //  gl_VkTextureDescSets[cmdBufferIndex]->Clear();
-
-  //  VkResult r = vkResetDescriptorPool(gl_VkDevice, gl_VkTextureDescPools[cmdBufferIndex], 0);
-  //  VK_CHECKERROR(r);
-  //}
+    VkResult r = vkResetDescriptorPool(gl_VkDevice, gl_VkTextureDescPools[cmdBufferIndex], 0);
+    VK_CHECKERROR(r);
 }
 
 #endif

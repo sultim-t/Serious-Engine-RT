@@ -92,7 +92,7 @@ public:
   SvkDynamicUniform                       gl_VkDynamicUB[gl_VkMaxCmdBufferCount];
 
   // dynamic buffers to delete
-  CStaticStackArray<SvkDBufferToDelete>   gl_VkDynamicToDelete[gl_VkMaxCmdBufferCount];
+  CStaticStackArray<SvkDBufferToDelete>   *gl_VkDynamicToDelete[gl_VkMaxCmdBufferCount];
 
   SvkSamplerFlags                         gl_VkGlobalSamplerState;
   SvkStaticHashTable<SvkSamplerObject>    gl_VkSamplers;
@@ -100,22 +100,21 @@ public:
   // all loaded textures
   SvkStaticHashTable<SvkTextureObject>    gl_VkTextures;
   uint32_t                                gl_VkLastTextureId;
-  SvkMemoryPool *gl_VkImageMemPool;
+  SvkMemoryPool                           *gl_VkImageMemPool;
 
   VkDescriptorPool                        gl_VkTextureDescPools[gl_VkMaxCmdBufferCount];
-  SvkStaticHashTable<SvkTextureDescSet> *gl_VkTextureDescSets[gl_VkMaxCmdBufferCount];
 
 
-  CStaticStackArray<uint32_t>             gl_VkTexturesToDelete[gl_VkMaxCmdBufferCount];
+  CStaticStackArray<SvkTextureObject>     *gl_VkTexturesToDelete[gl_VkMaxCmdBufferCount];
 
   // pointers to currently active textures
   uint32_t                                gl_VkActiveTextures[GFX_MAXTEXUNITS];
 
   SvkPipelineStateFlags                   gl_VkGlobalState;
-  SvkPipelineState *gl_VkPreviousPipeline;
+  SvkPipelineState                        *gl_VkPreviousPipeline;
   CStaticStackArray<SvkPipelineState>     gl_VkPipelines;
   VkPipelineCache                         gl_VkPipelineCache;
-  SvkVertexLayout *gl_VkDefaultVertexLayout;
+  SvkVertexLayout                         *gl_VkDefaultVertexLayout;
 
   VkPhysicalDevice                        gl_VkPhysDevice;
   VkPhysicalDeviceMemoryProperties        gl_VkPhMemoryProperties;
@@ -137,6 +136,8 @@ public:
   VkQueue                         gl_VkQueuePresent;
 
   VkDebugUtilsMessengerEXT        gl_VkDebugMessenger;
+
+  uint32_t                        gl_VkReloadTexturesTimer;
 
   // current mesh
   CStaticStackArray<SvkVertex>    gl_VkVerts;
@@ -217,7 +218,6 @@ public:
   void CreateTexturesDataStructure();
   void DestroyTexturesDataStructure();
 
-  SvkTextureObject &GetTextureObject(uint32_t textureId);
   VkDescriptorSet GetTextureDescriptor(uint32_t textureId);
   void FreeDeletedTextures(uint32_t cmdBufferIndex);
   static void DestroyTextureObject(SvkTextureObject &sto);

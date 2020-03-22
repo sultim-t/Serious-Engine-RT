@@ -29,6 +29,12 @@ void SvkMain::InitDynamicBuffers()
   }
 #endif // !NDEBUG
 
+  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
+  {
+    gl_VkDynamicToDelete[i] = new CStaticStackArray<SvkDBufferToDelete>();
+    gl_VkDynamicToDelete[i]->SetAllocationStep(256);
+  }
+
   InitDynamicVertexBuffers(SVK_DYNAMIC_VERTEX_BUFFER_START_SIZE);
   InitDynamicIndexBuffers(SVK_DYNAMIC_INDEX_BUFFER_START_SIZE);
   InitDynamicUniformBuffers(SVK_DYNAMIC_UNIFORM_BUFFER_START_SIZE);
@@ -165,7 +171,7 @@ void SvkMain::InitDynamicBuffer(SvkDynamicBufferGlobal &dynBufferGlobal, SvkDyna
 
 void SvkMain::AddDynamicBufferToDeletion(SvkDynamicBufferGlobal &dynBufferGlobal, SvkDynamicBuffer *buffers)
 {
-  auto &toDelete = gl_VkDynamicToDelete[gl_VkCmdBufferCurrent].Push();
+  auto &toDelete = gl_VkDynamicToDelete[gl_VkCmdBufferCurrent]->Push();
   toDelete.sdd_Memory = dynBufferGlobal.sdg_DynamicBufferMemory;
   
   for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
@@ -177,7 +183,7 @@ void SvkMain::AddDynamicBufferToDeletion(SvkDynamicBufferGlobal &dynBufferGlobal
 
 void SvkMain::AddDynamicUniformToDeletion(SvkDynamicBufferGlobal &dynBufferGlobal, SvkDynamicUniform *buffers)
 {
-  auto &toDelete = gl_VkDynamicToDelete[gl_VkCmdBufferCurrent].Push();
+  auto &toDelete = gl_VkDynamicToDelete[gl_VkCmdBufferCurrent]->Push();
   toDelete.sdd_Memory = dynBufferGlobal.sdg_DynamicBufferMemory;
  
   for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
@@ -295,7 +301,7 @@ void SvkMain::FlushDynamicBuffersMemory()
 void SvkMain::FreeUnusedDynamicBuffers(uint32_t cmdBufferIndex)
 {
   VkResult r;
-  auto &toDelete = gl_VkDynamicToDelete[cmdBufferIndex];
+  auto &toDelete = *(gl_VkDynamicToDelete[cmdBufferIndex]);
 
   for (uint32_t i = 0; i < toDelete.Count(); i++)
   {
@@ -329,7 +335,7 @@ void SvkMain::DestroyDynamicBuffers()
     FreeUnusedDynamicBuffers(i);
 
     // delete array
-    gl_VkDynamicToDelete[i].Clear();
+    delete gl_VkDynamicToDelete[i];
 
     vkDestroyBuffer(gl_VkDevice, gl_VkDynamicVB[i].sdb_Buffer, nullptr);
     vkDestroyBuffer(gl_VkDevice, gl_VkDynamicIB[i].sdb_Buffer, nullptr);

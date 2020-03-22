@@ -224,7 +224,7 @@ void UploadTexture_Vulkan(uint32_t *iTexture, ULONG *pulTexture, PIX pixSizeU, P
     }
   }*/
 
-  _pGfx->gl_SvkMain->InitTexture32Bit(*iTexture, eInternalFormat, pulTexture, mipmapSizes, mipmapCount, bUseSubImage);
+  _pGfx->gl_SvkMain->InitTexture32Bit(*iTexture, eInternalFormat, pulTexture, mipmapSizes, mipmapCount, bUseSubImage == TRUE);
 
   // all done
   _pfGfxProfile.IncrementCounter(CGfxProfile::PCI_TEXTUREUPLOADS, 1);

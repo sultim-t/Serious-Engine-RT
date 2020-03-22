@@ -351,7 +351,6 @@ void SvkMain::Reset_Vulkan()
   for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
   {
     gl_VkTextureDescPools[i] = VK_NULL_HANDLE;
-    gl_VkTextureDescSets[i] = nullptr;
 
     gl_VkCmdBuffers[i] = VK_NULL_HANDLE;
     gl_VkImageAvailableSemaphores[i] = VK_NULL_HANDLE;
@@ -372,16 +371,8 @@ void SvkMain::Reset_Vulkan()
 
     gl_VkDynamicUB[i].sdu_DescriptorSet = VK_NULL_HANDLE;
 
-    // manually set memory as arrays contain garbage
-    gl_VkDynamicToDelete[i].sa_Array = nullptr;
-    gl_VkDynamicToDelete[i].sa_Count = 0;
-    gl_VkDynamicToDelete[i].sa_UsedCount = 0;
-    gl_VkDynamicToDelete[i].sa_ctAllocationStep = 256;
-
-    gl_VkTexturesToDelete[i].sa_Array = nullptr;
-    gl_VkTexturesToDelete[i].sa_Count = 0;
-    gl_VkTexturesToDelete[i].sa_UsedCount = 0;
-    gl_VkTexturesToDelete[i].sa_ctAllocationStep = 2048;
+    gl_VkDynamicToDelete[i] = nullptr;
+    gl_VkTexturesToDelete[i] = nullptr;
   }
 
   gl_VkDynamicVBGlobal.sdg_DynamicBufferMemory = VK_NULL_HANDLE;
@@ -516,6 +507,8 @@ void SvkMain::InitContext_Vulkan()
   extern void CacheShadows(void);
   ReloadTextures();
   if (shd_bCacheAll) CacheShadows();
+
+  gl_VkReloadTexturesTimer = 3;
 }
 
 BOOL SvkMain::SetCurrentViewport_Vulkan(CViewPort* pvp)
@@ -579,6 +572,19 @@ BOOL SvkMain::SetCurrentViewport_Vulkan(CViewPort* pvp)
 
 void SvkMain::SwapBuffers_Vulkan()
 {
+  // TODO: remove this ugliest fix!
+  // without it textures are not fully reloaded
+  if (gl_VkReloadTexturesTimer > 0)
+  {
+    extern INDEX shd_bCacheAll;
+    extern void ReloadTextures(void);
+    extern void CacheShadows(void);
+    ReloadTextures();
+    if (shd_bCacheAll) CacheShadows();
+
+    gl_VkReloadTexturesTimer--;
+  }
+
   VkResult r;
 
   // wait until rendering is finished
