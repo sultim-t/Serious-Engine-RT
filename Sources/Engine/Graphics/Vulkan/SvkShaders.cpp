@@ -23,6 +23,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Graphics/Vulkan/Shaders/Compiled/TexturedVertSpv.h>
 #include <Engine/Graphics/Vulkan/Shaders/Compiled/TexturedFragSpv.h>
 #include <Engine/Graphics/Vulkan/Shaders/Compiled/TexturedAlphaFragSpv.h>
+#include <Engine/Graphics/Vulkan/Shaders/Compiled/OcclusionCheckVertSpv.h>
+#include <Engine/Graphics/Vulkan/Shaders/Compiled/OcclusionCheckFragSpv.h>
 
 extern unsigned char TexturedVert_Spirv[];
 extern unsigned int TexturedVert_Size;
@@ -30,6 +32,10 @@ extern unsigned char TexturedFrag_Spirv[];
 extern unsigned int TexturedFrag_Size;
 extern unsigned char TexturedAlphaFrag_Spirv[];
 extern unsigned int TexturedAlphaFrag_Size;
+extern unsigned char OcclusionCheckVert_Spirv[];
+extern unsigned int OcclusionCheckVert_Size;
+extern unsigned char OcclusionCheckFrag_Spirv[];
+extern unsigned int OcclusionCheckFrag_Size;
 #pragma endregion
 
 void SvkMain::CreateShaderModules()
@@ -37,6 +43,8 @@ void SvkMain::CreateShaderModules()
   gl_VkShaderModuleVert = CreateShaderModule((uint32_t *)TexturedVert_Spirv, TexturedVert_Size);
   gl_VkShaderModuleFrag = CreateShaderModule((uint32_t *)TexturedFrag_Spirv, TexturedFrag_Size);
   gl_VkShaderModuleFragAlpha = CreateShaderModule((uint32_t *)TexturedAlphaFrag_Spirv, TexturedAlphaFrag_Size);
+  gl_VkShaderModuleVertOcclusion = CreateShaderModule((uint32_t *)OcclusionCheckVert_Spirv, OcclusionCheckVert_Size);
+  gl_VkShaderModuleFragOcclusion = CreateShaderModule((uint32_t *)OcclusionCheckFrag_Spirv, OcclusionCheckFrag_Size);
 }
 
 void SvkMain::DestroyShaderModules()
@@ -44,6 +52,8 @@ void SvkMain::DestroyShaderModules()
   vkDestroyShaderModule(gl_VkDevice, gl_VkShaderModuleVert, nullptr);
   vkDestroyShaderModule(gl_VkDevice, gl_VkShaderModuleFrag, nullptr);
   vkDestroyShaderModule(gl_VkDevice, gl_VkShaderModuleFragAlpha, nullptr);
+  vkDestroyShaderModule(gl_VkDevice, gl_VkShaderModuleVertOcclusion, nullptr);
+  vkDestroyShaderModule(gl_VkDevice, gl_VkShaderModuleFragOcclusion, nullptr);
 }
 
 #endif

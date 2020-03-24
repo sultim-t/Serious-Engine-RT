@@ -245,6 +245,7 @@ BOOL SvkMain::InitDriver_Vulkan()
   CreateDescriptorSetLayouts();
   CreateShaderModules();
   InitDynamicBuffers();
+  InitOcclusionQuerying();
 
   return TRUE;
 }
@@ -275,6 +276,7 @@ void SvkMain::EndDriver_Vulkan(void)
   DestroyPipelines();
   DestroyVertexLayouts();
   DestroyShaderModules();
+  DestroyOcclusionQuerying();
 
   vkDestroyPipelineCache(gl_VkDevice, gl_VkPipelineCache, nullptr);
   vkDestroyRenderPass(gl_VkDevice, gl_VkRenderPass, nullptr);
@@ -319,11 +321,14 @@ void SvkMain::Reset_Vulkan()
   gl_VkDescSetLayoutTexture = VK_NULL_HANDLE;
   gl_VkDescriptorSetLayout = VK_NULL_HANDLE;
   gl_VkPipelineLayout = VK_NULL_HANDLE;
+  gl_VkPipelineLayoutOcclusion = VK_NULL_HANDLE;
   gl_VkPipelineCache = VK_NULL_HANDLE;
   gl_VkDefaultVertexLayout = nullptr;
   gl_VkShaderModuleVert = VK_NULL_HANDLE;
   gl_VkShaderModuleFrag = VK_NULL_HANDLE;
   gl_VkShaderModuleFragAlpha = VK_NULL_HANDLE;
+  gl_VkShaderModuleVertOcclusion = VK_NULL_HANDLE;
+  gl_VkShaderModuleFragOcclusion = VK_NULL_HANDLE;
   gl_VkPreviousPipeline = nullptr;
 
   // reset states to default
@@ -345,6 +350,8 @@ void SvkMain::Reset_Vulkan()
   gl_VkQueueGraphics = VK_NULL_HANDLE;
   gl_VkQueueTransfer = VK_NULL_HANDLE;
   gl_VkQueuePresent = VK_NULL_HANDLE;
+
+  gl_VkPipelineOcclusion = VK_NULL_HANDLE;
 
   gl_VkDebugMessenger = VK_NULL_HANDLE;
 
@@ -373,6 +380,9 @@ void SvkMain::Reset_Vulkan()
 
     gl_VkDynamicToDelete[i] = nullptr;
     gl_VkTexturesToDelete[i] = nullptr;
+
+    gl_VkOcclusionQueryLast[i] = 0;
+    gl_VkOcclusionQueryPools[i] = VK_NULL_HANDLE;
   }
 
   gl_VkDynamicVBGlobal.sdg_DynamicBufferMemory = VK_NULL_HANDLE;
@@ -879,6 +889,11 @@ void SvkMain::StartFrame()
   r = vkBeginCommandBuffer(cmd, &beginInfo);
   VK_CHECKERROR(r);
 
+  gl_VkCmdIsRecording = true;
+
+  // reset occlusion query pool
+  ResetOcclusionQueries(cmd, gl_VkCmdBufferCurrent);
+
   VkClearValue clearValues[2];
   clearValues[0].color = { 0.25f, 0.25f, 0.25f, 1.0f };
   clearValues[1].depthStencil = { 0.0f, 0 };
@@ -893,8 +908,6 @@ void SvkMain::StartFrame()
   renderPassInfo.pClearValues = clearValues;
 
   vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-  gl_VkCmdIsRecording = true;
 
   // it is guaranteed that viewport and scissor will be set dynamically
 }

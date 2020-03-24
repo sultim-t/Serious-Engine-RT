@@ -67,10 +67,13 @@ public:
   VkDescriptorSetLayout           gl_VkDescriptorSetLayout;
   VkDescriptorSetLayout           gl_VkDescSetLayoutTexture;
   VkPipelineLayout                gl_VkPipelineLayout;
+  VkPipelineLayout                gl_VkPipelineLayoutOcclusion;
 
   VkShaderModule                  gl_VkShaderModuleVert;
   VkShaderModule                  gl_VkShaderModuleFrag;
   VkShaderModule                  gl_VkShaderModuleFragAlpha;
+  VkShaderModule                  gl_VkShaderModuleVertOcclusion;
+  VkShaderModule                  gl_VkShaderModuleFragOcclusion;
 
   VkRect2D                        gl_VkCurrentScissor;
   VkViewport                      gl_VkCurrentViewport;
@@ -115,6 +118,7 @@ public:
   CStaticStackArray<SvkPipelineState>     gl_VkPipelines;
   VkPipelineCache                         gl_VkPipelineCache;
   SvkVertexLayout                         *gl_VkDefaultVertexLayout;
+  VkPipeline                              gl_VkPipelineOcclusion;
 
   VkPhysicalDevice                        gl_VkPhysDevice;
   VkPhysicalDeviceMemoryProperties        gl_VkPhMemoryProperties;
@@ -134,6 +138,9 @@ public:
   VkQueue                         gl_VkQueueGraphics;
   VkQueue                         gl_VkQueueTransfer;
   VkQueue                         gl_VkQueuePresent;
+
+  VkQueryPool                     gl_VkOcclusionQueryPools[gl_VkMaxCmdBufferCount];
+  uint32_t                        gl_VkOcclusionQueryLast[gl_VkMaxCmdBufferCount];
 
   VkDebugUtilsMessengerEXT        gl_VkDebugMessenger;
 
@@ -184,6 +191,8 @@ public:
   void CreatePipelineCache();
   void DestroyPipelines();
 
+  void CreateOcclusionPipeline();
+
   BOOL CreateSwapchainColor(uint32_t width, uint32_t height, uint32_t imageIndex, VkSampleCountFlagBits sampleCount);
   BOOL CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t imageIndex, VkSampleCountFlagBits sampleCount);
 
@@ -221,6 +230,12 @@ public:
   VkDescriptorSet GetTextureDescriptor(uint32_t textureId);
   void FreeDeletedTextures(uint32_t cmdBufferIndex);
   static void DestroyTextureObject(SvkTextureObject &sto);
+
+  void InitOcclusionQuerying();
+  void DestroyOcclusionQuerying();
+  void ResetOcclusionQueries(VkCommandBuffer cmd, uint32_t cmdIndex);
+  uint32_t CreateOcclusionQuery(float fromx, float fromy, float tox, float toy, float z);
+  void GetOcclusionResults(uint32_t firstQuery, uint32_t queryCount, uint32_t *results);
 
   void AcquireNextImage();
   void StartFrame();

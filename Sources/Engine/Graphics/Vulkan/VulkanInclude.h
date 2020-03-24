@@ -48,6 +48,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #define SVK_SAMPLER_LOD_BIAS                    (0.0f)
 
+#define SVK_OCCLUSION_QUERIES_MAX               256
+
 struct SvkTextureObject
 {
 public:
