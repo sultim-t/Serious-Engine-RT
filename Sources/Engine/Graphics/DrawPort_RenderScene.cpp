@@ -1419,7 +1419,9 @@ void RSRenderGroup( ScenePolygon *pspoGroup, ULONG ulGroupFlags, ULONG ulTestedF
   extern INDEX d3d_iMaxBurstSize;
   ogl_iMaxBurstSize = Clamp( ogl_iMaxBurstSize, 0L, 9999L);
   d3d_iMaxBurstSize = Clamp( d3d_iMaxBurstSize, 0L, 9999L);
-  const INDEX iMaxBurstSize = (eAPI==GAT_OGL) ? ogl_iMaxBurstSize : d3d_iMaxBurstSize;
+  const INDEX iMaxBurstSize = 
+    (eAPI==GAT_OGL) ? ogl_iMaxBurstSize :
+    (eAPI==GAT_VK) ? 0 : d3d_iMaxBurstSize;
 
   // if unlimited lock count
   if( iMaxBurstSize==0)

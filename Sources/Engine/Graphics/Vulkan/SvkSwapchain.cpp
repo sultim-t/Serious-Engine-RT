@@ -230,6 +230,9 @@ void SvkMain::DestroySwapchain()
   gl_VkSwapchainDepthImages.Clear();
   gl_VkSwapchainDepthMemory.Clear();
   gl_VkSwapchainDepthImageViews.Clear();
+  gl_VkSwapchainColorImages.Clear();
+  gl_VkSwapchainColorMemory.Clear();
+  gl_VkSwapchainColorImageViews.Clear();
   gl_VkFramebuffers.Clear();
 }
 

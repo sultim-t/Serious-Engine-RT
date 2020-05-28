@@ -225,6 +225,9 @@ static void UpdateDepthPointsVisibility( const CDrawPort *pdp, const INDEX iMirr
 
     uint32_t queryCount = 0;
 
+    const uint32_t deltafrom = 0;
+    const uint32_t deltato = 1;
+
     for (INDEX idi = 0; idi < ctCount; idi++)
     {
       DepthInfo &di = pdi[idi];
@@ -234,12 +237,10 @@ static void UpdateDepthPointsVisibility( const CDrawPort *pdp, const INDEX iMirr
       {
         continue;
       }
-
-      const uint32_t delta = 2;
-      float fromx = ((float)di.di_pixI - pdp->dp_MinI - delta) / pdp->GetWidth();
-      float fromy = ((float)di.di_pixJ - pdp->dp_MinJ - delta) / pdp->GetHeight();
-      float tox = ((float)di.di_pixI - pdp->dp_MinI + delta) / pdp->GetWidth();
-      float toy = ((float)di.di_pixJ - pdp->dp_MinJ + delta) / pdp->GetHeight();
+      float fromx = ((float)di.di_pixI - pdp->dp_MinI - deltafrom) / pdp->GetWidth();
+      float fromy = ((float)di.di_pixJ - pdp->dp_MinJ - deltafrom) / pdp->GetHeight();
+      float tox = ((float)di.di_pixI - pdp->dp_MinI + deltato) / pdp->GetWidth();
+      float toy = ((float)di.di_pixJ - pdp->dp_MinJ + deltato) / pdp->GetHeight();
 
       fromx = fromx * 2 - 1;
       fromy = fromy * 2 - 1;
@@ -258,7 +259,7 @@ static void UpdateDepthPointsVisibility( const CDrawPort *pdp, const INDEX iMirr
     // get query results
     for (uint32_t i = 0; i < queryCount; i++)
     {
-      pdi[queries[i].pdiId].di_bVisible = results[i] != 0;
+      pdi[queries[i].pdiId].di_bVisible = results[i] >= (deltato + deltafrom + 1) * (deltato + deltafrom + 1) / 2.0f;
     }
 
     _sfStats.StopTimer(CStatForm::STI_GFXAPI);
