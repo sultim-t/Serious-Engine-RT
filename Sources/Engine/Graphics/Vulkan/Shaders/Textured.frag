@@ -3,10 +3,10 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-layout (set = 1, binding = 0) uniform sampler2D aTexture0;
-layout (set = 2, binding = 0) uniform sampler2D aTexture1;
-layout (set = 3, binding = 0) uniform sampler2D aTexture2;
-layout (set = 4, binding = 0) uniform sampler2D aTexture3;
+layout (set = 0, binding = 0) uniform sampler2D aTexture0;
+layout (set = 1, binding = 0) uniform sampler2D aTexture1;
+layout (set = 2, binding = 0) uniform sampler2D aTexture2;
+layout (set = 3, binding = 0) uniform sampler2D aTexture3;
 
 layout (location = 0) in vec4 inColor;
 layout (location = 1) in vec4 inTexCoord01;
@@ -16,7 +16,7 @@ layout (location = 0) out vec4 outColor;
 
 layout(push_constant) uniform ColorScale
 {
-   float scale;
+   layout(offset = 64) float scale;
 } colorScale;
 
 void main()

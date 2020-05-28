@@ -23,9 +23,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
+#include <Engine/Graphics/Vulkan/vk_mem_alloc.h>
 #include <Engine/Graphics/Vulkan/SvkVertex.h>
 #include <Engine/Graphics/Vulkan/SvkPipelineStates.h>
 #include <Engine/Graphics/Vulkan/SvkSamplerStates.h>
+
 #include <Engine/Templates/StaticArray.h>
 
 #define gl_VkMaxCmdBufferCount                  2
@@ -95,18 +97,11 @@ struct SvkDynamicBuffer
   void*           sdb_Data;
 };
 
-struct SvkDynamicUniform : public SvkDynamicBuffer
-{
-  VkDescriptorSet sdu_DescriptorSet;
-};
-
 // Dynamic buffer to delete
 struct SvkDBufferToDelete
 {
-  VkBuffer        sdd_Memory;
-  VkBuffer        sdd_Buffers[gl_VkMaxCmdBufferCount];
-  // optional
-  VkDescriptorSet sdd_DescriptorSets[gl_VkMaxCmdBufferCount];
+  VmaAllocation   sdd_Allocation;
+  VkBuffer        sdd_Buffer;
 };
 
 struct SvkDynamicBufferGlobal

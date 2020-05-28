@@ -49,6 +49,9 @@ void SvkMain::DestroyTexturesDataStructure()
   for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
   {
     gl_VkTexturesToDelete[i]->Clear();
+
+    delete gl_VkTexturesToDelete[i];
+    gl_VkTexturesToDelete[i] = nullptr;
   }
 
   gl_VkTextures.Clear();

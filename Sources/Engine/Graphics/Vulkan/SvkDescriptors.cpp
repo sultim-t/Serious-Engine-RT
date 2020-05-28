@@ -22,21 +22,6 @@ void SvkMain::CreateDescriptorSetLayouts()
 {
   VkResult r;
 
-  VkDescriptorSetLayoutBinding uniformBinding = {};
-  uniformBinding.binding = 0;
-  uniformBinding.descriptorCount = 1;
-  uniformBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-  uniformBinding.pImmutableSamplers = nullptr;
-  uniformBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-  VkDescriptorSetLayoutCreateInfo uniformLayoutInfo = {};
-  uniformLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  uniformLayoutInfo.bindingCount = 1;
-  uniformLayoutInfo.pBindings = &uniformBinding;
-
-  r = vkCreateDescriptorSetLayout(gl_VkDevice, &uniformLayoutInfo, nullptr, &gl_VkDescriptorSetLayout);
-  VK_CHECKERROR(r);
-
   VkDescriptorSetLayoutBinding samplerBinding = {};
   samplerBinding.binding = 0;
   samplerBinding.descriptorCount = 1;
@@ -54,25 +39,32 @@ void SvkMain::CreateDescriptorSetLayouts()
 
   VkDescriptorSetLayout setLayouts[] = 
   { 
-    gl_VkDescriptorSetLayout, 
     gl_VkDescSetLayoutTexture,
     gl_VkDescSetLayoutTexture,
     gl_VkDescSetLayoutTexture,
     gl_VkDescSetLayoutTexture
   };
 
-  VkPushConstantRange colorScalePushConstant = {};
-  colorScalePushConstant.offset = 0;
-  colorScalePushConstant.size = sizeof(float);
-  colorScalePushConstant.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  const uint32_t pushConstCount = 2;
+  VkPushConstantRange pushConsts[pushConstCount] = {};
+
+  VkPushConstantRange &mvpPushConst = pushConsts[0];
+  mvpPushConst.offset = 0;
+  mvpPushConst.size = 16 * sizeof(float);
+  mvpPushConst.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+  VkPushConstantRange &colorScalePushConst = pushConsts[1];
+  colorScalePushConst.offset = 16 * sizeof(float);
+  colorScalePushConst.size = sizeof(float);
+  colorScalePushConst.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
   // create default layout
   VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  pipelineLayoutInfo.setLayoutCount = 5;
+  pipelineLayoutInfo.setLayoutCount = 4;
   pipelineLayoutInfo.pSetLayouts = setLayouts;
-  pipelineLayoutInfo.pushConstantRangeCount = 1;
-  pipelineLayoutInfo.pPushConstantRanges = &colorScalePushConstant;
+  pipelineLayoutInfo.pushConstantRangeCount = pushConstCount;
+  pipelineLayoutInfo.pPushConstantRanges = pushConsts;
 
   r = vkCreatePipelineLayout(gl_VkDevice, &pipelineLayoutInfo, nullptr, &gl_VkPipelineLayout);
   VK_CHECKERROR(r);
@@ -87,11 +79,9 @@ void SvkMain::CreateDescriptorSetLayouts()
 
 void SvkMain::DestroyDescriptorSetLayouts()
 {
-  ASSERT(gl_VkDescriptorSetLayout != VK_NULL_HANDLE);
   ASSERT(gl_VkDescSetLayoutTexture != VK_NULL_HANDLE);
   ASSERT(gl_VkPipelineLayout != VK_NULL_HANDLE);
 
-  vkDestroyDescriptorSetLayout(gl_VkDevice, gl_VkDescriptorSetLayout, nullptr);
   vkDestroyDescriptorSetLayout(gl_VkDevice, gl_VkDescSetLayoutTexture, nullptr);
   vkDestroyPipelineLayout(gl_VkDevice, gl_VkPipelineLayout, nullptr);
   vkDestroyPipelineLayout(gl_VkDevice, gl_VkPipelineLayoutOcclusion, nullptr);
@@ -100,7 +90,6 @@ void SvkMain::DestroyDescriptorSetLayouts()
 void SvkMain::CreateDescriptorPools()
 {
 #ifndef NDEBUG
-  ASSERT(gl_VkUniformDescPool == VK_NULL_HANDLE);
   for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
   {
     ASSERT(gl_VkTextureDescPools[i] == VK_NULL_HANDLE);
@@ -108,24 +97,6 @@ void SvkMain::CreateDescriptorPools()
 #endif // !NDEBUG
 
   VkResult r;
-
-
-  // one dynamic buffer per command buffer
-  VkDescriptorPoolSize unPoolSize;
-  unPoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-  unPoolSize.descriptorCount = gl_VkMaxCmdBufferCount;
-
-  VkDescriptorPoolCreateInfo unDescPoolInfo = {};
-  unDescPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-  // to deallocate unused desc sets in dynamic buffers
-  unDescPoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-  unDescPoolInfo.poolSizeCount = 1;
-  unDescPoolInfo.pPoolSizes = &unPoolSize;
-  unDescPoolInfo.maxSets = SVK_DESCRIPTOR_MAX_SET_COUNT;
-
-  r = vkCreateDescriptorPool(gl_VkDevice, &unDescPoolInfo, nullptr, &gl_VkUniformDescPool);
-  VK_CHECKERROR(r);
-
 
   // create one pool per command buffer to prevent descriptor set update collisions
   VkDescriptorPoolSize smPoolSize;
@@ -150,15 +121,11 @@ void SvkMain::CreateDescriptorPools()
 void SvkMain::DestroyDescriptorPools()
 {
 #ifndef NDEBUG
-  ASSERT(gl_VkUniformDescPool != VK_NULL_HANDLE);
   for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
   {
     ASSERT(gl_VkTextureDescPools[i] != VK_NULL_HANDLE);
   }
 #endif // !NDEBUG
-
-  vkDestroyDescriptorPool(gl_VkDevice, gl_VkUniformDescPool, nullptr);
-  gl_VkUniformDescPool = VK_NULL_HANDLE;
 
   for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
   {

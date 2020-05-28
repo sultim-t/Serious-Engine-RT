@@ -333,6 +333,7 @@ copy Release\$(TargetName).lib $(SolutionDir)..\Bin\ &gt;nul</Command>
     <ClCompile Include="Graphics\Vulkan\SvkSwapchain.cpp" />
     <ClCompile Include="Graphics\Vulkan\SvkTextures.cpp" />
     <ClCompile Include="Graphics\Vulkan\SvkUtils.cpp" />
+    <ClCompile Include="Graphics\Vulkan\vk_mem_alloc.cpp" />
     <ClCompile Include="Math\Float.cpp" />
     <ClCompile Include="Math\Functions.cpp" />
     <ClCompile Include="Math\Geometry.cpp">
@@ -766,6 +767,7 @@ copy Release\$(TargetName).lib $(SolutionDir)..\Bin\ &gt;nul</Command>
     <ClInclude Include="Graphics\Vulkan\SvkStaticHashTable.h" />
     <ClInclude Include="Graphics\Vulkan\SvkPipelineStates.h" />
     <ClInclude Include="Graphics\Vulkan\SvkSamplerStates.h" />
+    <ClInclude Include="Graphics\Vulkan\vk_mem_alloc.h" />
     <ClInclude Include="Graphics\Vulkan\VulkanInclude.h" />
     <ClInclude Include="Graphics\Vulkan\SvkVertex.h" />
     <ClInclude Include="Math\AABBox.h" />

@@ -317,9 +317,7 @@ void SvkMain::Reset_Vulkan()
   gl_VkCmdBufferCurrent = 0;
   gl_VkCmdIsRecording = false;
 
-  gl_VkUniformDescPool = VK_NULL_HANDLE;
   gl_VkDescSetLayoutTexture = VK_NULL_HANDLE;
-  gl_VkDescriptorSetLayout = VK_NULL_HANDLE;
   gl_VkPipelineLayout = VK_NULL_HANDLE;
   gl_VkPipelineLayoutOcclusion = VK_NULL_HANDLE;
   gl_VkPipelineCache = VK_NULL_HANDLE;
@@ -364,34 +362,13 @@ void SvkMain::Reset_Vulkan()
     gl_VkRenderFinishedSemaphores[i] = VK_NULL_HANDLE;
     gl_VkCmdFences[i] = VK_NULL_HANDLE;
 
-    gl_VkDynamicVB[i].sdb_Buffer = VK_NULL_HANDLE;
-    gl_VkDynamicIB[i].sdb_Buffer = VK_NULL_HANDLE;
-    gl_VkDynamicUB[i].sdb_Buffer = VK_NULL_HANDLE;
+    gl_VkVmaToDelete[i] = nullptr;
 
-    gl_VkDynamicVB[i].sdb_CurrentOffset = 0;
-    gl_VkDynamicIB[i].sdb_CurrentOffset = 0;
-    gl_VkDynamicUB[i].sdb_CurrentOffset = 0;
-
-    gl_VkDynamicVB[i].sdb_Data = nullptr;
-    gl_VkDynamicIB[i].sdb_Data = nullptr;
-    gl_VkDynamicUB[i].sdb_Data = nullptr;
-
-    gl_VkDynamicUB[i].sdu_DescriptorSet = VK_NULL_HANDLE;
-
-    gl_VkDynamicToDelete[i] = nullptr;
     gl_VkTexturesToDelete[i] = nullptr;
 
     gl_VkOcclusionQueryLast[i] = 0;
     gl_VkOcclusionQueryPools[i] = VK_NULL_HANDLE;
   }
-
-  gl_VkDynamicVBGlobal.sdg_DynamicBufferMemory = VK_NULL_HANDLE;
-  gl_VkDynamicIBGlobal.sdg_DynamicBufferMemory = VK_NULL_HANDLE;
-  gl_VkDynamicUBGlobal.sdg_DynamicBufferMemory = VK_NULL_HANDLE;
-
-  gl_VkDynamicVBGlobal.sdg_CurrentDynamicBufferSize = 0;
-  gl_VkDynamicIBGlobal.sdg_CurrentDynamicBufferSize = 0;
-  gl_VkDynamicUBGlobal.sdg_CurrentDynamicBufferSize = 0;
 
   Svk_MatSetIdentity(VkProjectionMatrix);
   Svk_MatSetIdentity(VkViewMatrix);
@@ -988,18 +965,13 @@ void SvkMain::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
 
   // get buffers
   SvkDynamicBuffer vertexBuffer, indexBuffer;
-  SvkDynamicUniform uniformBuffer;
 
   GetVertexBuffer(vertsSize, vertexBuffer);
   GetIndexBuffer(indicesSize, indexBuffer);
-  GetUniformBuffer(uniformSize, uniformBuffer);
 
   // copy data
   memcpy(vertexBuffer.sdb_Data, &verts[0], vertsSize);
   memcpy(indexBuffer.sdb_Data, indices, indicesSize);
-  memcpy(uniformBuffer.sdb_Data, mvp, uniformSize);
-
-  uint32_t descSetOffset = (uint32_t)uniformBuffer.sdb_CurrentOffset;
 
   // if previously not bound or flags don't match then bind new pipeline
   if (gl_VkPreviousPipeline == nullptr || (gl_VkPreviousPipeline != nullptr && gl_VkPreviousPipeline->sps_Flags != gl_VkGlobalState))
@@ -1011,7 +983,7 @@ void SvkMain::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
     gl_VkPreviousPipeline = &ps;
   }
 
-  VkDescriptorSet sets[5] = { uniformBuffer.sdu_DescriptorSet };
+  VkDescriptorSet sets[4] = {};
   float textureColorScale = 1.0f;
 
   // bind texture descriptors
@@ -1023,7 +995,7 @@ void SvkMain::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
      
       if (textureDescSet != VK_NULL_HANDLE)
       {
-        sets[i + 1] = textureDescSet;
+        sets[i] = textureDescSet;
 
         ASSERT(GFX_iTexModulation[i] == 1 || GFX_iTexModulation[i] == 2);
         textureColorScale *= GFX_iTexModulation[i];
@@ -1031,18 +1003,22 @@ void SvkMain::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
       }
     }
 
-    sets[i + 1] = _no_ulTextureDescSet;
+    sets[i] = _no_ulTextureDescSet;
   }
 
-  // set uniform and textures
+  // set textures
   vkCmdBindDescriptorSets(
     cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gl_VkPipelineLayout,
-    0, 5, sets,
-    1, &descSetOffset);
+    0, 4, sets,
+    0, nullptr);
+
+  // set tranformation matrix
+  vkCmdPushConstants(cmd, gl_VkPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT,
+    0, 16 * sizeof(float), mvp);
 
   // set texture color scales
   vkCmdPushConstants(cmd, gl_VkPipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 
-    0, sizeof(float), &textureColorScale);
+    16 * sizeof(float), sizeof(float), &textureColorScale);
 
   // set mesh
   vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer.sdb_Buffer, &vertexBuffer.sdb_CurrentOffset);

@@ -64,7 +64,6 @@ public:
 
   VkRenderPass                    gl_VkRenderPass;
 
-  VkDescriptorSetLayout           gl_VkDescriptorSetLayout;
   VkDescriptorSetLayout           gl_VkDescSetLayoutTexture;
   VkPipelineLayout                gl_VkPipelineLayout;
   VkPipelineLayout                gl_VkPipelineLayoutOcclusion;
@@ -83,19 +82,8 @@ public:
   VkCommandBuffer                 gl_VkCmdBuffers[gl_VkMaxCmdBufferCount];
   bool                            gl_VkCmdIsRecording;
 
-  VkDescriptorPool                        gl_VkUniformDescPool;
-
-  SvkDynamicBufferGlobal                  gl_VkDynamicVBGlobal;
-  SvkDynamicBuffer                        gl_VkDynamicVB[gl_VkMaxCmdBufferCount];
-
-  SvkDynamicBufferGlobal                  gl_VkDynamicIBGlobal;
-  SvkDynamicBuffer                        gl_VkDynamicIB[gl_VkMaxCmdBufferCount];
-
-  SvkDynamicBufferGlobal                  gl_VkDynamicUBGlobal;
-  SvkDynamicUniform                       gl_VkDynamicUB[gl_VkMaxCmdBufferCount];
-
-  // dynamic buffers to delete
-  CStaticStackArray<SvkDBufferToDelete>   *gl_VkDynamicToDelete[gl_VkMaxCmdBufferCount];
+  VmaAllocator                            gl_VkVmaAllocator;
+  CStaticStackArray<SvkDBufferToDelete>   *gl_VkVmaToDelete[gl_VkMaxCmdBufferCount];
 
   SvkSamplerFlags                         gl_VkGlobalSamplerState;
   SvkStaticHashTable<SvkSamplerObject>    gl_VkSamplers;
@@ -200,19 +188,13 @@ public:
   void DestroyCmdBuffers();
 
   void InitDynamicBuffers();
-  void InitDynamicVertexBuffers(uint32_t newSize);
-  void InitDynamicIndexBuffers(uint32_t newSize);
-  void InitDynamicUniformBuffers(uint32_t newSize);
-  void InitDynamicBuffer(SvkDynamicBufferGlobal &dynBufferGlobal, SvkDynamicBuffer *buffers, VkBufferUsageFlags usage);
 
   void ClearCurrentDynamicOffsets(uint32_t cmdBufferIndex);
   void GetVertexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer);
   void GetIndexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer);
-  void GetUniformBuffer(uint32_t size, SvkDynamicUniform &outDynUniform);
+  void GetVIBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer, VkBufferUsageFlags usage);
   void FlushDynamicBuffersMemory();
 
-  void AddDynamicBufferToDeletion(SvkDynamicBufferGlobal &dynBufferGlobal, SvkDynamicBuffer *buffers);
-  void AddDynamicUniformToDeletion(SvkDynamicBufferGlobal &dynBufferGlobal, SvkDynamicUniform *buffers);
   // free frame data: vertex, index, uniform buffers, descriptor sets
   void FreeUnusedDynamicBuffers(uint32_t cmdBufferIndex);
   // destroy all dynamic buffers data, including unused
