@@ -847,9 +847,6 @@ void SvkMain::StartFrame()
   // free dynamic buffers that have to be deleted
   FreeUnusedDynamicBuffers(gl_VkCmdBufferCurrent);
 
-  // set 0 offsets to dynamic buffers for current cmd buffer
-  ClearCurrentDynamicOffsets(gl_VkCmdBufferCurrent);
-
   FreeDeletedTextures(gl_VkCmdBufferCurrent);
 
   // reset previous pipeline
@@ -903,8 +900,6 @@ void SvkMain::EndFrame()
 {
   VkResult r;
   VkCommandBuffer cmd = gl_VkCmdBuffers[gl_VkCmdBufferCurrent];
-
-  FlushDynamicBuffersMemory();
 
   vkCmdEndRenderPass(cmd);
 

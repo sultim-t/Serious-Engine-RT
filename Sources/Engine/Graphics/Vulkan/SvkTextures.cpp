@@ -225,40 +225,25 @@ void SvkMain::InitTexture32Bit(
     textureBufferSize += mipLevels[i].width * mipLevels[i].height * PixelSize;
   }
 
-  // TODO: common staging memory
+
   // -----
   VkBuffer stagingBuffer;
-  VkDeviceMemory stagingMemory;
+  VmaAllocation stagingAllocation;
+  {
+    VmaAllocationCreateInfo allocInfo = {};
+    allocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+    allocInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
-  VkBufferCreateInfo bufferInfo = {};
-  bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-  bufferInfo.size = textureBufferSize;
-  bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-  bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  r = vkCreateBuffer(gl_VkDevice, &bufferInfo, nullptr, &stagingBuffer);
-  VK_CHECKERROR(r);
+    VkBufferCreateInfo bufferInfo = {};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = textureBufferSize;
+    bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
-  VkMemoryRequirements stagingMemoryReq;
-  vkGetBufferMemoryRequirements(gl_VkDevice, stagingBuffer, &stagingMemoryReq);
-  
-  VkMemoryAllocateInfo stagingAllocInfo = {};
-  stagingAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-  stagingAllocInfo.allocationSize = stagingMemoryReq.size;
-  stagingAllocInfo.memoryTypeIndex = GetMemoryTypeIndex(
-    stagingMemoryReq.memoryTypeBits, 
-    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-  
-  r = vkAllocateMemory(gl_VkDevice, &stagingAllocInfo, nullptr, &stagingMemory);
-  VK_CHECKERROR(r);
-  r = vkBindBufferMemory(gl_VkDevice, stagingBuffer, stagingMemory, 0);
-  VK_CHECKERROR(r);
+    VmaAllocationInfo stagingAllocInfo;
+    vmaCreateBuffer(gl_VkVmaAllocator, &bufferInfo, &allocInfo, &stagingBuffer, &stagingAllocation, &stagingAllocInfo);
 
-  void *mapped;
-  r = vkMapMemory(gl_VkDevice, stagingMemory, 0, stagingMemoryReq.size, 0, &mapped);
-  VK_CHECKERROR(r);
-
-  memcpy(mapped, textureData, textureBufferSize);
-  vkUnmapMemory(gl_VkDevice, stagingMemory);
+    memcpy(stagingAllocInfo.pMappedData, textureData, textureBufferSize);
+  }
   // -----
 
 
@@ -324,8 +309,6 @@ void SvkMain::InitTexture32Bit(
   }
 
 
-
-  // TODO: common staging memory
   // -----
   VkCommandBufferAllocateInfo cmdInfo = {};
   cmdInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -342,7 +325,6 @@ void SvkMain::InitTexture32Bit(
   r = vkBeginCommandBuffer(cmdBuffer, &cmdBeginInfo);
   VK_CHECKERROR(r);
   // -----
-
 
 
   // layout transition
@@ -397,8 +379,6 @@ void SvkMain::InitTexture32Bit(
     1, &barrier);
 
 
-
-  // TODO: common staging memory
   // -----
   r = vkEndCommandBuffer(cmdBuffer);
   VK_CHECKERROR(r);
@@ -414,10 +394,8 @@ void SvkMain::InitTexture32Bit(
   VK_CHECKERROR(r);
   vkFreeCommandBuffers(gl_VkDevice, gl_VkCmdPool, 1, &cmdBuffer);
 
-  vkFreeMemory(gl_VkDevice, stagingMemory, nullptr);
-  vkDestroyBuffer(gl_VkDevice, stagingBuffer, nullptr);
+  vmaDestroyBuffer(gl_VkVmaAllocator, stagingBuffer, stagingAllocation);
   // -----
-
 
 
   VkImageViewCreateInfo viewInfo = {};

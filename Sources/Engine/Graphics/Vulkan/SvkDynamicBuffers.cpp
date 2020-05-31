@@ -35,9 +35,6 @@ void SvkMain::InitDynamicBuffers()
   }
 }
 
-void SvkMain::ClearCurrentDynamicOffsets(uint32_t cmdBufferIndex)
-{}
-
 void SvkMain::GetVertexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer)
 {
   GetVIBuffer(size, outDynBuffer, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
@@ -72,9 +69,6 @@ void SvkMain::GetVIBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer, VkBuffe
   outDynBuffer.sdb_CurrentOffset = 0;
   outDynBuffer.sdb_Data = (UBYTE *)allocationInfo.pMappedData;
 }
-
-void SvkMain::FlushDynamicBuffersMemory()
-{}
 
 // using VMA, this function deletes all allocations that were created in cmdBufferIndex
 void SvkMain::FreeUnusedDynamicBuffers(uint32_t cmdBufferIndex)

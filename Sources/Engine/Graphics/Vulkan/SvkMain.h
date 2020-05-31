@@ -189,11 +189,9 @@ public:
 
   void InitDynamicBuffers();
 
-  void ClearCurrentDynamicOffsets(uint32_t cmdBufferIndex);
   void GetVertexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer);
   void GetIndexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer);
   void GetVIBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer, VkBufferUsageFlags usage);
-  void FlushDynamicBuffersMemory();
 
   // free frame data: vertex, index, uniform buffers, descriptor sets
   void FreeUnusedDynamicBuffers(uint32_t cmdBufferIndex);
