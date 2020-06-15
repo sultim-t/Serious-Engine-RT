@@ -30,6 +30,13 @@ SvkPipelineState &SvkMain::GetPipeline(SvkPipelineStateFlags flags)
     gl_VkPipelines.New();
   }
 
+  SvkPipelineState *sps = gl_VkPipelines.TryGet(flags);
+
+  if (sps != nullptr)
+  {
+    return *sps;
+  }
+
   VkShaderModule vert = gl_VkShaderModuleVert;
   VkShaderModule frag = (flags & SVK_PLS_ALPHA_ENABLE_BOOL) ? gl_VkShaderModuleFragAlpha : gl_VkShaderModuleFrag;
 
@@ -245,7 +252,6 @@ SvkPipelineState &SvkMain::CreatePipeline(
 
   VkResult r = vkCreateGraphicsPipelines(gl_VkDevice, gl_VkPipelineCache, 1, &pipelineInfo, nullptr, &newState.sps_Pipeline);
   VK_CHECKERROR(r);
-
 
   gl_VkPipelines.Add(flags, newState);
 

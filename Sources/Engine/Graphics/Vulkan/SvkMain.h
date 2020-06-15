@@ -79,7 +79,7 @@ public:
 
   uint32_t                        gl_VkCmdBufferCurrent;
   VkCommandPool                   gl_VkCmdPools[gl_VkMaxCmdBufferCount];
-  VkCommandBuffer                 gl_VkCmdBuffers[gl_VkMaxCmdBufferCount];
+  VkCommandBuffer                 gl_VkCmdBuffers[gl_VkMaxCmdBufferCount * 2];
   bool                            gl_VkCmdIsRecording;
 
   VmaAllocator                            gl_VkVmaAllocator;

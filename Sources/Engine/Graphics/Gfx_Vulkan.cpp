@@ -365,6 +365,7 @@ void SvkMain::Reset_Vulkan()
 
     gl_VkCmdPools[i] = VK_NULL_HANDLE;
     gl_VkCmdBuffers[i] = VK_NULL_HANDLE;
+    gl_VkCmdBuffers[i + gl_VkMaxCmdBufferCount] = VK_NULL_HANDLE;
     gl_VkImageAvailableSemaphores[i] = VK_NULL_HANDLE;
     gl_VkRenderFinishedSemaphores[i] = VK_NULL_HANDLE;
     gl_VkCmdFences[i] = VK_NULL_HANDLE;
@@ -775,7 +776,7 @@ void SvkMain::CreateRenderPass()
 void SvkMain::CreateCmdBuffers()
 {
 #ifndef NDEBUG
-  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
+  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount * 2; i++)
   {
     ASSERT(gl_VkCmdBuffers[i] == VK_NULL_HANDLE);
   }
@@ -785,7 +786,7 @@ void SvkMain::CreateCmdBuffers()
 
   VkCommandPoolCreateInfo cmdPoolInfo = {};
   cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-  cmdPoolInfo.pNext = nullptr;
+  cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
   cmdPoolInfo.queueFamilyIndex = gl_VkQueueFamGraphics;
 
   for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
@@ -805,6 +806,8 @@ void SvkMain::CreateCmdBuffers()
     allocInfo.commandPool = gl_VkCmdPools[i];
 
     r = vkAllocateCommandBuffers(gl_VkDevice, &allocInfo, &gl_VkCmdBuffers[i]);
+    VK_CHECKERROR(r);
+    r = vkAllocateCommandBuffers(gl_VkDevice, &allocInfo, &gl_VkCmdBuffers[i + gl_VkMaxCmdBufferCount]);
     VK_CHECKERROR(r);
   }
 }
