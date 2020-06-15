@@ -133,14 +133,10 @@ void UploadTexture_Vulkan(uint32_t *iTexture, ULONG *pulTexture, PIX pixSizeU, P
   _sfStats.StartTimer(CStatForm::STI_BINDTEXTURE);
   _pfGfxProfile.StartTimer(CGfxProfile::PTI_TEXTUREUPLOADING);
 
-  uint32_t mipmapCount = 1;
+  uint32_t mipmapCount = 0;
   VkExtent2D mipmapSizes[32];
-  // first in mipmapSizes is base texture size
-  mipmapSizes[0].width = pixSizeU;
-  mipmapSizes[0].height = pixSizeV;
   
   // upload each original mip-map
-  INDEX iMip = 0;
   PIX pixOffset = 0;
   while (pixSizeU > 0 && pixSizeV > 0)
   {
@@ -155,11 +151,6 @@ void UploadTexture_Vulkan(uint32_t *iTexture, ULONG *pulTexture, PIX pixSizeU, P
       //pglTexImage2D(GL_TEXTURE_2D, iMip, eInternalFormat, pixSizeU, pixSizeV, 0,
       //  GL_RGBA, GL_UNSIGNED_BYTE, pulTexture + pixOffset);
     };
-    // advance to next mip-map
-    pixOffset += pixSizeU * pixSizeV;
-    pixSizeU >>= 1;
-    pixSizeV >>= 1;
-    iMip++;
 
     if (pixSizeU > 0 && pixSizeV > 0)
     {
@@ -168,8 +159,16 @@ void UploadTexture_Vulkan(uint32_t *iTexture, ULONG *pulTexture, PIX pixSizeU, P
       mipmapCount++;
     }
 
+    // advance to next mip-map
+    pixOffset += pixSizeU * pixSizeV;
+    pixSizeU >>= 1;
+    pixSizeV >>= 1;
+
     // end here if there is only one mip-map to upload
-    if (_tpCurrent->tp_bSingleMipmap) break;
+    if (_tpCurrent->tp_bSingleMipmap) 
+    {
+      break;
+    }
   }
 
   // see if we need to generate and upload additional mipmaps (those under 1*N or N*1)
