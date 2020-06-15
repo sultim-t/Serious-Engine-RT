@@ -223,6 +223,8 @@ void SvkMain::InitTexture32Bit(
     CreateTexture(textureId);
 
     sto = gl_VkTextures.Get(textureId);
+
+    onlyUpdate = false;
   }
 
   sto.sto_Format = format;

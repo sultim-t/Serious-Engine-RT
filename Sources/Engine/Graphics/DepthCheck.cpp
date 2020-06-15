@@ -259,7 +259,7 @@ static void UpdateDepthPointsVisibility( const CDrawPort *pdp, const INDEX iMirr
     // get query results
     for (uint32_t i = 0; i < queryCount; i++)
     {
-      pdi[queries[i].pdiId].di_bVisible = results[i] >= (deltato + deltafrom + 1) * (deltato + deltafrom + 1) / 2.0f;
+      pdi[queries[i].pdiId].di_bVisible = results[i] > 0;
     }
 
     _sfStats.StopTimer(CStatForm::STI_GFXAPI);
