@@ -25,12 +25,9 @@ SvkPipelineStateFlags &SvkMain::GetPipelineState()
 
 SvkPipelineState &SvkMain::GetPipeline(SvkPipelineStateFlags flags)
 {
-  for (INDEX i = 0; i < gl_VkPipelines.Count(); i++)
+  if (!gl_VkPipelines.IsAllocated())
   {
-    if (gl_VkPipelines[i].sps_Flags == flags)
-    {
-      return gl_VkPipelines[i];
-    }
+    gl_VkPipelines.New();
   }
 
   VkShaderModule vert = gl_VkShaderModuleVert;
@@ -42,10 +39,10 @@ SvkPipelineState &SvkMain::GetPipeline(SvkPipelineStateFlags flags)
 
 void SvkMain::DestroyPipelines()
 {
-  for (INDEX i = 0; i < gl_VkPipelines.Count(); i++)
-  {
-    vkDestroyPipeline(gl_VkDevice, gl_VkPipelines[i].sps_Pipeline, nullptr);
-  }
+  gl_VkPipelines.Map([](SvkPipelineState &sps)
+    {
+      vkDestroyPipeline(sps.sps_Device, sps.sps_Pipeline, nullptr);
+    });
 
   gl_VkPipelines.Clear();
 }
@@ -54,7 +51,8 @@ SvkPipelineState &SvkMain::CreatePipeline(
   SvkPipelineStateFlags flags, const SvkVertexLayout &vertLayout,
   VkShaderModule vertShaderModule, VkShaderModule fragShaderModule)
 {
-  SvkPipelineState &newState = gl_VkPipelines.Push();
+  SvkPipelineState newState = {};
+  newState.sps_Device = gl_VkDevice;
   newState.sps_Flags = flags;
 
   // if dynamic depth bounds required, dynamicStatesCount will be incremented
@@ -62,7 +60,6 @@ SvkPipelineState &SvkMain::CreatePipeline(
   VkDynamicState dynamicStates[3] = {
     VK_DYNAMIC_STATE_VIEWPORT,
     VK_DYNAMIC_STATE_SCISSOR,
-    VK_DYNAMIC_STATE_DEPTH_BOUNDS
   };
 
   VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
@@ -150,16 +147,6 @@ SvkPipelineState &SvkMain::CreatePipeline(
     // depth writes are always disabled when depthTestEnable is VK_FALSE,
     // so depthTestEnable must be VK_TRUE
     depthStencil.depthTestEnable = VK_TRUE;
-  }
-
-  if (false) // (flags & SVK_PLS_DEPTH_BOUNDS_BOOL)
-  {
-    depthStencil.depthBoundsTestEnable = VK_TRUE;
-    dynamicStatesCount++;
-  }
-  else
-  {
-    depthStencil.depthBoundsTestEnable = VK_FALSE;
   }
 
   switch (flags & SVK_PLS_DEPTH_COMPARE_OP_BITS)
@@ -259,7 +246,10 @@ SvkPipelineState &SvkMain::CreatePipeline(
   VkResult r = vkCreateGraphicsPipelines(gl_VkDevice, gl_VkPipelineCache, 1, &pipelineInfo, nullptr, &newState.sps_Pipeline);
   VK_CHECKERROR(r);
 
-  return newState;
+
+  gl_VkPipelines.Add(flags, newState);
+
+  return gl_VkPipelines.Get(flags);
 }
 
 void SvkMain::CreatePipelineCache()

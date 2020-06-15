@@ -79,7 +79,7 @@ public:
   VkViewport                      gl_VkCurrentViewport;
 
   uint32_t                        gl_VkCmdBufferCurrent;
-  VkCommandPool                   gl_VkCmdPool;
+  VkCommandPool                   gl_VkCmdPools[gl_VkMaxCmdBufferCount];
   VkCommandBuffer                 gl_VkCmdBuffers[gl_VkMaxCmdBufferCount];
   bool                            gl_VkCmdIsRecording;
 
@@ -115,7 +115,7 @@ public:
 
   SvkPipelineStateFlags                   gl_VkGlobalState;
   SvkPipelineState                        *gl_VkPreviousPipeline;
-  CStaticStackArray<SvkPipelineState>     gl_VkPipelines;
+  SvkStaticHashTable<SvkPipelineState>    gl_VkPipelines;
   VkPipelineCache                         gl_VkPipelineCache;
   SvkVertexLayout                         *gl_VkDefaultVertexLayout;
   VkPipeline                              gl_VkPipelineOcclusion;
@@ -273,6 +273,8 @@ public:
   void SetTexture(uint32_t textureUnit, uint32_t textureId, SvkSamplerFlags samplerFlags);
   // create texture handler, texture IDs starts with 1, not 0
   uint32_t CreateTexture();
+  // create texture handler with specified ID
+  uint32_t CreateTexture(uint32_t textureId);
   // init texture; if onlyUpdate is true, texture will not be allocated
   void InitTexture32Bit(
     uint32_t &textureId, VkFormat format, void *textureData,

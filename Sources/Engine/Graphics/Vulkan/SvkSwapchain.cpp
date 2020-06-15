@@ -151,19 +151,24 @@ void SvkMain::CreateSwapchain(uint32_t width, uint32_t height)
   // create framebuffers
   for (uint32_t i = 0; i < swapchainImageCount; i++)
   {
-    const int attchCount = 3;
+    bool useResolve = gl_VkMaxSampleCount != VK_SAMPLE_COUNT_1_BIT;
 
-    VkImageView attachments[attchCount] = {
+    VkImageView attchsResolved[3] = {
       gl_VkSwapchainColorImageViews[i],
       gl_VkSwapchainDepthImageViews[i],
-      gl_VkSwapchainImageViews[i]
+      gl_VkSwapchainImageViews[i],
+    };
+
+    VkImageView attchsDefault[2] = {
+      gl_VkSwapchainImageViews[i],
+      gl_VkSwapchainDepthImageViews[i],
     };
 
     VkFramebufferCreateInfo framebufferInfo = {};
     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     framebufferInfo.renderPass = gl_VkRenderPass;
-    framebufferInfo.attachmentCount = attchCount;
-    framebufferInfo.pAttachments = attachments;
+    framebufferInfo.attachmentCount = useResolve ? 3 : 2;
+    framebufferInfo.pAttachments = useResolve ? attchsResolved : attchsDefault;
     framebufferInfo.width = gl_VkSwapChainExtent.width;
     framebufferInfo.height = gl_VkSwapChainExtent.height;
     framebufferInfo.layers = 1;

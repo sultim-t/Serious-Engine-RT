@@ -117,6 +117,7 @@ struct SvkDynamicBufferGlobal
 
 struct SvkPipelineState
 {
+  VkDevice                sps_Device;
   SvkPipelineStateFlags   sps_Flags;
   VkPipeline              sps_Pipeline;
 };

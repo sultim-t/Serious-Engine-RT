@@ -176,7 +176,11 @@ void SvkMain::DestroyTextureObject(SvkTextureObject &sto)
 uint32_t SvkMain::CreateTexture()
 {
   uint32_t textureId = gl_VkLastTextureId++;
+  return CreateTexture(textureId);
+}
 
+uint32_t SvkMain::CreateTexture(uint32_t textureId)
+{
   SvkTextureObject sto = {};
   sto.sto_VkDevice = gl_VkDevice;
   gl_VkTextures.Add(textureId, sto);
@@ -207,7 +211,16 @@ void SvkMain::InitTexture32Bit(
 
   // if texture is already initialized, it can be only updated
   ASSERT(sto.sto_Image == VK_NULL_HANDLE || (sto.sto_Image != VK_NULL_HANDLE && onlyUpdate));
-  ASSERT(!onlyUpdate || (onlyUpdate && mipLevels[0].width == sto.sto_Width && mipLevels[0].height == sto.sto_Height));
+ 
+  if (onlyUpdate && (mipLevels[0].width != sto.sto_Width || mipLevels[0].height != sto.sto_Height))
+  {
+    // safely delete and create new with the same id
+    AddTextureToDeletion(textureId);
+
+    CreateTexture(textureId);
+
+    sto = gl_VkTextures.Get(textureId);
+  }
 
   sto.sto_Format = format;
   sto.sto_Layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -326,7 +339,7 @@ void SvkMain::InitTexture32Bit(
   // -----
   VkCommandBufferAllocateInfo cmdInfo = {};
   cmdInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  cmdInfo.commandPool = gl_VkCmdPool;
+  cmdInfo.commandPool = gl_VkCmdPools[gl_VkCmdBufferCurrent];
   cmdInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   cmdInfo.commandBufferCount = 1;
 
@@ -336,6 +349,7 @@ void SvkMain::InitTexture32Bit(
 
   VkCommandBufferBeginInfo cmdBeginInfo = {};
   cmdBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  cmdBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
   r = vkBeginCommandBuffer(cmdBuffer, &cmdBeginInfo);
   VK_CHECKERROR(r);
   // -----
@@ -409,7 +423,6 @@ void SvkMain::InitTexture32Bit(
   VK_CHECKERROR(r);
   r = vkQueueWaitIdle(gl_VkQueueGraphics);
   VK_CHECKERROR(r);
-  vkFreeCommandBuffers(gl_VkDevice, gl_VkCmdPool, 1, &cmdBuffer);
 
   vkFreeMemory(gl_VkDevice, stagingMemory, nullptr);
   vkDestroyBuffer(gl_VkDevice, stagingBuffer, nullptr);
