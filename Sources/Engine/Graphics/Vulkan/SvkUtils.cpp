@@ -99,11 +99,11 @@ VkFormat SvkMain::FindSupportedFormat(const VkFormat *formats, uint32_t formatCo
     VkFormatProperties props;
     vkGetPhysicalDeviceFormatProperties(gl_VkPhysDevice, format, &props);
 
-    if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
+    if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
     {
       return format;
     }
-    else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
+    else if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
     {
       return format;
     }
@@ -398,7 +398,7 @@ BOOL SvkMain::PickPhysicalDevice()
         }
       }
 
-      VkFormat depthFormats[3] = { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT };
+      VkFormat depthFormats[3] = { VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT };
       gl_VkSurfDepthFormat = FindSupportedFormat(depthFormats, 3, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
       if (gl_VkSurfColorFormat == VK_FORMAT_UNDEFINED)
@@ -454,6 +454,31 @@ void SvkMain::ClearColor(int32_t x, int32_t y, uint32_t width, uint32_t height, 
   cv.float32[2] = rgba[2];
   cv.float32[3] = rgba[3];
 
+  // check swapchain bounds; swaphcain offset is (0,0)
+  if (x + width > gl_VkSwapChainExtent.width)
+  {
+    width = gl_VkSwapChainExtent.width - x;
+  }
+  if (y + height > gl_VkSwapChainExtent.height)
+  {
+    height = gl_VkSwapChainExtent.height - y;
+  }
+  if (x < 0)
+  {
+    width = x + width;
+    x = 0;
+  }
+  if (y < 0)
+  {
+    height = y + height;
+    y = 0;
+  }
+
+  ASSERT(x + width <= gl_VkSwapChainExtent.width);
+  ASSERT(y + height <= gl_VkSwapChainExtent.height);
+  ASSERT(x >= 0 && width > 0);
+  ASSERT(y >= 0 && height > 0);
+
   VkClearRect cr = {};
   cr.baseArrayLayer = 0;
   cr.layerCount = 1;
@@ -475,6 +500,31 @@ void SvkMain::ClearDepth(int32_t x, int32_t y, uint32_t width, uint32_t height, 
 
   VkClearDepthStencilValue &cd = ca.clearValue.depthStencil;
   cd.depth = depth;
+
+  // check swapchain bounds; swaphcain offset is (0,0)
+  if (x + width > gl_VkSwapChainExtent.width)
+  {
+    width = gl_VkSwapChainExtent.width - x;
+  }
+  if (y + height > gl_VkSwapChainExtent.height)
+  {
+    height = gl_VkSwapChainExtent.height - y;
+  }
+  if (x < 0)
+  {
+    width = x + width;
+    x = 0;
+  }
+  if (y < 0)
+  {
+    height = y + height;
+    y = 0;
+  }
+
+  ASSERT(x + width <= gl_VkSwapChainExtent.width);
+  ASSERT(y + height <= gl_VkSwapChainExtent.height);
+  ASSERT(x >= 0 && width > 0);
+  ASSERT(y >= 0 && height > 0);
 
   VkClearRect cr = {};
   cr.baseArrayLayer = 0;

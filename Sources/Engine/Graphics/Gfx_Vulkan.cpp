@@ -34,6 +34,13 @@ FLOAT	VkViewMatrix[16];
 
 #ifdef SE1_VULKAN
 
+#ifndef NDEBUG
+  #define SVK_ENABLE_VALIDATION 1
+#else
+  #define SVK_ENABLE_VALIDATION 0
+#endif // !NDEBUG
+
+
 // fog/haze textures
 extern ULONG _fog_ulTexture;
 extern ULONG _haze_ulTexture;
@@ -156,12 +163,12 @@ BOOL SvkMain::InitDriver_Vulkan()
   const char* extensions[] = {
     VK_KHR_SURFACE_EXTENSION_NAME,
     VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
-#ifndef NDEBUG
+#if SVK_ENABLE_VALIDATION
     VK_EXT_DEBUG_UTILS_EXTENSION_NAME
 #endif
   };
 
-#ifndef NDEBUG
+#if SVK_ENABLE_VALIDATION
   VkDebugUtilsMessengerCreateInfoEXT debugMsgInfo = {};
   GetDebugMsgCreateInfo(debugMsgInfo);
 
@@ -196,7 +203,7 @@ BOOL SvkMain::InitDriver_Vulkan()
     return FALSE;
   }
 
-#ifndef NDEBUG
+#if SVK_ENABLE_VALIDATION
   auto pfnCreateDUMsg = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(gl_VkInstance, "vkCreateDebugUtilsMessengerEXT");
   if (pfnCreateDUMsg != nullptr) 
   {
@@ -283,7 +290,7 @@ void SvkMain::EndDriver_Vulkan(void)
   vkDestroySurfaceKHR(gl_VkInstance, gl_VkSurface, nullptr);
   vkDestroyDevice(gl_VkDevice, nullptr);
 
-#ifndef NDEBUG
+#if SVK_ENABLE_VALIDATION
   auto pfnDestroyDUMsg = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(gl_VkInstance, "vkDestroyDebugUtilsMessengerEXT");
   if (pfnDestroyDUMsg != nullptr)
   {
@@ -306,13 +313,12 @@ void SvkMain::Reset_Vulkan()
   gl_VkCurrentScissor = {};
   gl_VkSwapChainExtent = {};
 
-  gl_VkCmdPool = VK_NULL_HANDLE;;
   gl_VkRenderPass = VK_NULL_HANDLE;
 
   gl_VkSwapchain = VK_NULL_HANDLE;
   gl_VkSurfColorFormat = VK_FORMAT_B8G8R8A8_UNORM;
   gl_VkSurfColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
-  gl_VkSurfDepthFormat = VK_FORMAT_D16_UNORM;
+  gl_VkSurfDepthFormat = VK_FORMAT_D24_UNORM_S8_UINT;
   gl_VkSurfPresentMode = VK_PRESENT_MODE_FIFO_KHR;
   gl_VkCmdBufferCurrent = 0;
   gl_VkCmdIsRecording = false;
@@ -357,6 +363,7 @@ void SvkMain::Reset_Vulkan()
   {
     gl_VkTextureDescPools[i] = VK_NULL_HANDLE;
 
+    gl_VkCmdPools[i] = VK_NULL_HANDLE;
     gl_VkCmdBuffers[i] = VK_NULL_HANDLE;
     gl_VkImageAvailableSemaphores[i] = VK_NULL_HANDLE;
     gl_VkRenderFinishedSemaphores[i] = VK_NULL_HANDLE;
@@ -668,8 +675,10 @@ BOOL SvkMain::CreateDevice()
   createInfo.pEnabledFeatures = &features;
   createInfo.enabledExtensionCount = (uint32_t)gl_VkPhysDeviceExtensions.Count();
   createInfo.ppEnabledExtensionNames = &gl_VkPhysDeviceExtensions[0];
+#if SVK_ENABLE_VALIDATION
   createInfo.enabledLayerCount = (uint32_t)gl_VkLayers.Count();
   createInfo.ppEnabledLayerNames = &gl_VkLayers[0];
+#endif
 
   if (vkCreateDevice(gl_VkPhysDevice, &createInfo, nullptr, &gl_VkDevice) != VK_SUCCESS)
   {
@@ -688,20 +697,22 @@ void SvkMain::CreateRenderPass()
 {
   VkSampleCountFlagBits sampleCount = gl_VkMaxSampleCount;
 
+  bool useResolve = sampleCount != VK_SAMPLE_COUNT_1_BIT;
+
   VkAttachmentDescription colorAttachment = {};
   colorAttachment.format = gl_VkSurfColorFormat;
   colorAttachment.samples = sampleCount;
   colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  colorAttachment.finalLayout = useResolve ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
   VkAttachmentDescription depthAttachment = {};
   depthAttachment.format = gl_VkSurfDepthFormat;
   depthAttachment.samples = sampleCount;
-  depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -712,11 +723,11 @@ void SvkMain::CreateRenderPass()
   colorAttachmentPresent.format = gl_VkSurfColorFormat;
   colorAttachmentPresent.samples = VK_SAMPLE_COUNT_1_BIT;
   colorAttachmentPresent.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  colorAttachmentPresent.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  colorAttachmentPresent.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   colorAttachmentPresent.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   colorAttachmentPresent.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   colorAttachmentPresent.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  colorAttachmentPresent.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // VK_IMAGE_LAYOUT_GENERAL;
+  colorAttachmentPresent.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
   VkAttachmentReference colorAttachmentRef = {};
   colorAttachmentRef.attachment = SVK_RENDERPASS_COLOR_ATTACHMENT_INDEX;
@@ -735,7 +746,7 @@ void SvkMain::CreateRenderPass()
   subpass.colorAttachmentCount = 1;
   subpass.pColorAttachments = &colorAttachmentRef;
   subpass.pDepthStencilAttachment = &depthAttachmentRef;
-  subpass.pResolveAttachments = &colorAttachmentPresentRef;
+  subpass.pResolveAttachments = useResolve ? &colorAttachmentPresentRef : nullptr;
 
   VkSubpassDependency dependency = {};
   dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -748,7 +759,7 @@ void SvkMain::CreateRenderPass()
   VkAttachmentDescription attachments[3] = { colorAttachment, depthAttachment, colorAttachmentPresent };
   VkRenderPassCreateInfo renderPassInfo = {};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-  renderPassInfo.attachmentCount = 3;
+  renderPassInfo.attachmentCount = useResolve ? 3 : 2;
   renderPassInfo.pAttachments = attachments;
   renderPassInfo.subpassCount = 1;
   renderPassInfo.pSubpasses = &subpass;
@@ -776,30 +787,37 @@ void SvkMain::CreateCmdBuffers()
   cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   cmdPoolInfo.pNext = nullptr;
   cmdPoolInfo.queueFamilyIndex = gl_VkQueueFamGraphics;
-  cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-  r = vkCreateCommandPool(gl_VkDevice, &cmdPoolInfo, nullptr, &gl_VkCmdPool);
-  VK_CHECKERROR(r);
+  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
+  {
+    r = vkCreateCommandPool(gl_VkDevice, &cmdPoolInfo, nullptr, &gl_VkCmdPools[i]);
+    VK_CHECKERROR(r);
+  }
 
   // allocate cmd buffers
   VkCommandBufferAllocateInfo allocInfo = {};
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  allocInfo.commandPool = gl_VkCmdPool;
   allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  allocInfo.commandBufferCount = gl_VkMaxCmdBufferCount;
+  allocInfo.commandBufferCount = 1;
 
-  r = vkAllocateCommandBuffers(gl_VkDevice, &allocInfo, &gl_VkCmdBuffers[0]);
-  VK_CHECKERROR(r);
+  for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
+  {
+    allocInfo.commandPool = gl_VkCmdPools[i];
+
+    r = vkAllocateCommandBuffers(gl_VkDevice, &allocInfo, &gl_VkCmdBuffers[i]);
+    VK_CHECKERROR(r);
+  }
 }
 
 void SvkMain::DestroyCmdBuffers()
 {
   for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
   {
-    gl_VkCmdBuffers[i] = VK_NULL_HANDLE;
-  }
+    vkDestroyCommandPool(gl_VkDevice, gl_VkCmdPools[i], nullptr);
 
-  vkDestroyCommandPool(gl_VkDevice, gl_VkCmdPool, nullptr);
+    gl_VkCmdBuffers[i] = VK_NULL_HANDLE;
+    gl_VkCmdPools[i] = VK_NULL_HANDLE;
+  }
 }
 
 void SvkMain::AcquireNextImage()
@@ -831,8 +849,6 @@ void SvkMain::StartFrame()
   // set new index
   gl_VkCmdBufferCurrent = (gl_VkCmdBufferCurrent + 1) % gl_VkMaxCmdBufferCount;
 
-  VkCommandBuffer cmd = gl_VkCmdBuffers[gl_VkCmdBufferCurrent];
-
   // wait when previous cmd with same index will be done
   r = vkWaitForFences(gl_VkDevice, 1, &gl_VkCmdFences[gl_VkCmdBufferCurrent], VK_TRUE, UINT64_MAX);
   VK_CHECKERROR(r);
@@ -855,6 +871,10 @@ void SvkMain::StartFrame()
   PrepareDescriptorSets(gl_VkCmdBufferCurrent);
 
   _no_ulTextureDescSet = GetTextureDescriptor(_no_ulTexture);
+
+  vkResetCommandPool(gl_VkDevice, gl_VkCmdPools[gl_VkCmdBufferCurrent], VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
+
+  VkCommandBuffer cmd = gl_VkCmdBuffers[gl_VkCmdBufferCurrent];
 
   VkCommandBufferBeginInfo beginInfo = {};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
