@@ -343,9 +343,7 @@ void SvkMain::InitTexture32Bit(
   cmdInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   cmdInfo.commandBufferCount = 1;
 
-  VkCommandBuffer cmdBuffer;
-  r = vkAllocateCommandBuffers(gl_VkDevice, &cmdInfo, &cmdBuffer);
-  VK_CHECKERROR(r);
+  VkCommandBuffer cmdBuffer = gl_VkCmdBuffers[gl_VkCmdBufferCurrent + gl_VkMaxCmdBufferCount];
 
   VkCommandBufferBeginInfo cmdBeginInfo = {};
   cmdBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -423,6 +421,8 @@ void SvkMain::InitTexture32Bit(
   VK_CHECKERROR(r);
   r = vkQueueWaitIdle(gl_VkQueueGraphics);
   VK_CHECKERROR(r);
+
+  vkResetCommandBuffer(cmdBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 
   vkFreeMemory(gl_VkDevice, stagingMemory, nullptr);
   vkDestroyBuffer(gl_VkDevice, stagingBuffer, nullptr);
