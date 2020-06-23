@@ -14,11 +14,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
 #include "stdh.h"
-#include <Engine/Graphics/GfxLibrary.h>
+#include <Engine/Graphics/Vulkan/SvkMain.h>
 
 #ifdef SE1_VULKAN
 
-void CGfxLibrary::CreateDescriptorSetLayouts()
+void SvkMain::CreateDescriptorSetLayouts()
 {
   VkResult r;
 
@@ -66,6 +66,7 @@ void CGfxLibrary::CreateDescriptorSetLayouts()
   colorScalePushConstant.size = sizeof(float);
   colorScalePushConstant.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
+  // create default layout
   VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipelineLayoutInfo.setLayoutCount = 5;
@@ -75,9 +76,16 @@ void CGfxLibrary::CreateDescriptorSetLayouts()
 
   r = vkCreatePipelineLayout(gl_VkDevice, &pipelineLayoutInfo, nullptr, &gl_VkPipelineLayout);
   VK_CHECKERROR(r);
+
+  // create layout for occlusion quiries
+  VkPipelineLayoutCreateInfo pipelineLayoutOcclInfo = {};
+  pipelineLayoutOcclInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+
+  r = vkCreatePipelineLayout(gl_VkDevice, &pipelineLayoutOcclInfo, nullptr, &gl_VkPipelineLayoutOcclusion);
+  VK_CHECKERROR(r);
 }
 
-void CGfxLibrary::DestroyDescriptorSetLayouts()
+void SvkMain::DestroyDescriptorSetLayouts()
 {
   ASSERT(gl_VkDescriptorSetLayout != VK_NULL_HANDLE);
   ASSERT(gl_VkDescSetLayoutTexture != VK_NULL_HANDLE);
@@ -86,13 +94,10 @@ void CGfxLibrary::DestroyDescriptorSetLayouts()
   vkDestroyDescriptorSetLayout(gl_VkDevice, gl_VkDescriptorSetLayout, nullptr);
   vkDestroyDescriptorSetLayout(gl_VkDevice, gl_VkDescSetLayoutTexture, nullptr);
   vkDestroyPipelineLayout(gl_VkDevice, gl_VkPipelineLayout, nullptr);
-
-  gl_VkDescriptorSetLayout = VK_NULL_HANDLE;
-  gl_VkDescSetLayoutTexture = VK_NULL_HANDLE;
-  gl_VkPipelineLayout = VK_NULL_HANDLE;
+  vkDestroyPipelineLayout(gl_VkDevice, gl_VkPipelineLayoutOcclusion, nullptr);
 }
 
-void CGfxLibrary::CreateDescriptorPools()
+void SvkMain::CreateDescriptorPools()
 {
 #ifndef NDEBUG
   ASSERT(gl_VkUniformDescPool == VK_NULL_HANDLE);
@@ -139,14 +144,10 @@ void CGfxLibrary::CreateDescriptorPools()
   {
     r = vkCreateDescriptorPool(gl_VkDevice, &smDescPoolInfo, nullptr, &gl_VkTextureDescPools[i]);
     VK_CHECKERROR(r);
-
-    // and allocate desc set hash tables
-    gl_VkTextureDescSets[i] = new SvkStaticHashTable<SvkTextureDescSet>();
-    gl_VkTextureDescSets[i]->New(16, 256);
   }
 }
 
-void CGfxLibrary::DestroyDescriptorPools()
+void SvkMain::DestroyDescriptorPools()
 {
 #ifndef NDEBUG
   ASSERT(gl_VkUniformDescPool != VK_NULL_HANDLE);
@@ -163,21 +164,13 @@ void CGfxLibrary::DestroyDescriptorPools()
   {
     vkDestroyDescriptorPool(gl_VkDevice, gl_VkTextureDescPools[i], nullptr);
     gl_VkTextureDescPools[i] = VK_NULL_HANDLE;
-
-    delete gl_VkTextureDescSets[i];
-    gl_VkTextureDescSets[i] = VK_NULL_HANDLE;
   }
 }
 
-void CGfxLibrary::PrepareDescriptorSets(uint32_t cmdBufferIndex)
+void SvkMain::PrepareDescriptorSets(uint32_t cmdBufferIndex)
 {
-  //if (gl_VkTextureDescSets[cmdBufferIndex]->Count() > SVK_DESCRIPTOR_MAX_SET_COUNT * 2.0f / 3.0f)
-  //{
-  //  gl_VkTextureDescSets[cmdBufferIndex]->Clear();
-
-  //  VkResult r = vkResetDescriptorPool(gl_VkDevice, gl_VkTextureDescPools[cmdBufferIndex], 0);
-  //  VK_CHECKERROR(r);
-  //}
+    VkResult r = vkResetDescriptorPool(gl_VkDevice, gl_VkTextureDescPools[cmdBufferIndex], 0);
+    VK_CHECKERROR(r);
 }
 
 #endif

@@ -46,6 +46,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Templates/DynamicContainer.cpp>
 #include <Engine/Templates/Stock_CTextureData.h>
 
+#ifdef SE1_VULKAN
+#include <Engine/Graphics/Vulkan/SvkMain.h>
+#endif
 
 // control for partial usage of compiled vertex arrays
 extern BOOL CVA_b2D     = FALSE;
@@ -172,6 +175,7 @@ extern INDEX d3d_iFinish = 0;
 
 // Vulkan control
 extern INDEX gfx_vk_iPresentMode = 0;           // what present mode to use: 0=FIFO, 1=Mailbox, 2=Immediate
+extern INDEX gfx_vk_iMSAA = 0;                  // MSAA: 0=1x, 1=2x, 2=4x, 3=8x
 
 // API common controls
 extern INDEX gap_iUseTextureUnits = 4;
@@ -502,7 +506,7 @@ static void GAPInfo(void)
     && _pGfx->gl_pd3dDevice==NULL
 #endif // SE1_D3D
 #ifdef SE1_VULKAN
-    && _pGfx->gl_VkInstance==VK_NULL_HANDLE
+    && _pGfx->gl_SvkMain->gl_VkInstance==VK_NULL_HANDLE
 #endif // SE1_VULKAN
 
     ) || eAPI==GAT_NONE) {
@@ -1015,7 +1019,7 @@ CGfxLibrary::CGfxLibrary(void)
   gl_ctIndices  = 0;
 
 #ifdef SE1_VULKAN
-  Reset_Vulkan();
+  gl_SvkMain = nullptr;
 #endif // SE1_VULKAN
 
   // reset profiling counters
@@ -1128,6 +1132,7 @@ void CGfxLibrary::Init(void)
   _pShell->DeclareSymbol("persistent user INDEX d3d_iFinish;", &d3d_iFinish);
 
   _pShell->DeclareSymbol("persistent user INDEX gfx_vk_iPresentMode;", &gfx_vk_iPresentMode);
+  _pShell->DeclareSymbol("persistent user INDEX gfx_vk_iMSAA;", &gfx_vk_iMSAA);
 
   _pShell->DeclareSymbol("persistent user INDEX gap_iUseTextureUnits;",   &gap_iUseTextureUnits);
   _pShell->DeclareSymbol("persistent user INDEX gap_iTextureFiltering;",  &gap_iTextureFiltering);
@@ -1918,7 +1923,7 @@ void CGfxLibrary::SwapBuffers(CViewPort *pvp)
     // end recording to cmd buffers
     if (GFX_bRenderingScene) 
     {
-      EndFrame();
+      gl_SvkMain->EndFrame();
     }
 
     SwapBuffers_Vulkan();
@@ -2052,7 +2057,7 @@ BOOL CGfxLibrary::LockRaster( CRaster *praToLock)
 #ifdef SE1_VULKAN
     if (gl_eCurrentAPI == GAT_VK && !GFX_bRenderingScene)
     {
-      StartFrame();
+      gl_SvkMain->StartFrame();
     }
 #endif // SE1_VULKAN
 

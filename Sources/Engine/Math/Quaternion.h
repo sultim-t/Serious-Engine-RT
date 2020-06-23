@@ -37,6 +37,8 @@ public:
   // conversion from euler angles
   void FromEuler(const Vector<Type, 3> &a);
 
+  inline Type Eps(Type value) const;
+
   // conversion to matrix
   void ToMatrix(Matrix<Type, 3, 3> &m) const;
   // conversion from matrix
@@ -185,6 +187,17 @@ inline Type Quaternion<Type>::Norm(void) const {
   return (Type)sqrt(q_w*q_w + q_x*q_x + q_y*q_y + q_z*q_z);
 }
 
+template<class Type>
+inline Type Quaternion<Type>::Eps(Type value) const
+{
+  if ((value <= 1e-4f) && (value >= -1e-4f))
+  {
+    return (Type)0.0f;
+  }
+
+  return value;
+}
+
 // transcendental functions
 template<class Type>
 inline Quaternion<Type> Exp(const Quaternion<Type> &q)
@@ -288,9 +301,9 @@ void Quaternion<Type>::ToMatrix(Matrix<Type, 3, 3> &m) const
   Type yy = 2*q_y*q_y; Type yz = 2*q_y*q_z; Type zz = 2*q_z*q_z;
   Type wx = 2*q_w*q_x; Type wy = 2*q_w*q_y; Type wz = 2*q_w*q_z;
 
-  m(1,1) = 1.0-(yy+zz); m(1,2) = xy-wz;        m(1,3) = xz+wy;      	
-  m(2,1) = xy+wz;		    m(2,2) = 1.0-(xx+zz);  m(2,3) = yz-wx;		    
-  m(3,1) = xz-wy;		    m(3,2) = yz+wx;        m(3,3) = 1.0-(xx+yy);
+  m(1,1) = 1.0 - Eps(yy+zz); m(1,2) = Eps(xy-wz);       m(1,3) = Eps(xz+wy);
+  m(2,1) = Eps(xy+wz);		   m(2,2) = 1.0 - Eps(xx+zz); m(2,3) = Eps(yz-wx);
+  m(3,1) = Eps(xz-wy);		   m(3,2) = Eps(yz+wx);       m(3,3) = 1.0 - Eps(xx+yy);
 }
 
 // conversion from matrix

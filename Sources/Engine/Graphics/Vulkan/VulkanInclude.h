@@ -38,8 +38,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define SVK_VERT_START_COUNT                    4096
 #define SVK_VERT_ALLOC_STEP                     4096
 
-#define SVK_DYNAMIC_VERTEX_BUFFER_START_SIZE	  (8192 * 1024)
-#define SVK_DYNAMIC_INDEX_BUFFER_START_SIZE	    (2048 * 1024)
+#define SVK_DYNAMIC_VERTEX_BUFFER_START_SIZE	  (8 * 1024 * 1024)
+#define SVK_DYNAMIC_INDEX_BUFFER_START_SIZE	    (2 * 1024 * 1024)
 #define SVK_DYNAMIC_UNIFORM_BUFFER_START_SIZE   (256 * 1024)
 #define SVK_DYNAMIC_UNIFORM_MAX_ALLOC_SIZE      1024
 
@@ -47,6 +47,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define SVK_RENDERPASS_DEPTH_ATTACHMENT_INDEX   1
 
 #define SVK_SAMPLER_LOD_BIAS                    (0.0f)
+
+#define SVK_OCCLUSION_QUERIES_MAX               256
 
 struct SvkTextureObject
 {
@@ -115,6 +117,7 @@ struct SvkDynamicBufferGlobal
 
 struct SvkPipelineState
 {
+  VkDevice                sps_Device;
   SvkPipelineStateFlags   sps_Flags;
   VkPipeline              sps_Pipeline;
 };
@@ -123,14 +126,6 @@ struct SvkSamplerObject
 {
   VkDevice    sso_Device;
   VkSampler   sso_Sampler;
-};
-
-struct SvkTextureDescSet
-{
-  VkImageView       sds_ImageView;
-  VkImageLayout     sds_Layout;
-  SvkSamplerFlags   sds_SamplerFlags;
-  VkDescriptorSet   sds_DescSet;
 };
 
 struct SvkVertexLayout

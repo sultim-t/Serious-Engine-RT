@@ -35,6 +35,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Templates/StaticArray.cpp>
 #include <Engine/Templates/StaticStackArray.cpp>
 
+#ifdef SE1_VULKAN
+#include <Engine/Graphics/Vulkan/SvkMain.h>
+#endif
+
 extern INDEX gfx_bDecoratedText;
 extern INDEX ogl_iFinish;
 extern INDEX d3d_iFinish;
@@ -864,7 +868,10 @@ void CDrawPort::Fill( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, COLOR col
     ColorToRGB(col, ubR, ubG, ubB);
     float rgba[] = { ubR / 255.0f, ubG / 255.0f, ubB / 255.0f, 1.0f };
 
-    _pGfx->ClearColor(pixI, pixJ, pixWidth, pixHeight, rgba);
+    pixI += dp_MinI;
+    pixJ += dp_MinJ;
+
+    _pGfx->gl_SvkMain->ClearColor(pixI, pixJ, pixWidth, pixHeight, rgba);
   }
 #endif // SE1_VULKAN
 }
@@ -993,7 +1000,7 @@ void CDrawPort::Fill( COLOR col) const
     ColorToRGB(col, ubR, ubG, ubB);
     float rgba[] = { ubR / 255.0f, ubG / 255.0f, ubB / 255.0f, 1.0f };
 
-    _pGfx->ClearColor(rgba);
+    _pGfx->gl_SvkMain->ClearColor(rgba);
   }
 #endif // SE1_VULKAN
 }
@@ -1044,7 +1051,7 @@ void CDrawPort::FillZBuffer( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, FL
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-    _pGfx->ClearDepth(pixI, pixJ, pixWidth, pixHeight, zval);
+    _pGfx->gl_SvkMain->ClearDepth(pixI, pixJ, pixWidth, pixHeight, zval);
   }
 #endif // SE1_VULKAN
 }
@@ -1085,7 +1092,7 @@ void CDrawPort::FillZBuffer( FLOAT zval) const
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-    _pGfx->ClearDepth(zval);
+    _pGfx->gl_SvkMain->ClearDepth(zval);
   }
 #endif // SE1_VULKAN
 }

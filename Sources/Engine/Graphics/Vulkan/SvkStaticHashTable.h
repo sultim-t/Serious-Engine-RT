@@ -104,6 +104,12 @@ template<class T>
 inline void SvkStaticHashTable<T>::Add(INDEX key, const T &value)
 {
   ASSERT(ht_Buckets != nullptr && ht_BucketCount != 0);
+
+#ifndef NDEBUG
+  auto *sps = TryGet(key);
+  ASSERTMSG(sps == nullptr, "Adding an element with a key that already exist in a hash table.");
+#endif // !NDEBUG
+
   
   INDEX hash = hashFunction == nullptr ? key : hashFunction(key);
   INDEX bucketIndex = hash % ht_BucketCount;

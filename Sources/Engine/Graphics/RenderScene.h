@@ -75,7 +75,7 @@ struct ScenePolygon {
 
 // renders whole scene (all visible polygons) to screen drawport
 void RenderScene( CDrawPort *pDP, ScenePolygon *pspoFirst, CAnyProjection3D &prProjection,
-                  COLOR colSelection, BOOL bTranslucent, BOOL bBackground = FALSE);
+                  COLOR colSelection, BOOL bTranslucent);
 // renders only scene z-buffer
 void RenderSceneZOnly( CDrawPort *pDP, ScenePolygon *pspoFirst, CAnyProjection3D &prProjection);
 // renders flat background of the scene

@@ -33,6 +33,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Base/Statistics_internal.h>
 
+#ifdef SE1_VULKAN
+#include <Engine/Graphics/Vulkan/VulkanInclude.h>
+#endif
+
 
 extern INDEX tex_iNormalQuality;
 extern INDEX tex_iAnimationQuality;

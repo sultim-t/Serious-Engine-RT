@@ -14,11 +14,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
 #include "stdh.h"
-#include <Engine/Graphics/GfxLibrary.h>
+#include <Engine/Graphics/Vulkan/SvkMain.h>
 
 #ifdef SE1_VULKAN
 
-void CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
+void SvkMain::CreateSwapchain(uint32_t width, uint32_t height)
 {
   // check consistency
   ASSERT(gl_VkSwapchainImages.Count() == gl_VkSwapchainImageViews.Count());
@@ -85,9 +85,15 @@ void CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
 
   gl_VkSwapchainImages.New(swapchainImageCount);
   gl_VkSwapchainImageViews.New(swapchainImageCount);
+
   gl_VkSwapchainDepthImages.New(swapchainImageCount);
   gl_VkSwapchainDepthMemory.New(swapchainImageCount);
   gl_VkSwapchainDepthImageViews.New(swapchainImageCount);
+
+  gl_VkSwapchainColorImages.New(swapchainImageCount);
+  gl_VkSwapchainColorMemory.New(swapchainImageCount);
+  gl_VkSwapchainColorImageViews.New(swapchainImageCount);
+
   gl_VkFramebuffers.New(swapchainImageCount);
 
   if (vkGetSwapchainImagesKHR(gl_VkDevice, gl_VkSwapchain, &swapchainImageCount, &gl_VkSwapchainImages[0]) != VK_SUCCESS)
@@ -124,7 +130,16 @@ void CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
   // create depth buffers
   for (uint32_t i = 0; i < swapchainImageCount; i++)
   {
-    if (!CreateSwapchainDepth(width, height, i))
+    if (!CreateSwapchainColor(width, height, i, gl_VkMaxSampleCount))
+    {
+      ASSERTALWAYS("Vulkan error: Can't create color buffers for swapchain.\n");
+    }
+  }
+
+  // create depth buffers
+  for (uint32_t i = 0; i < swapchainImageCount; i++)
+  {
+    if (!CreateSwapchainDepth(width, height, i, gl_VkMaxSampleCount))
     {
       ASSERTALWAYS("Vulkan error: Can't create depth buffers for swapchain.\n");
     }
@@ -136,16 +151,24 @@ void CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
   // create framebuffers
   for (uint32_t i = 0; i < swapchainImageCount; i++)
   {
-    VkImageView attachments[] = {
+    bool useResolve = gl_VkMaxSampleCount != VK_SAMPLE_COUNT_1_BIT;
+
+    VkImageView attchsResolved[3] = {
+      gl_VkSwapchainColorImageViews[i],
+      gl_VkSwapchainDepthImageViews[i],
       gl_VkSwapchainImageViews[i],
-      gl_VkSwapchainDepthImageViews[i]
+    };
+
+    VkImageView attchsDefault[2] = {
+      gl_VkSwapchainImageViews[i],
+      gl_VkSwapchainDepthImageViews[i],
     };
 
     VkFramebufferCreateInfo framebufferInfo = {};
     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     framebufferInfo.renderPass = gl_VkRenderPass;
-    framebufferInfo.attachmentCount = 2;
-    framebufferInfo.pAttachments = attachments;
+    framebufferInfo.attachmentCount = useResolve ? 3 : 2;
+    framebufferInfo.pAttachments = useResolve ? attchsResolved : attchsDefault;
     framebufferInfo.width = gl_VkSwapChainExtent.width;
     framebufferInfo.height = gl_VkSwapChainExtent.height;
     framebufferInfo.layers = 1;
@@ -157,7 +180,7 @@ void CGfxLibrary::CreateSwapchain(uint32_t width, uint32_t height)
   }
 }
 
-void CGfxLibrary::RecreateSwapchain(uint32_t newWidth, uint32_t newHeight)
+void SvkMain::RecreateSwapchain(uint32_t newWidth, uint32_t newHeight)
 {
   if (gl_VkSwapChainExtent.width == newWidth && gl_VkSwapChainExtent.height == newHeight)
   {
@@ -170,7 +193,7 @@ void CGfxLibrary::RecreateSwapchain(uint32_t newWidth, uint32_t newHeight)
   gl_VkSwapChainExtent.height = newHeight;
 }
 
-void CGfxLibrary::DestroySwapchain()
+void SvkMain::DestroySwapchain()
 {
   if (gl_VkDevice == VK_NULL_HANDLE || gl_VkSwapchain == VK_NULL_HANDLE)
   {
@@ -183,14 +206,17 @@ void CGfxLibrary::DestroySwapchain()
 
   for (uint32_t i = 0; i < gl_VkSwapchainDepthImages.Count(); i++) {
     vkDestroyImage(gl_VkDevice, gl_VkSwapchainDepthImages[i], nullptr);
+    vkDestroyImage(gl_VkDevice, gl_VkSwapchainColorImages[i], nullptr);
   }
 
   for (uint32_t i = 0; i < gl_VkSwapchainDepthImageViews.Count(); i++) {
     vkDestroyImageView(gl_VkDevice, gl_VkSwapchainDepthImageViews[i], nullptr);
+    vkDestroyImageView(gl_VkDevice, gl_VkSwapchainColorImageViews[i], nullptr);
   }
 
   for (uint32_t i = 0; i < gl_VkSwapchainDepthMemory.Count(); i++) {
     vkFreeMemory(gl_VkDevice, gl_VkSwapchainDepthMemory[i], nullptr);
+    vkFreeMemory(gl_VkDevice, gl_VkSwapchainColorMemory[i], nullptr);
   }
 
   for (uint32_t i = 0; i < gl_VkFramebuffers.Count(); i++) {
@@ -209,10 +235,13 @@ void CGfxLibrary::DestroySwapchain()
   gl_VkSwapchainDepthImages.Clear();
   gl_VkSwapchainDepthMemory.Clear();
   gl_VkSwapchainDepthImageViews.Clear();
+  gl_VkSwapchainColorImages.Clear();
+  gl_VkSwapchainColorMemory.Clear();
+  gl_VkSwapchainColorImageViews.Clear();
   gl_VkFramebuffers.Clear();
 }
 
-VkExtent2D CGfxLibrary::GetSwapchainExtent(uint32_t width, uint32_t height)
+VkExtent2D SvkMain::GetSwapchainExtent(uint32_t width, uint32_t height)
 {
   vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gl_VkPhysDevice, gl_VkSurface, &gl_VkPhSurfCapabilities);
 
@@ -237,7 +266,82 @@ VkExtent2D CGfxLibrary::GetSwapchainExtent(uint32_t width, uint32_t height)
   }
 }
 
-BOOL CGfxLibrary::CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t imageIndex)
+BOOL SvkMain::CreateSwapchainColor(uint32_t width, uint32_t height, uint32_t imageIndex, VkSampleCountFlagBits sampleCount)
+{
+  VkImageCreateInfo colorImageInfo = {};
+
+  colorImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+  colorImageInfo.pNext = nullptr;
+  colorImageInfo.imageType = VK_IMAGE_TYPE_2D;
+  colorImageInfo.format = gl_VkSurfColorFormat;
+  colorImageInfo.extent.width = width;
+  colorImageInfo.extent.height = height;
+  colorImageInfo.extent.depth = 1;
+  colorImageInfo.mipLevels = 1;
+  colorImageInfo.arrayLayers = 1;
+  colorImageInfo.samples = sampleCount;
+  colorImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  colorImageInfo.queueFamilyIndexCount = 0;
+  colorImageInfo.pQueueFamilyIndices = nullptr;
+  colorImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  colorImageInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
+  colorImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+  colorImageInfo.flags = 0;
+
+  if (vkCreateImage(gl_VkDevice, &colorImageInfo, nullptr, &gl_VkSwapchainColorImages[imageIndex]) != VK_SUCCESS)
+  {
+    CPrintF("Vulkan error: Can't create image for color buffer.\n");
+    return FALSE;
+  }
+
+  VkMemoryRequirements memReqs;
+  vkGetImageMemoryRequirements(gl_VkDevice, gl_VkSwapchainColorImages[imageIndex], &memReqs);
+
+  VkMemoryAllocateInfo allocInfo = {};
+  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  allocInfo.pNext = nullptr;
+  allocInfo.allocationSize = memReqs.size;
+  allocInfo.memoryTypeIndex = GetMemoryTypeIndex(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+  if (vkAllocateMemory(gl_VkDevice, &allocInfo, NULL, &gl_VkSwapchainColorMemory[imageIndex]) != VK_SUCCESS)
+  {
+    CPrintF("Vulkan error: Can't allocate memory for colror buffer.\n");
+    return FALSE;
+  }
+
+  if (vkBindImageMemory(gl_VkDevice, gl_VkSwapchainColorImages[imageIndex], gl_VkSwapchainColorMemory[imageIndex], 0) != VK_SUCCESS)
+  {
+    CPrintF("Vulkan error: Can't bind allocated memory to image in color buffer.\n");
+    return FALSE;
+  }
+
+  VkImageViewCreateInfo colorViewInfo = {};
+  colorViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+  colorViewInfo.pNext = nullptr;
+  colorViewInfo.format = gl_VkSurfColorFormat;
+  colorViewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
+  colorViewInfo.components.g = VK_COMPONENT_SWIZZLE_G;
+  colorViewInfo.components.b = VK_COMPONENT_SWIZZLE_B;
+  colorViewInfo.components.a = VK_COMPONENT_SWIZZLE_A;
+  colorViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  colorViewInfo.subresourceRange.baseMipLevel = 0;
+  colorViewInfo.subresourceRange.levelCount = 1;
+  colorViewInfo.subresourceRange.baseArrayLayer = 0;
+  colorViewInfo.subresourceRange.layerCount = 1;
+  colorViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+  colorViewInfo.flags = 0;
+  colorViewInfo.image = gl_VkSwapchainColorImages[imageIndex];
+
+  if (vkCreateImageView(gl_VkDevice, &colorViewInfo, nullptr, &gl_VkSwapchainColorImageViews[imageIndex]) != VK_SUCCESS)
+  {
+    CPrintF("Vulkan error: Can't bind allocated memory to image in color buffer.\n");
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+BOOL SvkMain::CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t imageIndex, VkSampleCountFlagBits sampleCount)
 {
   VkImageCreateInfo depthImageInfo = {};
 
@@ -250,7 +354,7 @@ BOOL CGfxLibrary::CreateSwapchainDepth(uint32_t width, uint32_t height, uint32_t
   depthImageInfo.extent.depth = 1;
   depthImageInfo.mipLevels = 1;
   depthImageInfo.arrayLayers = 1;
-  depthImageInfo.samples = VkSampleCountFlagBits::VK_SAMPLE_COUNT_1_BIT;
+  depthImageInfo.samples = sampleCount;
   depthImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   depthImageInfo.queueFamilyIndexCount = 0;
   depthImageInfo.pQueueFamilyIndices = nullptr;

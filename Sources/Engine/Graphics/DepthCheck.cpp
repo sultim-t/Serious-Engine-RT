@@ -26,6 +26,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Templates/StaticArray.cpp>
 #include <Engine/Templates/StaticStackArray.cpp>
 
+#ifdef SE1_VULKAN
+// used for occlusion query
+#include <Engine/Graphics/Vulkan/SvkMain.h>
+#endif // SE1_VULKAN
+
+
 
 extern INDEX gap_iOptimizeDepthReads;
 #ifdef SE1_D3D
@@ -202,7 +208,62 @@ static void UpdateDepthPointsVisibility( const CDrawPort *pdp, const INDEX iMirr
 #ifdef SE1_VULKAN
   if (eAPI == GAT_VK)
   {
-    // TODO: Vulkan: reading from depth buffer for flares
+    _sfStats.StartTimer(CStatForm::STI_GFXAPI);
+
+    ASSERT(ctCount < SVK_OCCLUSION_QUERIES_MAX);
+
+    if (ctCount == 0)
+    {
+      return;
+    }
+
+    struct
+    {
+      uint32_t queryId;
+      INDEX pdiId;
+    } queries[SVK_OCCLUSION_QUERIES_MAX];
+
+    uint32_t queryCount = 0;
+
+    const uint32_t deltafrom = 0;
+    const uint32_t deltato = 1;
+
+    for (INDEX idi = 0; idi < ctCount; idi++)
+    {
+      DepthInfo &di = pdi[idi];
+
+      // skip if not in required mirror level or was already checked in this iteration
+      if (iMirrorLevel != di.di_iMirrorLevel || _iCheckIteration != di.di_iSwapLastRequest) 
+      {
+        continue;
+      }
+      float fromx = ((float)di.di_pixI - pdp->dp_MinI - deltafrom) / pdp->GetWidth();
+      float fromy = ((float)di.di_pixJ - pdp->dp_MinJ - deltafrom) / pdp->GetHeight();
+      float tox = ((float)di.di_pixI - pdp->dp_MinI + deltato) / pdp->GetWidth();
+      float toy = ((float)di.di_pixJ - pdp->dp_MinJ + deltato) / pdp->GetHeight();
+
+      fromx = fromx * 2 - 1;
+      fromy = fromy * 2 - 1;
+      tox = tox * 2 - 1;
+      toy = toy * 2 - 1;
+
+      queries[queryCount].pdiId = idi;
+      queries[queryCount].queryId = _pGfx->gl_SvkMain->CreateOcclusionQuery(fromx, fromy, tox, toy, di.di_fOoK);
+
+      queryCount++;
+    }
+
+    uint32_t results[SVK_OCCLUSION_QUERIES_MAX];
+    _pGfx->gl_SvkMain->GetOcclusionResults(queries[0].queryId, queryCount, results);
+
+    // get query results
+    for (uint32_t i = 0; i < queryCount; i++)
+    {
+      pdi[queries[i].pdiId].di_bVisible = results[i] > 0;
+    }
+
+    _sfStats.StopTimer(CStatForm::STI_GFXAPI);
+    return;
   }
 #endif // SE1_VULKAN
 }
