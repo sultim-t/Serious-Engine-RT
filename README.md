@@ -42,9 +42,7 @@ And its working directory:
 ## Future work
 
 * window recreation (errors occur on textures reloading)
-* features like lens flares, screenshots etc
-* more optimal memory usage: descriptor sets, memory pool chain, etc
-* texture reuploading (for dynamic textures like fire, lava, etc) (currently disabled to prevent flickering)
+* features like screenshots etc
 * ...
 
 ## License
