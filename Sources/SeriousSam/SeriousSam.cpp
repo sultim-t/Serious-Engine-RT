@@ -115,15 +115,29 @@ extern CTextureObject *_ptoLogoCT  = NULL;
 extern CTextureObject *_ptoLogoODI = NULL;
 extern CTextureObject *_ptoLogoEAX = NULL;
 
-extern CTString sam_strVersion = "1.10";
-extern CTString sam_strModName = TRANS("-   O P E N   S O U R C E   -");
+#define SS_THE_FIRST_ENCOUNTER
 
-extern CTString sam_strFirstLevel = "Levels\\LevelsMP\\1_0_InTheLastEpisode.wld";
-extern CTString sam_strIntroLevel = "Levels\\LevelsMP\\Intro.wld";
-extern CTString sam_strGameName = "serioussamse";
+#ifdef SS_THE_FIRST_ENCOUNTER
+  extern CTString sam_strVersion = "1.10";
+  extern CTString sam_strModName = TRANS( "-   O P E N   S O U R C E   -" );
 
-extern CTString sam_strTechTestLevel = "Levels\\LevelsMP\\TechTest.wld";
-extern CTString sam_strTrainingLevel = "Levels\\KarnakDemo.wld";
+  extern CTString sam_strFirstLevel = "Levels\\01_Hatshepsut.wld";
+  extern CTString sam_strIntroLevel = "Levels\\Intro.wld";
+  extern CTString sam_strGameName = "serioussamfe";
+
+  extern CTString sam_strTechTestLevel = "Levels\\TechTest.wld";
+  extern CTString sam_strTrainingLevel = "Levels\\KarnakDemo.wld";
+#else
+  extern CTString sam_strVersion = "1.10";
+  extern CTString sam_strModName = TRANS( "-   O P E N   S O U R C E   -" );
+
+  extern CTString sam_strFirstLevel = "Levels\\LevelsMP\\1_0_InTheLastEpisode.wld";
+  extern CTString sam_strIntroLevel = "Levels\\LevelsMP\\Intro.wld";
+  extern CTString sam_strGameName = "serioussamse";
+
+  extern CTString sam_strTechTestLevel = "Levels\\LevelsMP\\Technology\\TechTest.wld";
+  extern CTString sam_strTrainingLevel = "Levels\\KarnakDemo.wld";
+#endif // SE_TFE
 
 ENGINE_API extern INDEX snd_iFormat;
 

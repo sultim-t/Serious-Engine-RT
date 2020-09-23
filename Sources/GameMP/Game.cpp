@@ -2770,8 +2770,13 @@ void CGame::LCDInit(void)
 {
   try {
     _toBcgClouds.SetData_t(CTFILENAME("Textures\\General\\Background6.tex"));
+#ifdef SS_THE_FIRST_ENCOUNTER
+    _toPointer.SetData_t(CTFILENAME("Textures\\General\\Pointer.tex"));
+    _toBcgGrid.SetData_t(CTFILENAME("Textures\\General\\Grid16x16-dot.tex"));
+#else
     _toPointer.SetData_t(CTFILENAME("TexturesMP\\General\\Pointer.tex"));
     _toBcgGrid.SetData_t(CTFILENAME("TexturesMP\\General\\grid.tex"));
+#endif
     _toBackdrop.SetData_t(CTFILENAME("TexturesMP\\General\\MenuBack.tex"));
     //_toSamU.SetData_t(CTFILENAME("TexturesMP\\General\\SamU.tex"));
     //_toSamD.SetData_t(CTFILENAME("TexturesMP\\General\\SamD.tex"));

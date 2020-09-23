@@ -68,6 +68,10 @@ Sources/EntitiesMP/*.h
 Sources/EntitiesMP/*.cpp
 !Sources/EntitiesMP/Common/*
 !Sources/EntitiesMP/StdH/*
+Sources/Entities/*.h
+Sources/Entities/*.cpp
+!Sources/Entities/Common/*
+!Sources/Entities/StdH/*
 Sources/Engine/Classes/*.h
 Sources/Engine/Classes/*.cpp
 

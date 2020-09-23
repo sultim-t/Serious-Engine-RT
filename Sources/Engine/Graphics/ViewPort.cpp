@@ -136,7 +136,10 @@ LRESULT CALLBACK CViewPortCLASS_WindowProc(
                            hWndParent, Msg, wParam, lParam);
   }
 
-  return DefWindowProc(hWnd, Msg, wParam, lParam);
+  LRESULT r = DefWindowProc( hWnd, Msg, wParam, lParam );
+
+  // UGLY fix! For some reason DefWindowProc returns 0
+  return TRUE;
 }
 
 
