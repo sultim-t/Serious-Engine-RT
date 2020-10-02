@@ -89,7 +89,9 @@ Sources/SeriousSkaStudio/Parser.cpp
 Sources/SeriousSkaStudio/Parser.h
 Sources/SeriousSkaStudio/Scanner.cpp
 
-
-
+# Custom data
+Controls/*
+Levels/*
+*.gro
 
 

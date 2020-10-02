@@ -22,7 +22,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/CurrentVersion.h>
 #include <GameMP/Game.h>
 #define DECL_DLL
-#include <EntitiesMP/Global.h>
+#ifdef SS_THE_FIRST_ENCOUNTER
+  #include <Entities/Global.h>
+#else
+  #include <EntitiesMP/Global.h>
+#endif
 #include "resource.h"
 #include "SplashScreen.h"
 #include "MainWindow.h"
@@ -114,8 +118,6 @@ static CTextureObject  _toLogoEAX;
 extern CTextureObject *_ptoLogoCT  = NULL;
 extern CTextureObject *_ptoLogoODI = NULL;
 extern CTextureObject *_ptoLogoEAX = NULL;
-
-#define SS_THE_FIRST_ENCOUNTER
 
 #ifdef SS_THE_FIRST_ENCOUNTER
   extern CTString sam_strVersion = "1.10";
