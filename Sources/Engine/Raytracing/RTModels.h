@@ -6,12 +6,14 @@
 #include <Engine/Brushes/Brush.h>
 #include <Engine/Models/ModelData.h>
 
+#include <Engine/Raytracing/SSRT.h>
+
 // this will INTERRUPT original renderer
 CListHead RT_lhActiveBrushes;     // list of active brushes
-CListHead RT_lhActiveSectors;     // list of active sectors
+//CListHead RT_lhActiveSectors;     // list of active sectors
 
 
-void RT_AddLight(CLightSource *plsLight)
+void RT_AddLight(CLightSource *plsLight, SSRT::SSRTMain *ssrt)
 {
   ASSERT(plsLight != NULL);
 
@@ -25,14 +27,13 @@ void RT_AddLight(CLightSource *plsLight)
   // ignore not important lights
   if (!(plsLight->ls_ulFlags & LSF_CASTSHADOWS))
   {
-    return;
+    //return;
   }
 
   const CPlacement3D &placement = plsLight->ls_penEntity->GetPlacement();
   const FLOAT3D &position = placement.pl_PositionVector;
 
-  UBYTE r, g, b;
-  plsLight->GetLightColor(r, g, b);
+  COLOR color = plsLight->GetLightColor();
 
   // directional light
   if (plsLight->ls_ulFlags & LSF_DIRECTIONAL)
@@ -40,8 +41,13 @@ void RT_AddLight(CLightSource *plsLight)
     FLOAT3D direction;
     AnglesToDirectionVector(placement.pl_OrientationAngle, direction);
 
+    SSRT::CDirectionalLight light = {};
+    light.direction = direction;
+    light.color = color;
+    // for a reference: sun is 0.5 degrees
+    light.angularSize = 5.0f;
 
-
+    ssrt->AddLight(light);
   }
   else
   {
@@ -49,11 +55,20 @@ void RT_AddLight(CLightSource *plsLight)
     float radius = plsLight->ls_rHotSpot;
     float falloff = plsLight->ls_rFallOff;
 
+    SSRT::CSphereLight light = {};
+    light.pOriginalEntity = plsLight->ls_penEntity;
+    light.isEnabled = true;
+    light.absPosition = position;
+    light.color = color;
+    light.intensity = 1.0f;
+    light.sphereRadius = radius;
 
+    ssrt->AddLight(light);
   }
+
 }
 
-void RT_AddActiveSector(CBrushSector &bscSector)
+void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
 {
 
   // TODO: Use absolute or relative verts
@@ -77,38 +92,36 @@ void RT_AddActiveSector(CBrushSector &bscSector)
 
         if (pls != NULL)
         {
-          RT_AddLight(pls);
+          RT_AddLight(pls, ssrt);
         }
       }
     ENDFOR
   }
 
+  //// dont need it, original function just transformed vertices
+  //return;
 
-
-  // dont need it, original function just transformed vertices
-  return;
-
-  // if already active
-  if (bscSector.bsc_lnInActiveSectors.IsLinked())
-  {
-    return;
-  }
-  RT_lhActiveSectors.AddTail(bscSector.bsc_lnInActiveSectors);
-
-  // DONT, adding all entities is already being done
-  //// get the entity the sector is in
-  //CEntity *penSectorEntity = bscSector.bsc_pbmBrushMip->bm_pbrBrush->br_penEntity;
-  //// if it has the entity (it is not the background brush)
-  //if (penSectorEntity != NULL)
+  //// if already active
+  //if (bscSector.bsc_lnInActiveSectors.IsLinked())
   //{
-  //  // add all other entities near the sector
-  //  AddEntitiesInSector(&bscSector);
+  //  return;
   //}
+  //RT_lhActiveSectors.AddTail(bscSector.bsc_lnInActiveSectors);
+
+  //// DONT, adding all entities is already being done
+  ////// get the entity the sector is in
+  ////CEntity *penSectorEntity = bscSector.bsc_pbmBrushMip->bm_pbrBrush->br_penEntity;
+  ////// if it has the entity (it is not the background brush)
+  ////if (penSectorEntity != NULL)
+  ////{
+  ////  // add all other entities near the sector
+  ////  AddEntitiesInSector(&bscSector);
+  ////}
 }
 
 
 // does nothing, actually
-void RT_PrepareBrush(CEntity *penBrush)
+void RT_PrepareBrush(CEntity *penBrush, SSRT::SSRTMain *ssrt)
 {
   ASSERT(penBrush != NULL);
   // get its brush
@@ -132,7 +145,7 @@ void RT_PrepareBrush(CEntity *penBrush)
 }
 
 
-void RT_AddNonZoningBrush(CEntity *penBrush, CBrushSector *pbscThatAdds)
+void RT_AddNonZoningBrush(CEntity *penBrush, CBrushSector *pbscThatAdds, SSRT::SSRTMain *ssrt)
 {
   ASSERT(penBrush != NULL);
   // get its brush
@@ -174,7 +187,7 @@ void RT_AddNonZoningBrush(CEntity *penBrush, CBrushSector *pbscThatAdds)
 
 addBrush:
   // prepare the brush entity for rendering if not yet prepared
-  RT_PrepareBrush(brBrush.br_penEntity);
+  RT_PrepareBrush(brBrush.br_penEntity, ssrt);
 
   // get highest mip
   CBrushMip *pbm = brBrush.GetBrushMipByDistance(0);
@@ -189,7 +202,7 @@ addBrush:
       if (!(itbsc->bsc_ulFlags & BSCF_HIDDEN))
       {
         // add that sector to active sectors
-        RT_AddActiveSector(itbsc.Current());
+        RT_AddActiveSector(itbsc.Current(), ssrt);
       }
     }
   }
@@ -198,25 +211,13 @@ addBrush:
 
 // ----------------------------
 
-// from RenderModel.cpp
-static void CalculateBoundingBox(CModelObject *pmo, CRenderModel &rm)
+struct RT_VertexData
 {
-  if (rm.rm_ulFlags & RMF_BBOXSET) return;
-  // get model's data and lerp info
-  rm.rm_pmdModelData = (CModelData *) pmo->GetData();
-  pmo->GetFrame(rm.rm_iFrame0, rm.rm_iFrame1, rm.rm_fRatio);
-  // calculate projection model bounding box in object space
-  const FLOAT3D &vMin0 = rm.rm_pmdModelData->md_FrameInfos[ rm.rm_iFrame0 ].mfi_Box.Min();
-  const FLOAT3D &vMax0 = rm.rm_pmdModelData->md_FrameInfos[ rm.rm_iFrame0 ].mfi_Box.Max();
-  const FLOAT3D &vMin1 = rm.rm_pmdModelData->md_FrameInfos[ rm.rm_iFrame1 ].mfi_Box.Min();
-  const FLOAT3D &vMax1 = rm.rm_pmdModelData->md_FrameInfos[ rm.rm_iFrame1 ].mfi_Box.Max();
-  rm.rm_vObjectMinBB = Lerp(vMin0, vMin1, rm.rm_fRatio);
-  rm.rm_vObjectMaxBB = Lerp(vMax0, vMax1, rm.rm_fRatio);
-  rm.rm_vObjectMinBB(1) *= pmo->mo_Stretch(1);  rm.rm_vObjectMaxBB(1) *= pmo->mo_Stretch(1);
-  rm.rm_vObjectMinBB(2) *= pmo->mo_Stretch(2);  rm.rm_vObjectMaxBB(2) *= pmo->mo_Stretch(2);
-  rm.rm_vObjectMinBB(3) *= pmo->mo_Stretch(3);  rm.rm_vObjectMaxBB(3) *= pmo->mo_Stretch(3);
-  rm.rm_ulFlags |= RMF_BBOXSET;
-}
+  GFXVertex   *vertices;
+  INDEX       vertexCount;
+  GFXNormal   *normals;
+  GFXTexCoord *texCoords;
+};
 
 // Create render model structure for rendering an attached model
 //BOOL CModelObject::CreateAttachment( CRenderModel &rmMain, CAttachmentModelObject &amo)
@@ -293,7 +294,7 @@ BOOL RT_CreateAttachment(CModelObject &moParent, CRenderModel &rmMain, CAttachme
 
 
 //void CModelObject::SetupModelRendering( CRenderModel &rm)
-void RT_SetupModelRendering(CModelObject &mo, CRenderModel &rm)
+void RT_SetupModelRendering(CModelObject &mo, CRenderModel &rm, SSRT::SSRTMain *ssrt)
 {
   // get model's data and lerp info
   rm.rm_pmdModelData = (CModelData *) mo.GetData();
@@ -402,12 +403,117 @@ void RT_SetupModelRendering(CModelObject &mo, CRenderModel &rm)
     } 
     
     // prepare if visible
-    RT_SetupModelRendering(pamo->amo_moModelObject, *pamo->amo_prm);
+    RT_SetupModelRendering(pamo->amo_moModelObject, *pamo->amo_prm, ssrt);
   }
 }
 
 
-void RT_RenderModel_View(CModelObject &mo, CRenderModel &rm)
+// RT: add vertices to corresponding CModelObject
+//void RenderOneSide( CRenderModel &rm, BOOL bBackSide, ULONG ulLayerFlags)
+void RT_RenderOneSide(CEntity *pen, CRenderModel &rm, CModelObject &mo, const RT_VertexData &vd, BOOL bBackSide, SSRT::SSRTMain *ssrt)
+{
+  // set face culling
+  if (bBackSide)
+  {
+    //if (!(_ulMipLayerFlags & SRF_DOUBLESIDED))
+    {
+      return;
+    }
+    //else g fxCullFace(GFX_FRONT);
+  }
+  //else g fxCullFace(GFX_BACK);
+
+  // start with invalid rendering parameters
+  SurfaceTranslucencyType sttLast = STT_INVALID;
+
+  // for each surface in current mip model
+  INDEX iStartElem = 0;
+  INDEX ctElements = 0;
+  ModelMipInfo &mmi = *rm.rm_pmmiMip;
+  {
+    FOREACHINSTATICARRAY(mmi.mmpi_MappingSurfaces, MappingSurface, itms)
+    {
+      const MappingSurface &ms = *itms;
+      const ULONG ulFlags = ms.ms_ulRenderingFlags;
+
+      // end rendering if surface is invisible or empty - these are the last surfaces in surface list
+      if ((ulFlags & SRF_INVISIBLE) || ms.ms_ctSrfVx == 0)
+      {
+        break;
+      }
+
+      // RT: let's assume that every surface is opaque for now
+#if 0
+      // skip surface if ... 
+      if (!(ulFlags & SRF_DIFFUSE)  // not in this layer,
+          || (bBackSide && !(ulFlags & SRF_DOUBLESIDED)) // rendering back side and surface is not double sided,
+          /*|| !(_ulColorMask & ms.ms_ulOnColor)  // not on or off.
+          || (_ulColorMask & ms.ms_ulOffColor)*/)
+      {
+        if (ctElements > 0)
+        {
+          FlushElements(ctElements, &mmi.mmpi_aiElements[ iStartElem ]);
+        }
+
+        iStartElem += ctElements + ms.ms_ctSrfEl;
+        ctElements = 0;
+        continue;
+      }
+
+      // get rendering parameters
+      SurfaceTranslucencyType stt = ms.ms_sttTranslucencyType;
+
+      // if surface uses rendering parameters different than last one
+      if (sttLast != stt)
+      {
+        // set up new API states
+        if (ctElements > 0)
+        {
+          FlushElements(ctElements, &mmi.mmpi_aiElements[ iStartElem ]);
+        }
+
+        SetRenderingParameters(stt, slBump);
+        sttLast = stt;
+        iStartElem += ctElements;
+        ctElements = 0;
+      }
+#endif
+
+      // batch the surface polygons for rendering
+      ctElements += ms.ms_ctSrfEl;
+    }
+  }
+
+  // RT: flush all
+  if (ctElements > 0)
+  {
+    //FlushElements(ctElements, &mmi.mmpi_aiElements[ iStartElem ]);
+
+    INDEX *indices = &mmi.mmpi_aiElements[iStartElem];
+    INDEX indexCount = ctElements;
+
+    // TODO: RT: default, MF_HALF_FACE_FORWARD, MF_FACE_FORWARD
+
+    SSRT::CModelGeometry modelInfo = {};
+    modelInfo.pOriginalEntity = pen;
+    modelInfo.isEnabled = true;
+    modelInfo.absPosition = rm.rm_vObjectPosition;
+    modelInfo.absRotation = rm.rm_mObjectRotation;
+    modelInfo.color = RGBAToColor(255, 255, 255, 255);
+    modelInfo.vertexCount = vd.vertexCount;
+    modelInfo.vertices = vd.vertices;
+    modelInfo.normals = vd.normals;
+    modelInfo.texCoords = vd.texCoords;
+    modelInfo.indexCount = indexCount;
+    modelInfo.indices = indices;
+
+    ssrt->AddModel(modelInfo);
+  }
+}
+
+
+
+void RT_RenderModel_View(CEntity *pen, CModelObject &mo, CRenderModel &rm, SSRT::SSRTMain *ssrt)
 //void CModelObject::RenderModel_View(CRenderModel &rm)
 {
   // TODO: RT: use this if some additional transformation is required for weapons
@@ -416,27 +522,24 @@ void RT_RenderModel_View(CModelObject &mo, CRenderModel &rm)
   // setup drawing direction (in case of mirror)
   if (rm.rm_ulFlags & RMF_INVERTED)
   {
-    //gfxFrontFace(GFX_CW);
+    //g fxFrontFace(GFX_CW);
   }
   else
   {
-    //gfxFrontFace(GFX_CCW);
+    //g fxFrontFace(GFX_CCW);
   }
 
   // declare pointers for general usage
   INDEX iSrfVx0, ctSrfVx;
-  GFXTexCoord *ptexSrfBase;
-  GFXTexCoord *ptexSrfBump;
-  GFXVertex *pvtxSrfBase;
-  GFXColor *pcolSrfBase;
-  FLOAT2D *pvTexCoord;
   ModelMipInfo &mmi = *rm.rm_pmmiMip;
   const ModelMipInfo &mmi0 = rm.rm_pmdModelData->md_MipInfos[ 0 ];
 
   // allocate vertex arrays
-  INDEX ctAllMipVx = mmi.mmpi_ctMipVx;
-  INDEX ctAllSrfVx = mmi.mmpi_ctSrfVx;
-  ASSERT(ctAllMipVx > 0 && ctAllSrfVx > 0);
+  extern INDEX _ctAllMipVx;
+  extern INDEX _ctAllSrfVx;
+  _ctAllMipVx = mmi.mmpi_ctMipVx;
+  _ctAllSrfVx = mmi.mmpi_ctSrfVx;
+  ASSERT(_ctAllMipVx > 0 && _ctAllSrfVx > 0);
 
   extern CStaticStackArray<GFXVertex3>  _avtxMipBase;
   extern CStaticStackArray<GFXTexCoord> _atexMipBase;
@@ -448,20 +551,16 @@ void RT_RenderModel_View(CModelObject &mo, CRenderModel &rm)
   extern CStaticStackArray<GFXTexCoord> _atexSrfBase;
   extern CStaticStackArray<GFXColor>    _acolSrfBase;
 
-  ASSERT(_avtxMipBase.Count() == 0);  _avtxMipBase.Push(ctAllMipVx);
-  ASSERT(_atexMipBase.Count() == 0);  _atexMipBase.Push(ctAllMipVx);
-  ASSERT(_acolMipBase.Count() == 0);  _acolMipBase.Push(ctAllMipVx);
-  ASSERT(_anorMipBase.Count() == 0);  _anorMipBase.Push(ctAllMipVx);
+  ASSERT(_avtxMipBase.Count() == 0);  _avtxMipBase.Push(_ctAllMipVx);
+  ASSERT(_atexMipBase.Count() == 0);  _atexMipBase.Push(_ctAllMipVx);
+  ASSERT(_acolMipBase.Count() == 0);  _acolMipBase.Push(_ctAllMipVx);
+  ASSERT(_anorMipBase.Count() == 0);  _anorMipBase.Push(_ctAllMipVx);
 
-  ASSERT(_avtxSrfBase.Count() == 0);  _avtxSrfBase.Push(ctAllSrfVx);
-  ASSERT(_atexSrfBase.Count() == 0);  _atexSrfBase.Push(ctAllSrfVx);
-  ASSERT(_acolSrfBase.Count() == 0);  _acolSrfBase.Push(ctAllSrfVx);
-  ASSERT(_anorSrfBase.Count() == 0);  _anorSrfBase.Push(ctAllSrfVx);
+  ASSERT(_avtxSrfBase.Count() == 0);  _avtxSrfBase.Push(_ctAllSrfVx);
+  ASSERT(_atexSrfBase.Count() == 0);  _atexSrfBase.Push(_ctAllSrfVx);
+  ASSERT(_acolSrfBase.Count() == 0);  _acolSrfBase.Push(_ctAllSrfVx);
+  ASSERT(_anorSrfBase.Count() == 0);  _anorSrfBase.Push(_ctAllSrfVx);
 
-
-  // determine multitexturing capability for overbrighting purposes
-  //extern INDEX mdl_bAllowOverbright;
-  //const BOOL bOverbright = mdl_bAllowOverbright && _pGfx->gl_ctTextureUnits > 1;
 
   // set forced translucency and color mask
   //_bForceTranslucency = ((rm.rm_colBlend & CT_AMASK) >> CT_ASHIFT) != CT_OPAQUE;
@@ -475,11 +574,14 @@ void RT_RenderModel_View(CModelObject &mo, CRenderModel &rm)
   //  _ulMipLayerFlags |= MMI_TRANSLUCENT;
   //}
 
+
   // unpack one model frame vertices and eventually normals (lerped or not lerped, as required)
   // RT: these global variables are required for UnpackFrame()
-  extern GFXColor *pcolMipBase;
   extern GFXVertex3 *pvtxMipBase;
   extern GFXNormal3 *pnorMipBase;
+  // this will array be ignored as it's used in per-vertex lighting,
+  // so _slAR, _slAG, _slAB, _slLR, _slLG, _slLB are not set
+  extern GFXColor *pcolMipBase;
 
   pvtxMipBase = &_avtxMipBase[ 0 ];
   pcolMipBase = &_acolMipBase[ 0 ];
@@ -494,22 +596,24 @@ void RT_RenderModel_View(CModelObject &mo, CRenderModel &rm)
 
 
   // for each surface in current mip model
-  BOOL bEmpty = TRUE;
   {
     FOREACHINSTATICARRAY(mmi.mmpi_MappingSurfaces, MappingSurface, itms)
     {
       const MappingSurface &ms = *itms;
       iSrfVx0 = ms.ms_iSrfVx0;
       ctSrfVx = ms.ms_ctSrfVx;
-      // skip to next in case of invisible or empty surface
-      if ((ms.ms_ulRenderingFlags & SRF_INVISIBLE) || ctSrfVx == 0) break;
-      bEmpty = FALSE;
-      UWORD *puwSrfToMip = &mmi.mmpi_auwSrfToMip[ iSrfVx0 ];
-      pvtxSrfBase = &_avtxSrfBase[ iSrfVx0 ];
-      INDEX iSrfVx;
 
-      // setup vetrex array
-      for (iSrfVx = 0; iSrfVx < ctSrfVx; iSrfVx++)
+      // skip to next in case of invisible or empty surface
+      if ((ms.ms_ulRenderingFlags & SRF_INVISIBLE) || ctSrfVx == 0)
+      {
+        break;
+      }
+      
+      UWORD *puwSrfToMip = &mmi.mmpi_auwSrfToMip[ iSrfVx0 ];
+
+      // setup vertex array
+      GFXVertex *pvtxSrfBase = &_avtxSrfBase[iSrfVx0];
+      for (INDEX iSrfVx = 0; iSrfVx < ctSrfVx; iSrfVx++)
       {
         const INDEX iMipVx = puwSrfToMip[ iSrfVx ];
         pvtxSrfBase[ iSrfVx ].x = pvtxMipBase[ iMipVx ].x;
@@ -517,9 +621,8 @@ void RT_RenderModel_View(CModelObject &mo, CRenderModel &rm)
         pvtxSrfBase[ iSrfVx ].z = pvtxMipBase[ iMipVx ].z;
       }
 
-      // setup normal array for truform (if enabled)
       GFXNormal *pnorSrfBase = &_anorSrfBase[ iSrfVx0 ];
-      for (iSrfVx = 0; iSrfVx < ctSrfVx; iSrfVx++)
+      for (INDEX iSrfVx = 0; iSrfVx < ctSrfVx; iSrfVx++)
       {
         const INDEX iMipVx = puwSrfToMip[ iSrfVx ];
         pnorSrfBase[ iSrfVx ].nx = pnorMipBase[ iMipVx ].nx;
@@ -528,10 +631,12 @@ void RT_RenderModel_View(CModelObject &mo, CRenderModel &rm)
       }
     }
   }
+
+  // RT: this data will be set in RT_VertexData
   // prepare (and lock) vertex array
-  //gfxEnableDepthTest();
-  gfxSetVertexArray(&_avtxSrfBase[ 0 ], ctAllSrfVx);
-  gfxSetNormalArray(&_anorSrfBase[ 0 ]);
+  //g fxEnableDepthTest();
+  //gfxSetVertexArray(&_avtxSrfBase[ 0 ], _ctAllSrfVx);
+  //gfxSetNormalArray(&_anorSrfBase[ 0 ]);
 
   // texture mapping correction factors (mex -> norm float)
   FLOAT fTexCorrU, fTexCorrV;
@@ -556,8 +661,8 @@ void RT_RenderModel_View(CModelObject &mo, CRenderModel &rm)
 
   // get model diffuse color
   GFXColor colMdlDiff;
-  const COLOR colD = AdjustColor(rm.rm_pmdModelData->md_colDiffuse, _slTexHueShift, _slTexSaturation);
-  const COLOR colB = AdjustColor(rm.rm_colBlend, _slTexHueShift, _slTexSaturation);
+  const COLOR colD = rm.rm_pmdModelData->md_colDiffuse; // AdjustColor(rm.rm_pmdModelData->md_colDiffuse, _slTexHueShift, _slTexSaturation);
+  const COLOR colB = rm.rm_colBlend; // AdjustColor(rm.rm_colBlend, _slTexHueShift, _slTexSaturation);
   colMdlDiff.MultiplyRGBA(colD, colB);
 
   // for each surface in current mip model
@@ -567,12 +672,18 @@ void RT_RenderModel_View(CModelObject &mo, CRenderModel &rm)
       const MappingSurface &ms = *itms;
       iSrfVx0 = ms.ms_iSrfVx0;
       ctSrfVx = ms.ms_ctSrfVx;
-      if ((ms.ms_ulRenderingFlags & SRF_INVISIBLE) || ctSrfVx == 0) break;  // done if found invisible or empty surface
+
+      if ((ms.ms_ulRenderingFlags & SRF_INVISIBLE) || ctSrfVx == 0)
+      {
+        break;  // done if found invisible or empty surface
+      }
+
       // cache surface pointers
       UWORD *puwSrfToMip = &mmi.mmpi_auwSrfToMip[ iSrfVx0 ];
-      pvTexCoord = &mmi.mmpi_avmexTexCoord[ iSrfVx0 ];
-      ptexSrfBase = &_atexSrfBase[ iSrfVx0 ];
-      pcolSrfBase = &_acolSrfBase[ iSrfVx0 ];
+      FLOAT2D *pvTexCoord = &mmi.mmpi_avmexTexCoord[ iSrfVx0 ];
+
+      GFXTexCoord *ptexSrfBase = &_atexSrfBase[ iSrfVx0 ];
+      GFXColor *pcolSrfBase = &_acolSrfBase[ iSrfVx0 ];
 
       // get surface diffuse color and combine with model color
       GFXColor colSrfDiff;
@@ -589,74 +700,47 @@ void RT_RenderModel_View(CModelObject &mo, CRenderModel &rm)
       // setup color array
       // RT: pcolMipBase is an array that holds light color,
       // we don't need it, so just set overall diffuse color for whole surface 
-      for (INDEX iSrfVx = 0; iSrfVx < ctSrfVx; iSrfVx++) pcolSrfBase[ iSrfVx ] = colSrfDiff;
-
-      /*if (ms.ms_sstShadingType == SST_FULLBRIGHT)
+      for (INDEX iSrfVx = 0; iSrfVx < ctSrfVx; iSrfVx++)
       {
-        // eventually adjust reflection color for overbrighting
-        GFXColor colSrfDiffAdj = colSrfDiff;
-        //if (bOverbright)
-        //{
-        //  colSrfDiffAdj.r >>= 1;
-        //  colSrfDiffAdj.g >>= 1;
-        //  colSrfDiffAdj.b >>= 1;
-        //} // just copy diffuse color
-        for (INDEX iSrfVx = 0; iSrfVx < ctSrfVx; iSrfVx++) pcolSrfBase[ iSrfVx ] = colSrfDiffAdj;
+        pcolSrfBase[ iSrfVx ] = colSrfDiff;
       }
-      else
-      {
-        // setup diffuse color array
-        for (INDEX iSrfVx = 0; iSrfVx < ctSrfVx; iSrfVx++)
-        {
-          const INDEX iMipVx = puwSrfToMip[ iSrfVx ];
-          pcolSrfBase[ iSrfVx ].MultiplyRGBCopyA1(colSrfDiff, pcolMipBase[ iMipVx ]);
-        }
-      }*/
     }
   }
+
+  // TODO: RT: texture loading
 
   // must render diffuse if there is no texture (white mode)
   if ((ulMipLayerFlags & SRF_DIFFUSE) || ptdDiff == NULL)
   {
-    // prepare overbrighting if supported
-    //if (bOverbright) gfxSetTextureModulation(2);
+    //gfxSetTexCoordArray(&_atexSrfBase[ 0 ], FALSE);
 
-    //// set texture/color arrays 
-    //INDEX iFrame = 0;
-    //if (ptdDiff != NULL) iFrame = mo.mo_toTexture.GetFrame();
+    RT_VertexData vd = {};
+    vd.vertices = &_avtxSrfBase[0];
+    vd.vertexCount = _ctAllSrfVx;
+    vd.normals = &_anorSrfBase[0];
+    vd.texCoords = &_atexSrfBase[0];
 
-    //// !!! REMOVE THIS, we need only to get info
-    //extern void SetCurrentTexture(CTextureData *ptd, INDEX iFrame);
-    //SetCurrentTexture(ptdDiff, iFrame);
-
-    gfxSetTexCoordArray(&_atexSrfBase[ 0 ], FALSE);
-    //gfxSetColorArray(&_acolSrfBase[ 0 ]);
-
-    // !!! REMOVE THIS, we need only to get info
-    extern void RenderOneSide(CRenderModel & rm, BOOL bBackSide, ULONG ulLayerFlags);
-    RenderOneSide(rm, TRUE, SRF_DIFFUSE);
-    RenderOneSide(rm, FALSE, SRF_DIFFUSE);
-
-    // revert to normal brightness if overbrighting was on
-    //if (bOverbright) gfxSetTextureModulation(1);
+    // RT: everything is set, copy model data to SSRT
+    //RT_RenderOneSide(rm, TRUE);
+    RT_RenderOneSide(pen, rm, mo, vd, FALSE, ssrt);
   }
 
   // adjust z-buffer and blending functions
   if (ulMipLayerFlags & MMI_OPAQUE)
   {
-    //gfxDepthFunc(GFX_EQUAL);
+    //g fxDepthFunc(GFX_EQUAL);
   }
   else
   {
-    //gfxDepthFunc(GFX_LESS_EQUAL);
+    //g fxDepthFunc(GFX_LESS_EQUAL);
   }
-  //gfxDisableDepthWrite();
-  //gfxDisableAlphaTest(); // disable alpha testing if enabled after some surface
-  //gfxEnableBlend();
+  //g fxDisableDepthWrite();
+  //g fxDisableAlphaTest(); // disable alpha testing if enabled after some surface
+  //g fxEnableBlend();
 
   // almost done
-  //gfxDepthFunc(GFX_LESS_EQUAL);
-  //gfxUnlockArrays();
+  //g fxDepthFunc(GFX_LESS_EQUAL);
+  //g fxUnlockArrays();
 
   // reset model vertex buffers and rendering face
   extern void ResetVertexArrays(void);
@@ -665,7 +749,7 @@ void RT_RenderModel_View(CModelObject &mo, CRenderModel &rm)
 
 
 //void CModelObject::RenderModel(CRenderModel &rm)
-void RT_RenderModel(CModelObject &mo, CRenderModel &rm)
+void RT_RenderModel(CEntity *pen, CModelObject &mo, CRenderModel &rm, SSRT::SSRTMain *ssrt)
 {
   // skip invisible models
   if (mo.mo_Stretch == FLOAT3D(0, 0, 0)) return;
@@ -680,7 +764,7 @@ void RT_RenderModel(CModelObject &mo, CRenderModel &rm)
     //if (rm.rm_ulFlags & (RMF_FOG | RMF_HAZE)) CalculateBoundingBox(this, rm);
     // render complete model
     //rm.SetModelView();
-    RT_RenderModel_View(rm);
+    RT_RenderModel_View(pen, mo, rm, ssrt);
   }
 
   // render each attachment on this model object
@@ -689,7 +773,7 @@ void RT_RenderModel(CModelObject &mo, CRenderModel &rm)
     // calculate bounding box of an attachment    
     CAttachmentModelObject *pamo = itamo;
     if (pamo->amo_prm == NULL) continue; // skip view-rejected attachments
-    RT_RenderModel(pamo->amo_moModelObject, *pamo->amo_prm);
+    RT_RenderModel(pen, pamo->amo_moModelObject, *pamo->amo_prm, ssrt);
   }
 }
 
@@ -697,7 +781,8 @@ void RT_RenderModel(CModelObject &mo, CRenderModel &rm)
 //void CRenderer::RenderOneModel(CEntity &en, CModelObject &moModel, const CPlacement3D &plModel,
 //                               const FLOAT fDistanceFactor, BOOL bRenderShadow, ULONG ulDMFlags)
 void RT_RenderOneModel(CEntity &en, CModelObject &moModel, const CPlacement3D &plModel,
-                       const FLOAT fDistanceFactor, BOOL bRenderShadow, ULONG ulDMFlags)
+                       const FLOAT fDistanceFactor, BOOL bRenderShadow, ULONG ulDMFlags, 
+                       SSRT::SSRTMain *ssrt)
 {
   // skip invisible models
   if (moModel.mo_Stretch == FLOAT3D(0, 0, 0)) return;
@@ -711,8 +796,6 @@ void RT_RenderOneModel(CEntity &en, CModelObject &moModel, const CPlacement3D &p
 
   //if (ulDMFlags & DMF_FOG)      rm.rm_ulFlags |= RMF_FOG;
   //if (ulDMFlags & DMF_HAZE)     rm.rm_ulFlags |= RMF_HAZE;
-  //if (ulDMFlags & DMF_INSIDE)   rm.rm_ulFlags |= RMF_INSIDE;
-  //if (ulDMFlags & DMF_INMIRROR) rm.rm_ulFlags |= RMF_INMIRROR;
 
   // RT: TODO: save current viewer entity
   CEntity *re_penViewer = NULL;
@@ -723,20 +806,19 @@ void RT_RenderOneModel(CEntity &en, CModelObject &moModel, const CPlacement3D &p
     rm.rm_ulFlags |= RMF_SPECTATOR;
   }
 
-  // TEMP: disable Truform usage on weapon models
-  if (IsOfClass(&en, "Player Weapons")) rm.rm_ulFlags |= RMF_WEAPON;
+  if (IsOfClass(&en, "Player Weapons"))
+  {
+    rm.rm_ulFlags |= RMF_WEAPON;
+  }
 
   // prepare CRenderModel structure for rendering of one model
-  RT_SetupModelRendering(moModel, rm);
-
-  // RT: no plane shadows
+  RT_SetupModelRendering(moModel, rm, ssrt);
 
   // if the entity is not the viewer, or this is not primary renderer
   if (re_penViewer != &en)
   {
     // render model
-    RT_RenderModel(moModel, rm);
-    // if the entity is viewer
+    RT_RenderModel(&en, moModel, rm, ssrt);
   }
   else
   {
@@ -749,69 +831,29 @@ void RT_RenderOneModel(CEntity &en, CModelObject &moModel, const CPlacement3D &p
 
 
 // CRenderer::RenderModels(BOOL bBackground)
-void RT_Post_RenderModels(CDelayedModel &dm)
+void RT_Post_RenderModels(CDelayedModel &dm, SSRT::SSRTMain *ssrt)
 {
-  //if (_bMultiPlayer) gfx_bRenderModels = 1; // must render in multiplayer mode!
-  //if (!gfx_bRenderModels && !re_bRenderingShadows) return;
-
-  //// sort all the delayed models by distance
-  //qsort(re_admDelayedModels.GetArrayOfPointers(), re_admDelayedModels.Count(),
-  //      sizeof(CDelayedModel *), qsort_CompareDelayedModels);
-
-  //CAnyProjection3D *papr;
-  //if (bBackground)
-  //{
-  //  papr = &re_prBackgroundProjection;
-  //}
-  //else
-  //{
-  //  papr = &re_prProjection;
-  //}
-  //// begin model rendering
-  //if (!re_bRenderingShadows)
-  //{
-  //  BeginModelRenderingView(*papr, re_pdpDrawPort);
-  //  RM_BeginRenderingView(*papr, re_pdpDrawPort);
-  //}
-  //else
-  //{
-  //  BeginModelRenderingMask(*papr, re_pubShadow, re_slShadowWidth, re_slShadowHeight);
-  //  RM_BeginModelRenderingMask(*papr, re_pubShadow, re_slShadowWidth, re_slShadowHeight);
-  //}
-
-
-  // for each of models that were kept for delayed rendering
-  //for (INDEX iModel = 0; iModel < re_admDelayedModels.Count(); iModel++)
+  if (!gfx_bRenderModels)
   {
-    //CDelayedModel &dm = re_admDelayedModels[ iModel ];
-
-    CEntity &en = *dm.dm_penModel;
-    BOOL bIsBackground =/* re_bBackgroundEnabled &&*/ (en.en_ulFlags & ENF_BACKGROUND);
-
-    //// skip if not rendered in this pass or not visible
-    //if (/*(bBackground && !bIsBackground)
-    //    || (!bBackground && bIsBackground)
-    //    ||*/ !(dm.dm_ulFlags & DMF_VISIBLE)) continue;
-
-    if (en.en_RenderType == CEntity::RT_SKAMODEL || en.en_RenderType == CEntity::RT_SKAEDITORMODEL)
-    {
-      // ASSUME THAT THIS NEVER HAPPENS
-    }
-    else
-    {
-      // render the model with its shadow
-      CModelObject &moModelObject = *dm.dm_pmoModel;
-      RT_RenderOneModel(en, moModelObject, en.GetLerpedPlacement(), dm.dm_fMipFactor, TRUE, dm.dm_ulFlags);
-    }
-
+    return;
   }
-  //// end model rendering
-  //EndModelRenderingView(FALSE); // don't restore ortho projection for now
-  //RM_EndRenderingView(FALSE);
+
+  CEntity &en = *dm.dm_penModel;
+  BOOL bIsBackground =/* re_bBackgroundEnabled &&*/ (en.en_ulFlags & ENF_BACKGROUND);
+
+  // TODO: RT: ignore background for now
+  if (bIsBackground)
+  {
+    return;
+  }
+
+  // render the model with its shadow
+  CModelObject &moModelObject = *dm.dm_pmoModel;
+  RT_RenderOneModel(en, moModelObject, en.GetLerpedPlacement(), dm.dm_fMipFactor, TRUE, dm.dm_ulFlags, ssrt);
 }
 
 
-void RT_AddModelEntity(CEntity *penModel)
+void RT_AddModelEntity(CEntity *penModel, SSRT::SSRTMain *ssrt)
 {
   // if the entity is currently active or hidden, don't add it again
   if (penModel->en_ulFlags & (ENF_INRENDERING | ENF_HIDDEN)) return;
@@ -968,30 +1010,30 @@ void RT_AddModelEntity(CEntity *penModel)
   //if (re_bRenderingShadows) dm.dm_fMipFactor = 0;
 
   // RT: call it here to bypass re_admDelayedModels list
-  RT_Post_RenderModels(dm);
+  RT_Post_RenderModels(dm, ssrt);
 }
 
 
 
 void RT_CleanUpLists()
 {
-  // for all active sectors
-  {
-    FORDELETELIST(CBrushSector, bsc_lnInActiveSectors, RT_lhActiveSectors, itbsc)
-    {
-      // remove it from list
-      itbsc->bsc_lnInActiveSectors.Remove();
+  //// for all active sectors
+  //{
+  //  FORDELETELIST(CBrushSector, bsc_lnInActiveSectors, RT_lhActiveSectors, itbsc)
+  //  {
+  //    // remove it from list
+  //    itbsc->bsc_lnInActiveSectors.Remove();
 
-      // for all polygons in sector
-      FOREACHINSTATICARRAY(itbsc->bsc_abpoPolygons, CBrushPolygon, itpo)
-      {
-        CBrushPolygon &bpo = *itpo;
-        // clear screen polygon pointers
-        bpo.bpo_pspoScreenPolygon = NULL;
-      }
-    }
-  }
-  ASSERT(RT_lhActiveSectors.IsEmpty());
+  //    // for all polygons in sector
+  //    FOREACHINSTATICARRAY(itbsc->bsc_abpoPolygons, CBrushPolygon, itpo)
+  //    {
+  //      CBrushPolygon &bpo = *itpo;
+  //      // clear screen polygon pointers
+  //      bpo.bpo_pspoScreenPolygon = NULL;
+  //    }
+  //  }
+  //}
+  //ASSERT(RT_lhActiveSectors.IsEmpty());
 
   // for all active brushes
   {
@@ -1005,7 +1047,7 @@ void RT_CleanUpLists()
 }
 
 
-void RT_AddAllEntities(CWorld *pwld)
+void RT_AddAllEntities(CWorld *pwld, SSRT::SSRTMain *ssrt)
 {
   RT_CleanUpLists();
 
@@ -1018,7 +1060,7 @@ void RT_AddAllEntities(CWorld *pwld)
             && _wrpWorldRenderPrefs.IsFieldBrushesOn()))
     {
       // add all of its sectors
-      RT_AddNonZoningBrush(&iten.Current(), NULL);
+      RT_AddNonZoningBrush(&iten.Current(), NULL, ssrt);
 
       // if it is model, or editor model that should be drawn
     }
@@ -1027,7 +1069,7 @@ void RT_AddAllEntities(CWorld *pwld)
                  && _wrpWorldRenderPrefs.IsEditorModelsOn())*/)
     {
       // add it as a model
-      RT_AddModelEntity(&iten.Current());
+      RT_AddModelEntity(&iten.Current(), ssrt);
     }
   }
 }

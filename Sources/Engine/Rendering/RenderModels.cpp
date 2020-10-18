@@ -378,57 +378,55 @@ void CRenderer::RenderOneModel( CEntity &en, CModelObject &moModel, const CPlace
   if( IsOfClass( &en, "Player Weapons")) rm.rm_ulFlags |= RMF_WEAPON; 
 
   // set tesselation level of models
-  rm.rm_iTesselationLevel = en.GetMaxTessellationLevel();
+  //rm.rm_iTesselationLevel = en.GetMaxTessellationLevel();
 
   // prepare CRenderModel structure for rendering of one model
   moModel.SetupModelRendering(rm);
 
   // determine shadow intensity
-  
-  fTotalShadowIntensity *= NormByteToFloat( (moModel.mo_colBlendColor&CT_AMASK)>>CT_ASHIFT);
-  fTotalShadowIntensity  = Clamp( fTotalShadowIntensity, 0.0f, 1.0f);
-
+  //fTotalShadowIntensity *= NormByteToFloat( (moModel.mo_colBlendColor&CT_AMASK)>>CT_ASHIFT);
+  //fTotalShadowIntensity  = Clamp( fTotalShadowIntensity, 0.0f, 1.0f);
   // if should render shadow for this model
-  if( bRenderModelShadow && !(en.en_ulFlags&ENF_CLUSTERSHADOWS) && moModel.HasShadow(rm.rm_iMipLevel)) {
-    // if only simple shadow
-    if( mdl_iShadowQuality==1) {
-      // render simple shadow
-      fTotalShadowIntensity = 0.1f + fTotalShadowIntensity*0.9f;
-      moModel.AddSimpleShadow( rm, fTotalShadowIntensity, plFloorPlane);
-    }
-    // if only one shadow
-    else if( mdl_iShadowQuality==2) {
-      // render one shadow of model from shading light direction
-      const FLOAT fHotSpot = 1E10f;
-      const FLOAT fFallOff = 1E11f;
-      CPlacement3D plLight;
-      plLight.pl_PositionVector = plModel.pl_PositionVector - rm.rm_vLightDirection*1000.0f;
-      moModel.RenderShadow( rm, plLight, fFallOff, fHotSpot, fTotalShadowIntensity, plFloorPlane);
-    }
-    // if full shadows
-    else if( mdl_iShadowQuality==3) {
-      // for each active light
-      for( INDEX iLight=0; iLight<_amlLights.Count(); iLight++) {
-        struct ModelLight &ml = _amlLights[iLight];
-        // skip light if doesn't cast shadows
-        if( !(ml.ml_plsLight->ls_ulFlags&LSF_CASTSHADOWS)) continue;
-        // get light parameters
-        CPlacement3D plLight = ml.ml_plsLight->ls_penEntity->en_plPlacement;
-        FLOAT fHotSpot = ml.ml_plsLight->ls_rHotSpot;
-        FLOAT fFallOff = ml.ml_plsLight->ls_rFallOff;
-        if (ml.ml_plsLight->ls_ulFlags & LSF_DIRECTIONAL) {
-          fHotSpot = 1E10f;
-          fFallOff = 1E11f;
-          FLOAT3D vDirection;
-          AnglesToDirectionVector( plLight.pl_OrientationAngle, vDirection);
-          plLight.pl_PositionVector = plModel.pl_PositionVector-(vDirection*1000.0f);
-        } 
-        // render one shadow of model
-        const FLOAT fShadowIntensity  = Clamp( ml.ml_fShadowIntensity, 0.0f, 1.0f);
-        moModel.RenderShadow( rm, plLight, fFallOff, fHotSpot, fShadowIntensity, plFloorPlane);
-      }
-    }
-  }
+  //if( bRenderModelShadow && !(en.en_ulFlags&ENF_CLUSTERSHADOWS) && moModel.HasShadow(rm.rm_iMipLevel)) {
+  //  // if only simple shadow
+  //  if( mdl_iShadowQuality==1) {
+  //    // render simple shadow
+  //    fTotalShadowIntensity = 0.1f + fTotalShadowIntensity*0.9f;
+  //    moModel.AddSimpleShadow( rm, fTotalShadowIntensity, plFloorPlane);
+  //  }
+  //  // if only one shadow
+  //  else if( mdl_iShadowQuality==2) {
+  //    // render one shadow of model from shading light direction
+  //    const FLOAT fHotSpot = 1E10f;
+  //    const FLOAT fFallOff = 1E11f;
+  //    CPlacement3D plLight;
+  //    plLight.pl_PositionVector = plModel.pl_PositionVector - rm.rm_vLightDirection*1000.0f;
+  //    moModel.RenderShadow( rm, plLight, fFallOff, fHotSpot, fTotalShadowIntensity, plFloorPlane);
+  //  }
+  //  // if full shadows
+  //  else if( mdl_iShadowQuality==3) {
+  //    // for each active light
+  //    for( INDEX iLight=0; iLight<_amlLights.Count(); iLight++) {
+  //      struct ModelLight &ml = _amlLights[iLight];
+  //      // skip light if doesn't cast shadows
+  //      if( !(ml.ml_plsLight->ls_ulFlags&LSF_CASTSHADOWS)) continue;
+  //      // get light parameters
+  //      CPlacement3D plLight = ml.ml_plsLight->ls_penEntity->en_plPlacement;
+  //      FLOAT fHotSpot = ml.ml_plsLight->ls_rHotSpot;
+  //      FLOAT fFallOff = ml.ml_plsLight->ls_rFallOff;
+  //      if (ml.ml_plsLight->ls_ulFlags & LSF_DIRECTIONAL) {
+  //        fHotSpot = 1E10f;
+  //        fFallOff = 1E11f;
+  //        FLOAT3D vDirection;
+  //        AnglesToDirectionVector( plLight.pl_OrientationAngle, vDirection);
+  //        plLight.pl_PositionVector = plModel.pl_PositionVector-(vDirection*1000.0f);
+  //      } 
+  //      // render one shadow of model
+  //      const FLOAT fShadowIntensity  = Clamp( ml.ml_fShadowIntensity, 0.0f, 1.0f);
+  //      moModel.RenderShadow( rm, plLight, fFallOff, fHotSpot, fShadowIntensity, plFloorPlane);
+  //    }
+  //  }
+  //}
 
   // if the entity is not the viewer, or this is not primary renderer
   if( re_penViewer!=&en) {
@@ -505,54 +503,54 @@ void CRenderer::RenderOneSkaModel( CEntity &en, const CPlacement3D &plModel,
   fTotalShadowIntensity  = Clamp( fTotalShadowIntensity, 0.0f, 1.0f);
 
   // if should render shadow for this model
-  if( bRenderModelShadow && !(en.en_ulFlags&ENF_CLUSTERSHADOWS) && en.GetModelInstance()->HasShadow(1/*rm.rm_iMipLevel*/)) {
-    // if only simple shadow
-    if( mdl_iShadowQuality==1) {
-      // render simple shadow
-      fTotalShadowIntensity = 0.1f + fTotalShadowIntensity*0.9f;
-        en.GetModelInstance()->AddSimpleShadow(fTotalShadowIntensity, plFloorPlane);
-    }
-    // if only one shadow
-    else if( mdl_iShadowQuality==2) {
-      /*
-      // render one shadow of model from shading light direction
-      const FLOAT fHotSpot = 1E10f;
-      const FLOAT fFallOff = 1E11f;
-      CPlacement3D plLight;
-      plLight.pl_PositionVector = plModel.pl_PositionVector - vTotalLightDirection*1000.0f;
-      // moModel.RenderShadow( rm, plLight, fFallOff, fHotSpot, fTotalShadowIntensity, plFloorPlane);
-      */
-      fTotalShadowIntensity = 0.1f + fTotalShadowIntensity*0.9f;
-      en.GetModelInstance()->AddSimpleShadow(fTotalShadowIntensity, plFloorPlane);
-    }
-    // if full shadows
-    else if( mdl_iShadowQuality==3) {
-      /*
-      // for each active light
-      for( INDEX iLight=0; iLight<_amlLights.Count(); iLight++) {
-        struct ModelLight &ml = _amlLights[iLight];
-        // skip light if doesn't cast shadows
-        if( !(ml.ml_plsLight->ls_ulFlags&LSF_CASTSHADOWS)) continue;
-        // get light parameters
-        CPlacement3D plLight = ml.ml_plsLight->ls_penEntity->en_plPlacement;
-        FLOAT fHotSpot = ml.ml_plsLight->ls_rHotSpot;
-        FLOAT fFallOff = ml.ml_plsLight->ls_rFallOff;
-        if (ml.ml_plsLight->ls_ulFlags & LSF_DIRECTIONAL) {
-          fHotSpot = 1E10f;
-          fFallOff = 1E11f;
-          FLOAT3D vDirection;
-          AnglesToDirectionVector( plLight.pl_OrientationAngle, vDirection);
-          plLight.pl_PositionVector = plModel.pl_PositionVector-(vDirection*1000.0f);
-        } 
-        // render one shadow of model
-        const FLOAT fShadowIntensity  = Clamp( ml.ml_fShadowIntensity, 0.0f, 1.0f);
-        // moModel.RenderShadow( rm, plLight, fFallOff, fHotSpot, fShadowIntensity, plFloorPlane);
-      }
-      */
-      fTotalShadowIntensity = 0.1f + fTotalShadowIntensity*0.9f;
-      en.GetModelInstance()->AddSimpleShadow(fTotalShadowIntensity, plFloorPlane);
-    }
-  }
+  //if( bRenderModelShadow && !(en.en_ulFlags&ENF_CLUSTERSHADOWS) && en.GetModelInstance()->HasShadow(1/*rm.rm_iMipLevel*/)) {
+  //  // if only simple shadow
+  //  if( mdl_iShadowQuality==1) {
+  //    // render simple shadow
+  //    fTotalShadowIntensity = 0.1f + fTotalShadowIntensity*0.9f;
+  //      en.GetModelInstance()->AddSimpleShadow(fTotalShadowIntensity, plFloorPlane);
+  //  }
+  //  // if only one shadow
+  //  else if( mdl_iShadowQuality==2) {
+  //    /*
+  //    // render one shadow of model from shading light direction
+  //    const FLOAT fHotSpot = 1E10f;
+  //    const FLOAT fFallOff = 1E11f;
+  //    CPlacement3D plLight;
+  //    plLight.pl_PositionVector = plModel.pl_PositionVector - vTotalLightDirection*1000.0f;
+  //    // moModel.RenderShadow( rm, plLight, fFallOff, fHotSpot, fTotalShadowIntensity, plFloorPlane);
+  //    */
+  //    fTotalShadowIntensity = 0.1f + fTotalShadowIntensity*0.9f;
+  //    en.GetModelInstance()->AddSimpleShadow(fTotalShadowIntensity, plFloorPlane);
+  //  }
+  //  // if full shadows
+  //  else if( mdl_iShadowQuality==3) {
+  //    /*
+  //    // for each active light
+  //    for( INDEX iLight=0; iLight<_amlLights.Count(); iLight++) {
+  //      struct ModelLight &ml = _amlLights[iLight];
+  //      // skip light if doesn't cast shadows
+  //      if( !(ml.ml_plsLight->ls_ulFlags&LSF_CASTSHADOWS)) continue;
+  //      // get light parameters
+  //      CPlacement3D plLight = ml.ml_plsLight->ls_penEntity->en_plPlacement;
+  //      FLOAT fHotSpot = ml.ml_plsLight->ls_rHotSpot;
+  //      FLOAT fFallOff = ml.ml_plsLight->ls_rFallOff;
+  //      if (ml.ml_plsLight->ls_ulFlags & LSF_DIRECTIONAL) {
+  //        fHotSpot = 1E10f;
+  //        fFallOff = 1E11f;
+  //        FLOAT3D vDirection;
+  //        AnglesToDirectionVector( plLight.pl_OrientationAngle, vDirection);
+  //        plLight.pl_PositionVector = plModel.pl_PositionVector-(vDirection*1000.0f);
+  //      } 
+  //      // render one shadow of model
+  //      const FLOAT fShadowIntensity  = Clamp( ml.ml_fShadowIntensity, 0.0f, 1.0f);
+  //      // moModel.RenderShadow( rm, plLight, fFallOff, fHotSpot, fShadowIntensity, plFloorPlane);
+  //    }
+  //    */
+  //    fTotalShadowIntensity = 0.1f + fTotalShadowIntensity*0.9f;
+  //    en.GetModelInstance()->AddSimpleShadow(fTotalShadowIntensity, plFloorPlane);
+  //  }
+  //}
 
   // if the entity is not the viewer, or this is not primary renderer
   if( re_penViewer!=&en) {
@@ -619,31 +617,30 @@ void CRenderer::RenderModels( BOOL bBackground)
     {
       RenderOneSkaModel(en, en.GetLerpedPlacement(), dm.dm_fMipFactor, TRUE, dm.dm_ulFlags);
 
-      // if selected entities should be drawn and this one is selected
-      if( !re_bRenderingShadows && _wrpWorldRenderPrefs.wrp_stSelection==CWorldRenderPrefs::ST_ENTITIES
-       && _wrpWorldRenderPrefs.wrp_pmoSelectedEntity!=NULL && en.IsSelected(ENF_SELECTED))
-      { // get bounding box of current frame
-        FLOATaabbox3D boxModel;
-        en.GetModelInstance()->GetCurrentColisionBox(boxModel);
-        // if model has collision
-        if( en.en_pciCollisionInfo!=NULL ) {
-          // get its collision box
-          INDEX iCollision = en.GetCollisionBoxIndex();
-          FLOAT3D vMin = en.GetModelInstance()->GetCollisionBoxMin(iCollision);
-          FLOAT3D vMax = en.GetModelInstance()->GetCollisionBoxMax(iCollision);
-          // extend the box by the collision box
-          boxModel|=FLOATaabbox3D(vMin, vMax);
-        }
-        // set position of marker at top of the model and it size to be proportional to the model
-        boxModel.StretchByVector(en.GetModelInstance()->mi_vStretch);
-        FLOAT fSize = boxModel.Size().Length()*0.3f;
-        _wrpWorldRenderPrefs.wrp_pmoSelectedEntity->mo_Stretch = FLOAT3D( fSize, fSize, fSize);
-        CPlacement3D plSelection = en.GetLerpedPlacement();
-        plSelection.Translate_OwnSystem( FLOAT3D(0.0f, boxModel.Max()(2), 0.0f));
-
-        // render the selection model without shadow
-        RenderOneModel( en, *_wrpWorldRenderPrefs.wrp_pmoSelectedEntity, plSelection, dm.dm_fMipFactor, FALSE, 0);
-      }
+      //// if selected entities should be drawn and this one is selected
+      //if( !re_bRenderingShadows && _wrpWorldRenderPrefs.wrp_stSelection==CWorldRenderPrefs::ST_ENTITIES
+      // && _wrpWorldRenderPrefs.wrp_pmoSelectedEntity!=NULL && en.IsSelected(ENF_SELECTED))
+      //{ // get bounding box of current frame
+      //  FLOATaabbox3D boxModel;
+      //  en.GetModelInstance()->GetCurrentColisionBox(boxModel);
+      //  // if model has collision
+      //  if( en.en_pciCollisionInfo!=NULL ) {
+      //    // get its collision box
+      //    INDEX iCollision = en.GetCollisionBoxIndex();
+      //    FLOAT3D vMin = en.GetModelInstance()->GetCollisionBoxMin(iCollision);
+      //    FLOAT3D vMax = en.GetModelInstance()->GetCollisionBoxMax(iCollision);
+      //    // extend the box by the collision box
+      //    boxModel|=FLOATaabbox3D(vMin, vMax);
+      //  }
+      //  // set position of marker at top of the model and it size to be proportional to the model
+      //  boxModel.StretchByVector(en.GetModelInstance()->mi_vStretch);
+      //  FLOAT fSize = boxModel.Size().Length()*0.3f;
+      //  _wrpWorldRenderPrefs.wrp_pmoSelectedEntity->mo_Stretch = FLOAT3D( fSize, fSize, fSize);
+      //  CPlacement3D plSelection = en.GetLerpedPlacement();
+      //  plSelection.Translate_OwnSystem( FLOAT3D(0.0f, boxModel.Max()(2), 0.0f));
+      //  // render the selection model without shadow
+      //  RenderOneModel( en, *_wrpWorldRenderPrefs.wrp_pmoSelectedEntity, plSelection, dm.dm_fMipFactor, FALSE, 0);
+      //}
     }
     else
     {
@@ -651,31 +648,31 @@ void CRenderer::RenderModels( BOOL bBackground)
       CModelObject &moModelObject = *dm.dm_pmoModel;
       RenderOneModel( en, moModelObject, en.GetLerpedPlacement(), dm.dm_fMipFactor, TRUE, dm.dm_ulFlags);
 
-      // if selected entities should be drawn and this one is selected
-      if( !re_bRenderingShadows && _wrpWorldRenderPrefs.wrp_stSelection==CWorldRenderPrefs::ST_ENTITIES
-       && _wrpWorldRenderPrefs.wrp_pmoSelectedEntity!=NULL && en.IsSelected(ENF_SELECTED))
-      { // get bounding box of current frame
-        FLOATaabbox3D boxModel;
-        moModelObject.GetCurrentFrameBBox(boxModel);
-        // if model has collision
-        if( en.en_pciCollisionInfo!=NULL && 
-          (en.GetRenderType()==CEntity::RT_MODEL || en.GetRenderType()==CEntity::RT_EDITORMODEL)) {
-          // get its collision box
-          INDEX iCollision = en.GetCollisionBoxIndex();
-          FLOAT3D vMin = moModelObject.GetCollisionBoxMin(iCollision);
-          FLOAT3D vMax = moModelObject.GetCollisionBoxMax(iCollision);
-          // extend the box by the collision box
-          boxModel|=FLOATaabbox3D(vMin, vMax);
-        }
-        // set position of marker at top of the model and it size to be proportional to the model
-        boxModel.StretchByVector(moModelObject.mo_Stretch);
-        FLOAT fSize = boxModel.Size().Length()*0.3f;
-        _wrpWorldRenderPrefs.wrp_pmoSelectedEntity->mo_Stretch = FLOAT3D( fSize, fSize, fSize);
-        CPlacement3D plSelection = en.GetLerpedPlacement();
-        plSelection.Translate_OwnSystem( FLOAT3D(0.0f, boxModel.Max()(2), 0.0f));
-        // render the selection model without shadow
-        RenderOneModel( en, *_wrpWorldRenderPrefs.wrp_pmoSelectedEntity, plSelection, dm.dm_fMipFactor, FALSE, 0);
-      }
+      //// if selected entities should be drawn and this one is selected
+      //if( !re_bRenderingShadows && _wrpWorldRenderPrefs.wrp_stSelection==CWorldRenderPrefs::ST_ENTITIES
+      // && _wrpWorldRenderPrefs.wrp_pmoSelectedEntity!=NULL && en.IsSelected(ENF_SELECTED))
+      //{ // get bounding box of current frame
+      //  FLOATaabbox3D boxModel;
+      //  moModelObject.GetCurrentFrameBBox(boxModel);
+      //  // if model has collision
+      //  if( en.en_pciCollisionInfo!=NULL && 
+      //    (en.GetRenderType()==CEntity::RT_MODEL || en.GetRenderType()==CEntity::RT_EDITORMODEL)) {
+      //    // get its collision box
+      //    INDEX iCollision = en.GetCollisionBoxIndex();
+      //    FLOAT3D vMin = moModelObject.GetCollisionBoxMin(iCollision);
+      //    FLOAT3D vMax = moModelObject.GetCollisionBoxMax(iCollision);
+      //    // extend the box by the collision box
+      //    boxModel|=FLOATaabbox3D(vMin, vMax);
+      //  }
+      //  // set position of marker at top of the model and it size to be proportional to the model
+      //  boxModel.StretchByVector(moModelObject.mo_Stretch);
+      //  FLOAT fSize = boxModel.Size().Length()*0.3f;
+      //  _wrpWorldRenderPrefs.wrp_pmoSelectedEntity->mo_Stretch = FLOAT3D( fSize, fSize, fSize);
+      //  CPlacement3D plSelection = en.GetLerpedPlacement();
+      //  plSelection.Translate_OwnSystem( FLOAT3D(0.0f, boxModel.Max()(2), 0.0f));
+      //  // render the selection model without shadow
+      //  RenderOneModel( en, *_wrpWorldRenderPrefs.wrp_pmoSelectedEntity, plSelection, dm.dm_fMipFactor, FALSE, 0);
+      //}
     }
 
   }

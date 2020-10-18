@@ -13,6 +13,7 @@ You should have received a copy of the GNU General Public License along
 with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
+#include <Engine/Raytracing/RTModels.h>
 
 // for generating unique IDs for lens flares
 // (32 bit should be enough for generating 1 lens flare per second during approx. 136 years)
@@ -423,7 +424,8 @@ void CRenderer::AddNonZoningBrush( CEntity *penBrush, CBrushSector *pbscThatAdds
   }
 
 
-  // skip whole non-zoning brush if invisible for rendering and not in wireframe mode
+  // skip whole non-zoning brush if all polygons in all sectors are invisible for rendering 
+  // and not in wireframe mode
   const BOOL bWireFrame = _wrpWorldRenderPrefs.wrp_ftEdges != CWorldRenderPrefs::FT_NONE
                        || _wrpWorldRenderPrefs.wrp_ftVertices != CWorldRenderPrefs::FT_NONE;
   if( !(penBrush->en_ulFlags&ENF_ZONING) && !bWireFrame)
@@ -447,8 +449,9 @@ addBrush:
   PrepareBrush(brBrush.br_penEntity);
 
   // get relevant mip factor for that brush and current rendering prefs
-  CBrushMip *pbm = brBrush.GetBrushMipByDistance(
-    _wrpWorldRenderPrefs.GetCurrentMipBrushingFactor(brBrush.br_prProjection->MipFactor()));
+  CBrushMip *pbm = brBrush.GetBrushMipByDistance(0);
+    //_wrpWorldRenderPrefs.GetCurrentMipBrushingFactor(brBrush.br_prProjection->MipFactor()));
+
   // if brush mip exists for that mip factor
   if (pbm!=NULL) {
     // if entity selecting by laso requested
@@ -506,6 +509,11 @@ void CRenderer::AddTerrainEntity(CEntity *penTerrain)
 /* Add to rendering all entities in the world (used in special cases in world editor). */
 void CRenderer::AddAllEntities(void)
 {
+  // TODO: RT: remove
+  SSRT::SSRTMain *ssrt = new SSRT::SSRTMain();
+
+  RT_AddAllEntities(re_pwoWorld, ssrt);
+
   // for all entities in world
   FOREACHINDYNAMICCONTAINER(re_pwoWorld->wo_cenEntities, CEntity, iten) {
     // if it is brush

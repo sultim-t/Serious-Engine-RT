@@ -30,6 +30,24 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Brushes/Brush.h>
 #include <Engine/Brushes/BrushTransformed.h>
 
+
+extern GFXColor *pcolMipBase;
+extern GFXVertex3 *pvtxMipBase;
+extern GFXNormal3 *pnorMipBase;
+extern CStaticStackArray<GFXVertex3>  _avtxMipBase;
+extern CStaticStackArray<GFXTexCoord> _atexMipBase;
+extern CStaticStackArray<GFXNormal3>  _anorMipBase;
+extern CStaticStackArray<GFXColor>    _acolMipBase;
+
+extern CStaticStackArray<GFXVertex4>  _avtxSrfBase;
+extern CStaticStackArray<GFXNormal4>  _anorSrfBase;
+extern CStaticStackArray<GFXTexCoord> _atexSrfBase;
+extern CStaticStackArray<GFXColor>    _acolSrfBase;
+
+extern void ResetVertexArrays(void);
+extern void PrepareModelMipForRendering(CModelData &md, INDEX iMip);
+
+
 #undef ALIGNED_NEW_AND_DELETE
 #ifdef NDEBUG
 #define ALIGNED_NEW_AND_DELETE(align) \
