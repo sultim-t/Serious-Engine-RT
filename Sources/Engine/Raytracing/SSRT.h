@@ -43,17 +43,6 @@ namespace SSRT
 
     COLOR           color;
 
-    // in relative space
-    //std::shared_ptr<std::vector<FLOAT3D>> positions;
-
-  public:
-    virtual ~CAbstractGeometry() = 0;
-  };
-
-
-  // Dynamic geometry that changes every frame
-  struct CModelGeometry : public CAbstractGeometry
-  {
     // Data that should be set to the renderer,
     // vertices are already animated.
     // This data will become invalid after adding CModelGeometry
@@ -65,6 +54,17 @@ namespace SSRT
     INDEX           indexCount;
     INDEX           *indices;
 
+    // in relative space
+    //std::shared_ptr<std::vector<FLOAT3D>> positions;
+
+  public:
+    virtual ~CAbstractGeometry() = 0;
+  };
+
+
+  // Dynamic geometry that changes every frame
+  struct CModelGeometry : public CAbstractGeometry
+  {
   public:
     CModelObject    *GetModelObject();
   };
@@ -106,21 +106,24 @@ namespace SSRT
     ULONG           screenWidth;
     ULONG           screenHeight;
 
+    // these arrays hold information about all objects in a world
     CStaticStackArray<CModelGeometry>     models;
     CStaticStackArray<CBrushGeometry>     staticBrushes;
     CStaticStackArray<CBrushGeometry>     movableBrushes;
     CStaticStackArray<CSphereLight>       sphLights;
     CStaticStackArray<CDirectionalLight>  dirLights;
 
-    // - Every entity can be either model or brush.
-    // - Entity can have one light source "attached" to it.
+    // - Every entity can be either model or brush
+    // - A model can have attachments that are models too
+    // - A brush can have several sectors
+    // - An ntity can have one light source "attached" to it.
     // Next maps are for getting associated SSRT object by entity ID
     // for updating their params, if they are created
-    std::map<ULONG, CModelGeometry*>      entityToModel;
-    std::map<ULONG, CBrushGeometry*>      entityToStaticBrush;
-    std::map<ULONG, CBrushGeometry*>      entityToMovableBrush;
-    std::map<ULONG, CSphereLight*>        entityToSphLight;
-    std::map<ULONG, CDirectionalLight*>   entityToDirLight;
+    std::map<ULONG, std::vector<INDEX>>   entityToModel;
+    std::map<ULONG, std::vector<INDEX>>   entityToStaticBrush;
+    std::map<ULONG, std::vector<INDEX>>   entityToMovableBrush;
+    std::map<ULONG, std::vector<INDEX>>   entityToSphLight;
+    std::map<ULONG, std::vector<INDEX>>   entityToDirLight;
 
   public:
     void AddModel(const CModelGeometry &model);
@@ -128,35 +131,53 @@ namespace SSRT
     void AddLight(const CSphereLight &sphLt);
     void AddLight(const CDirectionalLight &dirLt);
 
+    void SetWorld(CWorld *pwld);
+
   private:
     template<class T>
-    void AddRTObject(const T &obj, CStaticStackArray<T> &arr, std::map<ULONG, T*> &entToObj);
+    void AddRTObject(const T &obj, CStaticStackArray<T> &arr, std::map<ULONG, std::vector<INDEX>> &entToObjs);
   };
   
 #pragma region template implementation
   template<class T>
-  inline void SSRTMain::AddRTObject(const T &obj, CStaticStackArray<T> &arr, std::map<ULONG, T*> &entToObj)
+  inline void SSRTMain::AddRTObject(const T &obj, CStaticStackArray<T> &arr, std::map<ULONG, std::vector<INDEX>> &entToObjs)
   {
     ASSERT(obj.pOriginalEntity != nullptr);
 
-    // try to find object by its enitity
-    auto &found = entToObj.find(obj.GetEnitityID());
+    // try to find vector by its enitity
+    auto &found = entToObjs.find(obj.GetEnitityID());
 
-    if (found != entToObj.end())
+    if (found != entToObjs.end())
     {
-      // entities must be identical
-      ASSERT(found->second->pOriginalEntity == obj.pOriginalEntity);
+      for (INDEX i : found->second)
+      {
+        // entities must be identical
+        ASSERT(arr[i].pOriginalEntity->en_ulID == obj.GetEnitityID());
 
-      // set new value
-      *(found->second) = obj;
+        // if parts are the same
+        // (there should be a more reliable and faster way to identify 
+        // the same model attachments or brush sectors than just names) 
+
+        if (obj.pOriginalEntity->GetName() == arr[i].pOriginalEntity->GetName() ||
+            obj.pOriginalEntity->GetDescription() == arr[i].pOriginalEntity->GetDescription())
+        {
+          // set it and return
+          arr[i] = obj;
+          return;
+        }
+      }
+
+      INDEX i = arr.Count();
+      arr.Push() = obj;
+
+      found->second.push_back(i);
     }
     else
     {
-      // if not found, add it
-      T *pushed = &arr.Push();
-      *pushed = obj;
+      INDEX i = arr.Count();
+      arr.Push() = obj;
 
-      entToObj[obj.GetEnitityID()] = pushed;
+      entToObjs[obj.GetEnitityID()].push_back(i);
     }
   }
 #pragma endregion

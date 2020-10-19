@@ -9,7 +9,6 @@
 #include <Engine/Raytracing/SSRT.h>
 
 // this will INTERRUPT original renderer
-CListHead RT_lhActiveBrushes;     // list of active brushes
 //CListHead RT_lhActiveSectors;     // list of active sectors
 
 
@@ -65,83 +64,126 @@ void RT_AddLight(CLightSource *plsLight, SSRT::SSRTMain *ssrt)
 
     ssrt->AddLight(light);
   }
-
 }
+
+static CStaticStackArray<GFXVertex4> RT_AllBrushVertices;
+static CStaticStackArray<INDEX> RT_AllBrushIndices;
 
 void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
 {
+  RT_AllBrushVertices.PopAll();
+  RT_AllBrushIndices.PopAll();
 
-  // TODO: Use absolute or relative verts
   // maybe export it to .obj file
-  bscSector.bsc_abvxVertices[ 0 ].bvx_vAbsolute;
 
-  bscSector.bsc_abpoPolygons[ 0 ].bpo_apbvxTriangleVertices;
-  bscSector.bsc_abpoPolygons[ 0 ].bpo_aiTriangleElements;
-  bscSector.bsc_abpoPolygons[ 0 ].bpo_colColor;
-  bscSector.bsc_abpoPolygons[ 0 ].bpo_abptTextures;
+  CBrush3D *brush = bscSector.bsc_pbmBrushMip->bm_pbrBrush;
 
-  // RT: scan for all lights in sector
-  CEntity *penSectorEntity = bscSector.bsc_pbmBrushMip->bm_pbrBrush->br_penEntity;
-  // if it has the entity (it is not the background brush)
-  if (penSectorEntity != NULL && bscSector.bsc_bspBSPTree.bt_pbnRoot != NULL)
+  FOREACHINSTATICARRAY(bscSector.bsc_abpoPolygons, CBrushPolygon, itpo)
   {
-    FOREACHDSTOFSRC(bscSector.bsc_rsEntities, CEntity, en_rdSectors, pen)
-      if (pen->en_RenderType == CEntity::RT_MODEL /*|| pen->en_RenderType == CEntity::RT_EDITORMODEL*/)
-      {
-        CLightSource *pls = pen->GetLightSource();
+    CBrushPolygon &polygon = *itpo;
 
-        if (pls != NULL)
-        {
-          RT_AddLight(pls, ssrt);
-        }
-      }
-    ENDFOR
+    // for texture cordinates and transparency/translucency processing
+#pragma region MakeScreenPolygon
+    /*// all portals will be rendered as portals,
+    // original renderer also replaced them with pretenders if they're far away 
+    polygon.bpo_ulFlags &= ~BPOF_RENDERASPORTAL;
+    if (polygon.bpo_ulFlags & BPOF_PORTAL)
+    {
+      polygon.bpo_ulFlags |= BPOF_RENDERASPORTAL;
+    }*/
+
+
+    // TODO: RT: texture coordinates for brushes
+
+    // CRenderer::SetOneTextureParameters(CBrushPolygon &polygon, ScenePolygon &spo, INDEX iLayer)
+    //SetOneTextureParameters(polygon, sppo, 0);
+    //SetOneTextureParameters(polygon, sppo, 1);
+    //SetOneTextureParameters(polygon, sppo, 2);
+
+    if (polygon.bpo_ulFlags & BPOF_TRANSPARENT)
+    {
+      // TODO: RT: if needs alpha keying
+    }
+
+    bool needTranslucency = FALSE;
+    const float fOpacity = brush->br_penEntity->GetOpacity();
+    if (fOpacity < 1)
+    {
+      //needTranslucency = TRUE;
+    }
+
+    // if a translucent brush or a translucent portal
+    if (needTranslucency || ((polygon.bpo_ulFlags & BPOF_PORTAL) && (polygon.bpo_ulFlags & BPOF_TRANSLUCENT)))
+    {
+      polygon.bpo_ulFlags |= BPOF_RENDERTRANSLUCENT;
+      // TODO: RT: translucent brushes
+    }
+    else
+    {
+
+    }
+#pragma endregion
+
+    // add brush polygon
+#pragma region AddPolygonToScene
+
+    INDEX firstVertexId = RT_AllBrushVertices.Count();
+    INDEX *origIndices = &polygon.bpo_aiTriangleElements[0];
+
+    INDEX vertCount = polygon.bpo_apbvxTriangleVertices.Count();
+    GFXVertex4 *vertices = RT_AllBrushVertices.Push(vertCount);
+
+    for (INDEX i = 0; i < vertCount; i++)
+    {
+      CBrushVertex *brushVert = polygon.bpo_apbvxTriangleVertices[i];
+      vertices[i].x = brushVert->bvx_vRelative(1);
+      vertices[i].y = brushVert->bvx_vRelative(2);
+      vertices[i].z = brushVert->bvx_vRelative(3);
+      vertices[i].shade = 0;
+    }
+
+    INDEX indexCount = polygon.bpo_aiTriangleElements.Count();
+    INDEX *indices = RT_AllBrushIndices.Push(indexCount);
+
+    // set new indices relative to the shift in RT_AllBrushVertices
+    for (INDEX i = 0; i < indexCount; i++)
+    {
+      indices[i] = origIndices[i] + firstVertexId;
+    }
+
+#pragma endregion
+
+    // TODO: RT: brush textures
+    //COLOR color = polygon.bpo_colColor;
+    //CBrushPolygonTexture *textures = polygon.bpo_abptTextures;
   }
+#pragma region RenderSceneZOnly
+#pragma endregion
 
-  //// dont need it, original function just transformed vertices
-  //return;
-
-  //// if already active
-  //if (bscSector.bsc_lnInActiveSectors.IsLinked())
-  //{
-  //  return;
-  //}
-  //RT_lhActiveSectors.AddTail(bscSector.bsc_lnInActiveSectors);
-
-  //// DONT, adding all entities is already being done
-  ////// get the entity the sector is in
-  ////CEntity *penSectorEntity = bscSector.bsc_pbmBrushMip->bm_pbrBrush->br_penEntity;
-  ////// if it has the entity (it is not the background brush)
-  ////if (penSectorEntity != NULL)
-  ////{
-  ////  // add all other entities near the sector
-  ////  AddEntitiesInSector(&bscSector);
-  ////}
-}
-
-
-// does nothing, actually
-void RT_PrepareBrush(CEntity *penBrush, SSRT::SSRTMain *ssrt)
-{
-  ASSERT(penBrush != NULL);
-  // get its brush
-  CBrush3D &brBrush = *penBrush->en_pbrBrush;
-
-  // if the brush is already active in rendering
-  if (brBrush.br_lnInActiveBrushes.IsLinked())
-  {
-    return;
-  }
-  RT_lhActiveBrushes.AddTail(brBrush.br_lnInActiveBrushes);
-
-  CPlacement3D placement = 
-    penBrush->en_ulPhysicsFlags & EPF_MOVABLE ?
-    penBrush->GetLerpedPlacement() :
-    penBrush->en_plPlacement;
+  CEntity *brushEntity = brush->br_penEntity;
+  
+  const CPlacement3D &placement = brushEntity->en_ulPhysicsFlags & EPF_MOVABLE ?
+    brushEntity->GetLerpedPlacement() :
+    brushEntity->en_plPlacement;
 
   FLOAT3D position = placement.pl_PositionVector;
   FLOATmatrix3D rotation;
   MakeRotationMatrix(rotation, placement.pl_OrientationAngle);
+
+  SSRT::CBrushGeometry brushInfo = {};
+  brushInfo.pOriginalEntity = brush->br_penEntity;
+  brushInfo.isEnabled = true;
+  brushInfo.color = RGBAToColor(255, 255, 255, 255);
+  brushInfo.absPosition = position;
+  brushInfo.absRotation = rotation;
+  brushInfo.vertexCount = RT_AllBrushVertices.Count();
+  brushInfo.vertices = &RT_AllBrushVertices[0];
+  brushInfo.texCoords = nullptr;
+  brushInfo.normals = nullptr;
+  brushInfo.indexCount = RT_AllBrushIndices.Count();
+  brushInfo.indices = &RT_AllBrushIndices[0];
+
+  ssrt->AddBrush(brushInfo);
 }
 
 
@@ -158,38 +200,50 @@ void RT_AddNonZoningBrush(CEntity *penBrush, CBrushSector *pbscThatAdds, SSRT::S
     return;
   }
 
-  // if the brush is already added
-  if (brBrush.br_lnInActiveBrushes.IsLinked())
+  // RT: this must not happen, as iteration in AddAllEntities is done over all brushes
+  //// if the brush is already added
+  //if (brBrush.br_lnInActiveBrushes.IsLinked())
+  //{
+  //  // skip it
+  //  return;
+  //}
+
+  if (penBrush->en_ulFlags & ENF_ZONING)
   {
-    // skip it
     return;
   }
-
 
   // skip whole non-zoning brush if all polygons in all sectors are invisible for rendering 
-  if (!(penBrush->en_ulFlags & ENF_ZONING))
-  { 
-    // test every brush polygon for it's visibility flag
-    // for every sector in brush
-    FOREACHINDYNAMICARRAY(brBrush.GetFirstMip()->bm_abscSectors, CBrushSector, itbsc)
+  bool isVisible = false;
+
+  // test every brush polygon for it's visibility flag
+  // for every sector in brush
+  FOREACHINDYNAMICARRAY(brBrush.GetFirstMip()->bm_abscSectors, CBrushSector, itbsc)
+  {
+    // for all polygons in sector
+    FOREACHINSTATICARRAY(itbsc->bsc_abpoPolygons, CBrushPolygon, itpo)
     {
-      // for all polygons in sector
-      FOREACHINSTATICARRAY(itbsc->bsc_abpoPolygons, CBrushPolygon, itpo)
+      // advance to next polygon if invisible
+      CBrushPolygon &bpo = *itpo;
+      if (!(bpo.bpo_ulFlags & BPOF_INVISIBLE))
       {
-        // advance to next polygon if invisible
-        CBrushPolygon &bpo = *itpo;
-        if (!(bpo.bpo_ulFlags & BPOF_INVISIBLE)) goto addBrush;
+        isVisible = true;
+        break;
       }
     }
-    // skip this brush
+
+    if (isVisible)
+    {
+      break;
+    }
+  }
+
+  if (!isVisible)
+  {
     return;
   }
 
-addBrush:
-  // prepare the brush entity for rendering if not yet prepared
-  RT_PrepareBrush(brBrush.br_penEntity, ssrt);
-
-  // get highest mip
+  // RT: get highest mip
   CBrushMip *pbm = brBrush.GetBrushMipByDistance(0);
 
   // if brush mip exists for that mip factor
@@ -394,13 +448,7 @@ void RT_SetupModelRendering(CModelObject &mo, CRenderModel &rm, SSRT::SSRTMain *
     extern CStaticStackArray<CRenderModel> _armRenderModels;
 
     pamo->amo_prm = &_armRenderModels.Push();
-    const BOOL bVisible = RT_CreateAttachment(mo, rm, *pamo);
-    if (!bVisible)
-    { // skip if not visible
-      pamo->amo_prm = NULL;
-      _armRenderModels.Pop();
-      continue;
-    } 
+    RT_CreateAttachment(mo, rm, *pamo);
     
     // prepare if visible
     RT_SetupModelRendering(pamo->amo_moModelObject, *pamo->amo_prm, ssrt);
@@ -772,7 +820,8 @@ void RT_RenderModel(CEntity *pen, CModelObject &mo, CRenderModel &rm, SSRT::SSRT
   {
     // calculate bounding box of an attachment    
     CAttachmentModelObject *pamo = itamo;
-    if (pamo->amo_prm == NULL) continue; // skip view-rejected attachments
+    if (pamo->amo_prm == NULL) continue; 
+    
     RT_RenderModel(pen, pamo->amo_moModelObject, *pamo->amo_prm, ssrt);
   }
 }
@@ -816,8 +865,8 @@ void RT_RenderOneModel(CEntity &en, CModelObject &moModel, const CPlacement3D &p
 
   // if the entity is not the viewer, or this is not primary renderer
   if (re_penViewer != &en)
-  {
-    // render model
+  {  
+    // RT: set all vertices (with attachments) in one array
     RT_RenderModel(&en, moModel, rm, ssrt);
   }
   else
@@ -856,9 +905,23 @@ void RT_Post_RenderModels(CDelayedModel &dm, SSRT::SSRTMain *ssrt)
 void RT_AddModelEntity(CEntity *penModel, SSRT::SSRTMain *ssrt)
 {
   // if the entity is currently active or hidden, don't add it again
-  if (penModel->en_ulFlags & (ENF_INRENDERING | ENF_HIDDEN)) return;
+  if (penModel->en_ulFlags & (ENF_INRENDERING | ENF_HIDDEN))
+  {
+    return;
+  }
+
   // skip the entity if predicted, and predicted entities should not be rendered
-  if (penModel->IsPredicted() && !gfx_bRenderPredicted) return;
+  if (penModel->IsPredicted() && !gfx_bRenderPredicted)
+  {
+    return;
+  }
+  
+  // add light source there is one
+  CLightSource *pls = penModel->GetLightSource();
+  if (pls != NULL)
+  {
+    RT_AddLight(pls, ssrt);
+  }
 
   // get its model object
   CModelObject *pmoModelObject;
@@ -878,90 +941,17 @@ void RT_AddModelEntity(CEntity *penModel, SSRT::SSRTMain *ssrt)
   // mark the entity as active in rendering
   penModel->en_ulFlags |= ENF_INRENDERING;
 
-  // add it to container of all drawn entities
-  //re_cenDrawn.Add(penModel);
   // add it to a container for delayed rendering
   CDelayedModel dm = {}; // re_admDelayedModels.Push();
   dm.dm_penModel = penModel;
   dm.dm_pmoModel = pmoModelObject;
   dm.dm_ulFlags = NONE; // invisible until proved otherwise
-  //// get proper projection for the entity
-  //CProjection3D *pprProjection;
-  //if (re_bBackgroundEnabled && (penModel->en_ulFlags & ENF_BACKGROUND))
-  //{
-  //  pprProjection = re_prBackgroundProjection;
-  //}
-  //else
-  //{
-  //  pprProjection = re_prProjection;
-  //}
-  //// transform its handle to view space
-  //FLOAT3D vHandle;
-  //pprProjection->PreClip(penModel->en_plPlacement.pl_PositionVector, vHandle);
-  //// setup mip factor
-  //FLOAT fDistance = vHandle(3) + penModel->GetDepthSortOffset();
-  //FLOAT fMipFactor = pprProjection->MipFactor(fDistance);
-  //penModel->AdjustMipFactor(fMipFactor);
   dm.dm_fDistance = 0;// fDistance;
   dm.dm_fMipFactor = 0;// fMipFactor;
 
-//  FLOAT fR = penModel->en_fSpatialClassificationRadius;
-//  if (penModel->en_RenderType == CEntity::RT_BRUSH
-//      || penModel->en_RenderType == CEntity::RT_FIELDBRUSH)
-//  {
-//    fR = 1.0f;
-//  }
-//  ASSERT(fR > 0.0f);
-//
-//  // test object sphere to frustum
-//  FLOATobbox3D boxEntity;
-//  BOOL  bModelHasBox = FALSE;
-//  INDEX iFrustumTest = pprProjection->TestSphereToFrustum(vHandle, fR);
-//  // if test is indeterminate
-//  if (iFrustumTest == 0)
-//  {
-//    // create oriented box and test it to frustum
-//    CreateModelOBBox(penModel, vHandle, pprProjection->pr_ViewerRotationMatrix, boxEntity);
-//    bModelHasBox = TRUE; // mark that box has been created
-//    iFrustumTest = pprProjection->TestBoxToFrustum(boxEntity);
-//  }
-//  // if not inside 
-//  if (iFrustumTest < 0)
-//  {
-//    return;
-//  }
-//
-//  // do additional check for eventual mirror plane (if allowed)
-//  INDEX iMirrorPlaneTest = -1;
-//  extern INDEX gap_iOptimizeClipping;
-//  if (gap_iOptimizeClipping > 0 && (pprProjection->pr_bMirror || pprProjection->pr_bWarp))
-//  {
-//    // test sphere against plane
-//    const FLOAT fPlaneDistance = pprProjection->pr_plMirrorView.PointDistance(vHandle);
-//    if (fPlaneDistance < -fR) iMirrorPlaneTest = -1;
-//    else if (fPlaneDistance > +fR) iMirrorPlaneTest = +1;
-//    else
-//    { // if test is indeterminate
-//// create box entity if needed
-//      if (!bModelHasBox)
-//      {
-//        CreateModelOBBox(penModel, vHandle, pprProjection->pr_ViewerRotationMatrix, boxEntity);
-//        bModelHasBox = TRUE;
-//      } // test it to mirror/warp plane
-//      iMirrorPlaneTest = boxEntity.TestAgainstPlane(pprProjection->pr_plMirrorView);
-//    }
-//    // if not in mirror
-//    if (iMirrorPlaneTest < 0)
-//    {
-//      return;
-//    }
-//  }
-
   // if it has a light source with a lens flare and we're not rendering shadows
-  CLightSource *pls = penModel->GetLightSource();
   //if (!re_bRenderingShadows && pls != NULL && pls->ls_plftLensFlare != NULL)
   //{
-  //  // add the lens flare to rendering
   //  AddLensFlare(penModel, pls, pprProjection, re_iIndex);
   //}
 
@@ -971,21 +961,6 @@ void RT_AddModelEntity(CEntity *penModel, SSRT::SSRTMain *ssrt)
   {
     dm.dm_ulFlags |= DMF_HASALPHA;
   }
-  //if (re_bCurrentSectorHasFog)
-  {
-    //dm.dm_ulFlags |= DMF_FOG;
-  }
-  //if (re_bCurrentSectorHasHaze)
-  {
-    //dm.dm_ulFlags |= DMF_HAZE;
-  }
-
-  //// if this is an editor model and editor models are disabled
-  //if (penModel->en_RenderType == CEntity::RT_EDITORMODEL
-  //    && !_wrpWorldRenderPrefs.IsEditorModelsOn())
-  //{
-  //  return;
-  //}
 
   // safety check
   if (pmoModelObject == NULL)
@@ -993,21 +968,9 @@ void RT_AddModelEntity(CEntity *penModel, SSRT::SSRTMain *ssrt)
     return;
   }
 
-  //// if the object is not visible at its distance
-  //if ((!re_bRenderingShadows && !pmoModelObject->IsModelVisible(fMipFactor)))
-  //{
-  //  return;
-  //}
-
-  //// if entity selecting by laso requested, test for selecting
-  //if (_pselenSelectOnRender != NULL) SelectEntityOnRender(*pprProjection, *penModel);
-
   // allow its rendering
   //dm.dm_ulFlags |= DMF_VISIBLE;
   ASSERT(pmoModelObject != NULL);
-
-  // if rendering shadows use only first mip level
-  //if (re_bRenderingShadows) dm.dm_fMipFactor = 0;
 
   // RT: call it here to bypass re_admDelayedModels list
   RT_Post_RenderModels(dm, ssrt);
@@ -1027,23 +990,23 @@ void RT_CleanUpLists()
   //    // for all polygons in sector
   //    FOREACHINSTATICARRAY(itbsc->bsc_abpoPolygons, CBrushPolygon, itpo)
   //    {
-  //      CBrushPolygon &bpo = *itpo;
+  //      CBrushPolygon &polygon = *itpo;
   //      // clear screen polygon pointers
-  //      bpo.bpo_pspoScreenPolygon = NULL;
+  //      polygon.bpo_pspoScreenPolygon = NULL;
   //    }
   //  }
   //}
   //ASSERT(RT_lhActiveSectors.IsEmpty());
 
-  // for all active brushes
-  {
-    FORDELETELIST(CBrush3D, br_lnInActiveBrushes, RT_lhActiveBrushes, itbr)
-    {
-      // remove it from list
-      itbr->br_lnInActiveBrushes.Remove();
-    }
-  }
-  ASSERT(RT_lhActiveBrushes.IsEmpty());
+  //// for all active brushes
+  //{
+  //  FORDELETELIST(CBrush3D, br_lnInActiveBrushes, RT_lhActiveBrushes, itbr)
+  //  {
+  //    // remove it from list
+  //    itbr->br_lnInActiveBrushes.Remove();
+  //  }
+  //}
+  //ASSERT(RT_lhActiveBrushes.IsEmpty());
 }
 
 
@@ -1055,18 +1018,13 @@ void RT_AddAllEntities(CWorld *pwld, SSRT::SSRTMain *ssrt)
   FOREACHINDYNAMICCONTAINER(pwld->wo_cenEntities, CEntity, iten)
   {
     // if it is brush
-    if (iten->en_RenderType == CEntity::RT_BRUSH
-        || (iten->en_RenderType == CEntity::RT_FIELDBRUSH
-            && _wrpWorldRenderPrefs.IsFieldBrushesOn()))
+    if (iten->en_RenderType == CEntity::RT_BRUSH)
     {
       // add all of its sectors
       RT_AddNonZoningBrush(&iten.Current(), NULL, ssrt);
 
-      // if it is model, or editor model that should be drawn
     }
-    else if (iten->en_RenderType == CEntity::RT_MODEL
-             /*|| (iten->en_RenderType == CEntity::RT_EDITORMODEL
-                 && _wrpWorldRenderPrefs.IsEditorModelsOn())*/)
+    else if (iten->en_RenderType == CEntity::RT_MODEL)
     {
       // add it as a model
       RT_AddModelEntity(&iten.Current(), ssrt);
