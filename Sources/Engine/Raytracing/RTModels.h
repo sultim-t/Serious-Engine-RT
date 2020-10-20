@@ -66,13 +66,13 @@ void RT_AddLight(CLightSource *plsLight, SSRT::SSRTMain *ssrt)
   }
 }
 
-static CStaticStackArray<GFXVertex4> RT_AllBrushVertices;
-static CStaticStackArray<INDEX> RT_AllBrushIndices;
+static CStaticStackArray<GFXVertex> RT_AllSectorVertices;
+static CStaticStackArray<INDEX> RT_AllSectorIndices;
 
 void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
 {
-  RT_AllBrushVertices.PopAll();
-  RT_AllBrushIndices.PopAll();
+  RT_AllSectorVertices.PopAll();
+  RT_AllSectorIndices.PopAll();
 
   // maybe export it to .obj file
 
@@ -127,11 +127,11 @@ void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
     // add brush polygon
 #pragma region AddPolygonToScene
 
-    INDEX firstVertexId = RT_AllBrushVertices.Count();
+    INDEX firstVertexId = RT_AllSectorVertices.Count();
     INDEX *origIndices = &polygon.bpo_aiTriangleElements[0];
 
     INDEX vertCount = polygon.bpo_apbvxTriangleVertices.Count();
-    GFXVertex4 *vertices = RT_AllBrushVertices.Push(vertCount);
+    GFXVertex *vertices = RT_AllSectorVertices.Push(vertCount);
 
     for (INDEX i = 0; i < vertCount; i++)
     {
@@ -143,9 +143,9 @@ void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
     }
 
     INDEX indexCount = polygon.bpo_aiTriangleElements.Count();
-    INDEX *indices = RT_AllBrushIndices.Push(indexCount);
+    INDEX *indices = RT_AllSectorIndices.Push(indexCount);
 
-    // set new indices relative to the shift in RT_AllBrushVertices
+    // set new indices relative to the shift in RT_AllSectorVertices
     for (INDEX i = 0; i < indexCount; i++)
     {
       indices[i] = origIndices[i] + firstVertexId;
@@ -176,12 +176,12 @@ void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
   brushInfo.color = RGBAToColor(255, 255, 255, 255);
   brushInfo.absPosition = position;
   brushInfo.absRotation = rotation;
-  brushInfo.vertexCount = RT_AllBrushVertices.Count();
-  brushInfo.vertices = &RT_AllBrushVertices[0];
+  brushInfo.vertexCount = RT_AllSectorVertices.Count();
+  brushInfo.vertices = &RT_AllSectorVertices[0];
   brushInfo.texCoords = nullptr;
   brushInfo.normals = nullptr;
-  brushInfo.indexCount = RT_AllBrushIndices.Count();
-  brushInfo.indices = &RT_AllBrushIndices[0];
+  brushInfo.indexCount = RT_AllSectorIndices.Count();
+  brushInfo.indices = &RT_AllSectorIndices[0];
 
   ssrt->AddBrush(brushInfo);
 }

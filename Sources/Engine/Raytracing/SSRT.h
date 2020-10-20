@@ -19,6 +19,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Entities/Entity.h>
 #include <Engine/Brushes/Brush.h>
+#include <Engine/Templates/LinearAllocator.h>
 
 #include <memory>
 #include <vector>
@@ -26,159 +27,180 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 namespace SSRT
 {
-  struct RTObject
-  {
-    CEntity         *pOriginalEntity;
-    bool            isEnabled;
+// attachments can have attachments, SSRT_MAX_ATTCH_DEPTH defines the max depth
+#define SSRT_MAX_ATTACHMENT_DEPTH 8
 
-  public:
-    ULONG           GetEnitityID() const;
-  };
+struct RTObject
+{
+  CEntity         *pOriginalEntity;
+  bool            isEnabled;
 
-  struct CAbstractGeometry : RTObject
-  {
-    // absolute position and rotation
-    FLOAT3D         absPosition;
-    FLOATmatrix3D   absRotation;
+public:
+  ULONG           GetEnitityID() const;
+};
 
-    COLOR           color;
+struct CAbstractGeometry : RTObject
+{
+  // absolute position and rotation
+  FLOAT3D         absPosition;
+  FLOATmatrix3D   absRotation;
 
-    // Data that should be set to the renderer,
-    // vertices are already animated.
-    // This data will become invalid after adding CModelGeometry
-    // as SE will reset global arrays
-    INDEX           vertexCount;
-    GFXVertex       *vertices;
-    GFXNormal       *normals;
-    GFXTexCoord     *texCoords;
-    INDEX           indexCount;
-    INDEX           *indices;
+  COLOR           color;
 
-    // in relative space
-    //std::shared_ptr<std::vector<FLOAT3D>> positions;
+  // Data that should be set to the renderer,
+  // vertices are already animated.
+  // This data will become invalid after adding CModelGeometry
+  // as SE will reset global arrays
+  INDEX           vertexCount;
+  GFXVertex       *vertices;
+  GFXNormal       *normals;
+  GFXTexCoord     *texCoords;
+  INDEX           indexCount;
+  INDEX           *indices;
 
-  public:
-    virtual ~CAbstractGeometry() = 0;
-  };
+  // in relative space
+  //std::shared_ptr<std::vector<FLOAT3D>> positions;
 
-
-  // Dynamic geometry that changes every frame
-  struct CModelGeometry : public CAbstractGeometry
-  {
-  public:
-    CModelObject    *GetModelObject();
-  };
+public:
+  virtual ~CAbstractGeometry() = 0;
+};
 
 
-  // Static geometry, vertex data doesn't change. 
-  // If it's movable, then transformation can be changed
-  struct CBrushGeometry : public CAbstractGeometry
-  {
-  public:
-    bool            IsMovable() const;
-    CBrush3D        *GetOriginalBrush();
-  };
+// Dynamic geometry that changes every frame
+struct CModelGeometry : public CAbstractGeometry
+{
+  // path to attachment using attachment position ID,
+  // -1 means the end of the list
+  INDEX           attchPath[SSRT_MAX_ATTACHMENT_DEPTH];
+
+public:
+  CModelObject    *GetModelObject();
+};
 
 
-  struct CDirectionalLight : public RTObject
-  {
-    FLOAT3D         direction;
-    COLOR           color;
-    // directional light angular size on a sky in degrees
-    float           angularSize;
-  };
+// Static geometry, vertex data doesn't change. 
+// If it's movable, then transformation can be changed
+struct CBrushGeometry : public CAbstractGeometry
+{
+public:
+  bool            IsMovable() const;
+  CBrush3D        *GetOriginalBrush();
+};
 
 
-  struct CSphereLight : public RTObject
-  {
-    FLOAT3D         absPosition;
-    COLOR           color;
-    float           intensity;
-    float           sphereRadius;
-  };
+struct CDirectionalLight : public RTObject
+{
+  FLOAT3D         direction;
+  COLOR           color;
+  // directional light angular size on a sky in degrees
+  float           angularSize;
+};
 
 
-  // TODO: RT: if SE1 doesn't provide info about deleted entities
-  // then just set isEnabled=false for each object before frame start
-  class SSRTMain
-  {
-  private:
-    ULONG           screenWidth;
-    ULONG           screenHeight;
+struct CSphereLight : public RTObject
+{
+  FLOAT3D         absPosition;
+  COLOR           color;
+  float           intensity;
+  float           sphereRadius;
+};
 
-    // these arrays hold information about all objects in a world
-    CStaticStackArray<CModelGeometry>     models;
-    CStaticStackArray<CBrushGeometry>     staticBrushes;
-    CStaticStackArray<CBrushGeometry>     movableBrushes;
-    CStaticStackArray<CSphereLight>       sphLights;
-    CStaticStackArray<CDirectionalLight>  dirLights;
 
-    // - Every entity can be either model or brush
-    // - A model can have attachments that are models too
-    // - A brush can have several sectors
-    // - An ntity can have one light source "attached" to it.
-    // Next maps are for getting associated SSRT object by entity ID
-    // for updating their params, if they are created
-    std::map<ULONG, std::vector<INDEX>>   entityToModel;
-    std::map<ULONG, std::vector<INDEX>>   entityToStaticBrush;
-    std::map<ULONG, std::vector<INDEX>>   entityToMovableBrush;
-    std::map<ULONG, std::vector<INDEX>>   entityToSphLight;
-    std::map<ULONG, std::vector<INDEX>>   entityToDirLight;
+// TODO: RT: if SE1 doesn't provide info about deleted entities
+// then just set isEnabled=false for each object before frame start
+class SSRTMain
+{
+private:
+  ULONG           screenWidth;
+  ULONG           screenHeight;
 
-  public:
-    void AddModel(const CModelGeometry &model);
-    void AddBrush(const CBrushGeometry &brush);
-    void AddLight(const CSphereLight &sphLt);
-    void AddLight(const CDirectionalLight &dirLt);
 
-    void SetWorld(CWorld *pwld);
+  // global arrays; linear allocators will allocate new blocks without relocation of memory,
+  // so pointers in CAbstractGeometry won't be obsolete
+  CLinearAllocator<GFXVertex>           staticVertices;
+  CLinearAllocator<GFXNormal>           staticNormals;
+  CLinearAllocator<GFXTexCoord>         staticTexCoords;
+  CLinearAllocator<INDEX>               staticIndices;
 
-  private:
-    template<class T>
-    void AddRTObject(const T &obj, CStaticStackArray<T> &arr, std::map<ULONG, std::vector<INDEX>> &entToObjs);
-  };
-  
-#pragma region template implementation
+  CLinearAllocator<GFXVertex>           dynamicVertices;
+  CLinearAllocator<GFXNormal>           dynamicNormals;
+  CLinearAllocator<GFXTexCoord>         dynamicTexCoords;
+  CLinearAllocator<INDEX>               dynamicIndices;
+
+
+  // these arrays hold information about all objects in a world
+  CStaticStackArray<CModelGeometry>     models;
+  CStaticStackArray<CBrushGeometry>     staticBrushes;
+  CStaticStackArray<CBrushGeometry>     movableBrushes;
+  CStaticStackArray<CSphereLight>       sphLights;
+  CStaticStackArray<CDirectionalLight>  dirLights;
+
+  // - Every entity can be either model or brush
+  // - A model can have attachments that are models too
+  // - A brush can have several sectors
+  // - An ntity can have one light source "attached" to it.
+  // Next maps are for getting associated SSRT object by entity ID
+  // for updating their params, if they are created
+  std::map<ULONG, std::vector<INDEX>>   entityToModel;
+  std::map<ULONG, std::vector<INDEX>>   entityToStaticBrush;
+  std::map<ULONG, std::vector<INDEX>>   entityToMovableBrush;
+  std::map<ULONG, std::vector<INDEX>>   entityToSphLight;
+  std::map<ULONG, std::vector<INDEX>>   entityToDirLight;
+
+public:
+  void AddModel(const CModelGeometry &model);
+  void AddBrush(const CBrushGeometry &brush);
+  void AddLight(const CSphereLight &sphLt);
+  void AddLight(const CDirectionalLight &dirLt);
+
+  void SetWorld(CWorld *pwld);
+
+private:
   template<class T>
-  inline void SSRTMain::AddRTObject(const T &obj, CStaticStackArray<T> &arr, std::map<ULONG, std::vector<INDEX>> &entToObjs)
+  void AddRTObject(const T &obj, CStaticStackArray<T> &arr, std::map<ULONG, std::vector<INDEX>> &entToObjs);
+};
+
+#pragma region template implementation
+template<class T>
+inline void SSRTMain::AddRTObject(const T &obj, CStaticStackArray<T> &arr, std::map<ULONG, std::vector<INDEX>> &entToObjs)
+{
+  ASSERT(obj.pOriginalEntity != nullptr);
+
+  // try to find vector by its enitity
+  auto &found = entToObjs.find(obj.GetEnitityID());
+
+  if (found != entToObjs.end())
   {
-    ASSERT(obj.pOriginalEntity != nullptr);
-
-    // try to find vector by its enitity
-    auto &found = entToObjs.find(obj.GetEnitityID());
-
-    if (found != entToObjs.end())
+    for (INDEX i : found->second)
     {
-      for (INDEX i : found->second)
+      // entities must be identical
+      ASSERT(arr[i].pOriginalEntity->en_ulID == obj.GetEnitityID());
+
+      // if parts are the same
+      // (there should be a more reliable and faster way to identify 
+      // the same model attachments or brush sectors than just names) 
+
+      if (obj.pOriginalEntity->GetName() == arr[i].pOriginalEntity->GetName() ||
+          obj.pOriginalEntity->GetDescription() == arr[i].pOriginalEntity->GetDescription())
       {
-        // entities must be identical
-        ASSERT(arr[i].pOriginalEntity->en_ulID == obj.GetEnitityID());
-
-        // if parts are the same
-        // (there should be a more reliable and faster way to identify 
-        // the same model attachments or brush sectors than just names) 
-
-        if (obj.pOriginalEntity->GetName() == arr[i].pOriginalEntity->GetName() ||
-            obj.pOriginalEntity->GetDescription() == arr[i].pOriginalEntity->GetDescription())
-        {
-          // set it and return
-          arr[i] = obj;
-          return;
-        }
+        // set it and return
+        arr[i] = obj;
+        return;
       }
-
-      INDEX i = arr.Count();
-      arr.Push() = obj;
-
-      found->second.push_back(i);
     }
-    else
-    {
-      INDEX i = arr.Count();
-      arr.Push() = obj;
 
-      entToObjs[obj.GetEnitityID()].push_back(i);
-    }
+    INDEX i = arr.Count();
+    arr.Push() = obj;
+
+    found->second.push_back(i);
   }
+  else
+  {
+    INDEX i = arr.Count();
+    arr.Push() = obj;
+
+    entToObjs[obj.GetEnitityID()].push_back(i);
+  }
+}
 #pragma endregion
 }
