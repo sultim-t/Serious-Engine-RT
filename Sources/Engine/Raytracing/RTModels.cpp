@@ -1,18 +1,46 @@
-#pragma once
+/* Copyright (c) 2020 Sultim Tsyrendashiev
+This program is free software; you can redistribute it and/or modify
+it under the terms of version 2 of the GNU General Public License as published by
+the Free Software Foundation
 
-#include "stdh.h"
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
+
+#include "StdH.h"
+#include "RTProcessing.h"
 
 #include <Engine/Entities/Entity.h>
-#include <Engine/Brushes/Brush.h>
+#include <Engine/Models/RenderModel.h>
+#include <Engine/Models/ModelObject.h>
 #include <Engine/Models/ModelData.h>
+#include <Engine/Light/LightSource.h>
+
+#include <Engine/Base/ListIterator.inl>
 
 #include <Engine/Raytracing/SSRT.h>
 
-// this will INTERRUPT original renderer
-//CListHead RT_lhActiveSectors;     // list of active sectors
+
+extern INDEX gfx_bRenderModels;
+extern INDEX gfx_bRenderPredicted;
 
 
-void RT_AddLight(CLightSource *plsLight, SSRT::SSRTMain *ssrt)
+struct RT_VertexData
+{
+  GFXVertex   *vertices;
+  INDEX       vertexCount;
+  GFXNormal   *normals;
+  GFXTexCoord *texCoords;
+};
+
+
+static void RT_AddLight(const CLightSource *plsLight, SSRT::SSRTMain *ssrt)
 {
   ASSERT(plsLight != NULL);
 
@@ -66,224 +94,16 @@ void RT_AddLight(CLightSource *plsLight, SSRT::SSRTMain *ssrt)
   }
 }
 
-static CStaticStackArray<GFXVertex> RT_AllSectorVertices;
-static CStaticStackArray<INDEX> RT_AllSectorIndices;
-
-void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
-{
-  RT_AllSectorVertices.PopAll();
-  RT_AllSectorIndices.PopAll();
-
-  // maybe export it to .obj file
-
-  CBrush3D *brush = bscSector.bsc_pbmBrushMip->bm_pbrBrush;
-
-  FOREACHINSTATICARRAY(bscSector.bsc_abpoPolygons, CBrushPolygon, itpo)
-  {
-    CBrushPolygon &polygon = *itpo;
-
-    // for texture cordinates and transparency/translucency processing
-#pragma region MakeScreenPolygon
-    /*// all portals will be rendered as portals,
-    // original renderer also replaced them with pretenders if they're far away 
-    polygon.bpo_ulFlags &= ~BPOF_RENDERASPORTAL;
-    if (polygon.bpo_ulFlags & BPOF_PORTAL)
-    {
-      polygon.bpo_ulFlags |= BPOF_RENDERASPORTAL;
-    }*/
-
-
-    // TODO: RT: texture coordinates for brushes
-
-    // CRenderer::SetOneTextureParameters(CBrushPolygon &polygon, ScenePolygon &spo, INDEX iLayer)
-    //SetOneTextureParameters(polygon, sppo, 0);
-    //SetOneTextureParameters(polygon, sppo, 1);
-    //SetOneTextureParameters(polygon, sppo, 2);
-
-    if (polygon.bpo_ulFlags & BPOF_TRANSPARENT)
-    {
-      // TODO: RT: if needs alpha keying
-    }
-
-    bool needTranslucency = FALSE;
-    const float fOpacity = brush->br_penEntity->GetOpacity();
-    if (fOpacity < 1)
-    {
-      //needTranslucency = TRUE;
-    }
-
-    // if a translucent brush or a translucent portal
-    if (needTranslucency || ((polygon.bpo_ulFlags & BPOF_PORTAL) && (polygon.bpo_ulFlags & BPOF_TRANSLUCENT)))
-    {
-      polygon.bpo_ulFlags |= BPOF_RENDERTRANSLUCENT;
-      // TODO: RT: translucent brushes
-    }
-    else
-    {
-
-    }
-#pragma endregion
-
-    // add brush polygon
-#pragma region AddPolygonToScene
-
-    INDEX firstVertexId = RT_AllSectorVertices.Count();
-    INDEX *origIndices = &polygon.bpo_aiTriangleElements[0];
-
-    INDEX vertCount = polygon.bpo_apbvxTriangleVertices.Count();
-    GFXVertex *vertices = RT_AllSectorVertices.Push(vertCount);
-
-    for (INDEX i = 0; i < vertCount; i++)
-    {
-      CBrushVertex *brushVert = polygon.bpo_apbvxTriangleVertices[i];
-      vertices[i].x = brushVert->bvx_vRelative(1);
-      vertices[i].y = brushVert->bvx_vRelative(2);
-      vertices[i].z = brushVert->bvx_vRelative(3);
-      vertices[i].shade = 0;
-    }
-
-    INDEX indexCount = polygon.bpo_aiTriangleElements.Count();
-    INDEX *indices = RT_AllSectorIndices.Push(indexCount);
-
-    // set new indices relative to the shift in RT_AllSectorVertices
-    for (INDEX i = 0; i < indexCount; i++)
-    {
-      indices[i] = origIndices[i] + firstVertexId;
-    }
-
-#pragma endregion
-
-    // TODO: RT: brush textures
-    //COLOR color = polygon.bpo_colColor;
-    //CBrushPolygonTexture *textures = polygon.bpo_abptTextures;
-  }
-#pragma region RenderSceneZOnly
-#pragma endregion
-
-  CEntity *brushEntity = brush->br_penEntity;
-  
-  const CPlacement3D &placement = brushEntity->en_ulPhysicsFlags & EPF_MOVABLE ?
-    brushEntity->GetLerpedPlacement() :
-    brushEntity->en_plPlacement;
-
-  FLOAT3D position = placement.pl_PositionVector;
-  FLOATmatrix3D rotation;
-  MakeRotationMatrix(rotation, placement.pl_OrientationAngle);
-
-  SSRT::CBrushGeometry brushInfo = {};
-  brushInfo.pOriginalEntity = brush->br_penEntity;
-  brushInfo.isEnabled = true;
-  brushInfo.color = RGBAToColor(255, 255, 255, 255);
-  brushInfo.absPosition = position;
-  brushInfo.absRotation = rotation;
-  brushInfo.vertexCount = RT_AllSectorVertices.Count();
-  brushInfo.vertices = &RT_AllSectorVertices[0];
-  brushInfo.texCoords = nullptr;
-  brushInfo.normals = nullptr;
-  brushInfo.indexCount = RT_AllSectorIndices.Count();
-  brushInfo.indices = &RT_AllSectorIndices[0];
-
-  ssrt->AddBrush(brushInfo);
-}
-
-
-void RT_AddNonZoningBrush(CEntity *penBrush, CBrushSector *pbscThatAdds, SSRT::SSRTMain *ssrt)
-{
-  ASSERT(penBrush != NULL);
-  // get its brush
-  CBrush3D &brBrush = *penBrush->en_pbrBrush;
-
-  // if hidden
-  if (penBrush->en_ulFlags & ENF_HIDDEN)
-  {
-    // skip it
-    return;
-  }
-
-  // RT: this must not happen, as iteration in AddAllEntities is done over all brushes
-  //// if the brush is already added
-  //if (brBrush.br_lnInActiveBrushes.IsLinked())
-  //{
-  //  // skip it
-  //  return;
-  //}
-
-  if (penBrush->en_ulFlags & ENF_ZONING)
-  {
-    return;
-  }
-
-  // skip whole non-zoning brush if all polygons in all sectors are invisible for rendering 
-  bool isVisible = false;
-
-  // test every brush polygon for it's visibility flag
-  // for every sector in brush
-  FOREACHINDYNAMICARRAY(brBrush.GetFirstMip()->bm_abscSectors, CBrushSector, itbsc)
-  {
-    // for all polygons in sector
-    FOREACHINSTATICARRAY(itbsc->bsc_abpoPolygons, CBrushPolygon, itpo)
-    {
-      // advance to next polygon if invisible
-      CBrushPolygon &bpo = *itpo;
-      if (!(bpo.bpo_ulFlags & BPOF_INVISIBLE))
-      {
-        isVisible = true;
-        break;
-      }
-    }
-
-    if (isVisible)
-    {
-      break;
-    }
-  }
-
-  if (!isVisible)
-  {
-    return;
-  }
-
-  // RT: get highest mip
-  CBrushMip *pbm = brBrush.GetBrushMipByDistance(0);
-
-  // if brush mip exists for that mip factor
-  if (pbm != NULL)
-  {
-    // for each sector
-    FOREACHINDYNAMICARRAY(pbm->bm_abscSectors, CBrushSector, itbsc)
-    {
-      // if the sector is not hidden
-      if (!(itbsc->bsc_ulFlags & BSCF_HIDDEN))
-      {
-        // add that sector to active sectors
-        RT_AddActiveSector(itbsc.Current(), ssrt);
-      }
-    }
-  }
-}
-
-
-// ----------------------------
-
-struct RT_VertexData
-{
-  GFXVertex   *vertices;
-  INDEX       vertexCount;
-  GFXNormal   *normals;
-  GFXTexCoord *texCoords;
-};
 
 // Create render model structure for rendering an attached model
 //BOOL CModelObject::CreateAttachment( CRenderModel &rmMain, CAttachmentModelObject &amo)
-BOOL RT_CreateAttachment(CModelObject &moParent, CRenderModel &rmMain, CAttachmentModelObject &amo)
+static BOOL RT_CreateAttachment(const CModelObject &moParent, const CRenderModel &rmMain, const CAttachmentModelObject &amo)
 {
   CRenderModel &rmAttached = *amo.amo_prm;
   rmAttached.rm_ulFlags = rmMain.rm_ulFlags & (RMF_FOG | RMF_HAZE | RMF_WEAPON) | RMF_ATTACHMENT;
 
   // get the position
-  rmMain.rm_pmdModelData->md_aampAttachedPosition.Lock();
   const CAttachedModelPosition &amp = rmMain.rm_pmdModelData->md_aampAttachedPosition[ amo.amo_iAttachedPosition ];
-  rmMain.rm_pmdModelData->md_aampAttachedPosition.Unlock();
 
   // copy common values
   rmAttached.rm_vLightDirection = rmMain.rm_vLightDirection;
@@ -297,9 +117,36 @@ BOOL RT_CreateAttachment(CModelObject &moParent, CRenderModel &rmMain, CAttachme
   const INDEX iCenter = amp.amp_iCenterVertex;
   const INDEX iFront = amp.amp_iFrontVertex;
   const INDEX iUp = amp.amp_iUpVertex;
-  moParent.UnpackVertex(rmMain, iCenter, vCenter);
-  moParent.UnpackVertex(rmMain, iFront, vFront);
-  moParent.UnpackVertex(rmMain, iUp, vUp);
+
+  auto unpackVertex = [ &moParent ] (const CRenderModel &rm, INDEX iVertex, FLOAT3D &vVertex)
+  {
+    const CModelData *data = ((CModelObject &) moParent).GetData();
+
+    if (data->md_Flags & MF_COMPRESSED_16BIT)
+    {
+      // get 16 bit packed vertices
+      const SWPOINT3D &vsw0 = rm.rm_pFrame16_0[iVertex].mfv_SWPoint;
+      const SWPOINT3D &vsw1 = rm.rm_pFrame16_1[iVertex].mfv_SWPoint;
+      // convert them to float and lerp between them
+      vVertex(1) = (Lerp((FLOAT) vsw0(1), (FLOAT) vsw1(1), rm.rm_fRatio) - rm.rm_vOffset(1)) * rm.rm_vStretch(1);
+      vVertex(2) = (Lerp((FLOAT) vsw0(2), (FLOAT) vsw1(2), rm.rm_fRatio) - rm.rm_vOffset(2)) * rm.rm_vStretch(2);
+      vVertex(3) = (Lerp((FLOAT) vsw0(3), (FLOAT) vsw1(3), rm.rm_fRatio) - rm.rm_vOffset(3)) * rm.rm_vStretch(3);
+    }
+    else
+    {
+      // get 8 bit packed vertices
+      const SBPOINT3D &vsb0 = rm.rm_pFrame8_0[iVertex].mfv_SBPoint;
+      const SBPOINT3D &vsb1 = rm.rm_pFrame8_1[iVertex].mfv_SBPoint;
+      // convert them to float and lerp between them
+      vVertex(1) = (Lerp((FLOAT) vsb0(1), (FLOAT) vsb1(1), rm.rm_fRatio) - rm.rm_vOffset(1)) * rm.rm_vStretch(1);
+      vVertex(2) = (Lerp((FLOAT) vsb0(2), (FLOAT) vsb1(2), rm.rm_fRatio) - rm.rm_vOffset(2)) * rm.rm_vStretch(2);
+      vVertex(3) = (Lerp((FLOAT) vsb0(3), (FLOAT) vsb1(3), rm.rm_fRatio) - rm.rm_vOffset(3)) * rm.rm_vStretch(3);
+    }
+  };
+
+  unpackVertex(rmMain, iCenter, vCenter);
+  unpackVertex(rmMain, iFront, vFront);
+  unpackVertex(rmMain, iUp, vUp);
 
   // create front and up direction vectors
   FLOAT3D vY = vUp - vCenter;
@@ -348,10 +195,10 @@ BOOL RT_CreateAttachment(CModelObject &moParent, CRenderModel &rmMain, CAttachme
 
 
 //void CModelObject::SetupModelRendering( CRenderModel &rm)
-void RT_SetupModelRendering(CModelObject &mo, CRenderModel &rm, SSRT::SSRTMain *ssrt)
+static void RT_SetupModelRendering(const CModelObject &mo, CRenderModel &rm, SSRT::SSRTMain *ssrt)
 {
   // get model's data and lerp info
-  rm.rm_pmdModelData = (CModelData *) mo.GetData();
+  rm.rm_pmdModelData = (CModelData *) ((CModelObject &) mo).GetData();
   mo.GetFrame(rm.rm_iFrame0, rm.rm_iFrame1, rm.rm_fRatio);
 
   const INDEX ctVertices = rm.rm_pmdModelData->md_VerticesCt;
@@ -418,7 +265,7 @@ void RT_SetupModelRendering(CModelObject &mo, CRenderModel &rm, SSRT::SSRTMain *
 
   // get current mip model using mip factor
   rm.rm_iMipLevel = 0;//mo.GetMipModel(rm.rm_fMipFactor);
-  mo.mo_iLastRenderMipLevel = rm.rm_iMipLevel;
+  //mo.mo_iLastRenderMipLevel = rm.rm_iMipLevel;
   // get current vertices mask
   rm.rm_pmmiMip = &rm.rm_pmdModelData->md_MipInfos[ rm.rm_iMipLevel ];
 
@@ -458,7 +305,10 @@ void RT_SetupModelRendering(CModelObject &mo, CRenderModel &rm, SSRT::SSRTMain *
 
 // RT: add vertices to corresponding CModelObject
 //void RenderOneSide( CRenderModel &rm, BOOL bBackSide, ULONG ulLayerFlags)
-void RT_RenderOneSide(CEntity *pen, CRenderModel &rm, CModelObject &mo, const RT_VertexData &vd, BOOL bBackSide, SSRT::SSRTMain *ssrt)
+static void RT_RenderOneSide(const CEntity *pen, CRenderModel &rm,
+                      const RT_VertexData &vd, BOOL bBackSide, 
+                      const INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH], INDEX attchCount,
+                      SSRT::SSRTMain *ssrt)
 {
   // set face culling
   if (bBackSide)
@@ -555,13 +405,19 @@ void RT_RenderOneSide(CEntity *pen, CRenderModel &rm, CModelObject &mo, const RT
     modelInfo.indexCount = indexCount;
     modelInfo.indices = indices;
 
+    for (INDEX i = 0; i < SSRT_MAX_ATTACHMENT_DEPTH; i++)
+    {
+      modelInfo.attchPath[i] = attchPath[i];
+    }
+
     ssrt->AddModel(modelInfo);
   }
 }
 
 
 
-void RT_RenderModel_View(CEntity *pen, CModelObject &mo, CRenderModel &rm, SSRT::SSRTMain *ssrt)
+static void RT_RenderModel_View(const CEntity *pen, const CModelObject &mo, CRenderModel &rm,
+                         const INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH], INDEX attchCount, SSRT::SSRTMain *ssrt)
 //void CModelObject::RenderModel_View(CRenderModel &rm)
 {
   // TODO: RT: use this if some additional transformation is required for weapons
@@ -580,7 +436,6 @@ void RT_RenderModel_View(CEntity *pen, CModelObject &mo, CRenderModel &rm, SSRT:
   // declare pointers for general usage
   INDEX iSrfVx0, ctSrfVx;
   ModelMipInfo &mmi = *rm.rm_pmmiMip;
-  const ModelMipInfo &mmi0 = rm.rm_pmdModelData->md_MipInfos[ 0 ];
 
   // allocate vertex arrays
   extern INDEX _ctAllMipVx;
@@ -657,7 +512,7 @@ void RT_RenderModel_View(CEntity *pen, CModelObject &mo, CRenderModel &rm, SSRT:
         break;
       }
       
-      UWORD *puwSrfToMip = &mmi.mmpi_auwSrfToMip[ iSrfVx0 ];
+      const UWORD *puwSrfToMip = &mmi.mmpi_auwSrfToMip[ iSrfVx0 ];
 
       // setup vertex array
       GFXVertex *pvtxSrfBase = &_avtxSrfBase[iSrfVx0];
@@ -695,7 +550,7 @@ void RT_RenderModel_View(CEntity *pen, CModelObject &mo, CRenderModel &rm, SSRT:
 
 
   // get diffuse texture corrections
-  CTextureData *ptdDiff = (CTextureData *) mo.mo_toTexture.GetData();
+  const CTextureData *ptdDiff = (CTextureData *) ((CTextureObject&)mo.mo_toTexture).GetData();
   if (ptdDiff != NULL)
   {
     fTexCorrU = 1.0f / ptdDiff->GetWidth();
@@ -727,8 +582,8 @@ void RT_RenderModel_View(CEntity *pen, CModelObject &mo, CRenderModel &rm, SSRT:
       }
 
       // cache surface pointers
-      UWORD *puwSrfToMip = &mmi.mmpi_auwSrfToMip[ iSrfVx0 ];
-      FLOAT2D *pvTexCoord = &mmi.mmpi_avmexTexCoord[ iSrfVx0 ];
+      const UWORD *puwSrfToMip = &mmi.mmpi_auwSrfToMip[ iSrfVx0 ];
+      const FLOAT2D *pvTexCoord = &mmi.mmpi_avmexTexCoord[ iSrfVx0 ];
 
       GFXTexCoord *ptexSrfBase = &_atexSrfBase[ iSrfVx0 ];
       GFXColor *pcolSrfBase = &_acolSrfBase[ iSrfVx0 ];
@@ -770,7 +625,7 @@ void RT_RenderModel_View(CEntity *pen, CModelObject &mo, CRenderModel &rm, SSRT:
 
     // RT: everything is set, copy model data to SSRT
     //RT_RenderOneSide(rm, TRUE);
-    RT_RenderOneSide(pen, rm, mo, vd, FALSE, ssrt);
+    RT_RenderOneSide(pen, rm, vd, FALSE, attchPath, attchCount, ssrt);
   }
 
   // adjust z-buffer and blending functions
@@ -797,7 +652,7 @@ void RT_RenderModel_View(CEntity *pen, CModelObject &mo, CRenderModel &rm, SSRT:
 
 
 //void CModelObject::RenderModel(CRenderModel &rm)
-void RT_RenderModel(CEntity *pen, CModelObject &mo, CRenderModel &rm, SSRT::SSRTMain *ssrt)
+static void RT_RenderModel(const CEntity *pen, const CModelObject &mo, CRenderModel &rm, INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH], INDEX attchCount, SSRT::SSRTMain *ssrt)
 {
   // skip invisible models
   if (mo.mo_Stretch == FLOAT3D(0, 0, 0)) return;
@@ -812,7 +667,13 @@ void RT_RenderModel(CEntity *pen, CModelObject &mo, CRenderModel &rm, SSRT::SSRT
     //if (rm.rm_ulFlags & (RMF_FOG | RMF_HAZE)) CalculateBoundingBox(this, rm);
     // render complete model
     //rm.SetModelView();
-    RT_RenderModel_View(pen, mo, rm, ssrt);
+    RT_RenderModel_View(pen, mo, rm, attchPath, attchCount, ssrt);
+  }
+
+  // if too many attachments on attachments
+  if (attchCount >= SSRT_MAX_ATTACHMENT_DEPTH)
+  {
+    return;
   }
 
   // render each attachment on this model object
@@ -820,16 +681,23 @@ void RT_RenderModel(CEntity *pen, CModelObject &mo, CRenderModel &rm, SSRT::SSRT
   {
     // calculate bounding box of an attachment    
     CAttachmentModelObject *pamo = itamo;
-    if (pamo->amo_prm == NULL) continue; 
+    if (pamo->amo_prm == NULL)
+    {
+      continue;
+    }
+
+    // set the last as current attachment position,
+    // we're assuming that each attachment uses its unique amo_iAttachedPosition
+    attchPath[attchCount] = pamo->amo_iAttachedPosition;
     
-    RT_RenderModel(pen, pamo->amo_moModelObject, *pamo->amo_prm, ssrt);
+    RT_RenderModel(pen, pamo->amo_moModelObject, *pamo->amo_prm, attchPath, attchCount + 1, ssrt);
   }
 }
 
 
 //void CRenderer::RenderOneModel(CEntity &en, CModelObject &moModel, const CPlacement3D &plModel,
 //                               const FLOAT fDistanceFactor, BOOL bRenderShadow, ULONG ulDMFlags)
-void RT_RenderOneModel(CEntity &en, CModelObject &moModel, const CPlacement3D &plModel,
+static void RT_RenderOneModel(const CEntity &en, const CModelObject &moModel, const CPlacement3D &plModel,
                        const FLOAT fDistanceFactor, BOOL bRenderShadow, ULONG ulDMFlags, 
                        SSRT::SSRTMain *ssrt)
 {
@@ -843,6 +711,9 @@ void RT_RenderOneModel(CEntity &en, CModelObject &moModel, const CPlacement3D &p
   // RT: for calculating rotaion matrix and setting position vector
   rm.SetObjectPlacement(plModel);
 
+  // TODO: RT: alpha
+  // moModel->HasAlpha()
+
   //if (ulDMFlags & DMF_FOG)      rm.rm_ulFlags |= RMF_FOG;
   //if (ulDMFlags & DMF_HAZE)     rm.rm_ulFlags |= RMF_HAZE;
 
@@ -855,10 +726,10 @@ void RT_RenderOneModel(CEntity &en, CModelObject &moModel, const CPlacement3D &p
     rm.rm_ulFlags |= RMF_SPECTATOR;
   }
 
-  if (IsOfClass(&en, "Player Weapons"))
+  /*if (IsOfClass(&en, "Player Weapons"))
   {
     rm.rm_ulFlags |= RMF_WEAPON;
-  }
+  }*/
 
   // prepare CRenderModel structure for rendering of one model
   RT_SetupModelRendering(moModel, rm, ssrt);
@@ -866,8 +737,16 @@ void RT_RenderOneModel(CEntity &en, CModelObject &moModel, const CPlacement3D &p
   // if the entity is not the viewer, or this is not primary renderer
   if (re_penViewer != &en)
   {  
-    // RT: set all vertices (with attachments) in one array
-    RT_RenderModel(&en, moModel, rm, ssrt);
+    // attachment path for SSRT::CModelGeometry,
+    INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH];
+    for (INDEX i = 0; i < SSRT_MAX_ATTACHMENT_DEPTH; i++)
+    {
+      // init all as -1
+      attchPath[i] = -1;
+    }
+
+    // RT: process a model with all its attachmnets
+    RT_RenderModel(&en, moModel, rm, attchPath, 0, ssrt);
   }
   else
   {
@@ -876,18 +755,20 @@ void RT_RenderOneModel(CEntity &en, CModelObject &moModel, const CPlacement3D &p
     //_colViewerLight = rm.rm_colLight;
     //_colViewerAmbient = rm.rm_colAmbient;
   }
+
+  extern CStaticStackArray<CRenderModel> _armRenderModels;
+  _armRenderModels.PopAll();
 }
 
 
 // CRenderer::RenderModels(BOOL bBackground)
-void RT_Post_RenderModels(CDelayedModel &dm, SSRT::SSRTMain *ssrt)
+static void RT_Post_RenderModels(const CEntity &en, const CModelObject &mo, SSRT::SSRTMain *ssrt)
 {
   if (!gfx_bRenderModels)
   {
     return;
   }
 
-  CEntity &en = *dm.dm_penModel;
   BOOL bIsBackground =/* re_bBackgroundEnabled &&*/ (en.en_ulFlags & ENF_BACKGROUND);
 
   // TODO: RT: ignore background for now
@@ -896,13 +777,11 @@ void RT_Post_RenderModels(CDelayedModel &dm, SSRT::SSRTMain *ssrt)
     return;
   }
 
-  // render the model with its shadow
-  CModelObject &moModelObject = *dm.dm_pmoModel;
-  RT_RenderOneModel(en, moModelObject, en.GetLerpedPlacement(), dm.dm_fMipFactor, TRUE, dm.dm_ulFlags, ssrt);
+  RT_RenderOneModel(en, mo, en.GetLerpedPlacement(), 0, TRUE, 0, ssrt);
 }
 
 
-void RT_AddModelEntity(CEntity *penModel, SSRT::SSRTMain *ssrt)
+void RT_AddModelEntity(const CEntity *penModel, SSRT::SSRTMain *ssrt)
 {
   // if the entity is currently active or hidden, don't add it again
   if (penModel->en_ulFlags & (ENF_INRENDERING | ENF_HIDDEN))
@@ -917,18 +796,18 @@ void RT_AddModelEntity(CEntity *penModel, SSRT::SSRTMain *ssrt)
   }
   
   // add light source there is one
-  CLightSource *pls = penModel->GetLightSource();
+  const CLightSource *pls = ((CEntity *) penModel)->GetLightSource();
   if (pls != NULL)
   {
     RT_AddLight(pls, ssrt);
   }
 
   // get its model object
-  CModelObject *pmoModelObject;
+  const CModelObject *pmoModelObject;
   if (penModel->en_RenderType != CEntity::RT_BRUSH &&
       penModel->en_RenderType != CEntity::RT_FIELDBRUSH)
   {
-    pmoModelObject = penModel->GetModelForRendering();
+    pmoModelObject = ((CEntity *) penModel)->GetModelForRendering();
   }
   else
   {
@@ -939,15 +818,14 @@ void RT_AddModelEntity(CEntity *penModel, SSRT::SSRTMain *ssrt)
   }
 
   // mark the entity as active in rendering
-  penModel->en_ulFlags |= ENF_INRENDERING;
+  //penModel->en_ulFlags |= ENF_INRENDERING;
 
   // add it to a container for delayed rendering
-  CDelayedModel dm = {}; // re_admDelayedModels.Push();
-  dm.dm_penModel = penModel;
-  dm.dm_pmoModel = pmoModelObject;
-  dm.dm_ulFlags = NONE; // invisible until proved otherwise
-  dm.dm_fDistance = 0;// fDistance;
-  dm.dm_fMipFactor = 0;// fMipFactor;
+  //CDelayedModel dm = {}; // re_admDelayedModels.Push();
+  //dm.dm_pmoModel = pmoModelObject;
+  //dm.dm_ulFlags = NONE; // invisible until proved otherwise
+  //dm.dm_fDistance = 0;// fDistance;
+  //dm.dm_fMipFactor = 0;// fMipFactor;
 
   // if it has a light source with a lens flare and we're not rendering shadows
   //if (!re_bRenderingShadows && pls != NULL && pls->ls_plftLensFlare != NULL)
@@ -957,10 +835,10 @@ void RT_AddModelEntity(CEntity *penModel, SSRT::SSRTMain *ssrt)
 
   // RT: flags for fog and haze?
   // adjust model flags
-  if (pmoModelObject->HasAlpha())
-  {
-    dm.dm_ulFlags |= DMF_HASALPHA;
-  }
+  //if (pmoModelObject->HasAlpha())
+  //{
+  //  dm.dm_ulFlags |= DMF_HASALPHA;
+  //}
 
   // safety check
   if (pmoModelObject == NULL)
@@ -970,64 +848,7 @@ void RT_AddModelEntity(CEntity *penModel, SSRT::SSRTMain *ssrt)
 
   // allow its rendering
   //dm.dm_ulFlags |= DMF_VISIBLE;
-  ASSERT(pmoModelObject != NULL);
 
   // RT: call it here to bypass re_admDelayedModels list
-  RT_Post_RenderModels(dm, ssrt);
-}
-
-
-
-void RT_CleanUpLists()
-{
-  //// for all active sectors
-  //{
-  //  FORDELETELIST(CBrushSector, bsc_lnInActiveSectors, RT_lhActiveSectors, itbsc)
-  //  {
-  //    // remove it from list
-  //    itbsc->bsc_lnInActiveSectors.Remove();
-
-  //    // for all polygons in sector
-  //    FOREACHINSTATICARRAY(itbsc->bsc_abpoPolygons, CBrushPolygon, itpo)
-  //    {
-  //      CBrushPolygon &polygon = *itpo;
-  //      // clear screen polygon pointers
-  //      polygon.bpo_pspoScreenPolygon = NULL;
-  //    }
-  //  }
-  //}
-  //ASSERT(RT_lhActiveSectors.IsEmpty());
-
-  //// for all active brushes
-  //{
-  //  FORDELETELIST(CBrush3D, br_lnInActiveBrushes, RT_lhActiveBrushes, itbr)
-  //  {
-  //    // remove it from list
-  //    itbr->br_lnInActiveBrushes.Remove();
-  //  }
-  //}
-  //ASSERT(RT_lhActiveBrushes.IsEmpty());
-}
-
-
-void RT_AddAllEntities(CWorld *pwld, SSRT::SSRTMain *ssrt)
-{
-  RT_CleanUpLists();
-
-  // for all entities in world
-  FOREACHINDYNAMICCONTAINER(pwld->wo_cenEntities, CEntity, iten)
-  {
-    // if it is brush
-    if (iten->en_RenderType == CEntity::RT_BRUSH)
-    {
-      // add all of its sectors
-      RT_AddNonZoningBrush(&iten.Current(), NULL, ssrt);
-
-    }
-    else if (iten->en_RenderType == CEntity::RT_MODEL)
-    {
-      // add it as a model
-      RT_AddModelEntity(&iten.Current(), ssrt);
-    }
-  }
+  RT_Post_RenderModels(*penModel, *pmoModelObject, ssrt);
 }

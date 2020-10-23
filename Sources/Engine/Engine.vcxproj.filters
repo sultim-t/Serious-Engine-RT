@@ -796,6 +796,15 @@
     <ClCompile Include="Raytracing\SSRT.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Raytracing\SSRTObjects.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Raytracing\RTModels.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Raytracing\RTBrushes.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Base\Anim.h">
@@ -1434,10 +1443,13 @@
     <ClInclude Include="Graphics\Vulkan\SvkMain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Raytracing\RTModels.h">
+    <ClInclude Include="Raytracing\SSRT.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Raytracing\SSRT.h">
+    <ClInclude Include="Raytracing\SSRTObjects.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Raytracing\RTProcessing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

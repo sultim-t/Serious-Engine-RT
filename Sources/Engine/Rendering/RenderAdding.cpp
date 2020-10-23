@@ -13,8 +13,6 @@ You should have received a copy of the GNU General Public License along
 with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
-#include <Engine/Raytracing/RTModels.h>
-
 // for generating unique IDs for lens flares
 // (32 bit should be enough for generating 1 lens flare per second during approx. 136 years)
 static INDEX _iNextLensFlareID = 1; // 0 is reserved for no-id
@@ -509,11 +507,6 @@ void CRenderer::AddTerrainEntity(CEntity *penTerrain)
 /* Add to rendering all entities in the world (used in special cases in world editor). */
 void CRenderer::AddAllEntities(void)
 {
-  // TODO: RT: remove
-  SSRT::SSRTMain *ssrt = new SSRT::SSRTMain();
-
-  RT_AddAllEntities(re_pwoWorld, ssrt);
-
   // for all entities in world
   FOREACHINDYNAMICCONTAINER(re_pwoWorld->wo_cenEntities, CEntity, iten) {
     // if it is brush

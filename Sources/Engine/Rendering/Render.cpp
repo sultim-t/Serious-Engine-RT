@@ -59,6 +59,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Templates/StaticStackArray.cpp>
 #include <Engine/Templates/DynamicStackArray.cpp>
 
+#include <Engine/Raytracing/SSRT.h>
+
 extern BOOL _bSomeDarkExists;
 extern INDEX d3d_bAlternateDepthReads;
 
@@ -369,67 +371,72 @@ void CRenderer::AddInitialSectors(void)
     }
   }
 
-  // if a viewer entity is given
-  //if (re_penViewer!=NULL) {
-  //  // add all zoning sectors near the entity
-  //  AddZoningSectorsAroundEntity(re_penViewer, re_prProjection->ViewerPlacementR().pl_PositionVector);
-  //  // make sure the viewer is always added (if model)
-  //  if(re_penViewer->en_RenderType==CEntity::RT_MODEL ||
-  //     re_penViewer->en_RenderType==CEntity::RT_EDITORMODEL) {
-  //    AddModelEntity(re_penViewer);
-  //  }
-  //// if a viewer polygons are given
-  //} else if (re_pcspoViewPolygons!=NULL) {
-  //  // for each polygon
-  //  FOREACHINDYNAMICCONTAINER(*re_pcspoViewPolygons, CScreenPolygon, itspo) {
-  //    CBrushPolygon *pbpo = itspo->spo_pbpoBrushPolygon;
-  //    // get the sector, sector's brush mip, brush and entity
-  //    CBrushSector *pbsc = pbpo->bpo_pbscSector;
-  //    CBrushMip *pbmBrushMip = pbsc->bsc_pbmBrushMip;
-  //    CBrush3D *pbrBrush = pbmBrushMip->bm_pbrBrush;
-  //    ASSERT(pbrBrush!=NULL);
-  //    CEntity *penBrush = pbrBrush->br_penEntity;
-  //    // if the brush is zoning
-  //    if (penBrush->en_ulFlags&ENF_ZONING) {
-  //      // add the sector that the polygon is in
-  //      AddGivenZoningSector(pbsc);
-  //    // if the brush is non-zoning
-  //    } else {
-  //      // add sectors around it
-  //      AddZoningSectorsAroundEntity(penBrush, penBrush->GetPlacement().pl_PositionVector);
-  //    }
-  //  }
-  //// if there is no viewer entity/polygon
-  //} else {
-  //  // set up viewer bounding box as box of minimum redraw range around viewer position
-  //  if (re_bRenderingShadows) {
-  //    // NOTE: when rendering shadows, this is set in ::RenderShadows()
-  //    //re_boxViewer = FLOATaabbox3D(re_prProjection->ViewerPlacementR().pl_PositionVector,
-  //    //  1.0f);
-  //  } else {
-  //    re_boxViewer = FLOATaabbox3D(re_prProjection->ViewerPlacementR().pl_PositionVector,
-  //      _wrpWorldRenderPrefs.wrp_fMinimumRenderRange);
-  //  }
-  //  // add all zoning sectors near viewer box
-  //  AddZoningSectorsAroundBox(re_boxViewer);
-  //  // NOTE: this is so entities outside of world can be edited in WEd
-  //  // if editor models should be rendered
-  //  if (_wrpWorldRenderPrefs.IsEditorModelsOn()) {
-  //    // add all nonzoning entities near viewer box
-  //    AddEntitiesInBox(re_boxViewer);
-  //  }
-  //}
+  // TODO: RT: remove
+  static SSRT::SSRTMain *ssrt = new SSRT::SSRTMain();
+  ssrt->StartFrame();
+  ssrt->EndFrame();
 
-  //if( wld_bAlwaysAddAll) {
+  // if a viewer entity is given
+  if (re_penViewer!=NULL) {
+    // add all zoning sectors near the entity
+    AddZoningSectorsAroundEntity(re_penViewer, re_prProjection->ViewerPlacementR().pl_PositionVector);
+    // make sure the viewer is always added (if model)
+    if(re_penViewer->en_RenderType==CEntity::RT_MODEL ||
+       re_penViewer->en_RenderType==CEntity::RT_EDITORMODEL) {
+      AddModelEntity(re_penViewer);
+    }
+  // if a viewer polygons are given
+  } else if (re_pcspoViewPolygons!=NULL) {
+    // for each polygon
+    FOREACHINDYNAMICCONTAINER(*re_pcspoViewPolygons, CScreenPolygon, itspo) {
+      CBrushPolygon *pbpo = itspo->spo_pbpoBrushPolygon;
+      // get the sector, sector's brush mip, brush and entity
+      CBrushSector *pbsc = pbpo->bpo_pbscSector;
+      CBrushMip *pbmBrushMip = pbsc->bsc_pbmBrushMip;
+      CBrush3D *pbrBrush = pbmBrushMip->bm_pbrBrush;
+      ASSERT(pbrBrush!=NULL);
+      CEntity *penBrush = pbrBrush->br_penEntity;
+      // if the brush is zoning
+      if (penBrush->en_ulFlags&ENF_ZONING) {
+        // add the sector that the polygon is in
+        AddGivenZoningSector(pbsc);
+      // if the brush is non-zoning
+      } else {
+        // add sectors around it
+        AddZoningSectorsAroundEntity(penBrush, penBrush->GetPlacement().pl_PositionVector);
+      }
+    }
+  // if there is no viewer entity/polygon
+  } else {
+    // set up viewer bounding box as box of minimum redraw range around viewer position
+    if (re_bRenderingShadows) {
+      // NOTE: when rendering shadows, this is set in ::RenderShadows()
+      //re_boxViewer = FLOATaabbox3D(re_prProjection->ViewerPlacementR().pl_PositionVector,
+      //  1.0f);
+    } else {
+      re_boxViewer = FLOATaabbox3D(re_prProjection->ViewerPlacementR().pl_PositionVector,
+        _wrpWorldRenderPrefs.wrp_fMinimumRenderRange);
+    }
+    // add all zoning sectors near viewer box
+    AddZoningSectorsAroundBox(re_boxViewer);
+    // NOTE: this is so entities outside of world can be edited in WEd
+    // if editor models should be rendered
+    if (_wrpWorldRenderPrefs.IsEditorModelsOn()) {
+      // add all nonzoning entities near viewer box
+      AddEntitiesInBox(re_boxViewer);
+    }
+  }
+
+  if( wld_bAlwaysAddAll) {
     AddAllEntities(); // used for profiling
-  //} else {
-  //  // NOTE: this is so that world can be viewed from the outside in game
-  //  // if no brush sectors have been added so far
-  //  if (!re_bRenderingShadows && re_lhActiveSectors.IsEmpty()) {
-  //    // add all entities in the world
-  //    AddAllEntities();
-  //  }
-  //}
+  } else {
+    // NOTE: this is so that world can be viewed from the outside in game
+    // if no brush sectors have been added so far
+    if (!re_bRenderingShadows && re_lhActiveSectors.IsEmpty()) {
+      // add all entities in the world
+      AddAllEntities();
+    }
+  }
 
   // add the background if needed
   if (re_bBackgroundEnabled) {
