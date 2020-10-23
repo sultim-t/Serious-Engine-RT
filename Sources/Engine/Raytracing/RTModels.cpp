@@ -83,7 +83,7 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::SSRTMain *ssrt)
     float falloff = plsLight->ls_rFallOff;
 
     SSRT::CSphereLight light = {};
-    light.pOriginalEntity = plsLight->ls_penEntity;
+    light.entityID = plsLight->ls_penEntity->en_ulID;
     light.isEnabled = true;
     light.absPosition = position;
     light.color = color;
@@ -393,7 +393,7 @@ static void RT_RenderOneSide(const CEntity *pen, CRenderModel &rm,
     // TODO: RT: default, MF_HALF_FACE_FORWARD, MF_FACE_FORWARD
 
     SSRT::CModelGeometry modelInfo = {};
-    modelInfo.pOriginalEntity = pen;
+    modelInfo.entityID = pen->en_ulID;
     modelInfo.isEnabled = true;
     modelInfo.absPosition = rm.rm_vObjectPosition;
     modelInfo.absRotation = rm.rm_mObjectRotation;

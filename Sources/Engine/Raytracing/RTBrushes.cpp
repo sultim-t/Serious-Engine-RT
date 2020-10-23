@@ -120,7 +120,9 @@ static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
 
   CEntity *brushEntity = brush->br_penEntity;
 
-  const CPlacement3D &placement = brushEntity->en_ulPhysicsFlags & EPF_MOVABLE ?
+  bool isMovable = brushEntity->en_ulPhysicsFlags & EPF_MOVABLE;
+
+  const CPlacement3D &placement = isMovable ?
     brushEntity->GetLerpedPlacement() :
     brushEntity->en_plPlacement;
 
@@ -129,7 +131,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
   MakeRotationMatrix(rotation, placement.pl_OrientationAngle);
 
   SSRT::CBrushGeometry brushInfo = {};
-  brushInfo.pOriginalEntity = brush->br_penEntity;
+  brushInfo.entityID = brush->br_penEntity->en_ulID;
   brushInfo.isEnabled = true;
   brushInfo.color = RGBAToColor(255, 255, 255, 255);
   brushInfo.absPosition = position;
@@ -141,7 +143,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
   brushInfo.indexCount = RT_AllSectorIndices.Count();
   brushInfo.indices = &RT_AllSectorIndices[0];
 
-  ssrt->AddBrush(brushInfo);
+  ssrt->AddBrush(brushInfo, isMovable);
 }
 
 

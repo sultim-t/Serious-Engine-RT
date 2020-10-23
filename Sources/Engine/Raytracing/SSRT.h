@@ -32,33 +32,18 @@ namespace SSRT
 // then just set isEnabled=false for each object before frame start
 class SSRTMain
 {
-private:
+public:
   ULONG           screenWidth;
   ULONG           screenHeight;
 
   CTString        currentWorldName;
 
-  // global arrays;
-  // TODO: RT: requires allocator that won't reallocate already allocated memory,
-  //           so pointers in CAbstractGeometry won't be obsolete
-  CStaticStackArray<GFXVertex>           staticVertices;
-  CStaticStackArray<GFXNormal>           staticNormals;
-  CStaticStackArray<GFXTexCoord>         staticTexCoords;
-  CStaticStackArray<INDEX>               staticIndices;
-
-  // dynamic vertex data will be erased after each frame as it changes frequently
-  CStaticStackArray<GFXVertex>           dynamicVertices;
-  CStaticStackArray<GFXNormal>           dynamicNormals;
-  CStaticStackArray<GFXTexCoord>         dynamicTexCoords;
-  CStaticStackArray<INDEX>               dynamicIndices;
-
-
   // these arrays hold information about all objects in a world
-  CStaticStackArray<CModelGeometry>       models;
-  CStaticStackArray<CBrushGeometry>       staticBrushes;
-  CStaticStackArray<CBrushGeometry>       movableBrushes;
-  CStaticStackArray<CSphereLight>         sphLights;
-  CStaticStackArray<CDirectionalLight>    dirLights;
+  std::vector<CModelGeometry>             models;
+  std::vector<CBrushGeometry>             staticBrushes;
+  std::vector<CBrushGeometry>             movableBrushes;
+  std::vector<CSphereLight>               sphLights;
+  std::vector<CDirectionalLight>          dirLights;
 
   // - Every entity can be either model or brush
   // - A model can have attachments that are models too
@@ -72,7 +57,7 @@ private:
 
 public:
   void AddModel(const CModelGeometry &model);
-  void AddBrush(const CBrushGeometry &brush);
+  void AddBrush(const CBrushGeometry &brush, bool isMovable);
   void AddLight(const CSphereLight &sphLt);
   void AddLight(const CDirectionalLight &dirLt);
 
@@ -81,26 +66,28 @@ public:
 
 private:
   void SetWorld(CWorld *pwld);
-  
+  void StopWorld();
+
+  // get world from shell variable
+  CWorld *GetCurrentWorld();
+
   template<class T>
-  void AddRTObject(const T &obj, CStaticStackArray<T> &arr, std::map<ULONG, std::vector<INDEX>> &entToObjs);
+  void AddRTObject(const T &obj, std::vector<T> &arr, std::map<ULONG, std::vector<INDEX>> &entToObjs);
 };
 
 #pragma region template implementation
 template<class T>
-inline void SSRTMain::AddRTObject(const T &obj, CStaticStackArray<T> &arr, std::map<ULONG, std::vector<INDEX>> &entToObjs)
+inline void SSRTMain::AddRTObject(const T &obj, std::vector<T> &arr, std::map<ULONG, std::vector<INDEX>> &entToObjs)
 {
-  ASSERT(obj.pOriginalEntity != nullptr);
-
   // try to find vector by its enitity
-  auto &found = entToObjs.find(obj.GetEnitityID());
+  auto &found = entToObjs.find(obj.entityID);
 
   if (found != entToObjs.end())
   {
     for (INDEX i : found->second)
     {
       // entities must be identical
-      ASSERT(arr[i].pOriginalEntity->en_ulID == obj.GetEnitityID());
+      ASSERT(arr[i].entityID == obj.entityID);
 
       // if parts are the same
       // (there should be a more reliable and faster way to identify 
@@ -114,17 +101,17 @@ inline void SSRTMain::AddRTObject(const T &obj, CStaticStackArray<T> &arr, std::
       }
     }
 
-    INDEX i = arr.Count();
-    arr.Push() = obj;
+    INDEX i = arr.size();
+    arr.push_back(obj);
 
     found->second.push_back(i);
   }
   else
   {
-    INDEX i = arr.Count();
-    arr.Push() = obj;
+    INDEX i = arr.size();
+    arr.push_back(obj);
 
-    entToObjs[obj.GetEnitityID()].push_back(i);
+    entToObjs[obj.entityID].push_back(i);
   }
 }
 #pragma endregion

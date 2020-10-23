@@ -19,11 +19,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 namespace SSRT
 {
 
-ULONG RTObject::GetEnitityID() const
-{
-  ASSERT(pOriginalEntity != nullptr);
-  return pOriginalEntity->en_ulID;
-}
+//ULONG RTObject::GetEnitityID() const
+//{
+//  return entityID;
+//}
 
 bool RTObject::operator==(const RTObject &other) const
 {
@@ -34,15 +33,15 @@ RTObject::~RTObject()
 {}
 
 
-inline CBrush3D *CBrushGeometry::GetOriginalBrush()
-{
-  ASSERT(pOriginalEntity != nullptr);
-  return pOriginalEntity->en_pbrBrush;
-}
+//inline CBrush3D *CBrushGeometry::GetOriginalBrush()
+//{
+//  ASSERT(pOriginalEntity != nullptr);
+//  return pOriginalEntity->en_pbrBrush;
+//}
 
 bool CBrushGeometry::operator==(const CBrushGeometry &other) const
 {
-  if (this->pOriginalEntity->en_ulID != other.pOriginalEntity->en_ulID)
+  if (this->entityID != other.entityID)
   {
     return false;
   }
@@ -51,15 +50,15 @@ bool CBrushGeometry::operator==(const CBrushGeometry &other) const
 }
 
 
-CModelObject *CModelGeometry::GetModelObject()
-{
-  ASSERT(pOriginalEntity != nullptr);
-  return pOriginalEntity->en_pmoModelObject;
-}
+//CModelObject *CModelGeometry::GetModelObject()
+//{
+//  ASSERT(pOriginalEntity != nullptr);
+//  return pOriginalEntity->en_pmoModelObject;
+//}
 
 bool CModelGeometry::operator==(const CModelGeometry &other) const
 {
-  if (this->pOriginalEntity->en_ulID != other.pOriginalEntity->en_ulID)
+  if (this->entityID != other.entityID)
   {
     return false;
   }
@@ -81,10 +80,10 @@ bool CModelGeometry::operator==(const CModelGeometry &other) const
 }
 
 
-bool CBrushGeometry::IsMovable() const
-{
-  ASSERT(pOriginalEntity != nullptr);
-  return pOriginalEntity->en_ulPhysicsFlags & EPF_MOVABLE;
-}
+//bool CBrushGeometry::IsMovable() const
+//{
+//  ASSERT(pOriginalEntity != nullptr);
+//  return pOriginalEntity->en_ulPhysicsFlags & EPF_MOVABLE;
+//}
 
 }

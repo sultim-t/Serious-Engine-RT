@@ -26,11 +26,11 @@ namespace SSRT
 
 struct RTObject
 {
-  const CEntity   *pOriginalEntity;
+  ULONG           entityID;
   bool            isEnabled;
 
 public:
-  ULONG           GetEnitityID() const;
+  //ULONG           GetEnitityID() const;
   bool            operator==(const RTObject &other) const;
 
   virtual         ~RTObject() = 0;
@@ -65,7 +65,7 @@ struct CModelGeometry : public CAbstractGeometry
   INDEX           attchPath[SSRT_MAX_ATTACHMENT_DEPTH];
 
 public:
-  CModelObject    *GetModelObject();
+  //CModelObject    *GetModelObject();
   bool            operator==(const CModelGeometry &other) const;
 };
 
@@ -75,8 +75,8 @@ public:
 struct CBrushGeometry : public CAbstractGeometry
 {
 public:
-  bool            IsMovable() const;
-  CBrush3D        *GetOriginalBrush();
+  //bool            IsMovable() const;
+  //CBrush3D        *GetOriginalBrush();
   bool            operator==(const CBrushGeometry &other) const;
 };
 

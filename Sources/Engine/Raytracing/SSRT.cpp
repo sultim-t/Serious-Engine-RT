@@ -35,46 +35,16 @@ void SSRTMain::AddModel(const CModelGeometry &model)
   ASSERT(model.vertices != nullptr && model.vertexCount != 0);
   ASSERT(model.indices != nullptr && model.indexCount != 0);
 
-  // copy arrays to the global SSRT list
-  GFXVertex     *vertDest = model.vertices;// dynamicVertices.Push(model.vertexCount);
-  INDEX         *indcDest = model.indices;// dynamicIndices.Push(model.indexCount);
-  GFXNormal     *normDest = model.normals;//dynamicNormals.Push(model.vertexCount);
-  GFXTexCoord   *texcDest = model.texCoords;//dynamicTexCoords.Push(model.vertexCount);
-
-  //memcpy(vertDest, model.vertices, sizeof(GFXVertex) * model.vertexCount);
-  //memcpy(indcDest, model.indices, sizeof(INDEX) * model.indexCount);
-
-  //if (model.normals != nullptr)
-  //{
-  //  memcpy(normDest, model.normals, sizeof(GFXNormal) * model.vertexCount);
-  //}
-  //else
-  //{
-  //  // generate normals
-  //}
-
-  //if (model.texCoords != nullptr)
-  //{
-  //  memcpy(texcDest, model.texCoords, sizeof(GFXTexCoord) * model.vertexCount);
-  //}
-
-  // create a copy
-  CModelGeometry newModel = model;
-  newModel.vertices = vertDest;
-  newModel.normals = normDest;
-  newModel.texCoords = texcDest;
-  newModel.indices = indcDest;
-
-  AddRTObject(newModel, models, entityToModel);
+  AddRTObject(model, models, entityToModel);
 }
 
 
-void SSRTMain::AddBrush(const CBrushGeometry &brush)
+void SSRTMain::AddBrush(const CBrushGeometry &brush, bool isMovable)
 {
-  auto &brushArray = brush.IsMovable() ? movableBrushes : staticBrushes;
-  auto &entityToBrush = brush.IsMovable() ? entityToMovableBrush : entityToStaticBrush;
+  auto &brushArray = isMovable ? movableBrushes : staticBrushes;
+  auto &entityToBrush = isMovable ? entityToMovableBrush : entityToStaticBrush;
 
-  auto &found = entityToBrush.find(brush.GetEnitityID());
+  auto &found = entityToBrush.find(brush.entityID);
 
   // if it's already added
   if (found != entityToBrush.end())
@@ -98,7 +68,7 @@ void SSRTMain::AddBrush(const CBrushGeometry &brush)
     // entity must have only 1 brush
     // TODO: RT: delete "entityToBrush" maps?
     ASSERT(found->second.size() == 1);
-    ASSERT(brush.GetEnitityID() == brushArray[found->second[0]].GetEnitityID());
+    ASSERT(brush.entityID == brushArray[found->second[0]].entityID);
 
     auto &targetBrush = brushArray[found->second[0]];
     
@@ -113,58 +83,33 @@ void SSRTMain::AddBrush(const CBrushGeometry &brush)
   ASSERT(brush.vertices != nullptr && brush.vertexCount != 0);
   ASSERT(brush.indices != nullptr && brush.indexCount != 0);
 
-  // copy arrays to the global SSRT list
-  GFXVertex *vertDest = brush.vertices;//staticVertices.Push(brush.vertexCount);
-  INDEX *indcDest = brush.indices;//staticIndices.Push(brush.indexCount);
-  GFXNormal *normDest = brush.normals;//staticNormals.Push(brush.vertexCount);
-  GFXTexCoord *texcDest = brush.texCoords;//staticTexCoords.Push(brush.vertexCount);
-
-  //memcpy(vertDest, brush.vertices, sizeof(GFXVertex) * brush.vertexCount);
-  //memcpy(indcDest, brush.indices, sizeof(INDEX) * brush.indexCount);
-
-  //if (brush.normals != nullptr)
-  //{
-  //  memcpy(normDest, brush.normals, sizeof(GFXNormal) * brush.vertexCount);
-  //}
-  //else
-  //{
-  //  // generate normals
-  //}
-
-  //if (brush.texCoords != nullptr)
-  //{
-  //  memcpy(texcDest, brush.texCoords, sizeof(GFXTexCoord) * brush.vertexCount);
-  //}
-
-  // create a copy
-  CBrushGeometry newBrush = brush;
-  newBrush.vertices = vertDest;
-  newBrush.normals = normDest;
-  newBrush.texCoords = texcDest;
-  newBrush.indices = indcDest;
-
   AddRTObject(brush, brushArray, entityToBrush);
 }
 
-
 void SSRTMain::AddLight(const CSphereLight &sphLt)
 {
-  ASSERT(sphLt.pOriginalEntity != nullptr);
-
-  sphLights.Push() = sphLt; 
+  sphLights.push_back(sphLt);
 }
-
 
 void SSRTMain::AddLight(const CDirectionalLight &dirLt)
 {
-  ASSERT(dirLt.pOriginalEntity != nullptr);
+  dirLights.push_back(dirLt);
+}
 
-  dirLights.Push() = dirLt;
+CWorld *SSRTMain::GetCurrentWorld()
+{
+  return (CWorld *) _pShell->GetINDEX("pwoCurrentWorld");
 }
 
 void SSRTMain::StartFrame()
 {
-  CWorld *pwo = (CWorld *) _pShell->GetINDEX("pwoCurrentWorld");
+  CWorld *pwo = GetCurrentWorld();
+
+  if (pwo == nullptr)
+  {
+    StopWorld();
+    return;
+  }
 
   // check if need to reload new world
   if (pwo->GetName() != currentWorldName)
@@ -182,6 +127,11 @@ void SSRTMain::StartFrame()
     }
     else if (iten->en_RenderType == CEntity::RT_BRUSH && (iten->en_ulPhysicsFlags & EPF_MOVABLE))
     {
+      if ((iten->en_ulFlags & ENF_HIDDEN) || (iten->en_ulFlags & ENF_ZONING))
+      {
+        return;
+      }
+
       // if it's a movable brush
       const CPlacement3D &placement = iten->GetLerpedPlacement();
 
@@ -191,13 +141,13 @@ void SSRTMain::StartFrame()
 
       // update its transform
       CBrushGeometry brushInfo = {};
-      brushInfo.pOriginalEntity = &iten.Current();
+      brushInfo.entityID = iten->en_ulID;
       brushInfo.isEnabled = true;
       brushInfo.absPosition = position;
       brushInfo.absRotation = rotation;
 
       // leave vertex data empty, it won't be updated
-      AddBrush(brushInfo);
+      AddBrush(brushInfo, true);
     }
   }
 }
@@ -207,16 +157,11 @@ void SSRTMain::EndFrame()
   // models will be rescanned in the beginning of the frame
   // it's done because of dynamic vertex data
   entityToModel.clear();
-  models.Clear();
-
-  dynamicVertices.Clear();
-  dynamicNormals.Clear();
-  dynamicTexCoords.Clear();
-  dynamicIndices.Clear();
+  models.clear();
 
   // lights will be readded too
-  sphLights.Clear();
-  dirLights.Clear();
+  sphLights.clear();
+  dirLights.clear();
 }
 
 void SSRTMain::SetWorld(CWorld *pwld)
@@ -236,6 +181,21 @@ void SSRTMain::SetWorld(CWorld *pwld)
       RT_AddNonZoningBrush(&iten.Current(), NULL, this);
     }
   }
+}
+
+void SSRTMain::StopWorld()
+{
+  currentWorldName = "";
+
+  models.clear();
+  staticBrushes.clear();
+  movableBrushes.clear();
+  sphLights.clear();
+  dirLights.clear();
+
+  entityToModel.clear();
+  entityToStaticBrush.clear();
+  entityToMovableBrush.clear();
 }
 
 }
