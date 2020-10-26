@@ -17,6 +17,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "StdH.h"
 #include "SSRT.h"
 
+#include <stdio.h>
+
 #include <Engine/Base/Shell.h>
 #include <Engine/World/World.h>
 
@@ -27,13 +29,66 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 extern CShell *_pShell;
 
+// dump brushes and models to .obj files;
+// use it with care, all calls must be done for one frame
+// (offsets are local static variables)
+#define DUMP_GEOMETRY_TO_OBJ 0
+
 namespace SSRT
 {
+
+#if DUMP_GEOMETRY_TO_OBJ
+static void ExportGeometry(const CAbstractGeometry &geom, INDEX offset, const char *path)
+{
+  FILE *file = fopen(path, "a");
+  if (file == nullptr)
+  {
+    return;
+  }
+
+  for (INDEX i = 0; i < geom.vertexCount; i++)
+  {
+    FLOAT3D p = FLOAT3D(geom.vertices[i].x, geom.vertices[i].y, geom.vertices[i].z);
+    FLOAT3D n = geom.normals ? FLOAT3D(geom.normals[i].nx, geom.normals[i].ny, geom.normals[i].nz) : FLOAT3D(0, 1, 0);
+    FLOAT2D t = geom.texCoords ? FLOAT2D(geom.texCoords[i].s, geom.texCoords[i].t) : FLOAT2D();
+
+    p = p * geom.absRotation + geom.absPosition;
+    n = n * geom.absRotation;
+
+    fprintf(file, "v %.3f %.3f %.3f\n", p(1), p(2), p(3));
+    fprintf(file, "vn %.3f %.3f %.3f\n", n(1), n(2), n(3));
+    fprintf(file, "vt %.3f %.3f\n", t(1), t(2));
+  }
+
+  fprintf(file, "g %d\n", geom.entityID);
+
+  INDEX triangleCount = geom.indexCount / 3;
+
+  for (INDEX i = 0; i < triangleCount; i++)
+  {
+    // obj indices start with 1
+    INDEX a = geom.indices[i * 3 + 0] + offset + 1;
+    INDEX b = geom.indices[i * 3 + 1] + offset + 1;
+    INDEX c = geom.indices[i * 3 + 2] + offset + 1;
+
+    fprintf(file, "f %d/%d/%d %d/%d/%d %d/%d/%d\n", a, a, a, b, b, b, c, c, c);
+  }
+
+  fclose(file);
+}
+#endif
+
 
 void SSRTMain::AddModel(const CModelGeometry &model)
 {
   ASSERT(model.vertices != nullptr && model.vertexCount != 0);
   ASSERT(model.indices != nullptr && model.indexCount != 0);
+
+#if DUMP_GEOMETRY_TO_OBJ
+  static INDEX offset = 0;
+  ExportGeometry(model, offset, "MODELS.obj");
+  offset += model.vertexCount;
+#endif
 
   AddRTObject(model, models, entityToModel);
 }
@@ -47,41 +102,50 @@ void SSRTMain::AddBrush(const CBrushGeometry &brush, bool isMovable)
   auto &found = entityToBrush.find(brush.entityID);
 
   // if it's already added
-  if (found != entityToBrush.end())
+  //if (found != entityToBrush.end())
+  //{
+  //  /*// try to find its sector
+  //  auto &foundSector = std::find_if(found->second.begin(), found->second.end(), [ &brush, &brushArray ] (INDEX i)
+  //  {
+  //    const CBrushGeometry &otherBrush = brushArray[i];
+
+  //    // ? finding by a sector in a brush
+  //    return true;
+  //  });
+
+  //  // if sector is already added
+  //  if (foundSector != found->second.end())
+  //  {
+  //    brushArray[*foundSector] = brush;
+  //    return;
+  //  }*/
+
+  //  // entity must have only 1 brush
+  //  // TODO: RT: delete "entityToBrush" maps?
+  //  ASSERT(found->second.size() == 1);
+  //  ASSERT(brush.entityID == brushArray[found->second[0]].entityID);
+
+  //  auto &targetBrush = brushArray[found->second[0]];
+  //  
+  //  targetBrush.isEnabled = brush.isEnabled;
+  //  targetBrush.absPosition = brush.absPosition;
+  //  targetBrush.absRotation = brush.absRotation;
+  //  targetBrush.color = brush.color;
+
+  //  return;
+  //}
+
+  if (brush.vertices == nullptr || brush.vertexCount == 0 ||
+      brush.indices == nullptr || brush.indexCount == 0)
   {
-    /*// try to find its sector
-    auto &foundSector = std::find_if(found->second.begin(), found->second.end(), [ &brush, &brushArray ] (INDEX i)
-    {
-      const CBrushGeometry &otherBrush = brushArray[i];
-
-      // ? finding by a sector in a brush
-      return true;
-    });
-
-    // if sector is already added
-    if (foundSector != found->second.end())
-    {
-      brushArray[*foundSector] = brush;
-      return;
-    }*/
-
-    // entity must have only 1 brush
-    // TODO: RT: delete "entityToBrush" maps?
-    ASSERT(found->second.size() == 1);
-    ASSERT(brush.entityID == brushArray[found->second[0]].entityID);
-
-    auto &targetBrush = brushArray[found->second[0]];
-    
-    targetBrush.isEnabled = brush.isEnabled;
-    targetBrush.absPosition = brush.absPosition;
-    targetBrush.absRotation = brush.absRotation;
-    targetBrush.color = brush.color;
-
     return;
   }
 
-  ASSERT(brush.vertices != nullptr && brush.vertexCount != 0);
-  ASSERT(brush.indices != nullptr && brush.indexCount != 0);
+#if DUMP_GEOMETRY_TO_OBJ
+  static INDEX offset = 0;
+  ExportGeometry(brush, offset, "BRUSHES.obj");
+  offset += brush.vertexCount;
+#endif
 
   AddRTObject(brush, brushArray, entityToBrush);
 }

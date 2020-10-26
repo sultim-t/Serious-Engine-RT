@@ -371,11 +371,6 @@ void CRenderer::AddInitialSectors(void)
     }
   }
 
-  // TODO: RT: remove
-  static SSRT::SSRTMain *ssrt = new SSRT::SSRTMain();
-  ssrt->StartFrame();
-  ssrt->EndFrame();
-
   // if a viewer entity is given
   if (re_penViewer!=NULL) {
     // add all zoning sectors near the entity
@@ -710,6 +705,13 @@ void CRenderer::Render(void)
   // init select-on-render functionality if not rendering shadows
   extern void InitSelectOnRender( PIX pixSizeI, PIX pixSizeJ);
   if( re_pdpDrawPort!=NULL) InitSelectOnRender( re_pdpDrawPort->GetWidth(), re_pdpDrawPort->GetHeight());
+
+  // TODO: RT: remove
+  static SSRT::SSRTMain *ssrt = new SSRT::SSRTMain();
+  ssrt->StartFrame();
+  ssrt->EndFrame();
+
+
   // add initial sectors to active lists
   AddInitialSectors();
   // scan through portals for other sectors

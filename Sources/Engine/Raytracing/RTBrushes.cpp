@@ -35,6 +35,10 @@ static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
   // maybe export it to .obj file
 
   CBrush3D *brush = bscSector.bsc_pbmBrushMip->bm_pbrBrush;
+  if (brush->br_pfsFieldSettings != NULL)
+  {
+    return;
+  }
 
   FOREACHINSTATICARRAY(bscSector.bsc_abpoPolygons, CBrushPolygon, itpo)
   {
@@ -42,21 +46,19 @@ static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
 
     // for texture cordinates and transparency/translucency processing
   #pragma region MakeScreenPolygon
-      /*// all portals will be rendered as portals,
-      // original renderer also replaced them with pretenders if they're far away
-      polygon.bpo_ulFlags &= ~BPOF_RENDERASPORTAL;
-      if (polygon.bpo_ulFlags & BPOF_PORTAL)
-      {
-        polygon.bpo_ulFlags |= BPOF_RENDERASPORTAL;
-      }*/
+
+    if (polygon.bpo_ulFlags & BPOF_PORTAL)
+    {
+      continue;
+    }
 
 
-      // TODO: RT: texture coordinates for brushes
+    // TODO: RT: texture coordinates for brushes
 
-      // CRenderer::SetOneTextureParameters(CBrushPolygon &polygon, ScenePolygon &spo, INDEX iLayer)
-      //SetOneTextureParameters(polygon, sppo, 0);
-      //SetOneTextureParameters(polygon, sppo, 1);
-      //SetOneTextureParameters(polygon, sppo, 2);
+    // CRenderer::SetOneTextureParameters(CBrushPolygon &polygon, ScenePolygon &spo, INDEX iLayer)
+    //SetOneTextureParameters(polygon, sppo, 0);
+    //SetOneTextureParameters(polygon, sppo, 1);
+    //SetOneTextureParameters(polygon, sppo, 2);
 
     if (polygon.bpo_ulFlags & BPOF_TRANSPARENT)
     {
@@ -118,6 +120,11 @@ static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
 #pragma region RenderSceneZOnly
 #pragma endregion
 
+  if (RT_AllSectorVertices.Count() == 0 || RT_AllSectorIndices.Count() == 0)
+  {
+    return;
+  }
+
   CEntity *brushEntity = brush->br_penEntity;
 
   bool isMovable = brushEntity->en_ulPhysicsFlags & EPF_MOVABLE;
@@ -168,10 +175,10 @@ void RT_AddNonZoningBrush(CEntity *penBrush, CBrushSector *pbscThatAdds, SSRT::S
   //  return;
   //}
 
-  if (penBrush->en_ulFlags & ENF_ZONING)
+  /*if (penBrush->en_ulFlags & ENF_ZONING)
   {
     return;
-  }
+  }*/
 
   // skip whole non-zoning brush if all polygons in all sectors are invisible for rendering 
   bool isVisible = false;
