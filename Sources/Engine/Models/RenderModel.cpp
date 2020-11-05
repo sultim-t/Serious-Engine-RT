@@ -26,6 +26,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Base/Lists.inl>
 #include <Engine/Math/OBBox.h>
 
+#include <Engine/Raytracing/SSRT.h>
+
 #include <Engine/Base/ListIterator.inl>
 #include <Engine/Templates/StaticStackArray.cpp>
 
@@ -459,6 +461,23 @@ static void RenderWireframeBox( FLOAT3D vMinVtx, FLOAT3D vMaxVtx, COLOR col)
 // setup CRenderModel class for rendering one model and eventually it's shadow(s)
 void CModelObject::SetupModelRendering( CRenderModel &rm)
 {
+  extern INDEX srt_bEnableRayTracing;
+
+  // weapons are rendered using this function directly from PlayerWeapons.es,
+  // so if ray tracing is enabled and it's a weapon, add it to SSRT
+  if (srt_bEnableRayTracing && (rm.rm_ulFlags & RMF_WEAPON))
+  {
+    SSRT::CFirstPersonModelInfo fpInfo = {};
+    fpInfo.modelObject = this;
+    fpInfo.renderModel = &rm;
+    fpInfo.fovH = ((CPerspectiveProjection3D &) _aprProjection).FOVR();
+
+    // RenderModel(..) will be executed there
+    _pGfx->gl_SSRT->ProcessFirstPersonModel(fpInfo);
+    return;
+  }
+
+
   _sfStats.IncrementCounter( CStatForm::SCI_MODELS);
   _pfModelProfile.StartTimer( CModelProfile::PTI_INITMODELRENDERING);
   _pfModelProfile.IncrementTimerAveragingCounter( CModelProfile::PTI_INITMODELRENDERING);
@@ -576,9 +595,16 @@ void CModelObject::SetupModelRendering( CRenderModel &rm)
 
 // render model
 void CModelObject::RenderModel( CRenderModel &rm)
-{
+{ 
+  // weapons are processed in SetupModelRendering()
+  extern INDEX srt_bEnableRayTracing;
+  if (srt_bEnableRayTracing && (rm.rm_ulFlags & RMF_WEAPON))
+  {
+    return;
+  }
+
   // skip invisible models
-  if( mo_Stretch == FLOAT3D(0,0,0)) return;
+  if (mo_Stretch == FLOAT3D(0, 0, 0)) return;
 
   _pfModelProfile.StartTimer( CModelProfile::PTI_RENDERMODEL);
   _pfModelProfile.IncrementTimerAveragingCounter( CModelProfile::PTI_RENDERMODEL);

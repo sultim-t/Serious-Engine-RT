@@ -706,12 +706,6 @@ void CRenderer::Render(void)
   extern void InitSelectOnRender( PIX pixSizeI, PIX pixSizeJ);
   if( re_pdpDrawPort!=NULL) InitSelectOnRender( re_pdpDrawPort->GetWidth(), re_pdpDrawPort->GetHeight());
 
-  // TODO: RT: remove
-  static SSRT::SSRTMain *ssrt = new SSRT::SSRTMain();
-  ssrt->StartFrame();
-  ssrt->EndFrame();
-
-
   // add initial sectors to active lists
   AddInitialSectors();
   // scan through portals for other sectors
@@ -968,6 +962,93 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
   {
     // calculate all non directional shadows that are not up to date
     woWorld.CalculateNonDirectionalShadows();
+  }
+
+  extern INDEX srt_bEnableRayTracing;
+  if (srt_bEnableRayTracing)
+  {
+    SSRT::CWorldRenderingInfo renderInfo = {};
+    //renderInfo.pWorld = &woWorld;
+    renderInfo.viewerEntityID = enViewer.en_ulID;
+    renderInfo.screenWidth = dpDrawport.GetWidth();
+    renderInfo.screenHeight = dpDrawport.GetHeight();
+    renderInfo.screenX = dpDrawport.dp_MinI;
+    renderInfo.screenY = dpDrawport.dp_MinJ;
+
+    // RT: copied from CDrawPort::SetProjection which is called from BeginModelRenderingView(..)
+    {
+      // copy projection
+      CAnyProjection3D proj;
+      proj = prProjection;
+      // reset transformation for projection matrix calculation
+      proj->ObjectPlacementL() = CPlacement3D(FLOAT3D(0, 0, 0), ANGLE3D(0, 0, 0));
+      proj->Prepare();
+      if (proj.IsIsometric())
+      {
+        ASSERTALWAYS("Only perspective projections are allowed for ray tracing");
+
+        CIsometricProjection3D &ipr = (CIsometricProjection3D &) *proj;
+        const FLOAT2D vMin = ipr.pr_ScreenBBox.Min() - ipr.pr_ScreenCenter;
+        const FLOAT2D vMax = ipr.pr_ScreenBBox.Max() - ipr.pr_ScreenCenter;
+        const FLOAT fFactor = 1.0f / (ipr.ipr_ZoomFactor * ipr.pr_fViewStretch);
+        const FLOAT fNear = ipr.pr_NearClipDistance;
+        const FLOAT fLeft = +vMin(1) * fFactor;
+        const FLOAT fRight = +vMax(1) * fFactor;
+        const FLOAT fTop = -vMin(2) * fFactor;
+        const FLOAT fBottom = -vMax(2) * fFactor;
+        // if far clip plane is not specified use maximum expected dimension of the world
+        FLOAT fFar = ipr.pr_FarClipDistance;
+        if (fFar < 0) fFar = 1E5f;  // max size 32768, 3D (sqrt(3)), rounded up
+
+        // calculate projection matrix
+        extern void Svk_MatOrtho(float *result, float fLeft, float fRight, float fBottom, float fTop, float fNear, float fFar);
+        Svk_MatOrtho(renderInfo.projectionMatrix, fLeft, fRight, fTop, fBottom, fNear, fFar);
+      }
+      else
+      {
+        ASSERT(proj.IsPerspective());
+        CPerspectiveProjection3D &ppr = (CPerspectiveProjection3D &) *proj;
+        const FLOAT fNear = ppr.pr_NearClipDistance;
+        const FLOAT fLeft = ppr.pr_plClipL(3) / ppr.pr_plClipL(1) * fNear;
+        const FLOAT fRight = ppr.pr_plClipR(3) / ppr.pr_plClipR(1) * fNear;
+        const FLOAT fTop = ppr.pr_plClipU(3) / ppr.pr_plClipU(2) * fNear;
+        const FLOAT fBottom = ppr.pr_plClipD(3) / ppr.pr_plClipD(2) * fNear;
+        // if far clip plane is not specified use maximum expected dimension of the world
+        FLOAT fFar = ppr.pr_FarClipDistance;
+        if (fFar < 0) fFar = 1E5f;  // max size 32768, 3D (sqrt(3)), rounded up
+
+        renderInfo.fovH = ppr.FOVR();
+
+        // optional
+        // calculate projection matrix
+        extern void Svk_MatFrustum(float *result, float fLeft, float fRight, float fBottom, float fTop, float fNear, float fFar);
+        Svk_MatFrustum(renderInfo.projectionMatrix, fLeft, fRight, fTop, fBottom, fNear, fFar);
+      }
+    }
+    
+    // create view matrix
+    {
+      const CPlacement3D &viewerPl = prProjection->ViewerPlacementR();
+
+      renderInfo.viewerPosition = viewerPl.pl_PositionVector;
+      MakeRotationMatrix(renderInfo.viewerRotation, viewerPl.pl_OrientationAngle);
+
+      // optional
+      FLOAT3D v = -viewerPl.pl_PositionVector;
+      FLOATmatrix3D m;
+      MakeInverseRotationMatrix(m, viewerPl.pl_OrientationAngle);
+
+      float *glm = renderInfo.viewMatrix;
+      glm[0] = m(1, 1);  glm[4] = m(1, 2);  glm[8] = m(1, 3);   glm[12] = v(1);
+      glm[1] = m(2, 1);  glm[5] = m(2, 2);  glm[9] = m(2, 3);   glm[13] = v(2);
+      glm[2] = m(3, 1);  glm[6] = m(3, 2);  glm[10] = m(3, 3);  glm[14] = v(3);
+      glm[3] = 0;        glm[7] = 0;        glm[11] = 0;        glm[15] = 1;
+    }
+
+    _pGfx->gl_SSRT->ProcessWorld(renderInfo);
+
+    // don't render world using rasterization
+    //return;
   }
 
   // take first renderer object

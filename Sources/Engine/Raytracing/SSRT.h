@@ -32,11 +32,16 @@ namespace SSRT
 // then just set isEnabled=false for each object before frame start
 class SSRTMain
 {
-public:
-  ULONG           screenWidth;
-  ULONG           screenHeight;
+private:
+  CWorldRenderingInfo   worldRenderInfo;
+  CTString              currentWorldName;
+  // each first person model (left, right revolver, other weapons) should have its 
+  // fake entity to attach to, this counter will be used to simulate ID for fake entity
+  ULONG                 currentFirstPersonModelCount;
 
-  CTString        currentWorldName;
+  // true, if rendering 3D world using ray tracing,
+  // otherwise rasterization pass will be used (e.g. for HUD)
+  bool                  isRenderingWorld;
 
   // these arrays hold information about all objects in a world
   std::vector<CModelGeometry>             models;
@@ -56,19 +61,32 @@ public:
   std::map<ULONG, std::vector<INDEX>>     entityToMovableBrush;
 
 public:
+  void Init();
+  
   void AddModel(const CModelGeometry &model);
   void AddBrush(const CBrushGeometry &brush, bool isMovable);
   void AddLight(const CSphereLight &sphLt);
   void AddLight(const CDirectionalLight &dirLt);
 
   void StartFrame();
+  // Process world geometry and build acceleration structures
+  void ProcessWorld(const CWorldRenderingInfo &info);
+  // First person models are rendered directly from .es script,
+  // so a separate function is required to handle this
+  void ProcessFirstPersonModel(const CFirstPersonModelInfo &info);
+
+  // Try to start rendering HUD: rasterization functions will be enabled,
+  // if previously a world was being rendered (and return true)
+  bool StartHUDRendering();
+  void ProcessHUD(const CHudElementInfo &info);
+
   void EndFrame();
 
 private:
   void SetWorld(CWorld *pwld);
   void StopWorld();
 
-  // get world from shell variable
+  // Get world from shell variable
   CWorld *GetCurrentWorld();
 
   template<class T>

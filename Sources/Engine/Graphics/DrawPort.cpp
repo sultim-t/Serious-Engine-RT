@@ -39,6 +39,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Graphics/Vulkan/SvkMain.h>
 #endif
 
+#include <Engine/Raytracing/SSRT.h>
+#include <Engine/Raytracing/RTProcessing.h>
+
 extern INDEX gfx_bDecoratedText;
 extern INDEX ogl_iFinish;
 extern INDEX d3d_iFinish;
@@ -448,6 +451,12 @@ BOOL CDrawPort::Lock(void)
 // draw one point
 void CDrawPort::DrawPoint( PIX pixI, PIX pixJ, COLOR col, PIX pixRadius/*=1*/) const
 {
+  extern INDEX srt_bEnableRayTracing;
+  if (srt_bEnableRayTracing)
+  {
+    return;
+  }
+
   // check API and radius
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
@@ -512,6 +521,12 @@ void CDrawPort::DrawPoint( PIX pixI, PIX pixJ, COLOR col, PIX pixRadius/*=1*/) c
 // draw one point in 3D
 void CDrawPort::DrawPoint3D( FLOAT3D v, COLOR col, FLOAT fRadius/*=1.0f*/) const
 {
+  extern INDEX srt_bEnableRayTracing;
+  if (srt_bEnableRayTracing)
+  {
+    return;
+  }
+
   // check API and radius
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
@@ -571,6 +586,12 @@ void CDrawPort::DrawPoint3D( FLOAT3D v, COLOR col, FLOAT fRadius/*=1.0f*/) const
 // draw one line
 void CDrawPort::DrawLine( PIX pixI0, PIX pixJ0, PIX pixI1, PIX pixJ1, COLOR col, ULONG typ/*=_FULL*/) const
 {
+  extern INDEX srt_bEnableRayTracing;
+  if (srt_bEnableRayTracing)
+  {
+    return;
+  }
+
   // check API
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
@@ -650,6 +671,12 @@ void CDrawPort::DrawLine( PIX pixI0, PIX pixJ0, PIX pixI1, PIX pixJ1, COLOR col,
 // draw one line in 3D
 void CDrawPort::DrawLine3D( FLOAT3D v0, FLOAT3D v1, COLOR col) const
 {
+  extern INDEX srt_bEnableRayTracing;
+  if (srt_bEnableRayTracing)
+  {
+    return;
+  }
+
   // check API
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
@@ -717,6 +744,12 @@ void CDrawPort::DrawLine3D( FLOAT3D v0, FLOAT3D v1, COLOR col) const
 // draw border
 void CDrawPort::DrawBorder( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, COLOR col, ULONG typ/*=_FULL_*/) const
 {
+  extern INDEX srt_bEnableRayTracing;
+  if (srt_bEnableRayTracing)
+  {
+    return;
+  }
+
   // check API
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
@@ -803,6 +836,14 @@ void CDrawPort::DrawBorder( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, COL
 // fill part of a drawport with a given color
 void CDrawPort::Fill( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, COLOR col) const
 {
+  // draw only using polygons
+  extern INDEX srt_bEnableRayTracing;
+  if (srt_bEnableRayTracing)
+  {
+    Fill(pixI, pixJ, pixWidth, pixHeight, col, col, col, col);
+    return;
+  }
+
   // if color is tranlucent
   if( ((col&CT_AMASK)>>CT_ASHIFT) != CT_OPAQUE)
   { // draw thru polygon
@@ -878,13 +919,18 @@ void CDrawPort::Fill( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, COLOR col
 
 
 // fill part of a drawport with a four corner colors
-void CDrawPort::Fill( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, 
-                      COLOR colUL, COLOR colUR, COLOR colDL, COLOR colDR) const
+void CDrawPort::Fill(PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight,
+                     COLOR colUL, COLOR colUR, COLOR colDL, COLOR colDR) const
 {
   // clip and eventually reject
-  const BOOL bInside = ClipToDrawPort( this, pixI, pixJ, pixWidth, pixHeight);
-  if( !bInside) return;
+  const BOOL bInside = ClipToDrawPort(this, pixI, pixJ, pixWidth, pixHeight);
+  if (!bInside) return;
 
+  extern INDEX srt_bEnableRayTracing;
+  if (srt_bEnableRayTracing)
+  {
+    _pGfx->gl_SSRT->StartHUDRendering();
+  }
   // check API
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
@@ -918,6 +964,7 @@ void CDrawPort::Fill( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight,
     || eAPI == GAT_VK
 #endif // SE1_VULKAN
     ) {
+
     // thru OpenGL
     gfxResetArrays();
     GFXVertex   *pvtx = _avtxCommon.Push(4);
@@ -930,6 +977,17 @@ void CDrawPort::Fill( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight,
     pvtx[1].x = fI0;  pvtx[1].y = fJ1;  pvtx[1].z = 0;  pcol[1] = glcolDL;
     pvtx[2].x = fI1;  pvtx[2].y = fJ1;  pvtx[2].z = 0;  pcol[2] = glcolDR;
     pvtx[3].x = fI1;  pvtx[3].y = fJ0;  pvtx[3].z = 0;  pcol[3] = glcolUR;
+
+    if (srt_bEnableRayTracing)
+    {
+      SSRT::CHudElementInfo hudInfo = {};
+      hudInfo.blendEnable = true;
+      hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
+      hudInfo.blendFuncDst = GFX_INV_SRC_ALPHA;
+
+      RT_AddHudElementQuads(hudInfo, pvtx, ptex, pcol, 4, _pGfx->gl_SSRT);
+    }
+
     gfxFlushQuads();
   }
 #ifdef SE1_D3D
@@ -953,6 +1011,14 @@ void CDrawPort::Fill( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight,
 // fill an entire drawport with a given color
 void CDrawPort::Fill( COLOR col) const
 {
+  // draw only using polygons
+  extern INDEX srt_bEnableRayTracing;
+  if (srt_bEnableRayTracing)
+  {
+    Fill(0, 0, dp_Width, dp_Height, col, col, col, col);
+    return;
+  }
+
   // if color is tranlucent
   if( ((col&CT_AMASK)>>CT_ASHIFT) != CT_OPAQUE)
   { // draw thru polygon
@@ -1021,6 +1087,14 @@ void CDrawPort::FillZBuffer( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, FL
 #endif // SE1_VULKAN
 #endif // SE1_D3D
 
+  // ignore z buffer
+  extern INDEX srt_bEnableRayTracing;
+  if (srt_bEnableRayTracing)
+  {
+    // TODO: RT: uncomment(?) return to prevent depth clear
+    return;
+  }
+
   // clip and eventually reject
   const BOOL bInside = ClipToDrawPort( this, pixI, pixJ, pixWidth, pixHeight);
   if( !bInside) return;
@@ -1071,6 +1145,15 @@ void CDrawPort::FillZBuffer( FLOAT zval) const
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_VULKAN
 #endif // SE1_D3D
+
+  // ignore z buffer
+  extern INDEX srt_bEnableRayTracing;
+  if (srt_bEnableRayTracing)
+  {
+    // TODO: RT: uncomment(?) return to prevent depth clear
+    return;
+  }
+
   gfxEnableDepthWrite();
 
   // OpenGL
@@ -1234,7 +1317,14 @@ BOOL CDrawPort::IsPointVisible( PIX pixI, PIX pixJ, FLOAT fOoK, INDEX iID, INDEX
 
 void CDrawPort::RenderLensFlare( CTextureObject *pto, FLOAT fI, FLOAT fJ,
                                  FLOAT fSizeI, FLOAT fSizeJ, ANGLE aRotation, COLOR colLight) const
-{
+{  
+  // ignore lens flare rendering
+  extern INDEX srt_bEnableRayTracing;
+  if (srt_bEnableRayTracing)
+  {
+    return;
+  }
+
   // check API
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
@@ -1381,6 +1471,12 @@ void CDrawPort::PutText( const CTString &strText, PIX pixX0, PIX pixY0, const CO
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_VULKAN
 #endif // SE1_D3D
+
+  extern INDEX srt_bEnableRayTracing;
+  if (srt_bEnableRayTracing)
+  {
+    _pGfx->gl_SSRT->StartHUDRendering();
+  }
 
   // skip drawing if text falls above or below draw port
   if( pixY0>dp_Height || pixX0>dp_Width) return;
@@ -1653,6 +1749,12 @@ void CDrawPort::PutTexture( class CTextureObject *pTO,
                             const PIXaabbox2D &boxScreen, const MEXaabbox2D &boxTexture,
                             const COLOR colUL, const COLOR colUR, const COLOR colDL, const COLOR colDR) const
 {
+  extern INDEX srt_bEnableRayTracing;
+  if (srt_bEnableRayTracing)
+  {
+    _pGfx->gl_SSRT->StartHUDRendering();
+  }
+
   _pfGfxProfile.StartTimer( CGfxProfile::PTI_PUTTEXTURE);
 
   // extract screen and texture coordinates
@@ -1744,6 +1846,14 @@ void CDrawPort::PutTexture( class CTextureObject *pTO,
 // prepares texture and rendering arrays
 void CDrawPort::InitTexture( class CTextureObject *pTO, const BOOL bClamp/*=FALSE*/) const
 {
+  extern INDEX srt_bEnableRayTracing;
+  if (srt_bEnableRayTracing)
+  {
+
+
+    return;
+  }
+
   // prepare
   if( pTO!=NULL) {
     // has texture
@@ -1875,7 +1985,15 @@ void CDrawPort::AddTexture( const FLOAT fI0, const FLOAT fJ0, const FLOAT fU0, c
 
 // renders all textures from rendering queue and flushed rendering arrays
 void CDrawPort::FlushRenderingQueue(void) const
-{ 
+{
+  extern INDEX srt_bEnableRayTracing;
+  if (srt_bEnableRayTracing)
+  {
+    _pGfx->gl_SSRT->StartHUDRendering();
+    
+    SSRT::CHudElementInfo hudInfo = {};
+  }
+
   gfxFlushElements(); 
   gfxResetArrays(); 
 }
@@ -1886,6 +2004,12 @@ void CDrawPort::FlushRenderingQueue(void) const
 void CDrawPort::BlendScreen(void)
 {
   if( dp_ulBlendingA==0) return;
+
+  extern INDEX srt_bEnableRayTracing;
+  if (srt_bEnableRayTracing)
+  {
+    _pGfx->gl_SSRT->StartHUDRendering();
+  }
 
   ULONG fix1oA = 65536 / dp_ulBlendingA;
   ULONG ulRA = (dp_ulBlendingRA*fix1oA)>>16;

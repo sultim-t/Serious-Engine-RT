@@ -32,8 +32,6 @@ static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
   RT_AllSectorVertices.PopAll();
   RT_AllSectorIndices.PopAll();
 
-  // maybe export it to .obj file
-
   CBrush3D *brush = bscSector.bsc_pbmBrushMip->bm_pbrBrush;
   if (brush->br_pfsFieldSettings != NULL)
   {

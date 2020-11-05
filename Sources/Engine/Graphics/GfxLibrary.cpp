@@ -48,6 +48,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #ifdef SE1_VULKAN
 #include <Engine/Graphics/Vulkan/SvkMain.h>
+#include <Engine/Raytracing/SSRT.h>
 #endif
 
 // control for partial usage of compiled vertex arrays
@@ -176,6 +177,9 @@ extern INDEX d3d_iFinish = 0;
 // Vulkan control
 extern INDEX gfx_vk_iPresentMode = 0;           // what present mode to use: 0=FIFO, 1=Mailbox, 2=Immediate
 extern INDEX gfx_vk_iMSAA = 0;                  // MSAA: 0=1x, 1=2x, 2=4x, 3=8x
+
+// Ray tracing
+extern INDEX srt_bEnableRayTracing = TRUE;
 
 // API common controls
 extern INDEX gap_iUseTextureUnits = 4;
@@ -1038,6 +1042,8 @@ CGfxLibrary::CGfxLibrary(void)
 
   // reset GFX API function pointers
   GFX_SetFunctionPointers( (INDEX)GAT_NONE);
+
+  gl_SSRT = new SSRT::SSRTMain();
 }
 
 
@@ -1133,6 +1139,8 @@ void CGfxLibrary::Init(void)
 
   _pShell->DeclareSymbol("persistent user INDEX gfx_vk_iPresentMode;", &gfx_vk_iPresentMode);
   _pShell->DeclareSymbol("persistent user INDEX gfx_vk_iMSAA;", &gfx_vk_iMSAA);
+
+  _pShell->DeclareSymbol("persistent user INDEX srt_bEnableRayTracing;", &srt_bEnableRayTracing);
 
   _pShell->DeclareSymbol("persistent user INDEX gap_iUseTextureUnits;",   &gap_iUseTextureUnits);
   _pShell->DeclareSymbol("persistent user INDEX gap_iTextureFiltering;",  &gap_iTextureFiltering);
@@ -1924,6 +1932,7 @@ void CGfxLibrary::SwapBuffers(CViewPort *pvp)
     if (GFX_bRenderingScene) 
     {
       gl_SvkMain->EndFrame();
+      gl_SSRT->EndFrame();
     }
 
     SwapBuffers_Vulkan();
@@ -2058,6 +2067,7 @@ BOOL CGfxLibrary::LockRaster( CRaster *praToLock)
     if (gl_eCurrentAPI == GAT_VK && !GFX_bRenderingScene)
     {
       gl_SvkMain->StartFrame();
+      gl_SSRT->StartFrame();
     }
 #endif // SE1_VULKAN
 

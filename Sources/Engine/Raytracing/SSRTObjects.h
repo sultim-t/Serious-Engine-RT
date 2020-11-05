@@ -18,11 +18,15 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Entities/Entity.h>
 #include <Engine/Brushes/Brush.h>
 
+class CRenderModel;
+
 namespace SSRT
 { 
 
 // attachments can have attachments, SSRT_MAX_ATTCH_DEPTH defines the max depth
 #define SSRT_MAX_ATTACHMENT_DEPTH 8
+
+#define SSRT_FIRSTPERSON_ENTITY_START_ID 2000000000
 
 struct RTObject
 {
@@ -63,6 +67,8 @@ struct CModelGeometry : public CAbstractGeometry
   // path to attachment using attachment position ID,
   // -1 means the end of the list
   INDEX           attchPath[SSRT_MAX_ATTACHMENT_DEPTH];
+  // for first person weapons
+  bool            isFirstPerson;
 
 public:
   //CModelObject    *GetModelObject();
@@ -96,6 +102,54 @@ struct CSphereLight : public RTObject
   COLOR           color;
   float           intensity;
   float           sphereRadius;
+};
+
+
+struct CWorldRenderingInfo
+{
+  // top left point
+  ULONG           screenX;
+  ULONG           screenY;
+  ULONG           screenWidth;
+  ULONG           screenHeight;
+  ULONG           viewerEntityID;
+  //CWorld          *world;
+
+  FLOAT3D         viewerPosition;
+  FLOATmatrix3D   viewerRotation;
+
+  // horizontal FOV in degrees
+  float           fovH;
+
+  // optional matrices
+  // perspective projection matrix
+  float           projectionMatrix[16];
+  // view matrix
+  float           viewMatrix[16];
+};
+
+
+struct CFirstPersonModelInfo
+{
+  CModelObject    *modelObject;
+  CRenderModel    *renderModel;
+  // overriden FOV for first person model
+  float           fovH;
+};
+
+
+struct CHudElementInfo
+{
+  bool            depthTest;
+  bool            depthWrite;
+  bool            alphaTest;
+  bool            blendEnable;
+  GfxBlend        blendFuncSrc;
+  GfxBlend        blendFuncDst;
+  bool            textureEnable;
+  GfxWrap         textureWrapU;
+  GfxWrap         textureWrapV;
+  CTextureData    *textureData;
 };
 
 }

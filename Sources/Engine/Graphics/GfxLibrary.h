@@ -33,6 +33,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #ifdef SE1_VULKAN
 class SvkMain;
+namespace SSRT
+{
+class SSRTMain;
+}
 #endif // SE1_VULKAN
 
 #include <Engine/Graphics/Color.h>
@@ -143,6 +147,7 @@ public:
 
 #ifdef SE1_VULKAN
   SvkMain *gl_SvkMain;
+  SSRT::SSRTMain *gl_SSRT;
 #endif
 
 #ifdef SE1_D3D

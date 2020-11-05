@@ -37,6 +37,11 @@ extern CShell *_pShell;
 namespace SSRT
 {
 
+void SSRTMain::Init()
+{
+
+}
+
 #if DUMP_GEOMETRY_TO_OBJ
 static void ExportGeometry(const CAbstractGeometry &geom, INDEX offset, const char *path)
 {
@@ -77,7 +82,6 @@ static void ExportGeometry(const CAbstractGeometry &geom, INDEX offset, const ch
   fclose(file);
 }
 #endif
-
 
 void SSRTMain::AddModel(const CModelGeometry &model)
 {
@@ -167,6 +171,16 @@ CWorld *SSRTMain::GetCurrentWorld()
 
 void SSRTMain::StartFrame()
 {
+  extern INDEX srt_bEnableRayTracing;
+  srt_bEnableRayTracing = Clamp(srt_bEnableRayTracing, 0L, 1L);
+
+  currentFirstPersonModelCount = 0;
+}
+
+void SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
+{
+  worldRenderInfo = info;
+
   CWorld *pwo = GetCurrentWorld();
 
   if (pwo == nullptr)
@@ -181,9 +195,16 @@ void SSRTMain::StartFrame()
     SetWorld(pwo);
   }
 
+  isRenderingWorld = true;
+
   // check all movable brushes, models and light sources
   FOREACHINDYNAMICCONTAINER(pwo->wo_cenEntities, CEntity, iten)
   {
+    if (iten->en_ulID == info.viewerEntityID)
+    {
+      continue;
+    }
+
     if (iten->en_RenderType == CEntity::RT_MODEL)
     {
       // add it as a model and scan for light sources
@@ -214,6 +235,28 @@ void SSRTMain::StartFrame()
       AddBrush(brushInfo, true);
     }
   }
+}
+
+void SSRTMain::ProcessFirstPersonModel(const CFirstPersonModelInfo &info)
+{
+  // world must be currently rendering
+  ASSERT(isRenderingWorld);
+
+  RT_AddFirstPersonModel(info.modelObject, info.renderModel, SSRT_FIRSTPERSON_ENTITY_START_ID + currentFirstPersonModelCount, this);
+  currentFirstPersonModelCount++;
+}
+
+bool SSRTMain::StartHUDRendering()
+{
+  if (!isRenderingWorld)
+  {
+    return false;
+  }
+
+  // from now, using rasterization
+  isRenderingWorld = false;
+
+  return true;
 }
 
 void SSRTMain::EndFrame()
