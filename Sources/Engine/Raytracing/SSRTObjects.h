@@ -150,6 +150,13 @@ struct CHudElementInfo
   GfxWrap         textureWrapU;
   GfxWrap         textureWrapV;
   CTextureData    *textureData;
+
+  GFXVertex4      *pPositions; 
+  GFXTexCoord     *pTexCoords;
+  GFXColor        *pColors; 
+  INDEX           vertexCount;
+  INDEX           *pIndices; 
+  INDEX           indexCount;
 };
 
 }

@@ -32,6 +32,7 @@
 # CMake Build dirs (temp)
 Build/
 Debug/
+Release/
 
 # Visual Studio
 *.vs
@@ -92,6 +93,7 @@ Sources/SeriousSkaStudio/Scanner.cpp
 # Custom data
 Controls/*
 Levels/*
+Temp/*
 *.gro
 
 

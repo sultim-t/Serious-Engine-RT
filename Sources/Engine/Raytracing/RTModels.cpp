@@ -173,7 +173,7 @@ static BOOL RT_CreateAttachment(const CModelObject &moParent, const CRenderModel
   // adjust for relative placement of the attachment
   FLOAT3D vOffset;
   FLOATmatrix3D mRelative;
-  MakeRotationMatrixFast(mRelative, amo.amo_plRelative.pl_OrientationAngle);
+  MakeRotationMatrix(mRelative, amo.amo_plRelative.pl_OrientationAngle);
   vOffset(1) = amo.amo_plRelative.pl_PositionVector(1) * moParent.mo_Stretch(1);
   vOffset(2) = amo.amo_plRelative.pl_PositionVector(2) * moParent.mo_Stretch(2);
   vOffset(3) = amo.amo_plRelative.pl_PositionVector(3) * moParent.mo_Stretch(3);

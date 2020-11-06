@@ -452,6 +452,7 @@ copy Release\$(TargetName).lib $(SolutionDir)..\Bin\ &gt;nul</Command>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">StdH.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="Raytracing\RTHud.cpp" />
     <ClCompile Include="Raytracing\SSRT.cpp" />
     <ClCompile Include="Raytracing\SSRTObjects.cpp" />
     <ClCompile Include="Sound\SoundData.cpp" />

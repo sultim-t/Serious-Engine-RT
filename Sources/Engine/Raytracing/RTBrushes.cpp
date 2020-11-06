@@ -29,9 +29,6 @@ static CStaticStackArray<INDEX> RT_AllSectorIndices;
 
 static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
 {
-  RT_AllSectorVertices.PopAll();
-  RT_AllSectorIndices.PopAll();
-
   CBrush3D *brush = bscSector.bsc_pbmBrushMip->bm_pbrBrush;
   if (brush->br_pfsFieldSettings != NULL)
   {
@@ -45,7 +42,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
     // for texture cordinates and transparency/translucency processing
   #pragma region MakeScreenPolygon
 
-    if (polygon.bpo_ulFlags & BPOF_PORTAL)
+    if ((polygon.bpo_ulFlags & BPOF_PORTAL) || (polygon.bpo_ulFlags & BPOF_INVISIBLE))
     {
       continue;
     }
@@ -115,40 +112,6 @@ static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
     //COLOR color = polygon.bpo_colColor;
     //CBrushPolygonTexture *textures = polygon.bpo_abptTextures;
   }
-#pragma region RenderSceneZOnly
-#pragma endregion
-
-  if (RT_AllSectorVertices.Count() == 0 || RT_AllSectorIndices.Count() == 0)
-  {
-    return;
-  }
-
-  CEntity *brushEntity = brush->br_penEntity;
-
-  bool isMovable = brushEntity->en_ulPhysicsFlags & EPF_MOVABLE;
-
-  const CPlacement3D &placement = isMovable ?
-    brushEntity->GetLerpedPlacement() :
-    brushEntity->en_plPlacement;
-
-  FLOAT3D position = placement.pl_PositionVector;
-  FLOATmatrix3D rotation;
-  MakeRotationMatrix(rotation, placement.pl_OrientationAngle);
-
-  SSRT::CBrushGeometry brushInfo = {};
-  brushInfo.entityID = brush->br_penEntity->en_ulID;
-  brushInfo.isEnabled = true;
-  brushInfo.color = RGBAToColor(255, 255, 255, 255);
-  brushInfo.absPosition = position;
-  brushInfo.absRotation = rotation;
-  brushInfo.vertexCount = RT_AllSectorVertices.Count();
-  brushInfo.vertices = &RT_AllSectorVertices[0];
-  brushInfo.texCoords = nullptr;
-  brushInfo.normals = nullptr;
-  brushInfo.indexCount = RT_AllSectorIndices.Count();
-  brushInfo.indices = &RT_AllSectorIndices[0];
-
-  ssrt->AddBrush(brushInfo, isMovable);
 }
 
 
@@ -214,6 +177,8 @@ void RT_AddNonZoningBrush(CEntity *penBrush, CBrushSector *pbscThatAdds, SSRT::S
   // if brush mip exists for that mip factor
   if (pbm != NULL)
   {
+    ASSERT(RT_AllSectorVertices.Count() == 0 && RT_AllSectorIndices.Count() == 0);
+
     // for each sector
     FOREACHINDYNAMICARRAY(pbm->bm_abscSectors, CBrushSector, itbsc)
     {
@@ -224,5 +189,38 @@ void RT_AddNonZoningBrush(CEntity *penBrush, CBrushSector *pbscThatAdds, SSRT::S
         RT_AddActiveSector(itbsc.Current(), ssrt);
       }
     }
+
+    if (RT_AllSectorVertices.Count() == 0 || RT_AllSectorIndices.Count() == 0)
+    {
+      return;
+    }
+
+    bool isMovable = penBrush->en_ulPhysicsFlags & EPF_MOVABLE;
+
+    const CPlacement3D &placement = isMovable ?
+      penBrush->GetLerpedPlacement() :
+      penBrush->en_plPlacement;
+
+    FLOAT3D position = placement.pl_PositionVector;
+    FLOATmatrix3D rotation;
+    MakeRotationMatrix(rotation, placement.pl_OrientationAngle);
+
+    SSRT::CBrushGeometry brushInfo = {};
+    brushInfo.entityID = penBrush->en_ulID;
+    brushInfo.isEnabled = true;
+    brushInfo.color = RGBAToColor(255, 255, 255, 255);
+    brushInfo.absPosition = position;
+    brushInfo.absRotation = rotation;
+    brushInfo.vertexCount = RT_AllSectorVertices.Count();
+    brushInfo.vertices = &RT_AllSectorVertices[0];
+    brushInfo.texCoords = nullptr;
+    brushInfo.normals = nullptr;
+    brushInfo.indexCount = RT_AllSectorIndices.Count();
+    brushInfo.indices = &RT_AllSectorIndices[0];
+
+    ssrt->AddBrush(brushInfo, isMovable);
+
+    RT_AllSectorVertices.PopAll();
+    RT_AllSectorIndices.PopAll();
   }
 }

@@ -67,6 +67,7 @@ public:
   void AddBrush(const CBrushGeometry &brush, bool isMovable);
   void AddLight(const CSphereLight &sphLt);
   void AddLight(const CDirectionalLight &dirLt);
+  void AddHudElement(const CHudElementInfo &hud);
 
   void StartFrame();
   // Process world geometry and build acceleration structures
@@ -75,10 +76,9 @@ public:
   // so a separate function is required to handle this
   void ProcessFirstPersonModel(const CFirstPersonModelInfo &info);
 
-  // Try to start rendering HUD: rasterization functions will be enabled,
+  // ??? Try to start rendering HUD: rasterization functions will be enabled,
   // if previously a world was being rendered (and return true)
   bool StartHUDRendering();
-  void ProcessHUD(const CHudElementInfo &info);
 
   void EndFrame();
 

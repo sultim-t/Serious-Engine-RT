@@ -47,6 +47,14 @@ extern INDEX ogl_iFinish;
 extern INDEX d3d_iFinish;
 
 
+// Special static variables that are set in InitTexture(..) and used 
+// in FlushRenderingQueue(..). Those functions are used in the following pattern:
+// InitTexture -> AddTexture -> ... -> AddTexture -> FlushRenderingQueue
+static CTextureData *ssrt_pTextureData = nullptr;
+static GfxWrap ssrt_eWrap = GFX_REPEAT;
+
+
+
 // RECT HANDLING ROUTINES
 
 
@@ -926,11 +934,6 @@ void CDrawPort::Fill(PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight,
   const BOOL bInside = ClipToDrawPort(this, pixI, pixJ, pixWidth, pixHeight);
   if (!bInside) return;
 
-  extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing)
-  {
-    _pGfx->gl_SSRT->StartHUDRendering();
-  }
   // check API
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
@@ -978,14 +981,23 @@ void CDrawPort::Fill(PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight,
     pvtx[2].x = fI1;  pvtx[2].y = fJ1;  pvtx[2].z = 0;  pcol[2] = glcolDR;
     pvtx[3].x = fI1;  pvtx[3].y = fJ0;  pvtx[3].z = 0;  pcol[3] = glcolUR;
 
+    extern INDEX srt_bEnableRayTracing;
     if (srt_bEnableRayTracing)
     {
+      _pGfx->gl_SSRT->StartHUDRendering();
+
       SSRT::CHudElementInfo hudInfo = {};
       hudInfo.blendEnable = true;
       hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
       hudInfo.blendFuncDst = GFX_INV_SRC_ALPHA;
 
-      RT_AddHudElementQuads(hudInfo, pvtx, ptex, pcol, 4, _pGfx->gl_SSRT);
+      hudInfo.pPositions = &_avtxCommon[0];
+      hudInfo.pTexCoords = &_atexCommon[0];
+      hudInfo.pColors = &_acolCommon[0];
+      hudInfo.vertexCount = _avtxCommon.Count();
+
+      // indices will be generated there
+      RT_AddHudQuads(&hudInfo, &_aiCommonQuads[0], _aiCommonQuads.Count(), _pGfx->gl_SSRT);
     }
 
     gfxFlushQuads();
@@ -1472,12 +1484,6 @@ void CDrawPort::PutText( const CTString &strText, PIX pixX0, PIX pixY0, const CO
 #endif // SE1_VULKAN
 #endif // SE1_D3D
 
-  extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing)
-  {
-    _pGfx->gl_SSRT->StartHUDRendering();
-  }
-
   // skip drawing if text falls above or below draw port
   if( pixY0>dp_Height || pixX0>dp_Width) return;
   _pfGfxProfile.StartTimer( CGfxProfile::PTI_PUTTEXT);
@@ -1689,6 +1695,31 @@ void CDrawPort::PutText( const CTString &strText, PIX pixX0, PIX pixY0, const CO
   _avtxCommon.PopUntil( ctCharsPrinted*4-1);
   _atexCommon.PopUntil( ctCharsPrinted*4-1);
   _acolCommon.PopUntil( ctCharsPrinted*4-1);
+
+
+  extern INDEX srt_bEnableRayTracing;
+  if (srt_bEnableRayTracing)
+  {
+    _pGfx->gl_SSRT->StartHUDRendering();
+
+    SSRT::CHudElementInfo hudInfo = {};
+    hudInfo.blendEnable = true;
+    hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
+    hudInfo.blendFuncDst = GFX_INV_SRC_ALPHA;
+    hudInfo.textureEnable = true;
+    hudInfo.textureData = &td;
+    hudInfo.textureWrapU = hudInfo.textureWrapV = GFX_REPEAT;
+
+    hudInfo.pPositions = &_avtxCommon[0];
+    hudInfo.pTexCoords = &_atexCommon[0];
+    hudInfo.pColors = &_acolCommon[0];
+    hudInfo.vertexCount = _avtxCommon.Count();
+
+    // indices will be generated there
+    RT_AddHudQuads(&hudInfo, &_aiCommonQuads[0], _aiCommonQuads.Count(), _pGfx->gl_SSRT);
+  }
+
+
   gfxFlushQuads();
 
   // all done
@@ -1749,12 +1780,6 @@ void CDrawPort::PutTexture( class CTextureObject *pTO,
                             const PIXaabbox2D &boxScreen, const MEXaabbox2D &boxTexture,
                             const COLOR colUL, const COLOR colUR, const COLOR colDL, const COLOR colDR) const
 {
-  extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing)
-  {
-    _pGfx->gl_SSRT->StartHUDRendering();
-  }
-
   _pfGfxProfile.StartTimer( CGfxProfile::PTI_PUTTEXTURE);
 
   // extract screen and texture coordinates
@@ -1837,6 +1862,31 @@ void CDrawPort::PutTexture( class CTextureObject *pTO,
   pcol[1] = glcolDL;
   pcol[2] = glcolDR;
   pcol[3] = glcolUR;
+
+
+  extern INDEX srt_bEnableRayTracing;
+  if (srt_bEnableRayTracing)
+  {
+    _pGfx->gl_SSRT->StartHUDRendering();
+    
+    SSRT::CHudElementInfo hudInfo = {};
+    hudInfo.blendEnable = true;
+    hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
+    hudInfo.blendFuncDst = GFX_INV_SRC_ALPHA;
+    hudInfo.textureEnable = true;
+    hudInfo.textureData = ptd;
+    hudInfo.textureWrapU = hudInfo.textureWrapV = GFX_REPEAT;
+
+    hudInfo.pPositions = &_avtxCommon[0];
+    hudInfo.pTexCoords = &_atexCommon[0];
+    hudInfo.pColors = &_acolCommon[0];
+    hudInfo.vertexCount = _avtxCommon.Count();
+
+    // indices will be generated there
+    RT_AddHudQuads(&hudInfo, &_aiCommonQuads[0], _aiCommonQuads.Count(), _pGfx->gl_SSRT);
+  }
+
+
   gfxFlushQuads();
   _pfGfxProfile.StopTimer( CGfxProfile::PTI_PUTTEXTURE);
 }
@@ -1849,20 +1899,35 @@ void CDrawPort::InitTexture( class CTextureObject *pTO, const BOOL bClamp/*=FALS
   extern INDEX srt_bEnableRayTracing;
   if (srt_bEnableRayTracing)
   {
-
-
-    return;
+    _pGfx->gl_SSRT->StartHUDRendering();
   }
 
   // prepare
-  if( pTO!=NULL) {
+  if( pTO!=NULL)
+  {
     // has texture
     CTextureData *ptd = (CTextureData*)pTO->GetData();
     GfxWrap eWrap = GFX_REPEAT;
     if( bClamp) eWrap = GFX_CLAMP;
     gfxSetTextureWrapping( eWrap, eWrap);
-    ptd->SetAsCurrent(pTO->GetFrame());
-  } else {
+    
+    if (srt_bEnableRayTracing)
+    {
+      ssrt_pTextureData = ptd;
+      ssrt_eWrap = eWrap;
+    }
+    else
+    {
+      ptd->SetAsCurrent(pTO->GetFrame());
+    }
+  } 
+  else 
+  {
+    if (srt_bEnableRayTracing)
+    {
+      ssrt_pTextureData = nullptr;
+    }
+
     // no texture
     gfxDisableTexture();
   }
@@ -1992,6 +2057,28 @@ void CDrawPort::FlushRenderingQueue(void) const
     _pGfx->gl_SSRT->StartHUDRendering();
     
     SSRT::CHudElementInfo hudInfo = {};
+    hudInfo.blendEnable = true;
+    hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
+    hudInfo.blendFuncDst = GFX_INV_SRC_ALPHA;
+    hudInfo.textureEnable = ssrt_pTextureData != nullptr;
+
+    if (hudInfo.textureEnable)
+    {
+      hudInfo.textureData = ssrt_pTextureData;
+      hudInfo.textureWrapU = hudInfo.textureWrapV = ssrt_eWrap;
+    }
+
+    hudInfo.pPositions = &_avtxCommon[0];
+    hudInfo.pTexCoords = &_atexCommon[0];
+    hudInfo.pColors = &_acolCommon[0];
+    hudInfo.vertexCount = _avtxCommon.Count();
+    hudInfo.pIndices = &_aiCommonElements[0];
+    hudInfo.indexCount = _aiCommonElements.Count();
+
+    // indices will be set there
+    RT_AddHudElements(&hudInfo, _pGfx->gl_SSRT);
+
+    ssrt_pTextureData = nullptr;
   }
 
   gfxFlushElements(); 

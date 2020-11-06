@@ -85,8 +85,11 @@ static void ExportGeometry(const CAbstractGeometry &geom, INDEX offset, const ch
 
 void SSRTMain::AddModel(const CModelGeometry &model)
 {
-  ASSERT(model.vertices != nullptr && model.vertexCount != 0);
-  ASSERT(model.indices != nullptr && model.indexCount != 0);
+  if (model.vertices == nullptr || model.vertexCount == 0 
+      || model.indices == nullptr || model.indexCount == 0)
+  {
+    return;
+  }
 
 #if DUMP_GEOMETRY_TO_OBJ
   static INDEX offset = 0;
@@ -95,49 +98,41 @@ void SSRTMain::AddModel(const CModelGeometry &model)
 #endif
 
   AddRTObject(model, models, entityToModel);
+
+  // RT: TODO: send info to RTGL1
 }
 
 
 void SSRTMain::AddBrush(const CBrushGeometry &brush, bool isMovable)
 {
+  if (brush.vertices == nullptr || brush.vertexCount == 0
+      || brush.indices == nullptr || brush.indexCount == 0)
+  {
+    return;
+  }
+
   auto &brushArray = isMovable ? movableBrushes : staticBrushes;
   auto &entityToBrush = isMovable ? entityToMovableBrush : entityToStaticBrush;
 
   auto &found = entityToBrush.find(brush.entityID);
 
   // if it's already added
-  //if (found != entityToBrush.end())
-  //{
-  //  /*// try to find its sector
-  //  auto &foundSector = std::find_if(found->second.begin(), found->second.end(), [ &brush, &brushArray ] (INDEX i)
-  //  {
-  //    const CBrushGeometry &otherBrush = brushArray[i];
+  if (found != entityToBrush.end())
+  {
+    // entity must have only 1 brush
+    // TODO: RT: delete "entityToBrush" maps?
+    ASSERT(found->second.size() == 1);
+    ASSERT(brush.entityID == brushArray[found->second[0]].entityID);
 
-  //    // ? finding by a sector in a brush
-  //    return true;
-  //  });
+    auto &targetBrush = brushArray[found->second[0]];
+    
+    targetBrush.isEnabled = brush.isEnabled;
+    targetBrush.absPosition = brush.absPosition;
+    targetBrush.absRotation = brush.absRotation;
+    targetBrush.color = brush.color;
 
-  //  // if sector is already added
-  //  if (foundSector != found->second.end())
-  //  {
-  //    brushArray[*foundSector] = brush;
-  //    return;
-  //  }*/
-
-  //  // entity must have only 1 brush
-  //  // TODO: RT: delete "entityToBrush" maps?
-  //  ASSERT(found->second.size() == 1);
-  //  ASSERT(brush.entityID == brushArray[found->second[0]].entityID);
-
-  //  auto &targetBrush = brushArray[found->second[0]];
-  //  
-  //  targetBrush.isEnabled = brush.isEnabled;
-  //  targetBrush.absPosition = brush.absPosition;
-  //  targetBrush.absRotation = brush.absRotation;
-  //  targetBrush.color = brush.color;
-
-  //  return;
-  //}
+    return;
+  }
 
   if (brush.vertices == nullptr || brush.vertexCount == 0 ||
       brush.indices == nullptr || brush.indexCount == 0)
@@ -164,6 +159,11 @@ void SSRTMain::AddLight(const CDirectionalLight &dirLt)
   dirLights.push_back(dirLt);
 }
 
+void SSRTMain::AddHudElement(const CHudElementInfo &hud)
+{
+  // RT: TODO: send hud info to RTGL1
+}
+
 CWorld *SSRTMain::GetCurrentWorld()
 {
   return (CWorld *) _pShell->GetINDEX("pwoCurrentWorld");
@@ -175,30 +175,33 @@ void SSRTMain::StartFrame()
   srt_bEnableRayTracing = Clamp(srt_bEnableRayTracing, 0L, 1L);
 
   currentFirstPersonModelCount = 0;
+
+  CWorld *pwo = GetCurrentWorld();
+  if (pwo == nullptr)
+  {
+    StopWorld();
+  }
 }
 
 void SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
 {
-  worldRenderInfo = info;
-
-  CWorld *pwo = GetCurrentWorld();
-
-  if (pwo == nullptr)
+  CWorld *world = GetCurrentWorld();
+  if (world == nullptr)
   {
-    StopWorld();
     return;
   }
 
   // check if need to reload new world
-  if (pwo->GetName() != currentWorldName)
+  if (world->GetName() != currentWorldName)
   {
-    SetWorld(pwo);
+    SetWorld(world);
   }
 
+  worldRenderInfo = info;
   isRenderingWorld = true;
 
   // check all movable brushes, models and light sources
-  FOREACHINDYNAMICCONTAINER(pwo->wo_cenEntities, CEntity, iten)
+  FOREACHINDYNAMICCONTAINER(world->wo_cenEntities, CEntity, iten)
   {
     if (iten->en_ulID == info.viewerEntityID)
     {
@@ -235,6 +238,11 @@ void SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
       AddBrush(brushInfo, true);
     }
   }
+
+#if DUMP_GEOMETRY_TO_OBJ
+  // stop program to prevent dump file grow
+  ASSERTALWAYS("Geometry was dumped. App will be terminated.");
+#endif
 }
 
 void SSRTMain::ProcessFirstPersonModel(const CFirstPersonModelInfo &info)

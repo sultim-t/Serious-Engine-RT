@@ -16,14 +16,19 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #pragma once
 
 #include "StdH.h"
+
 namespace SSRT
 {
 class SSRTMain;
+struct CHudElementInfo;
 }
 
 class CRenderModel;
 
 void RT_AddNonZoningBrush(CEntity *penBrush, CBrushSector *pbscThatAdds, SSRT::SSRTMain *ssrt);
+
 void RT_AddModelEntity(const CEntity *penModel, SSRT::SSRTMain *ssrt);
 void RT_AddFirstPersonModel(const CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::SSRTMain *ssrt);
-void RT_AddHudElementQuads(SSRT::CHudElementInfo &preparedInfo, const GFXVertex *pvtx, const GFXTexCoord *ptex, const GFXColor *pcol, INDEX quadVertexCount, SSRT::SSRTMain *ssrt);
+
+void RT_AddHudQuads(SSRT::CHudElementInfo *preparedInfo, INDEX *quads, INDEX quadVertexCount, SSRT::SSRTMain *ssrt);
+void RT_AddHudElements(SSRT::CHudElementInfo *preparedInfo, SSRT::SSRTMain *ssrt);
