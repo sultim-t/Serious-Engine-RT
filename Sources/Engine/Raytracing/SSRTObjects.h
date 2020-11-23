@@ -25,8 +25,10 @@ namespace SSRT
 
 // attachments can have attachments, SSRT_MAX_ATTCH_DEPTH defines the max depth
 #define SSRT_MAX_ATTACHMENT_DEPTH 8
-
+// fake entity IDs for first person models
 #define SSRT_FIRSTPERSON_ENTITY_START_ID 2000000000
+#define SSRT_MATERIAL_LAYER_COUNT 3
+
 
 struct RTObject
 {
@@ -40,24 +42,54 @@ public:
   virtual         ~RTObject() = 0;
 };
 
+
+struct CTexture
+{
+  const char      *name;
+
+};
+
+
+struct CMaterial
+{
+  // ID of this material
+  uint32_t        materialId;
+  // base texture data
+  CTextureData    *textureData;
+};
+
+
+// Each triangle has 3 materials (the 4th one is shadowlayer)
+struct CTriangleMaterial
+{
+  uint32_t        layerMaterialId[SSRT_MATERIAL_LAYER_COUNT];
+};
+
+
 struct CAbstractGeometry : RTObject
 {
   // absolute position and rotation
-  FLOAT3D         absPosition;
-  FLOATmatrix3D   absRotation;
+  FLOAT3D             absPosition;
+  FLOATmatrix3D       absRotation;
 
-  COLOR           color;
+  COLOR               color;
+  // if geometry is using only one material, then 
+  // this value will be used, otherwise look at materialIds
+  uint32_t            globalMaterialId;
 
   // Data that should be set to the renderer,
   // vertices are already animated.
   // This data will become invalid after adding CModelGeometry
   // as SE will reset global arrays
-  INDEX           vertexCount;
-  GFXVertex       *vertices;
-  GFXNormal       *normals;
-  GFXTexCoord     *texCoords;
-  INDEX           indexCount;
-  INDEX           *indices;
+  INDEX               vertexCount;
+  GFXVertex           *vertices;
+  GFXNormal           *normals;
+  GFXTexCoord         *texCoords;
+  // each 3 indices make a triangle
+  INDEX               indexCount;
+  INDEX               *indices;
+  // material ID for each triangle
+  CTriangleMaterial   *materialIDs;
 };
 
 
@@ -108,10 +140,10 @@ struct CSphereLight : public RTObject
 struct CWorldRenderingInfo
 {
   // top left point
-  ULONG           screenX;
-  ULONG           screenY;
-  ULONG           screenWidth;
-  ULONG           screenHeight;
+  uint32_t        screenX;
+  uint32_t        screenY;
+  uint32_t        screenWidth;
+  uint32_t        screenHeight;
   ULONG           viewerEntityID;
   //CWorld          *world;
 
@@ -138,10 +170,9 @@ struct CFirstPersonModelInfo
 };
 
 
+// Note: depth test/write is disabled for HUD
 struct CHudElementInfo
 {
-  bool            depthTest;
-  bool            depthWrite;
   bool            alphaTest;
   bool            blendEnable;
   GfxBlend        blendFuncSrc;

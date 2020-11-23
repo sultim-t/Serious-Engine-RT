@@ -31,6 +31,9 @@ extern INDEX gfx_bRenderModels;
 extern INDEX gfx_bRenderPredicted;
 
 
+static CStaticStackArray<INDEX> RT_AllModelMaterialIndices;
+
+
 struct RT_VertexData
 {
   GFXVertex   *vertices;
@@ -546,12 +549,17 @@ static void RT_RenderModel_View(ULONG entityID, const CModelObject &mo, CRenderM
   FLOAT fTexCorrU, fTexCorrV;
   //gfxSetTextureWrapping(GFX_REPEAT, GFX_REPEAT);
 
+  // color and fill mode setup
+  bool bFlatFill = (rm.rm_rtRenderType & RT_WHITE_TEXTURE) || mo.mo_toTexture.ao_AnimData == NULL;
+  const BOOL bTexMode = rm.rm_rtRenderType & (RT_TEXTURE | RT_WHITE_TEXTURE);
+  const BOOL bAllLayers = bTexMode && !bFlatFill;  // disallow rendering of every layer except diffuse
+
 
   // RENDER DIFFUSE LAYER -------------------------------------------------------------------
 
 
   // get diffuse texture corrections
-  const CTextureData *ptdDiff = (CTextureData *) mo.mo_toTexture.ao_AnimData;
+  const CTextureData *ptdDiff = (const CTextureData *) mo.mo_toTexture.ao_AnimData;
   if (ptdDiff != NULL)
   {
     fTexCorrU = 1.0f / ptdDiff->GetWidth();
@@ -612,6 +620,52 @@ static void RT_RenderModel_View(ULONG entityID, const CModelObject &mo, CRenderM
   }
 
   // TODO: RT: texture loading
+  
+  
+  const CTextureData *ptdReflection = (const CTextureData *) mo.mo_toReflection.ao_AnimData;
+  if ((ulMipLayerFlags & SRF_REFLECTIONS) && ptdReflection != NULL && bAllLayers)
+  {
+    // get model reflection color
+    GFXColor colMdlRefl;
+    const COLOR colR = AdjustColor(rm.rm_pmdModelData->md_colReflections, _slTexHueShift, _slTexSaturation);
+    colMdlRefl.abgr = ByteSwap(colR);
+    colMdlRefl.AttenuateA((rm.rm_colBlend &CT_AMASK) >> CT_ASHIFT);
+
+    // for each reflective surface in current mip model
+    FOREACHINSTATICARRAY(mmi.mmpi_MappingSurfaces, MappingSurface, itms)
+    {
+      const MappingSurface &ms = *itms;
+      iSrfVx0 = ms.ms_iSrfVx0;
+      ctSrfVx = ms.ms_ctSrfVx;
+      if ((ms.ms_ulRenderingFlags & SRF_INVISIBLE) || ctSrfVx == 0) break;  // done if found invisible or empty surface
+      if (!(ms.ms_ulRenderingFlags & SRF_REFLECTIONS)) continue;  // skip non-reflection surface
+      // cache surface pointers
+      UWORD *puwSrfToMip = &mmi.mmpi_auwSrfToMip[iSrfVx0];
+      GFXTexCoord *ptexSrfBase = &_atexSrfBase[iSrfVx0];
+      GFXColor *pcolSrfBase = &_acolSrfBase[iSrfVx0];
+      // get surface reflection color and combine with model color
+      GFXColor colSrfRefl;
+      const COLOR colR = AdjustColor(ms.ms_colReflections, _slTexHueShift, _slTexSaturation);
+      colSrfRefl.MultiplyRGBA(colR, colMdlRefl);
+
+      // RT: TODO: process reflectiveness
+    }
+  }
+
+  const CTextureData *ptdSpecular = (const CTextureData *) mo.mo_toSpecular.ao_AnimData;
+  if ((ulMipLayerFlags & SRF_SPECULAR) && ptdSpecular != NULL && bAllLayers)
+  {
+    FOREACHINSTATICARRAY(mmi.mmpi_MappingSurfaces, MappingSurface, itms)
+    {
+      const MappingSurface &ms = *itms;
+      iSrfVx0 = ms.ms_iSrfVx0;
+      ctSrfVx = ms.ms_ctSrfVx;
+      if ((ms.ms_ulRenderingFlags & SRF_INVISIBLE) || ctSrfVx == 0) break;  // done if found invisible or empty surface
+      if (!(ms.ms_ulRenderingFlags & SRF_SPECULAR)) continue;  // skip non-specular surface
+    
+      // RT: TODO: process specularity
+    }
+  }
 
   // must render diffuse if there is no texture (white mode)
   if ((ulMipLayerFlags & SRF_DIFFUSE) || ptdDiff == NULL)

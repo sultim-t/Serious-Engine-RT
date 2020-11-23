@@ -254,6 +254,9 @@ void SSRTMain::ProcessFirstPersonModel(const CFirstPersonModelInfo &info)
   currentFirstPersonModelCount++;
 }
 
+void SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
+{}
+
 bool SSRTMain::StartHUDRendering()
 {
   if (!isRenderingWorld)

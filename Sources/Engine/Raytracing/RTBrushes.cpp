@@ -24,8 +24,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Raytracing/SSRT.h>
 
+
 static CStaticStackArray<GFXVertex> RT_AllSectorVertices;
 static CStaticStackArray<INDEX> RT_AllSectorIndices;
+static CStaticStackArray<INDEX> RT_AllBrushMaterialIndices;
+
 
 static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
 {

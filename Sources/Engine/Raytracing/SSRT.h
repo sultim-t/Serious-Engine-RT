@@ -47,13 +47,15 @@ private:
   std::vector<CModelGeometry>             models;
   std::vector<CBrushGeometry>             staticBrushes;
   std::vector<CBrushGeometry>             movableBrushes;
+  // light sources in a current world, cleaned up by the end of a frame
   std::vector<CSphereLight>               sphLights;
   std::vector<CDirectionalLight>          dirLights;
 
   // - Every entity can be either model or brush
   // - A model can have attachments that are models too
-  // - A brush can have several sectors
-  // - An ntity can have one light source "attached" to it.
+  // - A brush can have several sectors (but they're combined 
+  //        in one geometry while processing so vector.size()==1)
+  // - An entity can have one light source "attached" to it.
   // Next maps are for getting associated SSRT object by entity ID
   // for updating their params, if they are created
   std::map<ULONG, std::vector<INDEX>>     entityToModel;
@@ -70,11 +72,16 @@ public:
   void AddHudElement(const CHudElementInfo &hud);
 
   void StartFrame();
-  // Process world geometry and build acceleration structures
+
+  // Process world geometry: build acceleration structures and reload textures 
+  // when required (always for dynamic objects, once for static).
+  // Must be called every frame if the world is visible
   void ProcessWorld(const CWorldRenderingInfo &info);
   // First person models are rendered directly from .es script,
   // so a separate function is required to handle this
   void ProcessFirstPersonModel(const CFirstPersonModelInfo &info);
+
+  void ProcessHudElement(const CHudElementInfo &hud);
 
   // ??? Try to start rendering HUD: rasterization functions will be enabled,
   // if previously a world was being rendered (and return true)

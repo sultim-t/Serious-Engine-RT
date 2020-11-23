@@ -997,7 +997,7 @@ void CDrawPort::Fill(PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight,
       hudInfo.vertexCount = _avtxCommon.Count();
 
       // indices will be generated there
-      RT_AddHudQuads(&hudInfo, &_aiCommonQuads[0], _aiCommonQuads.Count(), _pGfx->gl_SSRT);
+      RT_AddHudQuads(&hudInfo, _pGfx->gl_SSRT);
     }
 
     gfxFlushQuads();
@@ -1104,7 +1104,7 @@ void CDrawPort::FillZBuffer( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, FL
   if (srt_bEnableRayTracing)
   {
     // TODO: RT: uncomment(?) return to prevent depth clear
-    return;
+    //return;
   }
 
   // clip and eventually reject
@@ -1163,7 +1163,7 @@ void CDrawPort::FillZBuffer( FLOAT zval) const
   if (srt_bEnableRayTracing)
   {
     // TODO: RT: uncomment(?) return to prevent depth clear
-    return;
+    //return;
   }
 
   gfxEnableDepthWrite();
@@ -1698,7 +1698,7 @@ void CDrawPort::PutText( const CTString &strText, PIX pixX0, PIX pixY0, const CO
 
 
   extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing)
+  if (srt_bEnableRayTracing && _avtxCommon.Count() > 0)
   {
     _pGfx->gl_SSRT->StartHUDRendering();
 
@@ -1716,7 +1716,7 @@ void CDrawPort::PutText( const CTString &strText, PIX pixX0, PIX pixY0, const CO
     hudInfo.vertexCount = _avtxCommon.Count();
 
     // indices will be generated there
-    RT_AddHudQuads(&hudInfo, &_aiCommonQuads[0], _aiCommonQuads.Count(), _pGfx->gl_SSRT);
+    RT_AddHudQuads(&hudInfo, _pGfx->gl_SSRT);
   }
 
 
@@ -1883,7 +1883,7 @@ void CDrawPort::PutTexture( class CTextureObject *pTO,
     hudInfo.vertexCount = _avtxCommon.Count();
 
     // indices will be generated there
-    RT_AddHudQuads(&hudInfo, &_aiCommonQuads[0], _aiCommonQuads.Count(), _pGfx->gl_SSRT);
+    RT_AddHudQuads(&hudInfo, _pGfx->gl_SSRT);
   }
 
 

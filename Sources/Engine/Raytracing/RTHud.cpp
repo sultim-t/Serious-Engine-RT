@@ -19,7 +19,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Raytracing/SSRT.h>
 
 
-void RT_AddHudQuads(SSRT::CHudElementInfo *preparedInfo, INDEX *quads, INDEX quadVertexCount, SSRT::SSRTMain *ssrt)
+void RT_AddHudQuads(SSRT::CHudElementInfo *preparedInfo, SSRT::SSRTMain *ssrt)
 {
   const INDEX ctElements = preparedInfo->vertexCount * 6 / 4;
   if (ctElements <= 0)
@@ -45,7 +45,6 @@ void RT_AddHudQuads(SSRT::CHudElementInfo *preparedInfo, INDEX *quads, INDEX qua
       piQuads[i * 6 + 4] = iStart + i * 4 + 3;
       piQuads[i * 6 + 5] = iStart + i * 4 + 0;
     }
-
   }
 
   preparedInfo->pIndices = &_aiCommonQuads[0];
