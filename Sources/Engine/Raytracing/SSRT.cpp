@@ -27,6 +27,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Raytracing/SSRTObjects.h>
 #include <Engine/Raytracing/RTProcessing.h>
 
+#include <RTGL1/RTGL1.h>
+
 extern CShell *_pShell;
 
 // dump brushes and models to .obj files;
