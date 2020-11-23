@@ -69,7 +69,6 @@ public:
   void AddBrush(const CBrushGeometry &brush, bool isMovable);
   void AddLight(const CSphereLight &sphLt);
   void AddLight(const CDirectionalLight &dirLt);
-  void AddHudElement(const CHudElementInfo &hud);
 
   void StartFrame();
 
@@ -80,12 +79,8 @@ public:
   // First person models are rendered directly from .es script,
   // so a separate function is required to handle this
   void ProcessFirstPersonModel(const CFirstPersonModelInfo &info);
-
+  // HUD elements will be drawn using rasterization
   void ProcessHudElement(const CHudElementInfo &hud);
-
-  // ??? Try to start rendering HUD: rasterization functions will be enabled,
-  // if previously a world was being rendered (and return true)
-  bool StartHUDRendering();
 
   void EndFrame();
 

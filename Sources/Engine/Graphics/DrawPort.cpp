@@ -40,7 +40,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #endif
 
 #include <Engine/Raytracing/SSRT.h>
-#include <Engine/Raytracing/RTProcessing.h>
 
 extern INDEX gfx_bDecoratedText;
 extern INDEX ogl_iFinish;
@@ -454,6 +453,39 @@ BOOL CDrawPort::Lock(void)
 
 // DRAWING ROUTINES -------------------------------------
 
+
+// function for generating indices for quad HUD elements
+void HudElement_GenerateQuadIndices(SSRT::CHudElementInfo *preparedInfo)
+{
+  const INDEX ctElements = preparedInfo->vertexCount * 6 / 4;
+  if (ctElements <= 0)
+  {
+    return;
+  }
+
+  // make sure that enough quad elements has been initialized,
+  // indices are the same so use one array without changing it
+  const INDEX ctQuads = _aiCommonQuads.Count();
+  if (ctElements > ctQuads)
+  {
+    const INDEX toAdd = ctElements - ctQuads;
+
+    const INDEX iStart = _aiCommonQuads.Count() / 6 * 4;
+    INDEX *piQuads = _aiCommonQuads.Push(toAdd * 6);
+    for (INDEX i = 0; i < toAdd; i++)
+    {
+      piQuads[i * 6 + 0] = iStart + i * 4 + 0;
+      piQuads[i * 6 + 1] = iStart + i * 4 + 1;
+      piQuads[i * 6 + 2] = iStart + i * 4 + 2;
+      piQuads[i * 6 + 3] = iStart + i * 4 + 2;
+      piQuads[i * 6 + 4] = iStart + i * 4 + 3;
+      piQuads[i * 6 + 5] = iStart + i * 4 + 0;
+    }
+  }
+
+  preparedInfo->pIndices = &_aiCommonQuads[0];
+  preparedInfo->indexCount = ctElements;
+}
 
 
 // draw one point
@@ -984,8 +1016,6 @@ void CDrawPort::Fill(PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight,
     extern INDEX srt_bEnableRayTracing;
     if (srt_bEnableRayTracing)
     {
-      _pGfx->gl_SSRT->StartHUDRendering();
-
       SSRT::CHudElementInfo hudInfo = {};
       hudInfo.blendEnable = true;
       hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
@@ -995,9 +1025,9 @@ void CDrawPort::Fill(PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight,
       hudInfo.pTexCoords = &_atexCommon[0];
       hudInfo.pColors = &_acolCommon[0];
       hudInfo.vertexCount = _avtxCommon.Count();
+      HudElement_GenerateQuadIndices(&hudInfo);
 
-      // indices will be generated there
-      RT_AddHudQuads(&hudInfo, _pGfx->gl_SSRT);
+      _pGfx->gl_SSRT->ProcessHudElement(hudInfo);
     }
 
     gfxFlushQuads();
@@ -1700,8 +1730,6 @@ void CDrawPort::PutText( const CTString &strText, PIX pixX0, PIX pixY0, const CO
   extern INDEX srt_bEnableRayTracing;
   if (srt_bEnableRayTracing && _avtxCommon.Count() > 0)
   {
-    _pGfx->gl_SSRT->StartHUDRendering();
-
     SSRT::CHudElementInfo hudInfo = {};
     hudInfo.blendEnable = true;
     hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
@@ -1714,9 +1742,9 @@ void CDrawPort::PutText( const CTString &strText, PIX pixX0, PIX pixY0, const CO
     hudInfo.pTexCoords = &_atexCommon[0];
     hudInfo.pColors = &_acolCommon[0];
     hudInfo.vertexCount = _avtxCommon.Count();
+    HudElement_GenerateQuadIndices(&hudInfo);
 
-    // indices will be generated there
-    RT_AddHudQuads(&hudInfo, _pGfx->gl_SSRT);
+    _pGfx->gl_SSRT->ProcessHudElement(hudInfo);
   }
 
 
@@ -1866,9 +1894,7 @@ void CDrawPort::PutTexture( class CTextureObject *pTO,
 
   extern INDEX srt_bEnableRayTracing;
   if (srt_bEnableRayTracing)
-  {
-    _pGfx->gl_SSRT->StartHUDRendering();
-    
+  {    
     SSRT::CHudElementInfo hudInfo = {};
     hudInfo.blendEnable = true;
     hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
@@ -1881,9 +1907,9 @@ void CDrawPort::PutTexture( class CTextureObject *pTO,
     hudInfo.pTexCoords = &_atexCommon[0];
     hudInfo.pColors = &_acolCommon[0];
     hudInfo.vertexCount = _avtxCommon.Count();
+    HudElement_GenerateQuadIndices(&hudInfo);
 
-    // indices will be generated there
-    RT_AddHudQuads(&hudInfo, _pGfx->gl_SSRT);
+    _pGfx->gl_SSRT->ProcessHudElement(hudInfo);
   }
 
 
@@ -1897,10 +1923,6 @@ void CDrawPort::PutTexture( class CTextureObject *pTO,
 void CDrawPort::InitTexture( class CTextureObject *pTO, const BOOL bClamp/*=FALSE*/) const
 {
   extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing)
-  {
-    _pGfx->gl_SSRT->StartHUDRendering();
-  }
 
   // prepare
   if( pTO!=NULL)
@@ -2054,8 +2076,6 @@ void CDrawPort::FlushRenderingQueue(void) const
   extern INDEX srt_bEnableRayTracing;
   if (srt_bEnableRayTracing)
   {
-    _pGfx->gl_SSRT->StartHUDRendering();
-    
     SSRT::CHudElementInfo hudInfo = {};
     hudInfo.blendEnable = true;
     hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
@@ -2076,7 +2096,7 @@ void CDrawPort::FlushRenderingQueue(void) const
     hudInfo.indexCount = _aiCommonElements.Count();
 
     // indices will be set there
-    RT_AddHudElements(&hudInfo, _pGfx->gl_SSRT);
+    _pGfx->gl_SSRT->ProcessHudElement(hudInfo);
 
     ssrt_pTextureData = nullptr;
   }
@@ -2095,7 +2115,7 @@ void CDrawPort::BlendScreen(void)
   extern INDEX srt_bEnableRayTracing;
   if (srt_bEnableRayTracing)
   {
-    _pGfx->gl_SSRT->StartHUDRendering();
+
   }
 
   ULONG fix1oA = 65536 / dp_ulBlendingA;
@@ -2131,6 +2151,25 @@ void CDrawPort::BlendScreen(void)
   pcol[1] = glcol;
   pcol[2] = glcol;
   pcol[3] = glcol;
+
+  extern INDEX srt_bEnableRayTracing;
+  if (srt_bEnableRayTracing && _avtxCommon.Count() > 0)
+  {
+    SSRT::CHudElementInfo hudInfo = {};
+    hudInfo.blendEnable = true;
+    hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
+    hudInfo.blendFuncDst = GFX_INV_SRC_ALPHA;
+    hudInfo.textureEnable = false;
+
+    hudInfo.pPositions = pvtx;
+    hudInfo.pTexCoords = ptex;
+    hudInfo.pColors = pcol;
+    hudInfo.vertexCount = 4;
+    HudElement_GenerateQuadIndices(&hudInfo);
+
+    _pGfx->gl_SSRT->ProcessHudElement(hudInfo);
+  }
+  
   gfxFlushQuads();
   // reset accumulation color
   dp_ulBlendingRA = 0;

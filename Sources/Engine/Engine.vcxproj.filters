@@ -805,9 +805,6 @@
     <ClCompile Include="Raytracing\RTBrushes.cpp">
       <Filter>Header Files</Filter>
     </ClCompile>
-    <ClCompile Include="Raytracing\RTHud.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Base\Anim.h">

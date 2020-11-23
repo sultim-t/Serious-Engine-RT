@@ -17,6 +17,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Entities/Entity.h>
 #include <Engine/Brushes/Brush.h>
+#include <stdint.h>
 
 class CRenderModel;
 

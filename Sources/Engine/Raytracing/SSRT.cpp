@@ -147,6 +147,8 @@ void SSRTMain::AddBrush(const CBrushGeometry &brush, bool isMovable)
 #endif
 
   AddRTObject(brush, brushArray, entityToBrush);
+
+  // RT: TODO: send info to RTGL1
 }
 
 void SSRTMain::AddLight(const CSphereLight &sphLt)
@@ -157,11 +159,6 @@ void SSRTMain::AddLight(const CSphereLight &sphLt)
 void SSRTMain::AddLight(const CDirectionalLight &dirLt)
 {
   dirLights.push_back(dirLt);
-}
-
-void SSRTMain::AddHudElement(const CHudElementInfo &hud)
-{
-  // RT: TODO: send hud info to RTGL1
 }
 
 CWorld *SSRTMain::GetCurrentWorld()
@@ -255,19 +252,8 @@ void SSRTMain::ProcessFirstPersonModel(const CFirstPersonModelInfo &info)
 }
 
 void SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
-{}
-
-bool SSRTMain::StartHUDRendering()
 {
-  if (!isRenderingWorld)
-  {
-    return false;
-  }
-
-  // from now, using rasterization
-  isRenderingWorld = false;
-
-  return true;
+  // RT: TODO: send hud info to RTGL1
 }
 
 void SSRTMain::EndFrame()

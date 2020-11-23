@@ -29,6 +29,3 @@ void RT_AddNonZoningBrush(CEntity *penBrush, CBrushSector *pbscThatAdds, SSRT::S
 
 void RT_AddModelEntity(const CEntity *penModel, SSRT::SSRTMain *ssrt);
 void RT_AddFirstPersonModel(const CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::SSRTMain *ssrt);
-
-void RT_AddHudQuads(SSRT::CHudElementInfo *preparedInfo, SSRT::SSRTMain *ssrt);
-void RT_AddHudElements(SSRT::CHudElementInfo *preparedInfo, SSRT::SSRTMain *ssrt);
