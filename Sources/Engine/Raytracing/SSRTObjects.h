@@ -89,7 +89,7 @@ struct CAbstractGeometry : RTObject
   // each 3 indices make a triangle
   INDEX               indexCount;
   INDEX               *indices;
-  // material ID for each triangle
+  // material ID for each triangle (i.e. for each 3 indices)
   CTriangleMaterial   *materialIDs;
 };
 

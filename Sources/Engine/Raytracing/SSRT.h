@@ -26,6 +26,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Raytracing/SSRTObjects.h>
 
+#include <RTGL1/RTGL1.h>
+
+
 namespace SSRT
 {
 // TODO: RT: if SE1 doesn't provide info about deleted entities

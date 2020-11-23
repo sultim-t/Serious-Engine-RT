@@ -126,7 +126,7 @@
       <GenerateMapFile>true</GenerateMapFile>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
-      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib32;$(SolutionDir)\RTGL1\Build\Debug\x64-Debug-Light;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib32;$(SolutionDir)RTGL1\Build\Debug\x64-Debug-Light;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <CustomBuildStep>
       <Command>copy Debug\$(TargetName).dll $(SolutionDir)..\Bin\Debug\ &gt;nul
@@ -136,7 +136,8 @@ copy Debug\$(TargetName).lib $(SolutionDir)..\Bin\Debug\ &gt;nul</Command>
       <Outputs>$(SolutionDir)..\Bin\Debug\$(TargetName).dll;%(Outputs)</Outputs>
     </CustomBuildStep>
     <PreBuildEvent>
-      <Command>del $(SolutionDir)..\Bin\Debug\$(TargetName).dll /q &gt;nul</Command>
+      <Command>del $(SolutionDir)..\Bin\Debug\$(TargetName).dll /q &gt;nul
+if not exist $(SolutionDir)RTGL1\Build\Debug\x64-Debug-Light\RayTracedGL1.lib echo "ERROR: $(SolutionDir)RTGL1\Build\Debug\x64-Debug-Light\RayTracedGL1.lib doesn't exist, please build RTGL1 project before building Engine"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -186,7 +187,7 @@ copy Debug\$(TargetName).lib $(SolutionDir)..\Bin\Debug\ &gt;nul</Command>
       <GenerateMapFile>true</GenerateMapFile>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
-      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib32;$(SolutionDir)\RTGL1\Build\Release\x64-Release-Light;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib32;$(SolutionDir)RTGL1\Build\Release\x64-Release-Light;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <CustomBuildStep>
       <Command>copy Release\$(TargetName).dll $(SolutionDir)..\Bin\ &gt;nul
@@ -196,7 +197,8 @@ copy Release\$(TargetName).lib $(SolutionDir)..\Bin\ &gt;nul</Command>
       <Outputs>$(SolutionDir)..\Bin\$(TargetName).dll;%(Outputs)</Outputs>
     </CustomBuildStep>
     <PreBuildEvent>
-      <Command>del $(SolutionDir)..\Bin\$(TargetName).dll /q &gt;nul</Command>
+      <Command>del $(SolutionDir)..\Bin\$(TargetName).dll /q &gt;nul
+if not exist $(SolutionDir)RTGL1\Build\Release\x64-Release-Light\RayTracedGL1.lib echo "ERROR: $(SolutionDir)RTGL1\Build\Release\x64-Release-Light\RayTracedGL1.lib doesn't exist, please build RTGL1 project before building Engine"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
