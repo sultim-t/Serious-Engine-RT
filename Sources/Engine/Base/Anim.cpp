@@ -471,7 +471,7 @@ void CAnimData::ExportAnimationNames_t( CTStream *ostrFile, CTString strAnimatio
   for( INDEX iAnimation=0; iAnimation<ad_NumberOfAnims; iAnimation++)
   {
     // prepare one #define line (add prefix)
-    sprintf( chrLine, "#define %s%s %d", strAnimationPrefix, ad_Anims[ iAnimation].oa_Name,
+    sprintf( chrLine, "#define %s%s %d", strAnimationPrefix.str_String, ad_Anims[ iAnimation].oa_Name,
              iAnimation);
     // put it into file
     ostrFile->PutLine_t( chrLine);

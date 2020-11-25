@@ -63,7 +63,7 @@ void FillDirList_internal(const CTFileName &fnmBasePath,
     }
     
     // start listing the directory
-    struct _finddata_t c_file; long hFile;
+    struct _finddata_t c_file; intptr_t hFile;
     hFile = _findfirst( (const char *)(fnmBasePath+fnmDir+"*"), &c_file );
     
     // for each file in the directory

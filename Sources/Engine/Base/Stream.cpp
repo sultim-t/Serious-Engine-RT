@@ -164,7 +164,7 @@ void InitStreams(void)
 
   // for each group file in base directory
   struct _finddata_t c_file;
-  long hFile;
+  intptr_t hFile;
   hFile = _findfirst(_fnmApplicationPath+"*.gro", &c_file);
   BOOL bOK = (hFile!=-1);
   while(bOK) {
@@ -180,7 +180,7 @@ void InitStreams(void)
   if (_fnmMod!="") {
     // for each group file in mod directory
     struct _finddata_t c_file;
-    long hFile;
+    intptr_t hFile;
     hFile = _findfirst(_fnmApplicationPath+_fnmMod+"*.gro", &c_file);
     BOOL bOK = (hFile!=-1);
     while(bOK) {
@@ -197,7 +197,7 @@ void InitStreams(void)
   if (_fnmCDPath!="") {
     // for each group file on the CD
     struct _finddata_t c_file;
-    long hFile;
+    intptr_t hFile;
     hFile = _findfirst(_fnmCDPath+"*.gro", &c_file);
     BOOL bOK = (hFile!=-1);
     while(bOK) {
@@ -213,7 +213,7 @@ void InitStreams(void)
     if (_fnmMod!="") {
       // for each group file in mod directory
       struct _finddata_t c_file;
-      long hFile;
+      intptr_t hFile;
       hFile = _findfirst(_fnmCDPath+_fnmMod+"*.gro", &c_file);
       BOOL bOK = (hFile!=-1);
       while(bOK) {
@@ -335,7 +335,7 @@ void CTStream::Throw_t(char *strFormat, ...)  // throws char *
   char strFormatBuffer[slBufferSize];
   char strBuffer[slBufferSize];
   // add the stream description to the format string
-  _snprintf(strFormatBuffer, slBufferSize, "%s (%s)", strFormat, strm_strStreamDescription);
+  _snprintf(strFormatBuffer, slBufferSize, "%s (%s)", strFormat, strm_strStreamDescription.str_String);
   // format the message in buffer
   va_list arg;
   va_start(arg, strFormat); // variable arguments start after this argument

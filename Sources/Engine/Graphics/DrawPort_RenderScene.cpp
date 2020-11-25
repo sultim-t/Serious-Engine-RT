@@ -823,7 +823,7 @@ vtxLoop:
       jnz     vtxLoop
     }
 #else
-    const FLOAT3D &vO = pspo->spo_amvMapping[iLayer].mv_vO;
+    // const FLOAT3D &vO = pspo->spo_amvMapping[iLayer].mv_vO;
     const FLOAT3D &vU = pspo->spo_amvMapping[iLayer].mv_vU;
     const FLOAT3D &vV = pspo->spo_amvMapping[iLayer].mv_vV;
     for( INDEX i=0; i<pspo->spo_ctVtx; i++) {

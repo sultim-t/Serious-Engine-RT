@@ -246,7 +246,6 @@ COLOR MulColors( COLOR col1, COLOR col2)
   if( col1==0xFFFFFFFF)   return col2;
   if( col2==0xFFFFFFFF)   return col1;
   if( col1==0 || col2==0) return 0;
-  COLOR colRet;
 
   UBYTE col1_RGBA[4];
   ColorToRGBA(col1, col1_RGBA[0], col1_RGBA[1], col1_RGBA[2], col1_RGBA[3]);

@@ -103,7 +103,7 @@ struct SvkDynamicUniform : public SvkDynamicBuffer
 // Dynamic buffer to delete
 struct SvkDBufferToDelete
 {
-  VkBuffer        sdd_Memory;
+  VkDeviceMemory  sdd_Memory;
   VkBuffer        sdd_Buffers[gl_VkMaxCmdBufferCount];
   // optional
   VkDescriptorSet sdd_DescriptorSets[gl_VkMaxCmdBufferCount];

@@ -54,15 +54,20 @@ struct GFXColor
     struct { ULONG abgr;    };  // reverse order - use ByteSwap()!
   };
 
-  GFXColor() {};
+  GFXColor() : r(0), g(0), b(0), a(0) {}
 
   GFXColor( COLOR col) {
-    r = (col & CT_RMASK) >> CT_RSHIFT;
-    g = (col & CT_GMASK) >> CT_GSHIFT;
-    b = (col & CT_BMASK) >> CT_BSHIFT;
-    a = (col & CT_AMASK) >> CT_ASHIFT;
+    Set(col);
   }
 
+#define CT_RMASK  0xFF000000UL
+#define CT_GMASK  0x00FF0000UL
+#define CT_BMASK  0x0000FF00UL
+#define CT_AMASK  0x000000FFUL
+#define CT_RSHIFT 24
+#define CT_GSHIFT 16
+#define CT_BSHIFT  8
+#define CT_ASHIFT  0
   __forceinline void Set( COLOR col) {
     r = (col & CT_RMASK) >> CT_RSHIFT;
     g = (col & CT_GMASK) >> CT_GSHIFT;

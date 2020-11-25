@@ -26,6 +26,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Graphics/Adapter.h>
 
+#include <intrin.h>
+
 INDEX con_bNoWarnings = 0;
 
 // global handle for application window in full-screen mode
@@ -190,5 +192,6 @@ void ThrowF_t(char *strFormat, ...)  // throws char *
 // must be in separate function to disable stupid optimizer
 extern void Breakpoint(void)
 {
-  __asm int 0x03;
+  __debugbreak();
+  //__asm int 0x03;
 }

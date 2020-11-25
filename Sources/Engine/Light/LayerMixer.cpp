@@ -40,7 +40,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define W  word ptr
 #define B  byte ptr
 
-#define ASMOPT 1
+#ifndef  _WIN64
+  #define ASMOPT 1
+#endif
 
 
 extern INDEX shd_bFineQuality;
@@ -267,6 +269,11 @@ void CLayerMixer::AddAmbientPoint(void)
   _slLightMax<<=7;
   _slLightStep>>=1;
 
+#ifdef  _WIN64
+
+  // TODO: X64
+
+#else
   __asm {
     // prepare interpolants
     movd    mm0,D [_slL2Row]
@@ -338,6 +345,7 @@ skipPixel:
     jnz     rowLoop
     emms
   }
+#endif
 }
 
 // add one layer point light without diffusion and with mask
@@ -440,7 +448,7 @@ skipPixel:
     for( PIX pixU=0; pixU<_iPixCt; pixU++)
     {
       // if the point is not masked
-      if( *pubPoint&ubMask && (slL2Point<FTOX)) {
+      if( (*pubMask&ubMask) && (slL2Point<FTOX)) {
         SLONG slL = (slL2Point>>SHIFTX)&(SQRTTABLESIZE-1);  // and is just for degenerate cases
         SLONG slIntensity = _slLightMax;
         slL = aubSqrt[slL];
@@ -450,11 +458,11 @@ skipPixel:
       } 
       // go to the next pixel
       _pulLayer++;
-      slL2Point += _slDL2oDU;
+      slL2Point += _slDL2oDV;
       slDL2oDU  += _slDDL2oDU;
       ubMask<<=1;
       if( ubMask==0) {
-        pubPoint++;
+        pubMask++;
         ubMask = 1;
       }
     }
@@ -484,6 +492,11 @@ void CLayerMixer::AddDiffusionPoint(void)
   _slLightMax<<=7;
   _slLightStep>>=1;
 
+#ifdef  _WIN64
+
+  // TODO: X64
+
+#else
   __asm {
     // prepare interpolants
     movd    mm0,D [_slL2Row]
@@ -554,6 +567,7 @@ skipPixel:
     jnz     rowLoop
     emms
   }
+#endif
 }
 
 // add one layer point light with diffusion and mask
@@ -1116,7 +1130,7 @@ rowNext:
       AddToCluster( (UBYTE*)_pulLayer);
       _pulLayer++; // go to the next pixel
     } // go to the next row
-    _pulLayer += slModulo;
+    _pulLayer += _slModulo;
   }
 
 #endif
@@ -1162,6 +1176,7 @@ skipLight:
   }
 
 #else
+  SLONG slModulo = (lm_pixCanvasSizeU - lm_pixPolygonSizeU) * BYTES_PER_TEXEL;
 
   // for each pixel in the shadow map
   for( PIX pixV=0; pixV<_iRowCt; pixV++) {
@@ -1282,6 +1297,12 @@ void CLayerMixer::MixOneMipmap(CBrushShadowMap *pbsm, INDEX iMipmap)
       }}
     }
   } // set initial color
+
+#ifdef  _WIN64
+
+// TODO: X64
+
+#else
   __asm {
     cld
     mov     ebx,D [this]
@@ -1292,6 +1313,8 @@ void CLayerMixer::MixOneMipmap(CBrushShadowMap *pbsm, INDEX iMipmap)
     bswap   eax
     rep     stosd
   }
+#endif
+
   _pfWorldEditingProfile.StopTimer(CWorldEditingProfile::PTI_AMBIENTFILL);
 
   // find gradient layer
@@ -1367,6 +1390,11 @@ void CLayerMixer::MixOneMipmap(CBrushShadowMap *pbsm, INDEX iMipmap)
 // copy from static shadow map to dynamic layer
 __forceinline void CLayerMixer::CopyShadowLayer(void)
 {
+#ifdef  _WIN64
+  
+  // TODO: X64
+
+#else
   __asm {
     cld
     mov     ebx,D [this]
@@ -1376,12 +1404,18 @@ __forceinline void CLayerMixer::CopyShadowLayer(void)
     mov     edi,D [ebx].lm_pulShadowMap
     rep     movsd
   }
+#endif
 }
 
 
 // copy from static shadow map to dynamic layer
 __forceinline void CLayerMixer::FillShadowLayer( COLOR col)
 {
+#ifdef  _WIN64
+
+  // TODO: X64
+
+#else
   __asm {
     cld
     mov     ebx,D [this]
@@ -1392,6 +1426,7 @@ __forceinline void CLayerMixer::FillShadowLayer( COLOR col)
     bswap   eax   // convert to R,G,B,A memory format!
     rep     stosd
   }
+#endif
 }
 
 

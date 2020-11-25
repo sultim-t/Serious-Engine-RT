@@ -24,7 +24,7 @@ static HBITMAP _hbmSplashMask = NULL;
 static BITMAP _bmSplashMask;
 static HWND hwnd = NULL;
 
-static long FAR PASCAL SplashWindowProc( HWND hWnd, UINT message, 
+static LONG_PTR FAR PASCAL SplashWindowProc( HWND hWnd, UINT message,
 			    WPARAM wParam, LPARAM lParam )
 {
   switch( message ) {

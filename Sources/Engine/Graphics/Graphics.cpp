@@ -198,7 +198,34 @@ static void MakeOneMipmap( ULONG *pulSrcMipmap, ULONG *pulDstMipmap, PIX pixWidt
   pixHeight>>=1;
 
   if( bBilinear) // type of filtering?
-  { // BILINEAR
+  { 
+    // BILINEAR
+  #ifdef _WIN64
+    PIX pixCurrWidth = pixWidth;
+    PIX pixCurrHeight = pixHeight;
+    UBYTE r, g, b, a;
+
+    for (PIX v = 0; v < pixHeight; v++)
+    { // column loop
+      for (PIX u = 0; u < pixWidth; u++)
+      { // read four neighbour pixels
+        COLOR colUL = pulSrcMipmap[((v * 2 + 0) * pixCurrWidth * 2 + u * 2) + 0];
+        COLOR colUR = pulSrcMipmap[((v * 2 + 0) * pixCurrWidth * 2 + u * 2) + 1];
+        COLOR colDL = pulSrcMipmap[((v * 2 + 1) * pixCurrWidth * 2 + u * 2) + 0];
+        COLOR colDR = pulSrcMipmap[((v * 2 + 1) * pixCurrWidth * 2 + u * 2) + 1];
+        // separate and add channels
+        ULONG rRes = 0, gRes = 0, bRes = 0, aRes = 0;
+        ColorToRGBA(colUL, r, g, b, a); rRes += r; gRes += g; bRes += b; aRes += a;
+        ColorToRGBA(colUR, r, g, b, a); rRes += r; gRes += g; bRes += b; aRes += a;
+        ColorToRGBA(colDL, r, g, b, a); rRes += r; gRes += g; bRes += b; aRes += a;
+        ColorToRGBA(colDR, r, g, b, a); rRes += r; gRes += g; bRes += b; aRes += a;
+        // round, average and store
+        rRes += 2; gRes += 2; bRes += 2; aRes += 2;
+        rRes >>= 2; gRes >>= 2; bRes >>= 2; aRes >>= 2;
+        pulDstMipmap[v * pixCurrWidth + u] = RGBAToColor(rRes, gRes, bRes, aRes);
+      }
+    }
+  #else
     __asm {
       pxor    mm0,mm0
       mov     ebx,D [pixWidth]
@@ -234,9 +261,39 @@ pixLoopN:
       jnz     rowLoop
       emms
     }
+  #endif
   }
   else
-  { // NEAREST-NEIGHBOUR but with border preserving
+  { 
+  #ifdef _WIN64
+    // NEAREST-NEIGHBOUR but with border preserving
+    PIX pixCurrWidth = pixWidth;
+    PIX pixCurrHeight = pixHeight;
+
+    PIX u, v;
+    for (v = 0; v < pixCurrHeight / 2; v++)
+    {
+      for (u = 0; u < pixCurrWidth / 2; u++)
+      { // mipmap upper left pixel
+        pulDstMipmap[v * pixCurrWidth + u] = pulSrcMipmap[((v * 2 + 0) * pixCurrWidth * 2 + u * 2) + 0];
+      }
+      for (u = pixCurrWidth / 2; u < pixCurrWidth; u++)
+      { // mipmap upper right pixel
+        pulDstMipmap[v * pixCurrWidth + u] = pulSrcMipmap[((v * 2 + 0) * pixCurrWidth * 2 + u * 2) + 1];
+      }
+    }
+    for (v = pixCurrHeight / 2; v < pixCurrHeight; v++)
+    {
+      for (u = 0; u < pixCurrWidth / 2; u++)
+      { // mipmap upper left pixel
+        pulDstMipmap[v * pixCurrWidth + u] = pulSrcMipmap[((v * 2 + 1) * pixCurrWidth * 2 + u * 2) + 0];
+      }
+      for (u = pixCurrWidth / 2; u < pixCurrWidth; u++)
+      { // mipmap upper right pixel
+        pulDstMipmap[v * pixCurrWidth + u] = pulSrcMipmap[((v * 2 + 1) * pixCurrWidth * 2 + u * 2) + 1];
+      }
+    }
+  #else
     ULONG ulRowModulo = pixWidth*2 *BYTES_PER_TEXEL;
     __asm {   
       xor     ebx,ebx
@@ -282,6 +339,7 @@ halfEnd:
       jne     halfLoop
 fullEnd:
     }
+  #endif
   }
 }
 
@@ -443,6 +501,14 @@ void DitherBitmap( INDEX iDitherType, ULONG *pulSrc, ULONG *pulDst, PIX pixWidth
   SLONG slModulo      = (pixCanvasWidth-pixWidth) *BYTES_PER_TEXEL;
   SLONG slWidthModulo = pixWidth*BYTES_PER_TEXEL +slModulo;
 
+#ifdef _WIN64
+
+  if (pulDst != pulSrc)
+  {
+    memcpy(pulDst, pulSrc, pixCanvasWidth * pixCanvasHeight * BYTES_PER_TEXEL);
+  }
+
+#else
   // if bitmap is smaller than 4x2 pixels
   if( pixWidth<4 || pixHeight<2)
   { // don't dither it at all, rather copy only (if needed)
@@ -660,6 +726,8 @@ allDoneE:
 
   // all done
 theEnd:
+#endif
+
   _pfGfxProfile.StopTimer( CGfxProfile::PTI_DITHERBITMAP);
 }
 
@@ -758,6 +826,13 @@ void FilterBitmap( INDEX iFilter, ULONG *pulSrc, ULONG *pulDst, PIX pixWidth, PI
   if( pixCanvasHeight==0) pixCanvasHeight = pixHeight;
   ASSERT( pixCanvasWidth>=pixWidth && pixCanvasHeight>=pixHeight);
 
+#ifdef _WIN64
+  if (pulDst != pulSrc)
+  {
+    memcpy(pulDst, pulSrc, pixCanvasWidth * pixCanvasHeight * BYTES_PER_TEXEL);
+  }
+  
+#else
   // if bitmap is smaller than 4x4
   if( pixWidth<4 || pixHeight<4)
   { // don't blur it at all, but eventually only copy
@@ -1084,6 +1159,7 @@ lowerLoop:
     movd    D [edi+ edx*4],mm2
     emms
   }
+#endif
 
   // all done (finally)
   _pfGfxProfile.StopTimer( CGfxProfile::PTI_FILTERBITMAP);

@@ -16,6 +16,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 /////////////////////////////////////////////////////////////////////
 // CWorldRenderPrefs
 
+#include <Math/FixInt.h>
+
 // global instance used in rendering
 CWorldRenderPrefs _wrpWorldRenderPrefs;
 CBrushSectorSelection *_pselbscVisTweaks = NULL;
@@ -104,6 +106,9 @@ static SLONG slTmp;
 
 static inline PIX PIXCoord(FLOAT f) // (f+0.9999f) or (ceil(f))
 {
+#ifdef _WIN64
+  return (PIX) ceilf(f);
+#else
   PIX pixRet;
   __asm {
     fld     dword ptr [f]
@@ -117,10 +122,11 @@ static inline PIX PIXCoord(FLOAT f) // (f+0.9999f) or (ceil(f))
     mov     dword ptr [pixRet],eax
   }
   return pixRet;
+#endif
 }
 
 
-static inline PIX PIXCoord(FIX16_16 x) { return (PIX)Ceil(x); };
+static inline PIX PIXCoord(FIX16_16 x) { return (PIX) Ceil(x); };
 
 
 /*

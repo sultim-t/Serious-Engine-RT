@@ -20,6 +20,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Base/Stream.h>
 #include <Engine/Base/Console.h>
 
+#include <stdarg.h>
+
 
 /*
  * Equality comparison.
@@ -506,18 +508,24 @@ INDEX CTString::VPrintF(const char *strFormat, va_list arg)
 
 
 
-static void *psscanf = &sscanf;
 // Scan formatted from a string
-__declspec(naked) INDEX CTString::ScanF(const char *strFormat, ...)
+INDEX CTString::ScanF(const char *strFormat, ...)
 {
-  __asm {
+  va_list args;
+  va_start(args, strFormat);
+  int result = vsscanf(this->str_String, strFormat, args);
+  va_end(args);
+
+  return result;
+
+  /*__asm {
     push    eax
     mov     eax,dword ptr [esp+8]
     mov     eax,dword ptr [eax]
     mov     dword ptr [esp+8], eax
     pop     eax
     jmp     dword ptr [psscanf]
-  }
+  }*/
 }
 
 

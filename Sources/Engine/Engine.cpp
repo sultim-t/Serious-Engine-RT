@@ -598,6 +598,11 @@ ENGINE_API void SE_UpdateWindowHandle( HWND hwndMain)
 
 static BOOL TouchBlock(UBYTE *pubMemoryBlock, INDEX ctBlockSize)
 {
+#ifdef _WIN64
+  ASSERTALWAYS("Pretouching was removed");
+  return FALSE;
+
+#else
   // cannot pretouch block that are smaller than 64KB :(
   ctBlockSize -= 16*0x1000;
   if( ctBlockSize<4) return FALSE; 
@@ -626,6 +631,7 @@ touchLoop:
     return FALSE;
   }
   return TRUE;
+#endif
 }
 
 
@@ -635,6 +641,14 @@ ENGINE_API extern void SE_PretouchIfNeeded(void)
 {
   // only if pretouching is needed?
   extern INDEX gam_bPretouch;
+
+#ifdef _WIN64
+  // disable pretouching
+  gam_bPretouch = 0;
+  return;
+
+#else
+
   if( !_bNeedPretouch || !gam_bPretouch) return;
   _bNeedPretouch = FALSE;
 
@@ -704,6 +718,7 @@ nextRegion:
   // some blocks failed?
   if( ctFails>1) CPrintF( TRANS("(%d blocks were skipped)\n"), ctFails);
   //_pShell->Execute("StockDump();");
+#endif
 }
 
 

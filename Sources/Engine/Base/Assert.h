@@ -72,7 +72,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
   // this breakpoint doesn't cause exceptions if not in debugger
   #ifdef _MSC_VER /* rcg10042001 */
-    #define SAFEBREAKPOINT try { _asm { int 3 }; } catch(...) {;}
+    #define SAFEBREAKPOINT try { __debugbreak(); } catch(...) {;}
   #endif
 
   #ifdef PLATFORM_UNIX /* rcg10042001 */
