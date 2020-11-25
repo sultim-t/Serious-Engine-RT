@@ -49,7 +49,8 @@ class MSJExceptionHandler
       static const char* GetExceptionString( DWORD dwCode );
       static BOOL GetLogicalAddress(PVOID addr, char* szModule, DWORD len,
                                     DWORD& section, DWORD& offset );
-      static void IntelStackWalk( PCONTEXT pContext );
+      // not used in x64
+      //static void IntelStackWalk( PCONTEXT pContext );
       static int __cdecl _tprintf(const char * format, ...);
 
       // Variables used by the class
@@ -312,6 +313,9 @@ BOOL MSJExceptionHandler::GetLogicalAddress(
     return FALSE;   // Should never get here!
 }
 
+
+// not used in x64
+/*
 //============================================================
 // Walks the stack, and writes the results to the report file
 //============================================================
@@ -363,6 +367,7 @@ void MSJExceptionHandler::IntelStackWalk( PCONTEXT pContext )
     };
     _tprintf( "\nmanual stack frame walk end:\n" );
 }
+*/
 
 //============================================================================
 // Helper function that writes to the report file, and allows the user to use

@@ -247,79 +247,44 @@ COLOR MulColors( COLOR col1, COLOR col2)
   if( col2==0xFFFFFFFF)   return col1;
   if( col1==0 || col2==0) return 0;
   COLOR colRet;
-  __asm {
-    xor     ebx,ebx
-    // red 
-    mov     eax,D [col1]
-    and     eax,CT_RMASK
-    shr     eax,CT_RSHIFT
-    mov     ecx,eax
-    shl     ecx,8
-    or      eax,ecx
-    mov     edx,D [col2]
-    and     edx,CT_RMASK
-    shr     edx,CT_RSHIFT
-    mov     ecx,edx
-    shl     ecx,8
-    or      edx,ecx
-    imul    eax,edx
-    shr     eax,16+8
-    shl     eax,CT_RSHIFT
-    or      ebx,eax
-    // green
-    mov     eax,D [col1]
-    and     eax,CT_GMASK
-    shr     eax,CT_GSHIFT
-    mov     ecx,eax
-    shl     ecx,8
-    or      eax,ecx
-    mov     edx,D [col2]
-    and     edx,CT_GMASK
-    shr     edx,CT_GSHIFT
-    mov     ecx,edx
-    shl     ecx,8
-    or      edx,ecx
-    imul    eax,edx
-    shr     eax,16+8
-    shl     eax,CT_GSHIFT
-    or      ebx,eax
-    // blue
-    mov     eax,D [col1]
-    and     eax,CT_BMASK
-    shr     eax,CT_BSHIFT
-    mov     ecx,eax
-    shl     ecx,8
-    or      eax,ecx
-    mov     edx,D [col2]
-    and     edx,CT_BMASK
-    shr     edx,CT_BSHIFT
-    mov     ecx,edx
-    shl     ecx,8
-    or      edx,ecx
-    imul    eax,edx
-    shr     eax,16+8
-    shl     eax,CT_BSHIFT
-    or      ebx,eax
-    // alpha
-    mov     eax,D [col1]
-    and     eax,CT_AMASK
-    shr     eax,CT_ASHIFT
-    mov     ecx,eax
-    shl     ecx,8
-    or      eax,ecx
-    mov     edx,D [col2]
-    and     edx,CT_AMASK
-    shr     edx,CT_ASHIFT
-    mov     ecx,edx
-    shl     ecx,8
-    or      edx,ecx
-    imul    eax,edx
-    shr     eax,16+8
-    shl     eax,CT_ASHIFT
-    or      ebx,eax
-    // done
-    mov     D [colRet],ebx
+
+  UBYTE col1_RGBA[4];
+  ColorToRGBA(col1, col1_RGBA[0], col1_RGBA[1], col1_RGBA[2], col1_RGBA[3]);
+
+  UBYTE col2_RGBA[4];
+  ColorToRGBA(col2, col2_RGBA[0], col2_RGBA[1], col2_RGBA[2], col2_RGBA[3]);
+
+  UBYTE colRet_RGBA[4];
+  
+  for (int i = 0; i < 4; i++)
+  {
+    //mov     eax, D[col1]
+    //and eax, CT_RMASK
+    //shr     eax, CT_RSHIFT
+    //mov     ecx, eax
+    //shl     ecx, 8
+    //or      eax,ecx
+
+    ULONG a = ((ULONG) col1_RGBA[i]) << 8;
+    a = a | col1_RGBA[i];
+
+    //mov     edx,D [col2]
+    //and     edx,CT_RMASK
+    //shr     edx,CT_RSHIFT
+    //mov     ecx,edx
+    //shl     ecx,8
+    //or      edx,ecx
+    ULONG b = ((ULONG) col2_RGBA[i]) << 8;
+    b = b | col2_RGBA[i];
+
+    //imul    eax,edx
+    //shr     eax,16+8
+    colRet_RGBA[i] = (a * b) << (16 + 8);
   }
+
+  COLOR colRet = RGBAToColor(colRet_RGBA[0], colRet_RGBA[1], colRet_RGBA[2], colRet_RGBA[3]);
+
+  // __asm {..}
   return colRet;
 }
 
@@ -330,69 +295,23 @@ COLOR AddColors( COLOR col1, COLOR col2)
   if( col1==0) return col2;
   if( col2==0) return col1;
   if( col1==0xFFFFFFFF || col2==0xFFFFFFFF) return 0xFFFFFFFF;
-  COLOR colRet;
-  __asm {
-    xor     ebx,ebx
-    mov     esi,255
-    // red 
-    mov     eax,D [col1]
-    and     eax,CT_RMASK
-    shr     eax,CT_RSHIFT
-    mov     edx,D [col2]
-    and     edx,CT_RMASK
-    shr     edx,CT_RSHIFT
-    add     eax,edx
-    cmp     esi,eax  // clamp
-    sbb     ecx,ecx
-    or      eax,ecx
-    shl     eax,CT_RSHIFT
-    and     eax,CT_RMASK
-    or      ebx,eax
-    // green
-    mov     eax,D [col1]
-    and     eax,CT_GMASK
-    shr     eax,CT_GSHIFT
-    mov     edx,D [col2]
-    and     edx,CT_GMASK
-    shr     edx,CT_GSHIFT
-    add     eax,edx
-    cmp     esi,eax  // clamp
-    sbb     ecx,ecx
-    or      eax,ecx
-    shl     eax,CT_GSHIFT
-    and     eax,CT_GMASK
-    or      ebx,eax
-    // blue
-    mov     eax,D [col1]
-    and     eax,CT_BMASK
-    shr     eax,CT_BSHIFT
-    mov     edx,D [col2]
-    and     edx,CT_BMASK
-    shr     edx,CT_BSHIFT
-    add     eax,edx
-    cmp     esi,eax  // clamp
-    sbb     ecx,ecx
-    or      eax,ecx
-    shl     eax,CT_BSHIFT
-    and     eax,CT_BMASK
-    or      ebx,eax
-    // alpha
-    mov     eax,D [col1]
-    and     eax,CT_AMASK
-    shr     eax,CT_ASHIFT
-    mov     edx,D [col2]
-    and     edx,CT_AMASK
-    shr     edx,CT_ASHIFT
-    add     eax,edx
-    cmp     esi,eax  // clamp
-    sbb     ecx,ecx
-    or      eax,ecx
-    shl     eax,CT_ASHIFT
-    and     eax,CT_AMASK
-    or      ebx,eax
-    // done
-    mov     D [colRet],ebx
+
+  UBYTE col1_RGBA[4];
+  ColorToRGBA(col1, col1_RGBA[0], col1_RGBA[1], col1_RGBA[2], col1_RGBA[3]);
+
+  UBYTE col2_RGBA[4];
+  ColorToRGBA(col2, col2_RGBA[0], col2_RGBA[1], col2_RGBA[2], col2_RGBA[3]);
+
+  UBYTE colRet_RGBA[4];
+
+  for (int i = 0; i < 4; i++)
+  {
+    colRet_RGBA[i] = ClampUp<ULONG>((ULONG) col1_RGBA[i] + (ULONG)col2_RGBA[i], 255);
   }
+
+  COLOR colRet = RGBAToColor(colRet_RGBA[0], colRet_RGBA[1], colRet_RGBA[2], colRet_RGBA[3]);
+
+  // __asm {..}
   return colRet;
 }
 
@@ -401,55 +320,8 @@ COLOR AddColors( COLOR col1, COLOR col2)
 // multiple conversion from OpenGL color to DirectX color
 extern void abgr2argb( ULONG *pulSrc, ULONG *pulDst, INDEX ct)
 {
-  __asm {
-    mov   esi,dword ptr [pulSrc]
-    mov   edi,dword ptr [pulDst]
-    mov   ecx,dword ptr [ct]
-    shr   ecx,2
-    jz    colSkip4
-colLoop4:
-    push  ecx
-    mov   eax,dword ptr [esi+ 0]
-    mov   ebx,dword ptr [esi+ 4]
-    mov   ecx,dword ptr [esi+ 8]
-    mov   edx,dword ptr [esi+12]
-    bswap eax
-    bswap ebx
-    bswap ecx
-    bswap edx
-    ror   eax,8
-    ror   ebx,8
-    ror   ecx,8
-    ror   edx,8
-    mov   dword ptr [edi+ 0],eax
-    mov   dword ptr [edi+ 4],ebx
-    mov   dword ptr [edi+ 8],ecx
-    mov   dword ptr [edi+12],edx
-    add   esi,4*4
-    add   edi,4*4
-    pop   ecx
-    dec   ecx
-    jnz   colLoop4
-colSkip4:
-    test  dword ptr [ct],2
-    jz    colSkip2
-    mov   eax,dword ptr [esi+0]
-    mov   ebx,dword ptr [esi+4]
-    bswap eax
-    bswap ebx
-    ror   eax,8
-    ror   ebx,8
-    mov   dword ptr [edi+0],eax
-    mov   dword ptr [edi+4],ebx
-    add   esi,4*2
-    add   edi,4*2
-colSkip2:
-    test  dword ptr [ct],1
-    jz    colSkip1
-    mov   eax,dword ptr [esi]
-    bswap eax
-    ror   eax,8
-    mov   dword ptr [edi],eax
-colSkip1:
-  }
+  // DX is not used anymore
+  ASSERTALWAYS("No implementation for abgr2argb");
+
+  // __asm {..}
 }

@@ -22,15 +22,13 @@ template CStaticArray<CProfileCounter>;
 template CStaticArray<CProfileTimer>;
 
 
+// https://docs.microsoft.com/cpp/intrinsics/rdtsc?view=msvc-160
 static inline __int64 ReadTSC_profile(void)
 {
-  __int64 mmRet;
-  __asm {
-    rdtsc
-    mov   dword ptr [mmRet+0],eax
-    mov   dword ptr [mmRet+4],edx
-  }
-  return mmRet;
+  unsigned __int64 i;
+  i = __rdtsc();
+
+  return i;
 }
 
 

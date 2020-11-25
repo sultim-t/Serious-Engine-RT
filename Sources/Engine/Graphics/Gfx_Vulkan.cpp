@@ -45,7 +45,7 @@ FLOAT	VkViewMatrix[16];
 extern ULONG _fog_ulTexture;
 extern ULONG _haze_ulTexture;
 static uint32_t _no_ulTexture;
-static uint64_t _no_ulTextureDescSet;
+static VkDescriptorSet _no_ulTextureDescSet;
 
 extern BOOL GFX_abTexture[GFX_MAXTEXUNITS];
 

@@ -44,6 +44,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Templates/StaticArray.cpp>
 #include <Engine/Base/IFeel.h>
 
+#include <intrin.h>
+
 // this version string can be referenced from outside the engine
 ENGINE_API CTString _strEngineBuild  = "";
 ENGINE_API ULONG _ulEngineBuildMajor = _SE_BUILD_MAJOR;
@@ -122,7 +124,28 @@ static void DetectCPU(void)
   ULONG ulFeatures;
 
   // test MMX presence and update flag
-  __asm {
+
+  // eax, ebx, ecx, edx
+  int cpuidData[4];
+
+  // 0: Highest Function Parameter and CPU's manufacturer ID string
+  __cpuid(cpuidData, 0);
+  // to get string copy 12 bytes in the following order:
+  // ebx
+  memcpy(&strVendor[0], &cpuidData[1], 4);
+  // edx
+  memcpy(&strVendor[0], &cpuidData[3], 4);
+  // ecx
+  memcpy(&strVendor[0], &cpuidData[2], 4);
+
+  // 1: Processor Info and Feature Bits
+  __cpuid(cpuidData, 1);
+  // eax
+  memcpy(&ulTFMS, &cpuidData[0], 4);
+  // edx
+  memcpy(&ulFeatures, &cpuidData[3], 4);
+
+  /*__asm {
     mov     eax,0           ;// request for basic id
     cpuid
     mov     dword ptr [strVendor+0], ebx
@@ -132,7 +155,7 @@ static void DetectCPU(void)
     cpuid
     mov     dword ptr [ulTFMS], eax ;// remember type, family, model and stepping
     mov     dword ptr [ulFeatures], edx
-  }
+  }*/
 
   INDEX iType     = (ulTFMS>>12)&0x3;
   INDEX iFamily   = (ulTFMS>> 8)&0xF;

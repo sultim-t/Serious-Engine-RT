@@ -220,9 +220,12 @@ extern void ReportGlobalMemoryStatus(void)
    CPrintF(TRANS("  Virtual memory used:  %4d/%4dMB\n"), (ms.dwTotalVirtual -ms.dwAvailVirtual )/MB, ms.dwTotalVirtual /MB);
    CPrintF(TRANS("  Memory load: %3d%%\n"), ms.dwMemoryLoad);
 
-   DWORD dwMin;
-   DWORD dwMax;
-   GetProcessWorkingSetSize(GetCurrentProcess(), &dwMin, &dwMax);
+   PSIZE_T pdwMin;
+   PSIZE_T pdwMax;
+   GetProcessWorkingSetSize(GetCurrentProcess(), pdwMin, pdwMax);
+
+   DWORD dwMin = static_cast<DWORD>(*pdwMin);
+   DWORD dwMax = static_cast<DWORD>(*pdwMax);
    CPrintF(TRANS("  Process working set: %dMB-%dMB\n\n"), dwMin/(1024*1024), dwMax/(1024*1024));
 }
 

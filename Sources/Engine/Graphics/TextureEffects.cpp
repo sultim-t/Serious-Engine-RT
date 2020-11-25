@@ -32,7 +32,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define W  word ptr
 #define B  byte ptr
 
-#define ASMOPT 1
+//#define ASMOPT 1
 
 
 static const __int64 mm1LO   = 0x0000000000000001;
@@ -1312,7 +1312,7 @@ pixLoop:
 #else
 
     PIX pixPos, pixDU, pixDV;
-    slHeightMapStep  = _pixBufferWidth/pixBaseWidth
+    slHeightMapStep = _pixBufferWidth / pixBaseWidth;
     slHeightRowStep  = (slHeightMapStep-1)*_pixBufferWidth;
     mmShift = DISTORSION+ FastLog2(slHeightMapStep) +2;
     for( PIX pixV=0; pixV<_pixTexHeight; pixV++)
@@ -1880,7 +1880,7 @@ pixLoop4:
 
         // advance to next texel
         pulTexture+=4;
-        pHeightMap++;
+        pswHeightMap++;
       }
       pulTexture+=_pixTexWidth*3;
     }

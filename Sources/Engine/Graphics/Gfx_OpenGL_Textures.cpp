@@ -152,7 +152,7 @@ extern void UploadTexture_OGL( ULONG *pulTexture, PIX pixSizeU, PIX pixSizeV,
   }
 
   // see if we need to generate and upload additional mipmaps (those under 1*N or N*1)
-  if( !_tpCurrent->tp_bSingleMipmap && pixSizeU!=pixSizeV)
+  /*if( !_tpCurrent->tp_bSingleMipmap && pixSizeU!=pixSizeV)
   { // prepare variables
     PIX pixSize = Max(pixSizeU,pixSizeV);
     ASSERT( pixSize<=2048);
@@ -200,7 +200,7 @@ extern void UploadTexture_OGL( ULONG *pulTexture, PIX pixSizeU, PIX pixSizeV,
       pixSizeV >>=1;
       iMip++;
     }
-  }
+  }*/
 
   // all done
   _pfGfxProfile.IncrementCounter( CGfxProfile::PCI_TEXTUREUPLOADS, 1);

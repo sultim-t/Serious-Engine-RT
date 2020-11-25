@@ -57,17 +57,17 @@ struct GFXColor
   GFXColor() {};
 
   GFXColor( COLOR col) {
-    _asm mov   ecx,dword ptr [this]
-    _asm mov   eax,dword ptr [col]
-    _asm bswap eax
-    _asm mov   dword ptr [ecx],eax
+    r = (col & CT_RMASK) >> CT_RSHIFT;
+    g = (col & CT_GMASK) >> CT_GSHIFT;
+    b = (col & CT_BMASK) >> CT_BSHIFT;
+    a = (col & CT_AMASK) >> CT_ASHIFT;
   }
 
   __forceinline void Set( COLOR col) {
-    _asm mov   ecx,dword ptr [this]
-    _asm mov   eax,dword ptr [col]
-    _asm bswap eax
-    _asm mov   dword ptr [ecx],eax
+    r = (col & CT_RMASK) >> CT_RSHIFT;
+    g = (col & CT_GMASK) >> CT_GSHIFT;
+    b = (col & CT_BMASK) >> CT_BSHIFT;
+    a = (col & CT_AMASK) >> CT_ASHIFT;
   }
 
   void MultiplyRGBA( const GFXColor &col1, const GFXColor &col2) {

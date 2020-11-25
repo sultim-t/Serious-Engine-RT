@@ -39,7 +39,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define W  word ptr
 #define B  byte ptr
 
-#define ASMOPT 1
+//#define ASMOPT 1
 
 #define MAXTEXUNITS   4
 #define SHADOWTEXTURE 3
@@ -440,13 +440,24 @@ static void RSBinToGroups( ScenePolygon *pspoFirst)
   }
 
   // determine maximum used groups
-  ASSERT( _ctGroupsCount);
-  __asm {
+  ASSERT(_ctGroupsCount > 0);
+
+  ULONG mask = 1U << 31;
+  while ((_ctGroupsCount & mask) == 0)
+  {
+    mask = mask >> 1;
+  }
+  _ctGroupsCount = mask;
+
+  /*__asm {
     mov     eax,2
+    // find the most significant bit of _ctGroupsCount
+    // and place its index to ecx
     bsr     ecx,D [_ctGroupsCount]
+    // cl is least 8 bits of ecx
     shl     eax,cl
     mov     D [_ctGroupsCount],eax
-  }
+  }*/
 
   // done with bining
   _pfGfxProfile.StopTimer( CGfxProfile::PTI_RS_BINTOGROUPS);

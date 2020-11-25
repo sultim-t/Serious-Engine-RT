@@ -97,10 +97,10 @@ ENGINE_API inline void CIntersector::AddEdge( FLOAT fedgx1, FLOAT fedgy1, FLOAT 
   ci_ct ++;
 }
 
-/* rcg10042001 !!! FIXME */
-#ifdef _MSC_VER
-  #define ASMOPT 1
-#endif
+///* rcg10042001 !!! FIXME */
+//#ifdef _MSC_VER
+//  #define ASMOPT 1
+//#endif
 
 // how much are the clip planes offset inside frustum
 #define CLIPPLANE_EPSILON (1E-3f)
@@ -397,7 +397,7 @@ static inline void MakeClipPlane(const FLOAT3D &vN, FLOAT fD, FLOATplane3D &pl)
   pl = FLOATplane3D(vN*fOoL, fD*fOoL);
 }
 
-#undef ASMOPT
+//#undef ASMOPT
 
 #undef O
 #undef Q

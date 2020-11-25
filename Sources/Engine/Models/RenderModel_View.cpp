@@ -41,7 +41,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define W  word ptr
 #define B  byte ptr
 
-#define ASMOPT 1
+//#define ASMOPT 1
 
 extern INDEX mdl_bRenderBump;
 
@@ -2564,7 +2564,7 @@ reflMipLoop:
     // for each mip vertex
     for( INDEX iMipVx=0; iMipVx<_ctAllMipVx; iMipVx++)
     { // get normal in absolute space
-      const GFXNormal &nor = pnorMipBase[iMipVx];
+      const GFXNormal3 &nor = pnorMipBase[iMipVx];
       const FLOAT fNx = nor.nx*m(1,1) + nor.ny*m(1,2) + nor.nz*m(1,3);
       const FLOAT fNy = nor.nx*m(2,1) + nor.ny*m(2,2) + nor.nz*m(2,3);
       const FLOAT fNz = nor.nx*m(3,1) + nor.ny*m(3,2) + nor.nz*m(3,3);
@@ -2764,7 +2764,7 @@ specMipLoop:
     // for each mip vertex
     for( INDEX iMipVx=0; iMipVx<_ctAllMipVx; iMipVx++)
     { // reflect light vector around vertex normal in object space
-      GFXNormal &nor = pnorMipBase[iMipVx];
+      GFXNormal3 &nor = pnorMipBase[iMipVx];
       const FLOAT fNL = nor.nx*_vLightObj(1) + nor.ny*_vLightObj(2) +	nor.nz*_vLightObj(3);
       const FLOAT fRx = _vLightObj(1) - 2*nor.nx*fNL;
       const FLOAT fRy = _vLightObj(2) - 2*nor.ny*fNL;

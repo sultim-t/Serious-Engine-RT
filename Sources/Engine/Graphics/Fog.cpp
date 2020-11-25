@@ -65,9 +65,22 @@ extern BOOL _bMultiPlayer;
 // prepares fog and haze parameters and eventualy converts texture
 ULONG PrepareTexture( UBYTE *pubTexture, PIX pixSizeI, PIX pixSizeJ)
 {
-  // need to upload from RGBA format
-  const PIX pixTextureSize = pixSizeI*pixSizeJ;
-  __asm {
+  const PIX pixTextureSize = pixSizeI * pixSizeJ;
+
+  UBYTE *esi = pubTexture;
+  // after 'pixTextureSize' bytes, RGBA data is stored
+  ULONG *edi = (ULONG *) (esi + pixTextureSize);
+
+  for (PIX i = pixTextureSize; i > 0; i--)
+  {
+    ULONG eax = (ULONG)esi[i];
+    eax = eax | 0xFFFFFF00;
+    eax = ByteSwap(eax);
+
+    edi[i] = eax;
+  }
+
+  /*__asm {
     mov     esi,D [pubTexture]
     mov     edi,D [pubTexture]
     mov     ecx,D [pixTextureSize]
@@ -81,7 +94,8 @@ pixLoop:
     add     edi,4
     dec     ecx
     jnz     pixLoop
-  }
+  }*/
+
   // determine internal format
   extern INDEX gap_bAllowGrayTextures;
   extern INDEX tex_bFineFog;
