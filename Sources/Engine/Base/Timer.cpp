@@ -27,16 +27,15 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Base/ListIterator.inl>
 #include <Engine/Base/Priority.inl>
 
-// Read the Pentium TimeStampCounter
+#include <intrin.h>
+
+// https://docs.microsoft.com/cpp/intrinsics/rdtsc?view=msvc-160
 static inline __int64 ReadTSC(void)
 {
-  __int64 mmRet;
-  __asm {
-    rdtsc
-    mov   dword ptr [mmRet+0],eax
-    mov   dword ptr [mmRet+4],edx
-  }
-  return mmRet;
+  unsigned __int64 i;
+  i = __rdtsc();
+
+  return i;
 }
 
 
@@ -384,6 +383,13 @@ void CTimer::DisableLerp(void)
   ASSERT(this!=NULL);
   tm_fLerpFactor =1.0f;
   tm_fLerpFactor2=1.0f;
+}
+
+/* Get current timer value of high precision timer. */
+
+inline CTimerValue CTimer::GetHighPrecisionTimer(void)
+{
+  return CTimerValue(ReadTSC());
 }
 
 // convert a time value to a printable string (hh:mm:ss)

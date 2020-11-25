@@ -82,30 +82,10 @@ extern void  (__stdcall *pglPNTrianglesfATI)( GLenum pname, GLfloat param);
 // set color from croteam format
 inline void glCOLOR( COLOR col)
 {
-/* rcg10052001 Platform-wrappers. */
-#if (defined USE_PORTABLE_C)
 	col = ( ((col << 24)            ) |
             ((col << 8) & 0x00FF0000) |
             ((col >> 8) & 0x0000FF00) |
             ((col >> 24)            ) );
-
-#elif (defined _MSC_VER)
-  __asm {
-    mov     eax,dword ptr [col]
-    bswap   eax
-    mov     dword ptr [col],eax
-  }
-
-#elif (defined __GNUC__)
-  __asm__ __volatile__ (
-    "bswapl   %%eax    \n\t"
-        : "=a" (col)
-        : "a" (col)
-  );
-
-#else
-  #error please define for your platform.
-#endif
 
   pglColor4ubv((GLubyte*)&col);
 }

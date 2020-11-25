@@ -286,20 +286,8 @@ inline FLOAT FastRcp( const FLOAT f)
 // convert float from 0.0f to 1.0f -> ulong form 0 to 255
 inline ULONG NormFloatToByte( const FLOAT f)
 {
-    /* rcg10042001 !!! FIXME: Move this elsewhere. */
-#ifdef _MSC_VER
-  const FLOAT f255 = 255.0f;
-  ULONG ulRet;
-  __asm {
-    fld   D [f]
-    fmul  D [f255]
-    fistp D [ulRet]
-  }
-  return ulRet;
-#else
-  assert((f >= 0.0) && (f <= 1.0));
+  ASSERT((f >= 0.0) && (f <= 1.0));
   return( (ULONG) (f * 255.0) );
-#endif
 }
 
 // convert ulong from 0 to 255 -> float form 0.0f to 255.0f
@@ -312,94 +300,32 @@ inline FLOAT NormByteToFloat( const ULONG ul)
 // fast float to int conversion
 inline SLONG FloatToInt( FLOAT f)
 {
-#if (defined USE_PORTABLE_C)
-  return((SLONG) f);  /* best of luck to you. */
-
-#elif (defined _MSC_VER)
-  SLONG slRet;
-  __asm {
-    fld    D [f]
-    fistp  D [slRet]
-  }
-  return slRet;
-
-#elif (defined __GNUC__)
-  SLONG slRet;
-  __asm__ __volatile__ (
-    "flds     (%%ebx)   \n\t"
-    "fistpl   (%%esi)   \n\t"
-        :
-        : "b" (&f), "S" (&slRet)
-        : "memory"
-  );
-  return(slRet);
-#else
-  #error Fill this in for your platform.
-#endif
+  return static_cast<SLONG>(f); 
 }
 
 // log base 2 of any float numero
 inline FLOAT Log2( FLOAT f) {
-#if (defined USE_PORTABLE_C)
-  return (FLOAT)(log10(x)*3.321928094887);  // log10(x)/log10(2)
-
-#elif (defined _MSC_VER)
-  FLOAT fRet;
-  _asm {
-    fld1
-    fld     D [f]
-    fyl2x
-    fstp    D [fRet]
-  }
-  return fRet;
-
-#elif (defined __GNUC__)
-  FLOAT fRet;
-  __asm__ __volatile__ (
-    "fld1               \n\t"
-    "flds     (%%ebx)   \n\t"
-    "fyl2x              \n\t"
-    "fstps    (%%esi)   \n\t"
-        :
-        : "b" (&f), "S" (&fRet)
-        : "memory"
-  );
-  return(fRet);
-#else
-  #error Fill this in for your platform.
-#endif
+  return log2f(f);
 }
 
 
 // returns accurate values only for integers that are power of 2
 inline SLONG FastLog2( SLONG x)
 {
-#if (defined USE_PORTABLE_C)
-  #error write me.
-
-#elif (defined _MSC_VER)
-  SLONG slRet;
-  __asm {
-    bsr   eax,D [x]
-    mov   D [slRet],eax
+  for (SLONG l = 31; l > 0; --l)
+  {
+    if (x & (1 << l))
+    {
+      return l;
+    }
   }
-  return slRet;
 
-#elif (defined __GNUC__)
-  SLONG slRet;
-  __asm__ __volatile__ (
-    "bsrl  (%%ebx), %%eax     \n\t"
-    "movl   %%eax, (%%esi)    \n\t"
-        :
-        : "b" (&x), "S" (&slRet)
-        : "memory"
-  );
-  return(slRet);
-#else
-  #error Fill this in for your platform.
-#endif
+  return 0;
 }
 
+
+// not used
+/*
 // returns log2 of first larger value that is a power of 2
 inline SLONG FastMaxLog2( SLONG x)
 { 
@@ -434,7 +360,7 @@ inline SLONG FastMaxLog2( SLONG x)
   #error Fill this in for your platform.
 #endif
 }
-
+*/
 
 
 // square root (works with negative numbers)

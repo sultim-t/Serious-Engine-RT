@@ -201,76 +201,25 @@ ENGINE_API extern COLOR AddColors( COLOR col1, COLOR col2); // fast color addito
 
 __forceinline ULONG ByteSwap( ULONG ul)
 {
-/* rcg10052001 Platform-wrappers. */
-#if (defined USE_PORTABLE_C)
-	return( ((ul << 24)            ) |
+	return(   ((ul << 24)            ) |
             ((ul << 8) & 0x00FF0000) |
             ((ul >> 8) & 0x0000FF00) |
             ((ul >> 24)            ) );
-
-#elif (defined _MSC_VER)
-  ULONG ulRet;
-  __asm {
-    mov   eax,dword ptr [ul]
-    bswap eax
-    mov   dword ptr [ulRet],eax
-  }
-  return ulRet;
-#elif (defined __GNUC__)
-  __asm__ __volatile__ (
-    "bswapl   %%eax    \n\t"
-        : "=a" (ul)
-        : "a" (ul)
-  );
-  return(ul);
-
-#else
-  #error please define for your platform.
-#endif
 }
 
 __forceinline ULONG rgba2argb( COLOR col)
 {
-#if (defined USE_PORTABLE_C)
 	return( (col << 24) | (col >> 8) );
-
-#elif (defined _MSC_VER)
-  ULONG ulRet;
-  __asm {
-    mov   eax,dword ptr [col]
-    ror   eax,8
-    mov   dword ptr [ulRet],eax
-  }
-  return ulRet;
-
-#else
-  #error please define for your platform.
-#endif
 }
 
 __forceinline ULONG abgr2argb( ULONG ul)
 {
-#if (defined USE_PORTABLE_C)
 	// this could be simplified, this is just a safe conversion from asm code
 	ul = ( ((ul << 24)            ) |
          ((ul << 8) & 0x00FF0000) |
          ((ul >> 8) & 0x0000FF00) |
          ((ul >> 24)            ) );
 	return( (ul << 24) | (ul >> 8) );
-
-#elif (defined _MSC_VER)
-  ULONG ulRet;
-  __asm {
-    mov   eax,dword ptr [ul]
-    bswap eax
-    ror   eax,8
-    mov   dword ptr [ulRet],eax
-  }
-  return ulRet;
-
-#else
-  #error please define for your platform.
-#endif
 }
 
 
@@ -281,34 +230,17 @@ extern void abgr2argb( ULONG *pulSrc, ULONG *pulDst, INDEX ct);
 // fast memory copy of ULONGs
 inline void CopyLongs( ULONG *pulSrc, ULONG *pulDst, INDEX ctLongs)
 {
-#if (defined _MSC_VER)
-  __asm {
-    cld
-    mov   esi,dword ptr [pulSrc]
-    mov   edi,dword ptr [pulDst]
-    mov   ecx,dword ptr [ctLongs]
-    rep   movsd
-  }
-#else
-  memcpy( pulDst, pulSrc, ctLongs*4);
-#endif
+  memcpy(pulDst, pulSrc, ctLongs * 4);
 }
 
 
 // fast memory set of ULONGs
 inline void StoreLongs( ULONG ulVal, ULONG *pulDst, INDEX ctLongs)
 {
-#if (defined _MSC_VER)
-  __asm {
-    cld
-    mov   eax,dword ptr [ulVal]
-    mov   edi,dword ptr [pulDst]
-    mov   ecx,dword ptr [ctLongs]
-    rep   stosd
+  for (INDEX i = 0; i < ctLongs; i++)
+  {
+    pulDst[i] = ulVal;
   }
-#else
-  for( INDEX i=0; i<ctLongs; i++) pulDst[i] = ulVal;
-#endif
 }
 
 

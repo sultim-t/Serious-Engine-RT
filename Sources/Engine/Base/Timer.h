@@ -131,13 +131,7 @@ public:
   inline FLOAT GetLerpFactor2(void) const { return tm_fLerpFactor2; };
 
   /* Get current timer value of high precision timer. */
-  inline CTimerValue GetHighPrecisionTimer(void) {
-   __int64 mmRet;
-    _asm rdtsc
-    _asm mov dword ptr [mmRet+0],eax
-    _asm mov dword ptr [mmRet+4],edx
-    return mmRet;
-  };
+  inline CTimerValue GetHighPrecisionTimer(void);
 };
 
 // pointer to global timer object
