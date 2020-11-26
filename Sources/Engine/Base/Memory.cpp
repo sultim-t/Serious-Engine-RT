@@ -105,16 +105,16 @@ void *_debug_AllocMemory( SLONG memsize, int iType, const char *strFile, int iLi
 }
 #endif
 
-void *AllocMemoryAligned( SLONG memsize, SLONG slAlignPow2)
+void *AllocMemoryAligned(SLONG memsize, SLONG slAlignPow2)
 {
-  ULONG ulMem = (ULONG)AllocMemory(memsize+slAlignPow2*2);
-  ULONG ulMemAligned = ((ulMem+slAlignPow2-1) & ~(slAlignPow2-1)) + slAlignPow2;
-  ((ULONG *)ulMemAligned)[-1] = ulMem;
-  return (void*)ulMemAligned;
+  UINT64 ulMem = (UINT64) AllocMemory(memsize + slAlignPow2 * 2);
+  UINT64 ulMemAligned = ((ulMem + slAlignPow2 - 1) & ~(slAlignPow2 - 1)) + slAlignPow2;
+  ((UINT64 *) ulMemAligned)[-1] = ulMem;
+  return (void *) ulMemAligned;
 }
-void FreeMemoryAligned( void *memory)
+void FreeMemoryAligned(void *memory)
 {
-  FreeMemory((void*) ( ( (ULONG*)memory )[-1] ) );
+  FreeMemory((void *) (((UINT64 *) memory)[-1]));
 }
 
 void FreeMemory( void *memory )

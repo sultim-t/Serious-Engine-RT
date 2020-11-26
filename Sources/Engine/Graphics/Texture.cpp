@@ -1335,7 +1335,7 @@ void CTextureData::SetAsCurrent( INDEX iFrameNo/*=0*/, BOOL bForceUpload/*=FALSE
 
   // if not already generated, generate bind number(s) and force upload
   const PIX pixTextureSize = pixWidth*pixHeight;
-  if( td_ulObject==NONE)
+  if ((td_ctFrames > 1 && td_pulObjects == NULL) || (td_ctFrames <= 1 && td_ulObject == NONE))
   {
     // check whether frames are present
     ASSERT( td_pulFrames!=NULL && td_pulFrames[0]!=0xDEADBEEF); 
@@ -1415,7 +1415,7 @@ void CTextureData::SetAsCurrent( INDEX iFrameNo/*=0*/, BOOL bForceUpload/*=FALSE
       td_pulFrames = NULL;
     }
     // done uploading
-    ASSERT( td_ulObject!=NONE);
+    ASSERT((td_ctFrames > 1 && td_pulObjects != NULL) || (td_ctFrames == 1 && td_ulObject != NONE));
     return;
   }
 
@@ -1449,7 +1449,7 @@ void CTextureData::SetAsCurrent( INDEX iFrameNo/*=0*/, BOOL bForceUpload/*=FALSE
   MarkDrawn();
 
   // debug check
-  ASSERT( td_ulObject!=NONE);
+  ASSERT((td_ctFrames > 1 && td_pulObjects != NULL) || (td_ctFrames <= 1 && td_ulObject != NONE));
 }
 
 

@@ -201,29 +201,54 @@ static void MakeOneMipmap( ULONG *pulSrcMipmap, ULONG *pulDstMipmap, PIX pixWidt
   { 
     // BILINEAR
   #ifdef _WIN64
-    PIX pixCurrWidth = pixWidth;
-    PIX pixCurrHeight = pixHeight;
-    UBYTE r, g, b, a;
+    UBYTE *src = (UBYTE *) pulSrcMipmap;
+    UBYTE *dest = (UBYTE *) pulDstMipmap;
+    for (int i = 0; i < pixHeight; i++)
+    {
+      for (int j = 0; j < pixWidth; j++)
+      {
+        // Grab pixels from image
+        UWORD upleft[4];
+        UWORD upright[4];
+        UWORD downleft[4];
+        UWORD downright[4];
+        upleft[0] = *(src + 0);
+        upleft[1] = *(src + 1);
+        upleft[2] = *(src + 2);
+        upleft[3] = *(src + 3);
+        upright[0] = *(src + 4);
+        upright[1] = *(src + 5);
+        upright[2] = *(src + 6);
+        upright[3] = *(src + 7);
 
-    for (PIX v = 0; v < pixHeight; v++)
-    { // column loop
-      for (PIX u = 0; u < pixWidth; u++)
-      { // read four neighbour pixels
-        COLOR colUL = pulSrcMipmap[((v * 2 + 0) * pixCurrWidth * 2 + u * 2) + 0];
-        COLOR colUR = pulSrcMipmap[((v * 2 + 0) * pixCurrWidth * 2 + u * 2) + 1];
-        COLOR colDL = pulSrcMipmap[((v * 2 + 1) * pixCurrWidth * 2 + u * 2) + 0];
-        COLOR colDR = pulSrcMipmap[((v * 2 + 1) * pixCurrWidth * 2 + u * 2) + 1];
-        // separate and add channels
-        ULONG rRes = 0, gRes = 0, bRes = 0, aRes = 0;
-        ColorToRGBA(colUL, r, g, b, a); rRes += r; gRes += g; bRes += b; aRes += a;
-        ColorToRGBA(colUR, r, g, b, a); rRes += r; gRes += g; bRes += b; aRes += a;
-        ColorToRGBA(colDL, r, g, b, a); rRes += r; gRes += g; bRes += b; aRes += a;
-        ColorToRGBA(colDR, r, g, b, a); rRes += r; gRes += g; bRes += b; aRes += a;
-        // round, average and store
-        rRes += 2; gRes += 2; bRes += 2; aRes += 2;
-        rRes >>= 2; gRes >>= 2; bRes >>= 2; aRes >>= 2;
-        pulDstMipmap[v * pixCurrWidth + u] = RGBAToColor(rRes, gRes, bRes, aRes);
+        downleft[0] = *(src + pixWidth * 8 + 0);
+        downleft[1] = *(src + pixWidth * 8 + 1);
+        downleft[2] = *(src + pixWidth * 8 + 2);
+        downleft[3] = *(src + pixWidth * 8 + 3);
+        downright[0] = *(src + pixWidth * 8 + 4);
+        downright[1] = *(src + pixWidth * 8 + 5);
+        downright[2] = *(src + pixWidth * 8 + 6);
+        downright[3] = *(src + pixWidth * 8 + 7);
+
+        UWORD answer[4];
+        answer[0] = upleft[0] + upright[0] + downleft[0] + downright[0] + 2;
+        answer[1] = upleft[1] + upright[1] + downleft[1] + downright[1] + 2;
+        answer[2] = upleft[2] + upright[2] + downleft[2] + downright[2] + 2;
+        answer[3] = upleft[3] + upright[3] + downleft[3] + downright[3] + 2;
+        answer[0] /= 4;
+        answer[1] /= 4;
+        answer[2] /= 4;
+        answer[3] /= 4;
+
+        *(dest + 0) = answer[0];
+        *(dest + 1) = answer[1];
+        *(dest + 2) = answer[2];
+        *(dest + 3) = answer[3];
+
+        src += 8;
+        dest += 4;
       }
+      src += 8 * pixWidth;
     }
   #else
     __asm {
@@ -267,31 +292,32 @@ pixLoopN:
   { 
   #ifdef _WIN64
     // NEAREST-NEIGHBOUR but with border preserving
-    PIX pixCurrWidth = pixWidth;
-    PIX pixCurrHeight = pixHeight;
+    PIX offset = 0;
+    ULONG ulRowModulo = pixWidth * 2 * BYTES_PER_TEXEL;
+    ulRowModulo /= 4;
 
-    PIX u, v;
-    for (v = 0; v < pixCurrHeight / 2; v++)
+    for (int q = 0; q < 2; q++)
     {
-      for (u = 0; u < pixCurrWidth / 2; u++)
-      { // mipmap upper left pixel
-        pulDstMipmap[v * pixCurrWidth + u] = pulSrcMipmap[((v * 2 + 0) * pixCurrWidth * 2 + u * 2) + 0];
+      for (PIX i = pixHeight / 2; i > 0; i--)
+      {
+        for (PIX j = pixWidth / 2; j > 0; j--)
+        {
+          *pulDstMipmap = *(pulSrcMipmap + offset);
+          pulSrcMipmap += 2;
+          pulDstMipmap++;
+        }
+
+        for (PIX j = pixWidth / 2; j > 0; j--)
+        {
+          *pulDstMipmap = *(pulSrcMipmap + offset + 1);
+          pulSrcMipmap += 2;
+          pulDstMipmap++;
+        }
+
+        pulSrcMipmap += ulRowModulo;
       }
-      for (u = pixCurrWidth / 2; u < pixCurrWidth; u++)
-      { // mipmap upper right pixel
-        pulDstMipmap[v * pixCurrWidth + u] = pulSrcMipmap[((v * 2 + 0) * pixCurrWidth * 2 + u * 2) + 1];
-      }
-    }
-    for (v = pixCurrHeight / 2; v < pixCurrHeight; v++)
-    {
-      for (u = 0; u < pixCurrWidth / 2; u++)
-      { // mipmap upper left pixel
-        pulDstMipmap[v * pixCurrWidth + u] = pulSrcMipmap[((v * 2 + 1) * pixCurrWidth * 2 + u * 2) + 0];
-      }
-      for (u = pixCurrWidth / 2; u < pixCurrWidth; u++)
-      { // mipmap upper right pixel
-        pulDstMipmap[v * pixCurrWidth + u] = pulSrcMipmap[((v * 2 + 1) * pixCurrWidth * 2 + u * 2) + 1];
-      }
+
+      offset = pixWidth * 2;
     }
   #else
     ULONG ulRowModulo = pixWidth*2 *BYTES_PER_TEXEL;
