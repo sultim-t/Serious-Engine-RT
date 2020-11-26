@@ -27,6 +27,31 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Templates/StaticStackArray.cpp>
 #include <Engine/Templates/DynamicArray.cpp>
 
+#include <Engine/Base/CRC.h>
+
+static ULONG HashPtr64To32(UINT64 a)
+{
+  // null pointers must be preserved
+  if (a == 0)
+  {
+    return 0;
+  }
+
+  ULONG r;
+  CRC_Start(r);
+  CRC_AddBYTE(r, UBYTE(a >> 56));
+  CRC_AddBYTE(r, UBYTE(a >> 48));
+  CRC_AddBYTE(r, UBYTE(a >> 40));
+  CRC_AddBYTE(r, UBYTE(a >> 32));
+  CRC_AddBYTE(r, UBYTE(a >> 24));
+  CRC_AddBYTE(r, UBYTE(a >> 16));
+  CRC_AddBYTE(r, UBYTE(a >> 8));
+  CRC_AddBYTE(r, UBYTE(a >> 0));
+  CRC_Finish(r);
+
+  return r;
+}
+
 
 // epsilon value used for BSP cutting
 //#define BSP_EPSILON ((Type) 0.015625)       // 1/2^6 ~= 1.5 cm
@@ -219,7 +244,7 @@ void BSPVertexContainer<Type, iDimensions>::ElliminatePairedVertices(void)
  * Create edges from vertices in one container -- must be sorted before.
  */
 template<class Type, int iDimensions>
-void BSPVertexContainer<Type, iDimensions>::CreateEdges(CDynamicArray<BSPEdge<Type, iDimensions> > &abed, ULONG ulEdgeTag)
+void BSPVertexContainer<Type, iDimensions>::CreateEdges(CDynamicArray<BSPEdge<Type, iDimensions> > &abed, UINT64 ulEdgeTag)
 {
   // if there are no vertices, or the container is not line
   if (bvc_aVertices.Count()==0 || IsPlannar()) {
@@ -260,7 +285,7 @@ void BSPVertexContainer<Type, iDimensions>::CreateEdges(CDynamicArray<BSPEdge<Ty
  * Constructor with two vectors.
  */
 template<class Type, int iDimensions>
-BSPEdge<Type, iDimensions>::BSPEdge(const Vector<Type, iDimensions> &vVertex0, const Vector<Type, iDimensions> &vVertex1, ULONG ulTag)
+BSPEdge<Type, iDimensions>::BSPEdge(const Vector<Type, iDimensions> &vVertex0, const Vector<Type, iDimensions> &vVertex1, UINT64 ulTag)
   : bed_vVertex0(vVertex0)
   , bed_vVertex1(vVertex1)
   , bed_ulEdgeTag(ulTag)
@@ -382,7 +407,7 @@ void BSPEdge<Type, iDimensions>::OptimizeBSPEdges(CDynamicArray<BSPEdge<Type, iD
  * Add an edge to the polygon.
  */
 template<class Type, int iDimensions>
-inline void BSPPolygon<Type, iDimensions>::AddEdge(const Vector<Type, iDimensions> &vPoint0, const Vector<Type, iDimensions> &vPoint1, ULONG ulTag)
+inline void BSPPolygon<Type, iDimensions>::AddEdge(const Vector<Type, iDimensions> &vPoint0, const Vector<Type, iDimensions> &vPoint1, UINT64 ulTag)
 {
   *bpo_abedPolygonEdges.New() = BSPEdge<Type, iDimensions>(vPoint0, vPoint1, ulTag);
 }
@@ -422,7 +447,7 @@ BSPNode<Type, iDimensions>::BSPNode(enum BSPNodeLocation bnl)
  * Constructor for a branch node.
  */
 template<class Type, int iDimensions>
-BSPNode<Type, iDimensions>::BSPNode(const Plane<Type, iDimensions> &plSplitPlane, ULONG ulPlaneTag,
+BSPNode<Type, iDimensions>::BSPNode(const Plane<Type, iDimensions> &plSplitPlane, UINT64 ulPlaneTag,
                  BSPNode<Type, iDimensions> &bnFront, BSPNode<Type, iDimensions> &bnBack)
   : Plane<Type, iDimensions>(plSplitPlane)
   , bn_pbnFront(&bnFront)
@@ -741,7 +766,7 @@ void BSPCutter<Type, iDimensions>::CutPolygon(BSPPolygon<Type, iDimensions> &bpo
  * -- returns FALSE if polygon is laying on the plane
  */
 template<class Type, int iDimensions>
-BOOL BSPCutter<Type, iDimensions>::SplitPolygon(BSPPolygon<Type, iDimensions> &bpoPolygon, const Plane<Type, iDimensions> &plSplitPlane, ULONG ulPlaneTag,
+BOOL BSPCutter<Type, iDimensions>::SplitPolygon(BSPPolygon<Type, iDimensions> &bpoPolygon, const Plane<Type, iDimensions> &plSplitPlane, UINT64 ulPlaneTag,
   BSPPolygon<Type, iDimensions> &bpoFront, BSPPolygon<Type, iDimensions> &bpoBack)
 {
   (Plane<Type, iDimensions> &)bpoFront = (Plane<Type, iDimensions> &)bpoPolygon;
@@ -812,7 +837,7 @@ BOOL BSPCutter<Type, iDimensions>::SplitPolygon(BSPPolygon<Type, iDimensions> &b
  * Split an edge with a plane.
  */
 template<class Type, int iDimensions>
-void BSPCutter<Type, iDimensions>::SplitEdge(const Vector<Type, iDimensions> &vPoint0, const Vector<Type, iDimensions> &vPoint1, ULONG ulEdgeTag,
+void BSPCutter<Type, iDimensions>::SplitEdge(const Vector<Type, iDimensions> &vPoint0, const Vector<Type, iDimensions> &vPoint1, UINT64 ulEdgeTag,
     const Plane<Type, iDimensions> &plSplitPlane,
     BSPPolygon<Type, iDimensions> &bpoFront, BSPPolygon<Type, iDimensions> &bpoBack,
     BSPVertexContainer<Type, iDimensions> &bvcFront, BSPVertexContainer<Type, iDimensions> &bvcBack)
@@ -1142,7 +1167,7 @@ void BSPTree<Type, iDimensions>::MoveSubTreeToArray(BSPNode<Type, iDimensions> *
   bnInArray.bn_bnlLocation = pbnSubtree->bn_bnlLocation;
   bnInArray.bn_ulPlaneTag = pbnSubtree->bn_ulPlaneTag;
   // let plane tag hold pointer to node in array
-  pbnSubtree->bn_ulPlaneTag = (ULONG)&bnInArray;
+  pbnSubtree->bn_ulPlaneTag = (UINT64)&bnInArray;
 
   // remap pointers to subnodes
   if (pbnSubtree->bn_pbnFront==NULL) {
@@ -1213,15 +1238,15 @@ void BSPTree<Type, iDimensions>::Read_t(CTStream &strm) // throw char *
   INDEX ctNodes;
   strm>>ctNodes;
 #ifdef _WIN64
-  // 2 pointers have now more space
+  // 2 pointers have now more space, tag is a pointer too
   const int actualSizeOfBSPNode =
     sizeof(enum BSPNodeLocation) +
     sizeof(BSPNode<Type, iDimensions> *) +
     sizeof(BSPNode<Type, iDimensions> *) +
-    sizeof(ULONG) +
+    sizeof(UINT64) +
     sizeof(Plane<Type, iDimensions>);
 
-  // size on x86
+  // size on x86, as it's stored on disk
   const int sizeOfBSPNode =
     sizeof(enum BSPNodeLocation) +
     4 +
@@ -1257,7 +1282,13 @@ void BSPTree<Type, iDimensions>::Read_t(CTStream &strm) // throw char *
       bn.bn_pbnBack = &bt_abnNodes[iBack];
     }
 
-    strm>>bn.bn_ulPlaneTag;
+  #ifdef _WIN64
+    ULONG ulPlaneTag;
+    strm >> ulPlaneTag;
+    bn.bn_ulPlaneTag = (UINT64) ulPlaneTag;
+  #else
+    strm >> bn.bn_ulPlaneTag;
+  #endif
   }
 
   // check end id
@@ -1283,7 +1314,7 @@ void BSPTree<Type, iDimensions>::Write_t(CTStream &strm) // throw char *
     sizeof(enum BSPNodeLocation) +
     sizeof(BSPNode<Type, iDimensions> *) +
     sizeof(BSPNode<Type, iDimensions> *) +
-    sizeof(ULONG) +
+    sizeof(UINT64) +
     sizeof(Plane<Type, iDimensions>);
 
   // size on x86
@@ -1326,7 +1357,11 @@ void BSPTree<Type, iDimensions>::Write_t(CTStream &strm) // throw char *
     }
     strm<<iBack;
 
-    strm<<bn.bn_ulPlaneTag;
+  #ifdef _WIN64
+    strm<<HashPtr64To32(bn.bn_ulPlaneTag);
+  #else
+    strm<<(ULONG)bn.bn_ulPlaneTag;
+  #endif
   }
   // write end id for checking
   strm.WriteID_t("BSPE");  // bsp end
