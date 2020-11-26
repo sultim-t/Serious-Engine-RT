@@ -246,45 +246,26 @@ COLOR MulColors( COLOR col1, COLOR col2)
   if( col1==0xFFFFFFFF)   return col2;
   if( col2==0xFFFFFFFF)   return col1;
   if( col1==0 || col2==0) return 0;
-
-  UBYTE col1_RGBA[4];
-  ColorToRGBA(col1, col1_RGBA[0], col1_RGBA[1], col1_RGBA[2], col1_RGBA[3]);
-
-  UBYTE col2_RGBA[4];
-  ColorToRGBA(col2, col2_RGBA[0], col2_RGBA[1], col2_RGBA[2], col2_RGBA[3]);
-
-  UBYTE colRet_RGBA[4];
-  
-  for (int i = 0; i < 4; i++)
+  union
   {
-    //mov     eax, D[col1]
-    //and eax, CT_RMASK
-    //shr     eax, CT_RSHIFT
-    //mov     ecx, eax
-    //shl     ecx, 8
-    //or      eax,ecx
+    COLOR col;
+    UBYTE bytes[4];
+  } conv1;
 
-    ULONG a = ((ULONG) col1_RGBA[i]) << 8;
-    a = a | col1_RGBA[i];
+  union
+  {
+    COLOR col;
+    UBYTE bytes[4];
+  } conv2;
 
-    //mov     edx,D [col2]
-    //and     edx,CT_RMASK
-    //shr     edx,CT_RSHIFT
-    //mov     ecx,edx
-    //shl     ecx,8
-    //or      edx,ecx
-    ULONG b = ((ULONG) col2_RGBA[i]) << 8;
-    b = b | col2_RGBA[i];
+  conv1.col = col1;
+  conv2.col = col2;
+  conv1.bytes[0] = (UBYTE) ((((DWORD) conv1.bytes[0]) * ((DWORD) conv2.bytes[0])) / 255);
+  conv1.bytes[1] = (UBYTE) ((((DWORD) conv1.bytes[1]) * ((DWORD) conv2.bytes[1])) / 255);
+  conv1.bytes[2] = (UBYTE) ((((DWORD) conv1.bytes[2]) * ((DWORD) conv2.bytes[2])) / 255);
+  conv1.bytes[3] = (UBYTE) ((((DWORD) conv1.bytes[3]) * ((DWORD) conv2.bytes[3])) / 255);
 
-    //imul    eax,edx
-    //shr     eax,16+8
-    colRet_RGBA[i] = (a * b) << (16 + 8);
-  }
-
-  COLOR colRet = RGBAToColor(colRet_RGBA[0], colRet_RGBA[1], colRet_RGBA[2], colRet_RGBA[3]);
-
-  // __asm {..}
-  return colRet;
+  return(conv1.col);
 }
 
 
@@ -294,21 +275,29 @@ COLOR AddColors( COLOR col1, COLOR col2)
   if( col1==0) return col2;
   if( col2==0) return col1;
   if( col1==0xFFFFFFFF || col2==0xFFFFFFFF) return 0xFFFFFFFF;
-
-  UBYTE col1_RGBA[4];
-  ColorToRGBA(col1, col1_RGBA[0], col1_RGBA[1], col1_RGBA[2], col1_RGBA[3]);
-
-  UBYTE col2_RGBA[4];
-  ColorToRGBA(col2, col2_RGBA[0], col2_RGBA[1], col2_RGBA[2], col2_RGBA[3]);
-
-  UBYTE colRet_RGBA[4];
-
-  for (int i = 0; i < 4; i++)
+  COLOR colRet;
+  union
   {
-    colRet_RGBA[i] = ClampUp<ULONG>((ULONG) col1_RGBA[i] + (ULONG)col2_RGBA[i], 255);
-  }
+    COLOR col;
+    UBYTE bytes[4];
+  } conv1;
 
-  COLOR colRet = RGBAToColor(colRet_RGBA[0], colRet_RGBA[1], colRet_RGBA[2], colRet_RGBA[3]);
+  union
+  {
+    COLOR col;
+    UBYTE bytes[4];
+  } conv2;
+#define MINVAL(a, b) ((a)>(b))?(b):(a)
+
+  conv1.col = col1;
+  conv2.col = col2;
+  conv1.bytes[0] = (UBYTE) MINVAL((((WORD) conv1.bytes[0]) + ((WORD) conv2.bytes[0])), 255);
+  conv1.bytes[1] = (UBYTE) MINVAL((((WORD) conv1.bytes[1]) + ((WORD) conv2.bytes[1])), 255);
+  conv1.bytes[2] = (UBYTE) MINVAL((((WORD) conv1.bytes[2]) + ((WORD) conv2.bytes[2])), 255);
+  conv1.bytes[3] = (UBYTE) MINVAL((((WORD) conv1.bytes[3]) + ((WORD) conv2.bytes[3])), 255);
+#undef MINVAL
+
+  colRet = conv1.col;
 
   // __asm {..}
   return colRet;

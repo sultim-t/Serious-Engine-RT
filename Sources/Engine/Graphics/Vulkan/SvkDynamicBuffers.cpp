@@ -280,8 +280,8 @@ void SvkMain::GetUniformBuffer(uint32_t size, SvkDynamicUniform &outDynUniform)
 
 void SvkMain::FlushDynamicBuffersMemory()
 {
-  VkMappedMemoryRange ranges[3];
-  memset(&ranges, 0, sizeof(ranges));
+  VkResult r;
+  VkMappedMemoryRange ranges[3] = {};
 
   ranges[0].sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
   ranges[0].memory = gl_VkDynamicVBGlobal.sdg_DynamicBufferMemory;
@@ -295,7 +295,8 @@ void SvkMain::FlushDynamicBuffersMemory()
   ranges[2].memory = gl_VkDynamicUBGlobal.sdg_DynamicBufferMemory;
   ranges[2].size = VK_WHOLE_SIZE;
 
-  vkFlushMappedMemoryRanges(gl_VkDevice, 3, ranges);
+  r = vkFlushMappedMemoryRanges(gl_VkDevice, 3, ranges);
+  VK_CHECKERROR(r);
 }
 
 void SvkMain::FreeUnusedDynamicBuffers(uint32_t cmdBufferIndex)

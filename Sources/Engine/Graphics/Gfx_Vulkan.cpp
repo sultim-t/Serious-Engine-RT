@@ -726,8 +726,8 @@ void SvkMain::CreateRenderPass()
   VkAttachmentDescription colorAttachment = {};
   colorAttachment.format = gl_VkSurfColorFormat;
   colorAttachment.samples = sampleCount;
-  colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
   colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -736,8 +736,8 @@ void SvkMain::CreateRenderPass()
   VkAttachmentDescription depthAttachment = {};
   depthAttachment.format = gl_VkSurfDepthFormat;
   depthAttachment.samples = sampleCount;
-  depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
   depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
