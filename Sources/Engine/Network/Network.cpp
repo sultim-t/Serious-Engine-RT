@@ -89,6 +89,7 @@ extern CTString con_strCapture;
 #ifdef _WIN64
 static INDEX _pwoCurrentWorld64_0 = 0;
 static INDEX _pwoCurrentWorld64_1 = 0;
+static CWorld *_pwoCurrentWorldAlwaysNull = NULL;
 #else
 static CWorld *_pwoCurrentWorld = NULL;
 #endif
@@ -907,8 +908,9 @@ void CNetworkLibrary::Init(const CTString &strGameID)
   // it seems that this is the only variable that stores address,
   // one 32-bit value is not enough on x64 
 #ifdef _WIN64
-  _pShell->DeclareSymbol("INDEX pwoCurrentWorld64_0;", &_pwoCurrentWorld64_0);
-  _pShell->DeclareSymbol("INDEX pwoCurrentWorld64_1;", &_pwoCurrentWorld64_1);
+  _pShell->DeclareSymbol("user INDEX pwoCurrentWorld64_0;", &_pwoCurrentWorld64_0);
+  _pShell->DeclareSymbol("user INDEX pwoCurrentWorld64_1;", &_pwoCurrentWorld64_1);
+  _pShell->DeclareSymbol("INDEX pwoCurrentWorld;", &_pwoCurrentWorldAlwaysNull);
 #else
   _pShell->DeclareSymbol("INDEX pwoCurrentWorld;", &_pwoCurrentWorld);
 #endif // _WIN64

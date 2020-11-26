@@ -106,7 +106,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Brushes/BrushArchive.h>
 
 
-#pragma message(">> Uncomment include to terrain.h")
+//#pragma message(">> Uncomment include to terrain.h")
 //#include <Engine/Terrain/Terrain.h>
 
 #include <Engine/World/World.h>

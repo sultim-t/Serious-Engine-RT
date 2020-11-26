@@ -225,6 +225,7 @@ CTextureData::CTextureData()
   td_ulInternalFormat = TEXFMT_NONE;
   td_ulProbeObject = NONE;
   td_ulObject = NONE;
+  td_pulObjects = NULL;
   td_pulFrames = NULL;
 
   td_pubBuffer1      = NULL; // reset effect buffers
