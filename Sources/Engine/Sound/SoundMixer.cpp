@@ -35,6 +35,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #endif
 
 
+// asm code translation
+// https://github.com/rcgordon/Serious-Engine/blame/master/Sources/Engine/Sound/SoundMixer.cpp
+
+
 // console variables for volume
 extern FLOAT snd_fSoundVolume;
 extern FLOAT snd_fMusicVolume;
@@ -80,7 +84,7 @@ void ResetMixer( const SLONG *pslBuffer, const SLONG slBufferSize)
 
 #ifdef  _WIN64
 
-  // TODO: X64
+  memset(pvMixerBuffer, 0, (UINT64)slMixerBufferSize * 8);
 
 #else
   // wipe destination mixer buffer
@@ -97,7 +101,7 @@ void ResetMixer( const SLONG *pslBuffer, const SLONG slBufferSize)
 
 
 // copy mixer buffer to the output buffer(s)
-void CopyMixerBuffer_stereo( const SLONG slSrcOffset, const void *pDstBuffer, const SLONG slBytes)
+void CopyMixerBuffer_stereo( const SLONG slSrcOffset, void *pDstBuffer, const SLONG slBytes)
 {
   ASSERT( pDstBuffer!=NULL);
   ASSERT( slBytes%4==0);
@@ -105,7 +109,7 @@ void CopyMixerBuffer_stereo( const SLONG slSrcOffset, const void *pDstBuffer, co
 
 #ifdef  _WIN64
 
-  // TODO: X64
+  memcpy(pDstBuffer, ((UINT8*) pvMixerBuffer) + slSrcOffset, slBytes);
 
 #else
   __asm {
@@ -122,7 +126,7 @@ void CopyMixerBuffer_stereo( const SLONG slSrcOffset, const void *pDstBuffer, co
 
 
 // copy one channel from mixer buffer to the output buffer(s)
-void CopyMixerBuffer_mono( const SLONG slSrcOffset, const void *pDstBuffer, const SLONG slBytes)
+void CopyMixerBuffer_mono( const SLONG slSrcOffset, void *pDstBuffer, const SLONG slBytes)
 {
   ASSERT( pDstBuffer!=NULL);
   ASSERT( slBytes%2==0);
@@ -130,7 +134,16 @@ void CopyMixerBuffer_mono( const SLONG slSrcOffset, const void *pDstBuffer, cons
 
 #ifdef  _WIN64
 
-  // TODO: X64
+  UINT16 *dst = (UINT16 *) pDstBuffer;
+  UINT16 *src = (UINT16 *) (((UINT8 *) pvMixerBuffer) + slSrcOffset);
+  
+  SLONG max = slBytes / 4;
+  for (SLONG i = 0; i < max; i++)
+  {
+    *dst = *src;
+    dst += 1;    // move 16 bits.
+    src += 2;    // move 32 bits.
+  }
 
 #else
   __asm {
@@ -159,7 +172,21 @@ static void ConvertMixerBuffer( const SLONG slBytes)
 
 #ifdef  _WIN64
 
-  // TODO
+  UINT16 *dst = (UINT16 *) pvMixerBuffer;
+  UINT32 *src = (UINT32 *) pvMixerBuffer;
+  SLONG max = slBytes / 2;
+
+  int tmp;
+  for (SLONG i = 0; i < max; i++)
+  {
+    tmp = *src;
+    tmp = Clamp(tmp, -32767, 32767);
+
+    *dst = tmp;
+
+    dst++;    
+    src++;  
+  }
 
 #else
   __asm {
@@ -381,6 +408,9 @@ loopEnd:
   __int64 fixSoundBufferSize = ((__int64)slSoundBufferSize)<<16;
   mmSurroundFactor = (__int64)(SWORD)mmSurroundFactor;
 
+  SLONG slLeftVolume_ = slLeftVolume >> 16;
+  SLONG slRightVolume_ = slRightVolume >> 16;
+
   // loop thru source buffer
   INDEX iCt = slMixerBufferSize;
   FOREVER
@@ -414,8 +444,8 @@ loopEnd:
     slLastRightSample += ((slRightSample-slLastRightSample)*slRightFilter)>>15;
 
     // apply stereo volume to current sample
-    slLeftSample  = (slLastLeftSample  * slLeftVolume) >>15;
-    slRightSample = (slLastRightSample * slRightVolume)>>15;
+    slLeftSample  = (slLastLeftSample  * slLeftVolume_) >>15;
+    slRightSample = (slLastRightSample * slRightVolume_)>>15;
 
     slRightSample = slRightSample ^ mmSurroundFactor;
 
@@ -440,7 +470,7 @@ loopEnd:
     // advance to next sample
     fixLeftOfs   += fixLeftStep;
     fixRightOfs  += fixRightStep;
-    pslDstBuffer += 4;
+    pslDstBuffer += 2;
     iCt--;
   }
                     
@@ -593,14 +623,6 @@ loopEnd:
 
 #else
 
-  // TODO: X64
-
-  // WARNING!
-  // this is just a copy from MixMono(..),
-  // the difference is in the asm code 
-  // that is commented as "// get sound samples"
-
-
   // initialize some local vars
   SLONG slLeftSample, slRightSample, slNextSample;
   SLONG *pslDstBuffer = (SLONG*)pvMixerBuffer;
@@ -610,6 +632,9 @@ loopEnd:
   __int64 fixRightStep = (__int64)(fRightStep * 65536.0);
   __int64 fixSoundBufferSize = ((__int64)slSoundBufferSize)<<16;
   mmSurroundFactor = (__int64)(SWORD)mmSurroundFactor;
+
+  SLONG slLeftVolume_ = slLeftVolume >> 16;
+  SLONG slRightVolume_ = slRightVolume >> 16;
 
   // loop thru source buffer
   INDEX iCt = slMixerBufferSize;
@@ -631,12 +656,12 @@ loopEnd:
     if( iCt<=0 || bEndOfSound) break;
 
     // fetch one lineary interpolated sample on left channel
-    slLeftSample = pswSrcBuffer[(fixLeftOfs>>16)+0];
-    slNextSample = pswSrcBuffer[(fixLeftOfs>>16)+1];
+    slLeftSample = pswSrcBuffer[(fixLeftOfs>>15)+0];
+    slNextSample = pswSrcBuffer[(fixLeftOfs>>15)+2];
     slLeftSample = (slLeftSample*(65535-(fixLeftOfs&65535)) + slNextSample*(fixLeftOfs&65535)) >>16;
     // fetch one lineary interpolated sample on right channel
-    slRightSample = pswSrcBuffer[(fixRightOfs>>16)+0];
-    slNextSample  = pswSrcBuffer[(fixRightOfs>>16)+1];
+    slRightSample = pswSrcBuffer[(fixRightOfs>>15)+0];
+    slNextSample  = pswSrcBuffer[(fixRightOfs>>15)+2];
     slRightSample = (slRightSample*(65535-(fixRightOfs&65535)) + slNextSample*(fixRightOfs&65535)) >>16;
 
     // filter samples
@@ -644,10 +669,11 @@ loopEnd:
     slLastRightSample += ((slRightSample-slLastRightSample)*slRightFilter)>>15;
 
     // apply stereo volume to current sample
-    slLeftSample  = (slLastLeftSample  * slLeftVolume) >>15;
-    slRightSample = (slLastRightSample * slRightVolume)>>15;
+    slLeftSample  = (slLastLeftSample  * slLeftVolume_) >>15;
+    slRightSample = (slLastRightSample * slRightVolume_)>>15;
 
-    slRightSample = slRightSample ^ mmSurroundFactor;
+    slLeftSample  ^= (SLONG)((mmSurroundFactor>> 0)&0xFFFFFFFF);
+    slRightSample ^= (SLONG)((mmSurroundFactor>>32)&0xFFFFFFFF);
 
     // mix in current sample
     slLeftSample  += pslDstBuffer[0];
@@ -670,10 +696,9 @@ loopEnd:
     // advance to next sample
     fixLeftOfs   += fixLeftStep;
     fixRightOfs  += fixRightStep;
-    pslDstBuffer += 4;
+    pslDstBuffer += 2;
     iCt--;
-  }
-                    
+  }                    
 #endif
 
   _pfSoundProfile.StopTimer(CSoundProfile::PTI_RAWMIXER);

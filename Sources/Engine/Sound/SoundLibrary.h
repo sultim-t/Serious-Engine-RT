@@ -39,8 +39,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 // set master volume and resets mixer buffer (wipes it with zeroes and keeps pointers)
 void ResetMixer( const SLONG *pslBuffer, const SLONG slBufferSize);
 // copy mixer buffer to the output buffer(s)
-void CopyMixerBuffer_stereo( const SLONG slSrcOffset, const void *pDstBuffer, const SLONG slBytes);
-void CopyMixerBuffer_mono(   const SLONG slSrcOffset, const void *pDstBuffer, const SLONG slBytes);
+void CopyMixerBuffer_stereo( const SLONG slSrcOffset, void *pDstBuffer, const SLONG slBytes);
+void CopyMixerBuffer_mono(   const SLONG slSrcOffset, void *pDstBuffer, const SLONG slBytes);
 // normalize mixed sounds
 void NormalizeMixerBuffer( const FLOAT snd_fNormalizer, const SLONG slBytes, FLOAT &_fLastNormalizeValue);
 // mix in one sound object to mixer buffer
