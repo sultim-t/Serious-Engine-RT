@@ -1212,7 +1212,27 @@ void BSPTree<Type, iDimensions>::Read_t(CTStream &strm) // throw char *
   // read count of nodes and create array
   INDEX ctNodes;
   strm>>ctNodes;
-  ASSERT(slSize==(SLONG)(sizeof(INDEX)+ctNodes*sizeof(BSPNode<Type, iDimensions>)));
+#ifdef _WIN64
+  // 2 pointers have now more space
+  const int actualSizeOfBSPNode =
+    sizeof(enum BSPNodeLocation) +
+    sizeof(BSPNode<Type, iDimensions> *) +
+    sizeof(BSPNode<Type, iDimensions> *) +
+    sizeof(ULONG) +
+    sizeof(Plane<Type, iDimensions>);
+
+  // size on x86
+  const int sizeOfBSPNode =
+    sizeof(enum BSPNodeLocation) +
+    4 +
+    4 +
+    sizeof(ULONG) +
+    sizeof(Plane<Type, iDimensions>);
+
+  ASSERT(slSize == (SLONG) (sizeof(INDEX) + ctNodes * sizeOfBSPNode));
+#else
+  ASSERT(slSize == (SLONG) (sizeof(INDEX) + ctNodes * sizeof(BSPNode<Type, iDimensions>)));
+#endif
   bt_abnNodes.New(ctNodes);
   // for each node
   for(INDEX iNode=0; iNode<ctNodes; iNode++) {
@@ -1257,7 +1277,27 @@ void BSPTree<Type, iDimensions>::Write_t(CTStream &strm) // throw char *
   INDEX ctNodes = bt_abnNodes.Count();
 
   // calculate size of chunk to write
-  SLONG slSize = sizeof(INDEX)+ctNodes*sizeof(BSPNode<Type, iDimensions>);
+#ifdef _WIN64
+  // 2 pointers have now more space
+  const int actualSizeOfBSPNode =
+    sizeof(enum BSPNodeLocation) +
+    sizeof(BSPNode<Type, iDimensions> *) +
+    sizeof(BSPNode<Type, iDimensions> *) +
+    sizeof(ULONG) +
+    sizeof(Plane<Type, iDimensions>);
+
+  // size on x86
+  const int sizeOfBSPNode =
+    sizeof(enum BSPNodeLocation) +
+    4 +
+    4 +
+    sizeof(ULONG) + 
+    sizeof(Plane<Type, iDimensions>);
+
+  SLONG slSize = sizeof(INDEX) + ctNodes * sizeOfBSPNode;
+#else
+  SLONG slSize = sizeof(INDEX) + ctNodes * sizeof(BSPNode<Type, iDimensions>);
+#endif
   // write current version and size
   strm<<INDEX(1)<<slSize;
 

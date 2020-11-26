@@ -17,11 +17,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Math/Float.h>
 
+static ULONG _fpcw = FPT_24BIT;
+
 /* Get current precision setting of FPU. */
 enum FPUPrecisionType GetFPUPrecision(void)
 {
   // get control flags from FPU
-  ULONG fpcw = _control87( 0, 0);
+  ULONG fpcw = _fpcw;// _control87(0, 0);
 
   // extract the precision from the flags
   switch(fpcw&_MCW_PC) {
@@ -60,7 +62,8 @@ void SetFPUPrecision(enum FPUPrecisionType fptNew)
     fpcw=_PC_24;
   };
   // set the FPU precission
-  _control87( fpcw, MCW_PC);
+  //_control87( fpcw, MCW_PC);
+  _fpcw = fpcw;
 }
 
 /////////////////////////////////////////////////////////////////////

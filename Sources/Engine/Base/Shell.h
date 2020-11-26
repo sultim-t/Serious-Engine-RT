@@ -62,6 +62,9 @@ public:
   CTString GetString(const CTString &strName);
   void SetString(const CTString &strName, const CTString &strValue);
 
+  UINT64 GetUINT64(const CTString &strName_Index0, const CTString &strName_Index1);
+  void SetUINT64(const CTString &strName_Index0, const CTString &strName_Index1, UINT64 uValue);
+
   CTString GetValue(const CTString &strName);
   void SetValue(const CTString &strName, const CTString &strValue);
 };

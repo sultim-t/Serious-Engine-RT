@@ -86,7 +86,12 @@ extern BOOL _bTempNetwork = FALSE;  // set while using temporary second network 
 extern BOOL con_bCapture;
 extern CTString con_strCapture;
 
+#ifdef _WIN64
+static INDEX _pwoCurrentWorld64_0 = 0;
+static INDEX _pwoCurrentWorld64_1 = 0;
+#else
 static CWorld *_pwoCurrentWorld = NULL;
+#endif
 
 static FLOAT _bStartDemoRecordingNextTime = FALSE;
 static FLOAT _bStopDemoRecordingNextTime = FALSE;
@@ -253,7 +258,12 @@ extern void CacheShadows(void)
 {
   // mute all sounds
   _pSound->Mute();
+#ifdef _WIN64
+  CWorld *pwo = (CWorld *) _pShell->GetUINT64("pwoCurrentWorld64_0", "pwoCurrentWorld64_1");
+#else
   CWorld *pwo = (CWorld*)_pShell->GetINDEX("pwoCurrentWorld");
+#endif
+
   if( pwo!=NULL) {
     pwo->wo_baBrushes.CacheAllShadowmaps();
     CPrintF( TRANS("All shadows recached"));
@@ -521,7 +531,11 @@ static void StockInfo(void)
   INDEX ctEntities=0, ctShadowLayers=0, ctPolys=0,    ctPlanes=0,   ctEdges=0,    ctVertices=0, ctSectors=0;
   SLONG slEntBytes=0, slLyrBytes=0,     slPlyBytes=0, slPlnBytes=0, slEdgBytes=0, slVtxBytes=0, slSecBytes=0;
   SLONG slCgrBytes=0;
-  CWorld *pwo = (CWorld*)_pShell->GetINDEX("pwoCurrentWorld");
+#ifdef _WIN64
+  CWorld *pwo = (CWorld *) _pShell->GetUINT64("pwoCurrentWorld64_0", "pwoCurrentWorld64_1");
+#else
+  CWorld *pwo = (CWorld *) _pShell->GetINDEX("pwoCurrentWorld");
+#endif
 
   if( pwo!=NULL)
   {
@@ -890,7 +904,14 @@ void CNetworkLibrary::Init(const CTString &strGameID)
   _pShell->DeclareSymbol("persistent user CTString ga_strMSLegacy;", &ga_strMSLegacy);
   _pShell->DeclareSymbol("persistent user INDEX ga_bMSLegacy;", &ga_bMSLegacy);
 
+  // it seems that this is the only variable that stores address,
+  // one 32-bit value is not enough on x64 
+#ifdef _WIN64
+  _pShell->DeclareSymbol("INDEX pwoCurrentWorld64_0;", &_pwoCurrentWorld64_0);
+  _pShell->DeclareSymbol("INDEX pwoCurrentWorld64_1;", &_pwoCurrentWorld64_1);
+#else
   _pShell->DeclareSymbol("INDEX pwoCurrentWorld;", &_pwoCurrentWorld);
+#endif // _WIN64
 }
 
 /*
@@ -1032,7 +1053,11 @@ void CNetworkLibrary::StartPeerToPeer_t(const CTString &strSessionName,
     throw;
   }
   // remember the world pointer
-  _pShell->SetINDEX("pwoCurrentWorld", (INDEX)&ga_World);
+#ifdef _WIN64
+  _pShell->SetUINT64("pwoCurrentWorld64_0","pwoCurrentWorld64_1", (UINT64) &ga_World);
+#else
+  _pShell->SetINDEX("pwoCurrentWorld", &ga_World);
+#endif
 
   SetProgressDescription(TRANS("starting server"));
   CallProgressHook_t(0.0f);
@@ -1269,7 +1294,11 @@ void CNetworkLibrary::JoinSession_t(const CNetworkSession &nsSesssion, INDEX ctL
   }
 
   // remember the world pointer
-  _pShell->SetINDEX("pwoCurrentWorld", (INDEX)&ga_World);
+#ifdef _WIN64
+  _pShell->SetUINT64("pwoCurrentWorld64_0", "pwoCurrentWorld64_1", (UINT64) &ga_World);
+#else
+  _pShell->SetINDEX("pwoCurrentWorld", &ga_World);
+#endif
 
   // eventually cache all shadowmaps in world (memory eater!)
   if( shd_bCacheAll) ga_World.wo_baBrushes.CacheAllShadowmaps();
@@ -1341,7 +1370,11 @@ void CNetworkLibrary::StartDemoPlay_t(const CTFileName &fnDemo)  // throw char *
   _bNeedPretouch = TRUE;
 
   // remember the world pointer
-  _pShell->SetINDEX("pwoCurrentWorld", (INDEX)&ga_World);
+#ifdef _WIN64
+  _pShell->SetUINT64("pwoCurrentWorld64_0", "pwoCurrentWorld64_1", (UINT64) &ga_World);
+#else
+  _pShell->SetINDEX("pwoCurrentWorld", &ga_World);
+#endif
 
   // demo synchronization starts at the beginning initially
   ga_fDemoTimer = 0.0f;
@@ -1550,7 +1583,11 @@ void CNetworkLibrary::StopGame(void)
   ga_aplsPlayers.Clear();
   ga_aplsPlayers.New(NET_MAXLOCALPLAYERS);
   // remember the world pointer
-  _pShell->SetINDEX("pwoCurrentWorld", (INDEX)NULL);
+#ifdef _WIN64
+  _pShell->SetUINT64("pwoCurrentWorld64_0", "pwoCurrentWorld64_1", (UINT64) 0);
+#else
+  _pShell->SetINDEX("pwoCurrentWorld", (INDEX)0);
+#endif
 
   // rewind the timer
   _pTimer->SetCurrentTick(0.0f);
@@ -1674,8 +1711,12 @@ void CNetworkLibrary::ChangeLevel_internal(void)
     // remember the world filename
     ga_fnmWorld = ga_fnmNextLevel;
     // remember the world pointer
-    _pShell->SetINDEX("pwoCurrentWorld", (INDEX)&ga_World);
-  // if there is remembered level
+  #ifdef _WIN64
+    _pShell->SetUINT64("pwoCurrentWorld64_0", "pwoCurrentWorld64_1", (UINT64) &ga_World);
+  #else
+    _pShell->SetINDEX("pwoCurrentWorld", &ga_World);
+  #endif
+    // if there is remembered level
   } else {
     // restore it
     ga_sesSessionState.RestoreOldLevel(ga_fnmNextLevel);
@@ -2379,7 +2420,11 @@ extern void NET_MakeDefaultState_t(
     _pNetwork->ga_fnmWorld = fnmWorld;
     _pNetwork->ga_fnmNextLevel = CTString("");
     // remember the world pointer
-    _pShell->SetINDEX("pwoCurrentWorld", (INDEX)&_pNetwork->ga_World);
+  #ifdef _WIN64
+    _pShell->SetUINT64("pwoCurrentWorld64_0", "pwoCurrentWorld64_1", (UINT64) &_pNetwork->ga_World);
+  #else
+    _pShell->SetINDEX("pwoCurrentWorld", (INDEX) &_pNetwork->ga_World);
+  #endif
 
     // reset random number generator
     _pNetwork->ga_sesSessionState.ResetRND();

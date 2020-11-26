@@ -146,7 +146,7 @@ struct CWorldRenderingInfo
   uint32_t        screenWidth;
   uint32_t        screenHeight;
   ULONG           viewerEntityID;
-  //CWorld          *world;
+  CWorld          *world;
 
   FLOAT3D         viewerPosition;
   FLOATmatrix3D   viewerRotation;

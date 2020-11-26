@@ -741,6 +741,22 @@ void CShell::SetString(const CTString &strName, const CTString &strValue)
   *(CTString*)pss->ss_pvValue = strValue;
 }
 
+UINT64 CShell::GetUINT64(const CTString &strName_0, const CTString &strName_1)
+{
+  UINT32 val_64_0 = _pShell->GetINDEX(strName_0);
+  UINT32 val_64_1 = _pShell->GetINDEX(strName_1);
+  return ((UINT64) val_64_0) << 32 | val_64_1;
+}
+
+void CShell::SetUINT64(const CTString &strName_0, const CTString &strName_1, UINT64 uValue)
+{
+  UINT32 val_64_0 = (UINT32) ((uValue & 0xFFFFFFFF00000000LL) >> 32);
+  UINT32 val_64_1 = (UINT32) (uValue & 0xFFFFFFFFLL);
+
+  _pShell->SetINDEX(strName_0, val_64_0);
+  _pShell->SetINDEX(strName_1, val_64_1);
+}
+
 
 CTString CShell::GetValue(const CTString &strName)
 {

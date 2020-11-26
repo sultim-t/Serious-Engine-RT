@@ -1176,10 +1176,9 @@ skipLight:
   }
 
 #else
-  SLONG slModulo = (lm_pixCanvasSizeU - lm_pixPolygonSizeU) * BYTES_PER_TEXEL;
 
   // for each pixel in the shadow map
-  for( PIX pixV=0; pixV<_iRowCt; pixV++) {
+  /*for( PIX pixV=0; pixV<_iRowCt; pixV++) {
     for( PIX pixU=0; pixU<_iPixCt; pixU++) {
       // if the point is not masked
       if( *pubMask&ubMask) {
@@ -1193,8 +1192,8 @@ skipLight:
         ubMask = 1;
       }
     } // go to the next row
-    _pulLayer += slModulo;
-  }
+    _pulLayer += _slModulo;
+  }*/
 
 #endif
 

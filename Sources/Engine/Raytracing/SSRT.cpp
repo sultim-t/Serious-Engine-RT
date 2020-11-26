@@ -163,7 +163,13 @@ void SSRTMain::AddLight(const CDirectionalLight &dirLt)
 
 CWorld *SSRTMain::GetCurrentWorld()
 {
-  return (CWorld *) _pShell->GetINDEX("pwoCurrentWorld");
+#ifdef _WIN64
+  CWorld *pwo = (CWorld *) _pShell->GetUINT64("pwoCurrentWorld64_0", "pwoCurrentWorld64_1");
+#else
+  CWorld *pwo = (CWorld *) _pShell->GetINDEX("pwoCurrentWorld");
+#endif
+
+  return pwo;
 }
 
 void SSRTMain::StartFrame()
@@ -182,7 +188,11 @@ void SSRTMain::StartFrame()
 
 void SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
 {
-  CWorld *world = GetCurrentWorld();
+  CWorld *world = info.world;
+
+  CWorld *pwo = GetCurrentWorld();
+  ASSERT(world == pwo);
+
   if (world == nullptr)
   {
     return;

@@ -968,7 +968,7 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
   if (srt_bEnableRayTracing)
   {
     SSRT::CWorldRenderingInfo renderInfo = {};
-    //renderInfo.pWorld = &woWorld;
+    renderInfo.world = &woWorld;
     renderInfo.viewerEntityID = enViewer.en_ulID;
     renderInfo.screenWidth = dpDrawport.GetWidth();
     renderInfo.screenHeight = dpDrawport.GetHeight();
