@@ -69,6 +69,7 @@ private:
 
   // handles for freeing
   CStaticStackArray<AllocHandle> smp_Handles;
+  // 0 is not used
   uint32_t        smp_HandleLastIndex;
 
   uint32_t        smp_PreferredSize;
@@ -90,6 +91,7 @@ public:
 
   // Allocate memory with specified size, out params are memory and offset in it.
   // Returns handle which must be used to free memory.
+  // Returns 0 if couldn't allocate
   uint32_t Allocate(VkMemoryAllocateInfo allocInfo, VkMemoryRequirements memReqs, VkDeviceMemory &outMemory, uint32_t &outOffset);
 
   // Free allocated memory. Handle is a number that was returned in Allocate.

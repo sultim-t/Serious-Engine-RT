@@ -1,6 +1,8 @@
 #include "StdH.h"
 #include "SvkMemoryPool.h"
 
+#include <Engine/Base/Console.h>
+
 SvkMemoryPool::SvkMemoryPool(VkDevice device, uint32_t preferredSize)
 {
   smp_VkDevice = device;
@@ -13,7 +15,7 @@ SvkMemoryPool::SvkMemoryPool(VkDevice device, uint32_t preferredSize)
   smp_FreeListHeadIndex = 0;
   smp_AllocationCount = 0;
   smp_VkMemoryTypeIndex = 0;
-  smp_HandleLastIndex = 0;
+  smp_HandleLastIndex = 1;
   smp_NodeLastIndex = 0;
 }
 
@@ -40,7 +42,7 @@ SvkMemoryPool::~SvkMemoryPool()
   smp_BlockSize = 0;
   smp_AllocationCount = 0;
   smp_VkMemoryTypeIndex = 0;
-  smp_HandleLastIndex = 0;
+  smp_HandleLastIndex = 1;
   smp_NodeLastIndex = 0;
 }
 
@@ -223,8 +225,9 @@ uint32_t SvkMemoryPool::Allocate(VkMemoryAllocateInfo allocInfo, VkMemoryRequire
     prevNode = curNode;
     curNode = smp_Nodes[curNode].nextNodeIndex;
   }
-
-  ASSERTALWAYS("Increase SvkMemoryPool block count or block size");
+  
+  CPrintF("Vulkan: Increase SvkMemoryPool block count or block size");
+  ASSERT(0);
 
   // TODO: memory pool chain
   // if free list is empty or none is found, create new and slightly bigger
