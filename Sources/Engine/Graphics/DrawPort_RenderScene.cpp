@@ -440,14 +440,22 @@ static void RSBinToGroups( ScenePolygon *pspoFirst)
   }
 
   // determine maximum used groups
-  ASSERT(_ctGroupsCount > 0);
-
-  ULONG mask = 1U << 31;
-  while ((_ctGroupsCount & mask) == 0)
+  if (_ctGroupsCount != 0)
   {
-    mask = mask >> 1;
+    UINT32 bsr = 31;
+    UINT64 a = _ctGroupsCount;
+
+    while (bsr > 0)
+    {
+      if (a & (1ull << bsr))
+      {
+        break;
+      }
+      bsr--;
+    }
+
+    _ctGroupsCount = 2 << bsr;
   }
-  _ctGroupsCount = mask;
 
   /*__asm {
     mov     eax,2
