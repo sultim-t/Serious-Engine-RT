@@ -13,6 +13,7 @@ You should have received a copy of the GNU General Public License along
 with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
+
 // for generating unique IDs for lens flares
 // (32 bit should be enough for generating 1 lens flare per second during approx. 136 years)
 static INDEX _iNextLensFlareID = 1; // 0 is reserved for no-id
@@ -422,8 +423,7 @@ void CRenderer::AddNonZoningBrush( CEntity *penBrush, CBrushSector *pbscThatAdds
   }
 
 
-  // skip whole non-zoning brush if all polygons in all sectors are invisible for rendering 
-  // and not in wireframe mode
+  // skip whole non-zoning brush if invisible for rendering and not in wireframe mode
   const BOOL bWireFrame = _wrpWorldRenderPrefs.wrp_ftEdges != CWorldRenderPrefs::FT_NONE
                        || _wrpWorldRenderPrefs.wrp_ftVertices != CWorldRenderPrefs::FT_NONE;
   if( !(penBrush->en_ulFlags&ENF_ZONING) && !bWireFrame)

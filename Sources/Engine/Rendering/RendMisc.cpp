@@ -16,8 +16,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 /////////////////////////////////////////////////////////////////////
 // CWorldRenderPrefs
 
-#include <Engine/Math/FixInt.h>
-
 // global instance used in rendering
 CWorldRenderPrefs _wrpWorldRenderPrefs;
 CBrushSectorSelection *_pselbscVisTweaks = NULL;
