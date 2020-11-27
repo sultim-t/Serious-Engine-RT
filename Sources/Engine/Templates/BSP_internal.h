@@ -90,7 +90,7 @@ public:
   UINT64 bed_ulEdgeTag;   // tags for BSPs with tagged edges/planes
 
   /* Default constructor. */
-  inline BSPEdge(void) {};
+  inline BSPEdge(void) : bed_ulEdgeTag(-1) {};
   /* Constructor with two vectors. */
   inline BSPEdge(const Vector<Type, iDimensions> &vVertex0, const Vector<Type, iDimensions> &vVertex1, UINT64 ulTag);
   /* Clear the object. */
@@ -148,7 +148,7 @@ public:
 
 public:
   /* Defualt constructor (for arrays only). */
-  inline BSPNode(void) {};
+  inline BSPNode(void) : bn_ulPlaneTag(-1), bn_pbnBack(nullptr), bn_pbnFront(nullptr), bn_bnlLocation(BNL_ILLEGAL) {};
   /* Constructor for a leaf node. */
   inline BSPNode(enum BSPNodeLocation bnl);
   /* Constructor for a branch node. */

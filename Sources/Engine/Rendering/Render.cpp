@@ -552,31 +552,31 @@ void CRenderer::DrawToScreen(void)
     }
     _pfRenderProfile.StopTimer(CRenderProfile::PTI_RENDERSCENE);
   }
-  //
-  //if (re_bBackgroundEnabled) {
-  //  // render models that were kept for delayed rendering.
-  //  ChangeStatsMode(CStatForm::STI_MODELSETUP);
-  //  RenderModels(TRUE);   // render background models
-  //  ChangeStatsMode(CStatForm::STI_WORLDRENDERING);
-  //}
-  //
-  //// if polygons should be drawn
-  //if (!re_bRenderingShadows &&
-  //  re_bBackgroundEnabled
-  //  &&_wrpWorldRenderPrefs.wrp_ftPolygons != CWorldRenderPrefs::FT_NONE) {
-  //  // render translucent portals
-  //  _pfRenderProfile.StartTimer(CRenderProfile::PTI_RENDERSCENE);
-  //  CPerspectiveProjection3D *pprPerspective = (CPerspectiveProjection3D*)(CProjection3D*)(re_prBackgroundProjection);
-  //  RenderScene( re_pdpDrawPort, SortTranslucentPolygons(re_pspoFirstBackgroundTranslucent),
-  //               re_prBackgroundProjection, re_colSelection, TRUE);
-  //  _pfRenderProfile.StopTimer(CRenderProfile::PTI_RENDERSCENE);
-  //}
-  //
-  //if( re_bBackgroundEnabled) {
-  //  ChangeStatsMode(CStatForm::STI_PARTICLERENDERING);
-  //  RenderParticles(TRUE); // render background particless
-  //  ChangeStatsMode(CStatForm::STI_WORLDRENDERING);
-  //}
+  
+  if (re_bBackgroundEnabled) {
+    // render models that were kept for delayed rendering.
+    ChangeStatsMode(CStatForm::STI_MODELSETUP);
+    RenderModels(TRUE);   // render background models
+    ChangeStatsMode(CStatForm::STI_WORLDRENDERING);
+  }
+  
+  // if polygons should be drawn
+  if (!re_bRenderingShadows &&
+    re_bBackgroundEnabled
+    &&_wrpWorldRenderPrefs.wrp_ftPolygons != CWorldRenderPrefs::FT_NONE) {
+    // render translucent portals
+    _pfRenderProfile.StartTimer(CRenderProfile::PTI_RENDERSCENE);
+    CPerspectiveProjection3D *pprPerspective = (CPerspectiveProjection3D*)(CProjection3D*)(re_prBackgroundProjection);
+    RenderScene( re_pdpDrawPort, SortTranslucentPolygons(re_pspoFirstBackgroundTranslucent),
+                 re_prBackgroundProjection, re_colSelection, TRUE);
+    _pfRenderProfile.StopTimer(CRenderProfile::PTI_RENDERSCENE);
+  }
+  
+  if( re_bBackgroundEnabled) {
+    ChangeStatsMode(CStatForm::STI_PARTICLERENDERING);
+    RenderParticles(TRUE); // render background particless
+    ChangeStatsMode(CStatForm::STI_WORLDRENDERING);
+  }
   
   //------------------------------------------------- second render non-background
   // if polygons should be drawn
@@ -596,54 +596,54 @@ void CRenderer::DrawToScreen(void)
     RenderTerrains();
   }
 
-  //// if wireframe should be drawn
-  //if( !re_bRenderingShadows &&
-  //  ( _wrpWorldRenderPrefs.wrp_ftEdges     != CWorldRenderPrefs::FT_NONE
-  // || _wrpWorldRenderPrefs.wrp_ftVertices  != CWorldRenderPrefs::FT_NONE
-  // || _wrpWorldRenderPrefs.wrp_stSelection == CWorldRenderPrefs::ST_VERTICES
-  // || _wrpWorldRenderPrefs.IsFieldBrushesOn())) {
-  //  // render in wireframe all brushes that were added (in orthographic projection!)
-  //  re_pdpDrawPort->SetOrtho();
-  //  RenderWireFrameBrushes();
-  //  RenderWireFrameTerrains();
-  //}
+  // if wireframe should be drawn
+  if( !re_bRenderingShadows &&
+    ( _wrpWorldRenderPrefs.wrp_ftEdges     != CWorldRenderPrefs::FT_NONE
+   || _wrpWorldRenderPrefs.wrp_ftVertices  != CWorldRenderPrefs::FT_NONE
+   || _wrpWorldRenderPrefs.wrp_stSelection == CWorldRenderPrefs::ST_VERTICES
+   || _wrpWorldRenderPrefs.IsFieldBrushesOn())) {
+    // render in wireframe all brushes that were added (in orthographic projection!)
+    re_pdpDrawPort->SetOrtho();
+    RenderWireFrameBrushes();
+    RenderWireFrameTerrains();
+  }
 
   // render models that were kept for delayed rendering
   ChangeStatsMode(CStatForm::STI_MODELSETUP);
   RenderModels(FALSE); // render non-background models
-  //ChangeStatsMode(CStatForm::STI_PARTICLERENDERING);
-  //RenderParticles(FALSE); // render non-background particles
+  ChangeStatsMode(CStatForm::STI_PARTICLERENDERING);
+  RenderParticles(FALSE); // render non-background particles
   ChangeStatsMode(CStatForm::STI_WORLDRENDERING);
   
-  //// if polygons should be drawn
-  //if (!re_bRenderingShadows
-  //  &&_wrpWorldRenderPrefs.wrp_ftPolygons != CWorldRenderPrefs::FT_NONE) {
-  //  // render translucent portals
-  //  _pfRenderProfile.StartTimer(CRenderProfile::PTI_RENDERSCENE);
-  //  CPerspectiveProjection3D *pprPerspective = (CPerspectiveProjection3D*)(CProjection3D*)re_prProjection;
-  //  pprPerspective->Prepare();
-  //  RenderScene( re_pdpDrawPort, SortTranslucentPolygons(re_pspoFirstTranslucent),
-  //               re_prProjection, re_colSelection, TRUE);
-  //  _pfRenderProfile.StopTimer(CRenderProfile::PTI_RENDERSCENE);
-  //}
+  // if polygons should be drawn
+  if (!re_bRenderingShadows
+    &&_wrpWorldRenderPrefs.wrp_ftPolygons != CWorldRenderPrefs::FT_NONE) {
+    // render translucent portals
+    _pfRenderProfile.StartTimer(CRenderProfile::PTI_RENDERSCENE);
+    CPerspectiveProjection3D *pprPerspective = (CPerspectiveProjection3D*)(CProjection3D*)re_prProjection;
+    pprPerspective->Prepare();
+    RenderScene( re_pdpDrawPort, SortTranslucentPolygons(re_pspoFirstTranslucent),
+                 re_prProjection, re_colSelection, TRUE);
+    _pfRenderProfile.StopTimer(CRenderProfile::PTI_RENDERSCENE);
+  }
 
-  //// render lens flares
-  //if( !re_bRenderingShadows) {
-  //  ChangeStatsMode(CStatForm::STI_FLARESRENDERING);
-  //  RenderLensFlares(); // (this also sets orthographic projection!)
-  //  ChangeStatsMode(CStatForm::STI_WORLDRENDERING);
-  //}
+  // render lens flares
+  if( !re_bRenderingShadows) {
+    ChangeStatsMode(CStatForm::STI_FLARESRENDERING);
+    RenderLensFlares(); // (this also sets orthographic projection!)
+    ChangeStatsMode(CStatForm::STI_WORLDRENDERING);
+  }
 
-  //// if entity targets should be drawn
-  //if( !re_bRenderingShadows && _wrpWorldRenderPrefs.wrp_bShowTargetsOn) {
-  //  // render entity targets
-  //  RenderEntityTargets();
-  //}
+  // if entity targets should be drawn
+  if( !re_bRenderingShadows && _wrpWorldRenderPrefs.wrp_bShowTargetsOn) {
+    // render entity targets
+    RenderEntityTargets();
+  }
 
-  //// if entity targets should be drawn
-  //if( !re_bRenderingShadows && _wrpWorldRenderPrefs.wrp_bShowEntityNames) {
-  //  RenderEntityNames();
-  //}
+  // if entity targets should be drawn
+  if( !re_bRenderingShadows && _wrpWorldRenderPrefs.wrp_bShowEntityNames) {
+    RenderEntityNames();
+  }
 
   // clean all buffers after rendering
   re_aspoScreenPolygons.PopAll();
@@ -705,7 +705,6 @@ void CRenderer::Render(void)
   // init select-on-render functionality if not rendering shadows
   extern void InitSelectOnRender( PIX pixSizeI, PIX pixSizeJ);
   if( re_pdpDrawPort!=NULL) InitSelectOnRender( re_pdpDrawPort->GetWidth(), re_pdpDrawPort->GetHeight());
-
   // add initial sectors to active lists
   AddInitialSectors();
   // scan through portals for other sectors

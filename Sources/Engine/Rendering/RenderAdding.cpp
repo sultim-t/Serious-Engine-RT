@@ -447,9 +447,8 @@ addBrush:
   PrepareBrush(brBrush.br_penEntity);
 
   // get relevant mip factor for that brush and current rendering prefs
-  CBrushMip *pbm = brBrush.GetBrushMipByDistance(0);
-    //_wrpWorldRenderPrefs.GetCurrentMipBrushingFactor(brBrush.br_prProjection->MipFactor()));
-
+  CBrushMip *pbm = brBrush.GetBrushMipByDistance(
+    _wrpWorldRenderPrefs.GetCurrentMipBrushingFactor(brBrush.br_prProjection->MipFactor()));
   // if brush mip exists for that mip factor
   if (pbm!=NULL) {
     // if entity selecting by laso requested
