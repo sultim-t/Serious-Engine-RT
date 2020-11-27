@@ -71,7 +71,7 @@ ULONG PrepareTexture( UBYTE *pubTexture, PIX pixSizeI, PIX pixSizeJ)
   // after 'pixTextureSize' bytes, RGBA data is stored
   ULONG *edi = (ULONG *) (esi + pixTextureSize);
 
-  for (PIX i = pixTextureSize; i > 0; i--)
+  for (PIX i = 0; i < pixTextureSize; i++)
   {
     ULONG eax = (ULONG)esi[i];
     eax = eax | 0xFFFFFF00;
