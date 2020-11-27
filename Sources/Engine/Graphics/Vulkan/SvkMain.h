@@ -206,9 +206,9 @@ public:
   void InitDynamicBuffer(SvkDynamicBufferGlobal &dynBufferGlobal, SvkDynamicBuffer *buffers, VkBufferUsageFlags usage);
 
   void ClearCurrentDynamicOffsets(uint32_t cmdBufferIndex);
-  void GetVertexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer);
-  void GetIndexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer);
-  void GetUniformBuffer(uint32_t size, SvkDynamicUniform &outDynUniform);
+  bool GetVertexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer);
+  bool GetIndexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer);
+  bool GetUniformBuffer(uint32_t size, SvkDynamicUniform &outDynUniform);
   void FlushDynamicBuffersMemory();
 
   void AddDynamicBufferToDeletion(SvkDynamicBufferGlobal &dynBufferGlobal, SvkDynamicBuffer *buffers);

@@ -18,6 +18,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #ifdef SE1_VULKAN
 
+#define SVK_DYNAMIC_VERTEX_BUFFER_START_SIZE	  (256 * 1024 * 1024)
+#define SVK_DYNAMIC_INDEX_BUFFER_START_SIZE	    (128 * 1024 * 1024)
+#define SVK_DYNAMIC_UNIFORM_BUFFER_START_SIZE   (32 * 1024 * 1024)
+#define SVK_DYNAMIC_UNIFORM_MAX_ALLOC_SIZE      1024
+
+
 void SvkMain::InitDynamicBuffers()
 {
 #ifndef NDEBUG
@@ -200,7 +206,7 @@ void SvkMain::ClearCurrentDynamicOffsets(uint32_t cmdBufferIndex)
   gl_VkDynamicUB[cmdBufferIndex].sdb_CurrentOffset = 0;
 }
 
-void SvkMain::GetVertexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer)
+bool SvkMain::GetVertexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer)
 {
   SvkDynamicBuffer &commonBuffer = gl_VkDynamicVB[gl_VkCmdBufferCurrent];
   SvkDynamicBufferGlobal &dynBufferGlobal = gl_VkDynamicVBGlobal;
@@ -208,6 +214,9 @@ void SvkMain::GetVertexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer)
   // if not enough
   if (commonBuffer.sdb_CurrentOffset + size > dynBufferGlobal.sdg_CurrentDynamicBufferSize)
   {
+    // currently, dynamic buffer recreation is disabled
+    return false;
+
     AddDynamicBufferToDeletion(dynBufferGlobal, gl_VkDynamicVB);
 
     vkUnmapMemory(gl_VkDevice, dynBufferGlobal.sdg_DynamicBufferMemory);
@@ -221,9 +230,10 @@ void SvkMain::GetVertexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer)
   outDynBuffer.sdb_Data = (UBYTE *)commonBuffer.sdb_Data + commonBuffer.sdb_CurrentOffset;
 
   commonBuffer.sdb_CurrentOffset += size;
+  return true;
 }
 
-void SvkMain::GetIndexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer)
+bool SvkMain::GetIndexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer)
 {
   SvkDynamicBuffer &commonBuffer = gl_VkDynamicIB[gl_VkCmdBufferCurrent];
   SvkDynamicBufferGlobal &dynBufferGlobal = gl_VkDynamicIBGlobal;
@@ -231,6 +241,9 @@ void SvkMain::GetIndexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer)
   // if not enough
   if (commonBuffer.sdb_CurrentOffset + size > dynBufferGlobal.sdg_CurrentDynamicBufferSize)
   {
+    // currently, dynamic buffer recreation is disabled
+    return false;
+
     AddDynamicBufferToDeletion(dynBufferGlobal, gl_VkDynamicIB);
 
     vkUnmapMemory(gl_VkDevice, dynBufferGlobal.sdg_DynamicBufferMemory);
@@ -244,9 +257,10 @@ void SvkMain::GetIndexBuffer(uint32_t size, SvkDynamicBuffer &outDynBuffer)
   outDynBuffer.sdb_Data = (UBYTE *)commonBuffer.sdb_Data + commonBuffer.sdb_CurrentOffset;
 
   commonBuffer.sdb_CurrentOffset += size;
+  return true;
 }
 
-void SvkMain::GetUniformBuffer(uint32_t size, SvkDynamicUniform &outDynUniform)
+bool SvkMain::GetUniformBuffer(uint32_t size, SvkDynamicUniform &outDynUniform)
 {
   // size must be aligned by min uniform offset alignment
   uint32_t alignment = gl_VkPhProperties.limits.minUniformBufferOffsetAlignment;
@@ -261,6 +275,9 @@ void SvkMain::GetUniformBuffer(uint32_t size, SvkDynamicUniform &outDynUniform)
   // if not enough
   if (commonBuffer.sdb_CurrentOffset + SVK_DYNAMIC_UNIFORM_MAX_ALLOC_SIZE > dynBufferGlobal.sdg_CurrentDynamicBufferSize)
   {
+    // currently, dynamic buffer recreation is disabled
+    return false;
+
     AddDynamicUniformToDeletion(dynBufferGlobal, gl_VkDynamicUB);
 
     vkUnmapMemory(gl_VkDevice, dynBufferGlobal.sdg_DynamicBufferMemory);
@@ -276,6 +293,7 @@ void SvkMain::GetUniformBuffer(uint32_t size, SvkDynamicUniform &outDynUniform)
   outDynUniform.sdu_DescriptorSet = commonBuffer.sdu_DescriptorSet;
 
   commonBuffer.sdb_CurrentOffset += alignedSize;
+  return true;
 }
 
 void SvkMain::FlushDynamicBuffersMemory()

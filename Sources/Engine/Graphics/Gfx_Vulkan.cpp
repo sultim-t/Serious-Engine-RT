@@ -999,6 +999,28 @@ void SvkMain::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
   uint32_t indicesSize = indexCount * sizeof(UINT);
   uint32_t uniformSize = 16 * sizeof(FLOAT);
 
+  // get buffers
+  SvkDynamicBuffer vertexBuffer, indexBuffer;
+  SvkDynamicUniform uniformBuffer;
+
+  bool gotVb =  GetVertexBuffer(vertsSize, vertexBuffer);
+  if (!gotVb)
+  {
+    return;
+  }
+
+  bool gotIb = GetIndexBuffer(indicesSize, indexBuffer);
+  if (!gotIb)
+  {
+    return;
+  }
+
+  bool gotUb = GetUniformBuffer(uniformSize, uniformBuffer);
+  if (!gotUb)
+  {
+    return;
+  }
+
   FLOAT mvp[16];
   if (GFX_bViewMatrix)
   {
@@ -1008,14 +1030,6 @@ void SvkMain::DrawTriangles(uint32_t indexCount, const uint32_t *indices)
   {
     Svk_MatCopy(mvp, VkProjectionMatrix);
   }
-
-  // get buffers
-  SvkDynamicBuffer vertexBuffer, indexBuffer;
-  SvkDynamicUniform uniformBuffer;
-
-  GetVertexBuffer(vertsSize, vertexBuffer);
-  GetIndexBuffer(indicesSize, indexBuffer);
-  GetUniformBuffer(uniformSize, uniformBuffer);
 
   // copy data
   memcpy(vertexBuffer.sdb_Data, &verts[0], vertsSize);
