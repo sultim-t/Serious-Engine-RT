@@ -15,8 +15,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #pragma once
 
-#include "StdH.h"
-
 #include <memory>
 #include <vector>
 #include <map>
