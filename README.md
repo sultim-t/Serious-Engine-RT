@@ -1,18 +1,15 @@
-# Serious Engine: Vulkan
+# Serious Engine: Ray Traced
 
-Vulkan Serious Engine port based on [open source version](https://github.com/Croteam-official/Serious-Engine).
+Real-time path tracing support for Serious Engine 1.10.
 
-![Screenshot 00](/Github/Vulkan_Screenshot_0.png)
-![Screenshot 01](/Github/Vulkan_Screenshot_1.png)
-![Screenshot 02](/Github/Vulkan_Screenshot_2.png)
-![Screenshot 03](/Github/Vulkan_Screenshot_3.png)
-![Screenshot 04](/Github/Vulkan_Screenshot_4.png)
 
 ## Building
 
 ### Windows
 
 Prerequisites:
+* 64-bit CPU
+* GPU with ray tracing support
 * [Git](https://github.com/git-for-windows/git/releases)
 * [Vulkan SDK](https://vulkan.lunarg.com/)
 * [Visual Studio](https://www.visualstudio.com/post-download-vs?sku=community) (any version after 2013), Professional or Community edition.
@@ -39,15 +36,11 @@ When running a selected project, make sure its project settings on Debugging is 
 And its working directory:
     $(SolutionDir)..\
 
-## Future work
-
-* window recreation (errors occur on textures reloading)
-* features like screenshots etc
-* ...
-
 ## License
 
 This project is licensed under the GNU GPL v2 (see LICENSE file).
+
+x64 port is based on https://github.com/rcgordon/Serious-Engine (GNU GPL v2).
 
 Some of the code included with the engine sources is not licensed under the GNU GPL v2:
 

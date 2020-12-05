@@ -120,6 +120,10 @@ static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
 
 void RT_AddNonZoningBrush(CEntity *penBrush, CBrushSector *pbscThatAdds, SSRT::SSRTMain *ssrt)
 {
+  RT_AllSectorVertices.PopAll();
+  RT_AllSectorIndices.PopAll();
+  RT_AllBrushMaterialIndices.PopAll();
+
   ASSERT(penBrush != NULL);
   // get its brush
   CBrush3D &brBrush = *penBrush->en_pbrBrush;
@@ -222,8 +226,9 @@ void RT_AddNonZoningBrush(CEntity *penBrush, CBrushSector *pbscThatAdds, SSRT::S
     brushInfo.indices = &RT_AllSectorIndices[0];
 
     ssrt->AddBrush(brushInfo, isMovable);
-
-    RT_AllSectorVertices.PopAll();
-    RT_AllSectorIndices.PopAll();
   }
+
+  RT_AllSectorVertices.PopAll();
+  RT_AllSectorIndices.PopAll();
+  RT_AllBrushMaterialIndices.PopAll();
 }
