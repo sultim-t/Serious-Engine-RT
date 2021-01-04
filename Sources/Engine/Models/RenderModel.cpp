@@ -461,11 +461,9 @@ static void RenderWireframeBox( FLOAT3D vMinVtx, FLOAT3D vMaxVtx, COLOR col)
 // setup CRenderModel class for rendering one model and eventually it's shadow(s)
 void CModelObject::SetupModelRendering( CRenderModel &rm)
 {
-  extern INDEX srt_bEnableRayTracing;
-
   // weapons are rendered using this function directly from PlayerWeapons.es,
   // so if ray tracing is enabled and it's a weapon, add it to SSRT
-  if (srt_bEnableRayTracing && (rm.rm_ulFlags & RMF_WEAPON))
+  if (_pGfx->gl_eCurrentAPI == GAT_RT && (rm.rm_ulFlags & RMF_WEAPON))
   {
     SSRT::CFirstPersonModelInfo fpInfo = {};
     fpInfo.modelObject = this;
@@ -474,6 +472,7 @@ void CModelObject::SetupModelRendering( CRenderModel &rm)
 
     // RenderModel(..) will be executed there
     _pGfx->gl_SSRT->ProcessFirstPersonModel(fpInfo);
+
     return;
   }
 
@@ -597,8 +596,7 @@ void CModelObject::SetupModelRendering( CRenderModel &rm)
 void CModelObject::RenderModel( CRenderModel &rm)
 { 
   // weapons are processed in SetupModelRendering()
-  extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing && (rm.rm_ulFlags & RMF_WEAPON))
+  if (_pGfx->gl_eCurrentAPI == GAT_RT && (rm.rm_ulFlags & RMF_WEAPON))
   {
     return;
   }

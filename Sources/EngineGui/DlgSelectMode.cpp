@@ -181,6 +181,8 @@ CDlgSelectMode::CDlgSelectMode( CDisplayMode &dm, enum GfxAPIType &gfxAPI,
 #ifdef SE1_VULKAN
   case GAT_VK:
     m_strCurrentDriver = "Vulkan";
+  case GAT_RT:
+    m_strCurrentDriver = "Vulkan Ray Tracing";
 #endif // SE1_VULKAN
   default:
     m_strCurrentDriver = "none";
@@ -261,16 +263,27 @@ void CDlgSelectMode::DoDataExchange(CDataExchange* pDX)
     i = m_ctrlDriverCombo.AddString( L"OpenGL");
     m_ctrlDriverCombo.SetItemData( i, (INDEX)GAT_OGL);
     if( *m_pGfxAPI==GAT_OGL) iSelect = i;
+
 #ifdef SE1_D3D
+
     i = m_ctrlDriverCombo.AddString( L"Direct3D");
     m_ctrlDriverCombo.SetItemData( i, (INDEX)GAT_D3D);
     if( *m_pGfxAPI==GAT_D3D) iSelect = i;
+
 #endif // SE1_D3D
+
 #ifdef SE1_VULKAN
+
     i = m_ctrlDriverCombo.AddString( L"Vulkan");
     m_ctrlDriverCombo.SetItemData(i, (INDEX)GAT_VK);
     if (*m_pGfxAPI == GAT_VK) iSelect = i;
+
+    i = m_ctrlDriverCombo.AddString(L"Vulkan Ray Tracing");
+    m_ctrlDriverCombo.SetItemData(i, (INDEX) GAT_RT);
+    if (*m_pGfxAPI == GAT_RT) iSelect = i;
+
 #endif // SE1_VULKAN
+
     // set old driver to be default
     m_ctrlDriverCombo.SetCurSel( iSelect);
   

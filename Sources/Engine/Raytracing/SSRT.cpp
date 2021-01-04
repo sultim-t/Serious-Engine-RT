@@ -53,7 +53,7 @@ namespace SSRT
 void SSRTMain::Init()
 {
   RgInstanceCreateInfo info = {};
-  info.name = "RTGL1 Test";
+  info.name = "Serious Engine RT";
   info.physicalDeviceIndex = 0;
   info.enableValidationLayer = RG_TRUE;
 
@@ -102,11 +102,39 @@ void SSRTMain::Init()
 
 void SSRTMain::Destroy()
 {
+  worldRenderInfo = {};
+  currentWorldName.Clear();
+  currentFirstPersonModelCount = 0;
+
+  curWindowWidth = 0;
+  curWindowHeight = 0;
+
+  models.clear();
+  staticBrushes.clear();
+  movableBrushes.clear();
+  sphLights.clear();
+  dirLights.clear();
+
+  entityToModel.clear();
+  entityToStaticBrush.clear();
+  entityToMovableBrush.clear();
+
   if (instance != 0)
   {
     rgDestroyInstance(instance);
+
+    instance = 0;
   }
 }
+
+SSRTMain::SSRTMain() :
+  worldRenderInfo({}),
+  currentFirstPersonModelCount(0),
+  isFrameStarted(false),
+  curWindowWidth(0),
+  curWindowHeight(0),
+  instance(0)
+{}
 
 SSRTMain::~SSRTMain()
 {
@@ -259,9 +287,6 @@ CWorld *SSRTMain::GetCurrentWorld()
 
 void SSRTMain::StartFrame(CViewPort *pvp)
 {
-  extern INDEX srt_bEnableRayTracing;
-  srt_bEnableRayTracing = Clamp(srt_bEnableRayTracing, 0L, 1L);
-
   currentFirstPersonModelCount = 0;
 
   CWorld *pwo = GetCurrentWorld();
@@ -270,14 +295,13 @@ void SSRTMain::StartFrame(CViewPort *pvp)
     StopWorld();
   }
 
-  RECT rectWindow;
-  GetClientRect(pvp->vp_hWnd, &rectWindow);
-
-  curWindowWidth = rectWindow.right - rectWindow.left;
-  curWindowHeight = rectWindow.bottom - rectWindow.top;
+  curWindowWidth = pvp->vp_Raster.ra_Width;
+  curWindowHeight = pvp->vp_Raster.ra_Height;
 
   RgResult r = rgStartFrame(instance, curWindowWidth, curWindowHeight);
   RG_CHECKERROR(r);
+
+  isFrameStarted = true;
 }
 
 void SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
@@ -299,7 +323,6 @@ void SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
   }
 
   worldRenderInfo = info;
-  isRenderingWorld = true;
 
   // check all movable brushes, models and light sources
   FOREACHINDYNAMICCONTAINER(world->wo_cenEntities, CEntity, iten)
@@ -348,9 +371,6 @@ void SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
 
 void SSRTMain::ProcessFirstPersonModel(const CFirstPersonModelInfo &info)
 {
-  // world must be currently rendering
-  ASSERT(isRenderingWorld);
-
   RT_AddFirstPersonModel(info.modelObject, info.renderModel, SSRT_FIRSTPERSON_ENTITY_START_ID + currentFirstPersonModelCount, this);
   currentFirstPersonModelCount++;
 }
@@ -362,6 +382,11 @@ void SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
 
 void SSRTMain::EndFrame()
 {
+  if (!isFrameStarted)
+  {
+    return;
+  }
+
   RgDrawFrameInfo frameInfo = {};
   frameInfo.renderWidth = curWindowWidth;
   frameInfo.renderHeight = curWindowHeight;
@@ -382,6 +407,8 @@ void SSRTMain::EndFrame()
   // lights will be readded too
   sphLights.clear();
   dirLights.clear();
+
+  isFrameStarted = false;
 }
 
 void SSRTMain::SetWorld(CWorld *pwld)
@@ -404,10 +431,21 @@ void SSRTMain::SetWorld(CWorld *pwld)
       RT_AddNonZoningBrush(&iten.Current(), NULL, this);
     }
   }
+
+  r = rgSubmitStaticGeometries(instance);
+  RG_CHECKERROR(r);
 }
 
 void SSRTMain::StopWorld()
 {
+  //RgResult r;
+
+  //r = rgStartNewScene(instance);
+  //RG_CHECKERROR(r);
+
+  //r = rgSubmitStaticGeometries(instance);
+  //RG_CHECKERROR(r);
+
   currentWorldName = "";
 
   models.clear();

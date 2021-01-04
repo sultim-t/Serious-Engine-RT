@@ -360,6 +360,7 @@ void CGfxLibrary::Benchmark(CViewPort *pvp, CDrawPort *pdp)
 #endif // SE1_D3D
 #ifdef SE1_VULKAN
   else if (_pGfx->gl_eCurrentAPI == GAT_VK) strAPI = "Vulkan";
+  else if (_pGfx->gl_eCurrentAPI == GAT_RT) strAPI = "Vulkan Ray Tracing";
 #endif // SE1_VULKAN
 
   CPrintF("=====================================\n");

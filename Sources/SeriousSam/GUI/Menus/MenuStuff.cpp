@@ -259,7 +259,8 @@ INDEX APIToSwitch(enum GfxAPIType gat)
   case GAT_D3D: return 1;
 #endif // SE1_D3D
 #ifdef SE1_VULKAN
-  case GAT_VK: return GAT_VK_INDEX;
+  case GAT_VK: return 1;
+  case GAT_RT: return 2;
 #endif // SE1_VULKAN
   default: ASSERT(FALSE); return 0;
   }
@@ -273,7 +274,8 @@ enum GfxAPIType SwitchToAPI(INDEX i)
   case 1: return GAT_D3D;
 #endif // SE1_D3D
 #ifdef SE1_VULKAN
-  case GAT_VK_INDEX: return GAT_VK;
+  case 1: return GAT_VK;
+  case 2: return GAT_RT;
 #endif // SE1_VULKAN
   default: ASSERT(FALSE); return GAT_OGL;
   }

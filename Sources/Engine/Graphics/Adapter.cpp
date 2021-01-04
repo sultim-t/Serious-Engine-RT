@@ -191,7 +191,7 @@ void CGfxLibrary::InitAPIs(void)
 
   for (INDEX iAdapter = 0; iAdapter < ctMaxPhysDevices; iAdapter++)
   {
-    pda = &gl_gaAPI[GAT_VK_INDEX].ga_adaAdapter[iAdapter];
+    pda = &gl_gaAPI[GAT_VK].ga_adaAdapter[iAdapter];
     pda->da_ulFlags = NONE;
     pda->da_ctDisplayModes = 0;
     // pda->da_iCurrentDisplayMode = -1;
@@ -246,6 +246,9 @@ void CGfxLibrary::InitAPIs(void)
 
   gl_gaAPI[GAT_VK].ga_ctAdapters = ctMaxPhysDevices;
   gl_gaAPI[GAT_VK].ga_iCurrentAdapter = 0;
+
+  // fill the same info for Vulkan ray tracing
+  gl_gaAPI[GAT_RT] = gl_gaAPI[GAT_VK];
 
   // destroy temporary instance
   vkDestroyInstance(tempVkInstance, nullptr);

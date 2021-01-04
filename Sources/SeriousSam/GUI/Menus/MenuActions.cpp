@@ -693,7 +693,8 @@ extern void UpdateVideoOptionsButtons(INDEX iSelected)
 #else // 
 #ifdef SE1_VULKAN
   const BOOL bVKEnabled = _pGfx->HasAPI(GAT_VK);
-  ASSERT(bOGLEnabled || bVKEnabled);
+  const BOOL bRTEnabled = _pGfx->HasAPI(GAT_RT);
+  ASSERT(bOGLEnabled || bVKEnabled || bRTEnabled);
 #else // SE1_VULKAN
   ASSERT(bOGLEnabled);
 #endif // SE1_VULKAN

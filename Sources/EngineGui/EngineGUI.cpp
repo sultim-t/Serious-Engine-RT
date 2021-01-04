@@ -269,14 +269,28 @@ void CEngineGUI::GetFullScreenModeFromRegistry( CTString strSectionName, CDispla
   strResult.ScanF( "%d x %d x %d", &dm.dm_pixSizeI, &dm.dm_pixSizeJ, &dm.dm_ddDepth);
   if( dm.dm_ddDepth<DD_DEFAULT || dm.dm_ddDepth>DD_32BIT) dm.dm_ddDepth = DD_DEFAULT;
   strResult = CStringA(AfxGetApp()->GetProfileString( CString(strSectionName), L"Full screen API", L"OpenGL"));
+
 #ifdef SE1_D3D
   gat = (strResult=="Direct3D") ? GAT_D3D : GAT_OGL;
 #else // SE1_D3D
+
 #ifdef SE1_VULKAN
-  gat = (strResult == "Vulkan") ? GAT_VK : GAT_OGL;
+  if (strResult == "Vulkan Ray Tracing")
+  {
+    gat = GAT_RT;
+  }
+  else if (strResult == "Vulkan")
+  {
+    gat = GAT_VK;
+  }
+  else
+  {
+    gat = GAT_OGL;
+  }
 #else
   gat = GAT_OGL;
 #endif // SE1_VULKAN
+
 #endif // SE1_D3D
 }
 

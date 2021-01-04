@@ -494,14 +494,14 @@ void HudElement_GenerateQuadIndices(SSRT::CHudElementInfo *preparedInfo)
 // draw one point
 void CDrawPort::DrawPoint( PIX pixI, PIX pixJ, COLOR col, PIX pixRadius/*=1*/) const
 {
-  extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing)
+  // check API and radius
+  const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
+
+  if (eAPI == GAT_RT)
   {
     return;
   }
 
-  // check API and radius
-  const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
   ASSERT( eAPI==GAT_OGL || eAPI==GAT_D3D || eAPI==GAT_NONE);
 #else // SE1_D3D
@@ -564,14 +564,14 @@ void CDrawPort::DrawPoint( PIX pixI, PIX pixJ, COLOR col, PIX pixRadius/*=1*/) c
 // draw one point in 3D
 void CDrawPort::DrawPoint3D( FLOAT3D v, COLOR col, FLOAT fRadius/*=1.0f*/) const
 {
-  extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing)
+  // check API and radius
+  const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
+
+  if (eAPI == GAT_RT)
   {
     return;
   }
 
-  // check API and radius
-  const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
@@ -629,14 +629,14 @@ void CDrawPort::DrawPoint3D( FLOAT3D v, COLOR col, FLOAT fRadius/*=1.0f*/) const
 // draw one line
 void CDrawPort::DrawLine( PIX pixI0, PIX pixJ0, PIX pixI1, PIX pixJ1, COLOR col, ULONG typ/*=_FULL*/) const
 {
-  extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing)
+  // check API
+  const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
+
+  if (eAPI == GAT_RT)
   {
     return;
   }
 
-  // check API
-  const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
@@ -714,14 +714,14 @@ void CDrawPort::DrawLine( PIX pixI0, PIX pixJ0, PIX pixI1, PIX pixJ1, COLOR col,
 // draw one line in 3D
 void CDrawPort::DrawLine3D( FLOAT3D v0, FLOAT3D v1, COLOR col) const
 {
-  extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing)
+  // check API
+  const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
+
+  if (eAPI == GAT_RT)
   {
     return;
   }
 
-  // check API
-  const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
@@ -787,14 +787,14 @@ void CDrawPort::DrawLine3D( FLOAT3D v0, FLOAT3D v1, COLOR col) const
 // draw border
 void CDrawPort::DrawBorder( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, COLOR col, ULONG typ/*=_FULL_*/) const
 {
-  extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing)
+  // check API
+  const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
+
+  if (eAPI == GAT_RT)
   {
     return;
   }
 
-  // check API
-  const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
@@ -879,9 +879,10 @@ void CDrawPort::DrawBorder( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, COL
 // fill part of a drawport with a given color
 void CDrawPort::Fill( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, COLOR col) const
 {
+  const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
+
   // draw only using polygons
-  extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing)
+  if (eAPI == GAT_RT)
   {
     Fill(pixI, pixJ, pixWidth, pixHeight, col, col, col, col);
     return;
@@ -902,7 +903,6 @@ void CDrawPort::Fill( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, COLOR col
   col = AdjustColor( col, _slTexHueShift, _slTexSaturation);
 
   // check API
-  const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
@@ -975,7 +975,7 @@ void CDrawPort::Fill(PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight,
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
 #ifdef SE1_VULKAN
-  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_RT || eAPI == GAT_NONE);
 #else
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_VULKAN
@@ -985,29 +985,32 @@ void CDrawPort::Fill(PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight,
   gfxDisableDepthTest();
   gfxDisableDepthWrite();
   gfxEnableBlend();
-  gfxBlendFunc( GFX_SRC_ALPHA, GFX_INV_SRC_ALPHA);
+  gfxBlendFunc(GFX_SRC_ALPHA, GFX_INV_SRC_ALPHA);
   gfxDisableAlphaTest();
   gfxDisableTexture();
+
   // prepare colors and coords
-  colUL = AdjustColor( colUL, _slTexHueShift, _slTexSaturation);
-  colUR = AdjustColor( colUR, _slTexHueShift, _slTexSaturation);
-  colDL = AdjustColor( colDL, _slTexHueShift, _slTexSaturation);
-  colDR = AdjustColor( colDR, _slTexHueShift, _slTexSaturation);
-  const FLOAT fI0 = pixI;  const FLOAT fI1 = pixI +pixWidth; 
-  const FLOAT fJ0 = pixJ;  const FLOAT fJ1 = pixJ +pixHeight;
+  colUL = AdjustColor(colUL, _slTexHueShift, _slTexSaturation);
+  colUR = AdjustColor(colUR, _slTexHueShift, _slTexSaturation);
+  colDL = AdjustColor(colDL, _slTexHueShift, _slTexSaturation);
+  colDR = AdjustColor(colDR, _slTexHueShift, _slTexSaturation);
+  const FLOAT fI0 = pixI;  const FLOAT fI1 = pixI + pixWidth;
+  const FLOAT fJ0 = pixJ;  const FLOAT fJ1 = pixJ + pixHeight;
 
   // render rectangle
-  if( eAPI==GAT_OGL
-#ifdef SE1_VULKAN
-    || eAPI == GAT_VK
-#endif // SE1_VULKAN
-    ) {
+  if (eAPI == GAT_OGL
+    #ifdef SE1_VULKAN
+      || eAPI == GAT_VK
+      || eAPI == GAT_RT
+    #endif // SE1_VULKAN
+      )
+  {
 
     // thru OpenGL
     gfxResetArrays();
-    GFXVertex   *pvtx = _avtxCommon.Push(4);
+    GFXVertex *pvtx = _avtxCommon.Push(4);
     GFXTexCoord *ptex = _atexCommon.Push(4);
-    GFXColor    *pcol = _acolCommon.Push(4);
+    GFXColor *pcol = _acolCommon.Push(4);
     const GFXColor glcolUL(colUL);  const GFXColor glcolUR(colUR);
     const GFXColor glcolDL(colDL);  const GFXColor glcolDR(colDR);
     // add to element list and flush (the toilet!:)
@@ -1016,8 +1019,8 @@ void CDrawPort::Fill(PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight,
     pvtx[2].x = fI1;  pvtx[2].y = fJ1;  pvtx[2].z = 0;  pcol[2] = glcolDR;
     pvtx[3].x = fI1;  pvtx[3].y = fJ0;  pvtx[3].z = 0;  pcol[3] = glcolUR;
 
-    extern INDEX srt_bEnableRayTracing;
-    if (srt_bEnableRayTracing)
+
+    if (eAPI == GAT_RT)
     {
       SSRT::CHudElementInfo hudInfo = {};
       hudInfo.blendEnable = true;
@@ -1036,7 +1039,8 @@ void CDrawPort::Fill(PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight,
     gfxFlushQuads();
   }
 #ifdef SE1_D3D
-  else if( eAPI==GAT_D3D) { 
+  else if (eAPI == GAT_D3D)
+  {
     // thru Direct3D
     HRESULT hr;
     const ULONG d3dColUL = rgba2argb(colUL);  const ULONG d3dColUR = rgba2argb(colUR);
@@ -1046,7 +1050,7 @@ void CDrawPort::Fill(PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight,
       {fI0,fJ0,0, d3dColUL, 0,0}, {fI1,fJ1,0, d3dColDR, 1,1}, {fI1,fJ0,0, d3dColUR, 1,0} };
     // set vertex shader and draw
     d3dSetVertexShader(D3DFVF_CTVERTEX);
-    hr = _pGfx->gl_pd3dDevice->DrawPrimitiveUP( D3DPT_TRIANGLELIST, 2, avtxTris, sizeof(CTVERTEX));
+    hr = _pGfx->gl_pd3dDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, 2, avtxTris, sizeof(CTVERTEX));
     D3D_CHECKERROR(hr);
   }
 #endif // SE1_D3D
@@ -1056,11 +1060,13 @@ void CDrawPort::Fill(PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight,
 // fill an entire drawport with a given color
 void CDrawPort::Fill( COLOR col) const
 {
-  // draw only using polygons
-  extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing)
+  const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
+
+  if (eAPI == GAT_RT)
   {
+    // draw only using polygons
     Fill(0, 0, dp_Width, dp_Height, col, col, col, col);
+
     return;
   }
 
@@ -1075,7 +1081,6 @@ void CDrawPort::Fill( COLOR col) const
   col = AdjustColor( col, _slTexHueShift, _slTexSaturation);
 
   // check API
-  const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
@@ -1122,6 +1127,13 @@ void CDrawPort::FillZBuffer( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, FL
 { 
   // check API
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
+
+  if (eAPI == GAT_RT)
+  {
+    // ignore z buffer
+    return;
+  }
+
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
@@ -1131,14 +1143,6 @@ void CDrawPort::FillZBuffer( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, FL
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_VULKAN
 #endif // SE1_D3D
-
-  // ignore z buffer
-  extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing)
-  {
-    // TODO: RT: uncomment(?) return to prevent depth clear
-    //return;
-  }
 
   // clip and eventually reject
   const BOOL bInside = ClipToDrawPort( this, pixI, pixJ, pixWidth, pixHeight);
@@ -1181,6 +1185,13 @@ void CDrawPort::FillZBuffer( FLOAT zval) const
 { 
   // check API
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
+
+  if (eAPI == GAT_RT)
+  {
+    // ignore z buffer
+    return;
+  }
+
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
@@ -1190,14 +1201,6 @@ void CDrawPort::FillZBuffer( FLOAT zval) const
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_VULKAN
 #endif // SE1_D3D
-
-  // ignore z buffer
-  extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing)
-  {
-    // TODO: RT: uncomment(?) return to prevent depth clear
-    //return;
-  }
 
   gfxEnableDepthWrite();
 
@@ -1362,16 +1365,16 @@ BOOL CDrawPort::IsPointVisible( PIX pixI, PIX pixJ, FLOAT fOoK, INDEX iID, INDEX
 
 void CDrawPort::RenderLensFlare( CTextureObject *pto, FLOAT fI, FLOAT fJ,
                                  FLOAT fSizeI, FLOAT fSizeJ, ANGLE aRotation, COLOR colLight) const
-{  
-  // ignore lens flare rendering
-  extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing)
+{
+  const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
+  
+  if (eAPI == GAT_RT)
   {
+    // ignore lens flare rendering
     return;
   }
 
   // check API
-  const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
@@ -1511,7 +1514,7 @@ void CDrawPort::PutText( const CTString &strText, PIX pixX0, PIX pixY0, const CO
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
 #ifdef SE1_VULKAN
-  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_RT || eAPI == GAT_NONE);
 #else
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_VULKAN
@@ -1730,8 +1733,8 @@ void CDrawPort::PutText( const CTString &strText, PIX pixX0, PIX pixY0, const CO
   _acolCommon.PopUntil( ctCharsPrinted*4-1);
 
 
-  extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing && _avtxCommon.Count() > 0)
+  
+  if (eAPI == GAT_RT && _avtxCommon.Count() > 0)
   {
     SSRT::CHudElementInfo hudInfo = {};
     hudInfo.blendEnable = true;
@@ -1830,7 +1833,7 @@ void CDrawPort::PutTexture( class CTextureObject *pTO,
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
 #ifdef SE1_VULKAN
-  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_RT || eAPI == GAT_NONE);
 #else
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_VULKAN
@@ -1895,8 +1898,7 @@ void CDrawPort::PutTexture( class CTextureObject *pTO,
   pcol[3] = glcolUR;
 
 
-  extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing)
+  if (eAPI == GAT_RT)
   {    
     SSRT::CHudElementInfo hudInfo = {};
     hudInfo.blendEnable = true;
@@ -1925,7 +1927,7 @@ void CDrawPort::PutTexture( class CTextureObject *pTO,
 // prepares texture and rendering arrays
 void CDrawPort::InitTexture( class CTextureObject *pTO, const BOOL bClamp/*=FALSE*/) const
 {
-  extern INDEX srt_bEnableRayTracing;
+  const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 
   // prepare
   if( pTO!=NULL)
@@ -1936,7 +1938,7 @@ void CDrawPort::InitTexture( class CTextureObject *pTO, const BOOL bClamp/*=FALS
     if( bClamp) eWrap = GFX_CLAMP;
     gfxSetTextureWrapping( eWrap, eWrap);
     
-    if (srt_bEnableRayTracing)
+    if (eAPI == GAT_RT)
     {
       SSRT::ssrt_pTextureData = ptd;
       SSRT::ssrt_eWrap = eWrap;
@@ -1948,7 +1950,7 @@ void CDrawPort::InitTexture( class CTextureObject *pTO, const BOOL bClamp/*=FALS
   } 
   else 
   {
-    if (srt_bEnableRayTracing)
+    if (eAPI == GAT_RT)
     {
       SSRT::ssrt_pTextureData = nullptr;
     }
@@ -2076,8 +2078,9 @@ void CDrawPort::AddTexture( const FLOAT fI0, const FLOAT fJ0, const FLOAT fU0, c
 // renders all textures from rendering queue and flushed rendering arrays
 void CDrawPort::FlushRenderingQueue(void) const
 {
-  extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing)
+  const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
+  
+  if (eAPI == GAT_RT)
   {
     SSRT::CHudElementInfo hudInfo = {};
     hudInfo.blendEnable = true;
@@ -2113,7 +2116,10 @@ void CDrawPort::FlushRenderingQueue(void) const
 // blends screen with accumulation color
 void CDrawPort::BlendScreen(void)
 {
-  if( dp_ulBlendingA==0) return;
+  if (dp_ulBlendingA == 0)
+  {
+    return;
+  }
 
   ULONG fix1oA = 65536 / dp_ulBlendingA;
   ULONG ulRA = (dp_ulBlendingRA*fix1oA)>>16;
@@ -2149,8 +2155,9 @@ void CDrawPort::BlendScreen(void)
   pcol[2] = glcol;
   pcol[3] = glcol;
 
-  extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing && _avtxCommon.Count() > 0)
+  const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
+
+  if (eAPI == GAT_RT && _avtxCommon.Count() > 0)
   {
     SSRT::CHudElementInfo hudInfo = {};
     hudInfo.blendEnable = true;

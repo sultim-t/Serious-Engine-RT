@@ -224,6 +224,12 @@ extern void UpdateLODBias( const FLOAT fLODBias)
 { 
   // check API
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
+
+  if (eAPI == GAT_RT)
+  {
+    return;
+  }
+
 #ifdef SE1_D3D
   ASSERT( eAPI==GAT_OGL || eAPI==GAT_D3D || eAPI==GAT_NONE);
 #elif SE1_VULKAN
@@ -235,7 +241,6 @@ extern void UpdateLODBias( const FLOAT fLODBias)
 #ifdef SE1_VULKAN
   if (eAPI == GAT_VK)
   {
-    // TODO: Vulkan: texture lod
     // force default lod bias
     _fCurrentLODBias = SVK_SAMPLER_LOD_BIAS;
     return;
@@ -593,7 +598,6 @@ extern INDEX gfxGetTexturePixRatio( ULONG ulTextureObject)
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-    // TODO (statistics): Vulkan bytes/pixels ratio for uploaded texture 
     return 4;
   }
 #endif // SE1_VULKAN
@@ -622,7 +626,6 @@ extern INDEX gfxGetFormatPixRatio( ULONG ulTextureFormat)
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-    // TODO (statistics): Vulkan format size for statistics
     return 4;
   }
 #endif // SE1_VULKAN
@@ -839,6 +842,31 @@ static void none_SetColorMask( ULONG ulColorMask) { NOTHING; };
 
 
 
+// DUMMY FUNCTIONS FOR RAY TRACING API
+static void ssrt_void(void){ NOTHING; }
+static void ssrt_BlendFunc( GfxBlend eSrc, GfxBlend eDst) { NOTHING; }
+static void ssrt_DepthFunc( GfxComp eFunc) { NOTHING; }
+static void ssrt_DepthRange( FLOAT fMin, FLOAT fMax) { NOTHING; }
+static void ssrt_CullFace( GfxFace eFace) { NOTHING; }
+static void ssrt_ClipPlane( const DOUBLE *pdViewPlane) { NOTHING; }
+static void ssrt_SetOrtho(   const FLOAT fLeft, const FLOAT fRight, const FLOAT fTop, const FLOAT fBottom, const FLOAT fNear, const FLOAT fFar, const BOOL bSubPixelAdjust) { NOTHING; }
+static void ssrt_SetFrustum( const FLOAT fLeft, const FLOAT fRight, const FLOAT fTop, const FLOAT fBottom, const FLOAT fNear, const FLOAT fFar) { NOTHING; }
+static void ssrt_SetMatrix( const FLOAT *pfMatrix) { NOTHING; }
+static void ssrt_PolygonMode( GfxPolyMode ePolyMode) { NOTHING; }
+static void ssrt_SetTextureWrapping( enum GfxWrap eWrapU, enum GfxWrap eWrapV) { NOTHING; }
+static void ssrt_SetTextureModulation( INDEX iScale) { NOTHING; }
+static void ssrt_GenDelTexture( ULONG &ulTexObject) { NOTHING; }
+static void ssrt_SetVertexArray( GFXVertex4 *pvtx, INDEX ctVtx) { NOTHING; }
+static void ssrt_SetNormalArray( GFXNormal *pnor) { NOTHING; }
+static void ssrt_SetTexCoordArray( GFXTexCoord *ptex, BOOL b4) { NOTHING; }
+static void ssrt_SetColorArray( GFXColor *pcol) { NOTHING; }
+static void ssrt_DrawElements( INDEX ctElem, INDEX *pidx) { NOTHING; }
+static void ssrt_SetConstantColor( COLOR col) { NOTHING; }
+static void ssrt_SetColorMask( ULONG ulColorMask) { NOTHING; }
+
+
+
+
 // functions initialization for OGL, D3D or NONE (dummy)
 extern void GFX_SetFunctionPointers( INDEX iAPI)
 {
@@ -994,6 +1022,55 @@ extern void GFX_SetFunctionPointers( INDEX iAPI)
     gfxFinish               = &svk_Finish;
     gfxLockArrays           = &svk_LockArrays;
     gfxSetColorMask         = &svk_SetColorMask;
+  }
+  else if (iAPI == (INDEX)GAT_RT)
+  {
+    gfxEnableDepthWrite     = &ssrt_void;
+    gfxEnableDepthBias      = &ssrt_void;
+    gfxEnableDepthTest      = &ssrt_void;
+    gfxEnableAlphaTest      = &ssrt_void;
+    gfxEnableBlend          = &ssrt_void;
+    gfxEnableDither         = &ssrt_void;
+    gfxEnableTexture        = &ssrt_void;
+    gfxEnableClipping       = &ssrt_void;
+    gfxEnableClipPlane      = &ssrt_void;
+    gfxEnableTruform        = &ssrt_void;
+    gfxDisableDepthWrite    = &ssrt_void;
+    gfxDisableDepthBias     = &ssrt_void;
+    gfxDisableDepthTest     = &ssrt_void;
+    gfxDisableAlphaTest     = &ssrt_void;
+    gfxDisableBlend         = &ssrt_void;
+    gfxDisableDither        = &ssrt_void;
+    gfxDisableTexture       = &ssrt_void;
+    gfxDisableClipping      = &ssrt_void;
+    gfxDisableClipPlane     = &ssrt_void;
+    gfxDisableTruform       = &ssrt_void;
+    gfxBlendFunc            = &ssrt_BlendFunc;
+    gfxDepthFunc            = &ssrt_DepthFunc;
+    gfxDepthRange           = &ssrt_DepthRange;
+    gfxCullFace             = &ssrt_CullFace;
+    gfxFrontFace            = &ssrt_CullFace;
+    gfxClipPlane            = &ssrt_ClipPlane;
+    gfxSetOrtho             = &ssrt_SetOrtho;
+    gfxSetFrustum           = &ssrt_SetFrustum;
+    gfxSetTextureMatrix     = &ssrt_SetMatrix;
+    gfxSetViewMatrix        = &ssrt_SetMatrix;
+    gfxPolygonMode          = &ssrt_PolygonMode;
+    gfxSetTextureWrapping   = &ssrt_SetTextureWrapping;
+    gfxSetTextureModulation = &ssrt_SetTextureModulation;
+    gfxGenerateTexture      = &ssrt_GenDelTexture;
+    gfxDeleteTexture        = &ssrt_GenDelTexture;   
+    gfxSetVertexArray       = &ssrt_SetVertexArray;  
+    gfxSetNormalArray       = &ssrt_SetNormalArray;  
+    gfxSetTexCoordArray     = &ssrt_SetTexCoordArray;
+    gfxSetColorArray        = &ssrt_SetColorArray;   
+    gfxDrawElements         = &ssrt_DrawElements;    
+    gfxSetConstantColor     = &ssrt_SetConstantColor;
+    gfxEnableColorArray     = &ssrt_void;
+    gfxDisableColorArray    = &ssrt_void;
+    gfxFinish               = &ssrt_void;
+    gfxLockArrays           = &ssrt_void;
+    gfxSetColorMask         = &ssrt_SetColorMask;
   }
 #endif // SE1_VULKAN
   // NONE!

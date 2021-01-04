@@ -33,43 +33,8 @@ namespace SSRT
 // then just set isEnabled=false for each object before frame start
 class SSRTMain
 {
-private:
-  CWorldRenderingInfo   worldRenderInfo;
-  CTString              currentWorldName;
-  // each first person model (left, right revolver, other weapons) should have its 
-  // fake entity to attach to, this counter will be used to simulate ID for fake entity
-  ULONG                 currentFirstPersonModelCount;
-
-  // true, if rendering 3D world using ray tracing,
-  // otherwise rasterization pass will be used (e.g. for HUD)
-  bool                  isRenderingWorld;
-
-  uint32_t              curWindowWidth, curWindowHeight;
-
-  // these arrays hold information about all objects in a world
-  std::vector<CModelGeometry>             models;
-  std::vector<CBrushGeometry>             staticBrushes;
-  std::vector<CBrushGeometry>             movableBrushes;
-  // light sources in a current world, cleaned up by the end of a frame
-  std::vector<CSphereLight>               sphLights;
-  std::vector<CDirectionalLight>          dirLights;
-
-  // - Every entity can be either model or brush
-  // - A model can have attachments that are models too
-  // - A brush can have several sectors (but they're combined 
-  //        in one geometry while processing so vector.size()==1)
-  // - An entity can have one light source "attached" to it.
-  // Next maps are for getting associated SSRT object by entity ID
-  // for updating their params, if they are created
-  std::map<ULONG, std::vector<INDEX>>     entityToModel;
-  std::map<ULONG, std::vector<INDEX>>     entityToStaticBrush;
-  std::map<ULONG, std::vector<INDEX>>     entityToMovableBrush;
-
-private:
-  RgInstance instance;
-
 public:
-  SSRTMain() = default;
+  SSRTMain();
   ~SSRTMain();
 
   SSRTMain(const SSRTMain &other) = delete;
@@ -79,8 +44,6 @@ public:
 
   void Init();
   void Destroy();
-
-  void CopyTransform(RgTransform &dst, const CAbstractGeometry &src);
 
   void AddModel(const CModelGeometry &model);
   void AddBrush(const CBrushGeometry &brush, bool isMovable);
@@ -105,11 +68,44 @@ private:
   void SetWorld(CWorld *pwld);
   void StopWorld();
 
+  void CopyTransform(RgTransform &dst, const CAbstractGeometry &src);
+
   // Get world from shell variable
   CWorld *GetCurrentWorld();
 
   template<class T>
   void AddRTObject(const T &obj, std::vector<T> &arr, std::map<ULONG, std::vector<INDEX>> &entToObjs);
+
+private:
+  CWorldRenderingInfo   worldRenderInfo;
+  CTString              currentWorldName;
+  // each first person model (left, right revolver, other weapons) should have its 
+  // fake entity to attach to, this counter will be used to simulate ID for fake entity
+  ULONG                 currentFirstPersonModelCount;
+
+  bool                  isFrameStarted;
+  uint32_t              curWindowWidth, curWindowHeight;
+
+  // these arrays hold information about all objects in a world
+  std::vector<CModelGeometry>             models;
+  std::vector<CBrushGeometry>             staticBrushes;
+  std::vector<CBrushGeometry>             movableBrushes;
+  // light sources in a current world, cleaned up by the end of a frame
+  std::vector<CSphereLight>               sphLights;
+  std::vector<CDirectionalLight>          dirLights;
+
+  // - Every entity can be either model or brush
+  // - A model can have attachments that are models too
+  // - A brush can have several sectors (but they're combined 
+  //        in one geometry while processing so vector.size()==1)
+  // - An entity can have one light source "attached" to it.
+  // Next maps are for getting associated SSRT object by entity ID
+  // for updating their params, if they are created
+  std::map<ULONG, std::vector<INDEX>>     entityToModel;
+  std::map<ULONG, std::vector<INDEX>>     entityToStaticBrush;
+  std::map<ULONG, std::vector<INDEX>>     entityToMovableBrush;
+
+  RgInstance instance;
 };
 
 #pragma region template implementation

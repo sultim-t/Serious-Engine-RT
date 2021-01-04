@@ -659,24 +659,31 @@ void PrintDisplayModeInfo(void)
   CTString strRes;
   extern CTString _strPreferencesDescription;
   strRes.PrintF( "%dx%dx%s", slDPWidth, slDPHeight, _pGfx->gl_dmCurrentDisplayMode.DepthString());
+
   if( dm.IsDualHead())   strRes += TRANS(" DualMonitor");
   if( dm.IsWideScreen()) strRes += TRANS(" WideScreen");
-       if( _pGfx->gl_eCurrentAPI==GAT_OGL) strRes += " (OpenGL)";
+
+  if (_pGfx->gl_eCurrentAPI == GAT_OGL) strRes += " (OpenGL)";
 #ifdef SE1_D3D
-  else if( _pGfx->gl_eCurrentAPI==GAT_D3D) strRes += " (Direct3D)";
+  else if (_pGfx->gl_eCurrentAPI == GAT_D3D) strRes += " (Direct3D)";
 #endif // SE1_D3D
 #ifdef SE1_VULKAN
   else if (_pGfx->gl_eCurrentAPI == GAT_VK) strRes += " (Vulkan)";
+  else if (_pGfx->gl_eCurrentAPI == GAT_RT) strRes += " (Vulkan Ray Tracing)";
 #endif // SE1_VULKAN
 
 
   CTString strDescr;
   strDescr.PrintF("\n%s (%s)\n", _strPreferencesDescription, RenderingPreferencesDescription(sam_iVideoSetup));
   strRes+=strDescr;
+
   // tell if application is started for the first time, or failed to set mode
-  if( _iDisplayModeChangeFlag==0) {
+  if( _iDisplayModeChangeFlag==0) 
+  {
     strRes += TRANS("Display mode set by default!");
-  } else if( _iDisplayModeChangeFlag==2) {
+  }
+  else if (_iDisplayModeChangeFlag == 2)
+  {
     strRes += TRANS("Last mode set failed!");
   }
 
@@ -1308,22 +1315,23 @@ int PASCAL WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 
 // try to start a new display mode
-BOOL TryToSetDisplayMode( enum GfxAPIType eGfxAPI, INDEX iAdapter, PIX pixSizeI, PIX pixSizeJ,
-                          enum DisplayDepth eColorDepth, BOOL bFullScreenMode)
+BOOL TryToSetDisplayMode(enum GfxAPIType eGfxAPI, INDEX iAdapter, PIX pixSizeI, PIX pixSizeJ,
+                         enum DisplayDepth eColorDepth, BOOL bFullScreenMode)
 {
   CDisplayMode dmTmp;
   dmTmp.dm_ddDepth = eColorDepth;
-  CPrintF( TRANS("  Starting display mode: %dx%dx%s (%s)\n"),
-           pixSizeI, pixSizeJ, dmTmp.DepthString(),
-           bFullScreenMode ? TRANS("fullscreen") : TRANS("window"));
+  CPrintF(TRANS("  Starting display mode: %dx%dx%s (%s)\n"),
+          pixSizeI, pixSizeJ, dmTmp.DepthString(),
+          bFullScreenMode ? TRANS("fullscreen") : TRANS("window"));
 
   // mark to start ignoring window size/position messages until settled down
   _bWindowChanging = TRUE;
-  
+
   // destroy canvas if existing
   _pGame->DisableLoadingHook();
-  if( pvpViewPort!=NULL) {
-    _pGfx->DestroyWindowCanvas( pvpViewPort);
+  if (pvpViewPort != NULL)
+  {
+    _pGfx->DestroyWindowCanvas(pvpViewPort);
     pvpViewPort = NULL;
     pdpNormal = NULL;
   }
@@ -1333,65 +1341,95 @@ BOOL TryToSetDisplayMode( enum GfxAPIType eGfxAPI, INDEX iAdapter, PIX pixSizeI,
 
   // try to set new display mode
   BOOL bSuccess;
-   
+
   // TODO: enable full screen for vulkan
-#ifdef SE1_VULKAN  
+  #ifdef SE1_VULKAN  
   {
-#else // SE1_VULKAN
-  if( bFullScreenMode) {
-#ifdef SE1_D3D
-    if( eGfxAPI==GAT_D3D) OpenMainWindowFullScreen( pixSizeI, pixSizeJ);
-#endif // SE1_D3D
-    bSuccess = _pGfx->SetDisplayMode( eGfxAPI, iAdapter, pixSizeI, pixSizeJ, eColorDepth);
-    if( bSuccess && eGfxAPI==GAT_OGL) OpenMainWindowFullScreen( pixSizeI, pixSizeJ);
-  } else {
+  #else // SE1_VULKAN
+  if (bFullScreenMode)
+  {
+  #ifdef SE1_D3D
+    if (eGfxAPI == GAT_D3D)
+    {
+      OpenMainWindowFullScreen(pixSizeI, pixSizeJ);
+    }
+  #endif // SE1_D3D
 
-#endif // SE1_VULKAN
+    bSuccess = _pGfx->SetDisplayMode(eGfxAPI, iAdapter, pixSizeI, pixSizeJ, eColorDepth);
+    if (bSuccess && eGfxAPI == GAT_OGL)
+    {
+      OpenMainWindowFullScreen(pixSizeI, pixSizeJ);
+    }
+  }
+  else
+  {
 
-#ifdef SE1_D3D
-    if( eGfxAPI==GAT_D3D) OpenMainWindowNormal( pixSizeI, pixSizeJ);
-#endif // SE1_D3D
-#ifdef SE1_VULKAN
-    if (eGfxAPI == GAT_VK) OpenMainWindowNormal(pixSizeI, pixSizeJ);
-#endif // SE1_VULKAN
-    bSuccess = _pGfx->ResetDisplayMode( eGfxAPI);
-    if( bSuccess && eGfxAPI==GAT_OGL) OpenMainWindowNormal( pixSizeI, pixSizeJ);
-#ifdef SE1_D3D
-    if( bSuccess && eGfxAPI==GAT_D3D) ResetMainWindowNormal();
-#endif // SE1_D3D
+  #endif // SE1_VULKAN
+
+  #ifdef SE1_D3D
+    if (eGfxAPI == GAT_D3D)
+    {
+      OpenMainWindowNormal(pixSizeI, pixSizeJ);
+    }
+  #endif // SE1_D3D
+  #ifdef SE1_VULKAN
+    if (eGfxAPI == GAT_VK || eGfxAPI == GAT_RT)
+    {
+      OpenMainWindowNormal(pixSizeI, pixSizeJ);
+    }
+  #endif // SE1_VULKAN
+
+    bSuccess = _pGfx->ResetDisplayMode(eGfxAPI);
+
+    if (bSuccess && eGfxAPI == GAT_OGL)
+    {
+      OpenMainWindowNormal(pixSizeI, pixSizeJ);
+    }
+  #ifdef SE1_D3D
+    if (bSuccess && eGfxAPI == GAT_D3D)
+    {
+      ResetMainWindowNormal();
+    }
+  #endif // SE1_D3D
   }
 
   // if new mode was set
-  if( bSuccess) {
+  if (bSuccess)
+  {
     // create canvas
-    ASSERT( pvpViewPort==NULL);
-    ASSERT( pdpNormal==NULL);
-    _pGfx->CreateWindowCanvas( _hwndMain, &pvpViewPort, &pdpNormal);
+    ASSERT(pvpViewPort == NULL);
+    ASSERT(pdpNormal == NULL);
+    _pGfx->CreateWindowCanvas(_hwndMain, &pvpViewPort, &pdpNormal);
 
     // erase context of both buffers (for the sake of wide-screen)
     pdp = pdpNormal;
-    if( pdp!=NULL && pdp->Lock()) {
-      pdp->Fill(C_BLACK|CT_OPAQUE);
+    if (pdp != NULL && pdp->Lock())
+    {
+      pdp->Fill(C_BLACK | CT_OPAQUE);
       pdp->Unlock();
       pvpViewPort->SwapBuffers();
       pdp->Lock();
-      pdp->Fill(C_BLACK|CT_OPAQUE);
+      pdp->Fill(C_BLACK | CT_OPAQUE);
       pdp->Unlock();
       pvpViewPort->SwapBuffers();
     }
 
     // lets try some wide screen screaming :)
-    const PIX pixYBegAdj = pdp->GetHeight() * 21/24;
-    const PIX pixYEndAdj = pdp->GetHeight() * 3/24;
-    const PIX pixXEnd    = pdp->GetWidth();
-    pdpWideScreen = new CDrawPort( pdp, PIXaabbox2D( PIX2D(0,pixYBegAdj), PIX2D(pixXEnd, pixYEndAdj)));
+    const PIX pixYBegAdj = pdp->GetHeight() * 21 / 24;
+    const PIX pixYEndAdj = pdp->GetHeight() * 3 / 24;
+    const PIX pixXEnd = pdp->GetWidth();
+    pdpWideScreen = new CDrawPort(pdp, PIXaabbox2D(PIX2D(0, pixYBegAdj), PIX2D(pixXEnd, pixYEndAdj)));
     pdpWideScreen->dp_fWideAdjustment = 9.0f / 12.0f;
-    if( sam_bWideScreen) pdp = pdpWideScreen;
+    if (sam_bWideScreen)
+    {
+      pdp = pdpWideScreen;
+    }
 
     // initial screen fill and swap, just to get context running
     BOOL bSuccess = FALSE;
-    if( pdp!=NULL && pdp->Lock()) {
-      pdp->Fill( LCDGetColor( C_dGREEN|CT_OPAQUE, "bcg fill"));
+    if (pdp != NULL && pdp->Lock())
+    {
+      pdp->Fill(LCDGetColor(C_dGREEN | CT_OPAQUE, "bcg fill"));
       pdp->Unlock();
       pvpViewPort->SwapBuffers();
       bSuccess = TRUE;
@@ -1399,16 +1437,20 @@ BOOL TryToSetDisplayMode( enum GfxAPIType eGfxAPI, INDEX iAdapter, PIX pixSizeI,
     _pGame->EnableLoadingHook(pdp);
 
     // if the mode is not working, or is not accelerated
-    if( !bSuccess || !_pGfx->IsCurrentModeAccelerated())
-    { // report error
-      CPrintF( TRANS("This mode does not support hardware acceleration.\n"));
+    if (!bSuccess || !_pGfx->IsCurrentModeAccelerated())
+    {
+      // report error
+      CPrintF(TRANS("This mode does not support hardware acceleration.\n"));
+
       // destroy canvas if existing
-      if( pvpViewPort!=NULL) {
+      if (pvpViewPort != NULL)
+      {
         _pGame->DisableLoadingHook();
-        _pGfx->DestroyWindowCanvas( pvpViewPort);
+        _pGfx->DestroyWindowCanvas(pvpViewPort);
         pvpViewPort = NULL;
         pdpNormal = NULL;
       }
+
       // close the application window
       CloseMainWindow();
       // report failure
@@ -1425,8 +1467,10 @@ BOOL TryToSetDisplayMode( enum GfxAPIType eGfxAPI, INDEX iAdapter, PIX pixSizeI,
 
     // report success
     return TRUE;
-  // if couldn't set new mode
-  } else {
+    // if couldn't set new mode
+  }
+  else
+  {
     // close the application window
     CloseMainWindow();
     // report failure

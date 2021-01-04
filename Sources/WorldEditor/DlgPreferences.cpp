@@ -238,6 +238,11 @@ BOOL CDlgPreferences::OnInitDialog()
     INDEX iAddedAs = m_ctrGfxApi.AddString(L"Vulkan");
     m_ctrGfxApi.SetItemData(iAddedAs, GAT_VK);
   }
+  if (_pGfx->HasAPI(GAT_RT))
+  {
+    INDEX iAddedAs = m_ctrGfxApi.AddString(L"Vulkan Ray Tracing");
+    m_ctrGfxApi.SetItemData(iAddedAs, GAT_RT);
+  }
 #endif // SE1_VULKAN
 
   m_ctrlTerrainSelectionVisible.ResetContent();

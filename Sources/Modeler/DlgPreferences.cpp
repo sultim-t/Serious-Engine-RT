@@ -156,8 +156,11 @@ void CDlgPreferences::DoDataExchange(CDataExchange* pDX)
         break;
 #endif // SE1_D3D
 #ifdef SE1_VULKAN
-      case GAT_VK_INDEX:
+      case 2:
         theApp.m_iApi = GAT_VK;
+        break;
+      case 3:
+        theApp.m_iApi = GAT_RT;
         break;
 #endif // SE1_VULKAN
 
@@ -211,7 +214,10 @@ BOOL CDlgPreferences::OnInitDialog()
 #endif // SE1_D3D
 #ifdef SE1_VULKAN:
     case GAT_VK:
-      m_ctrlGfxApi.SetCurSel(GAT_VK_INDEX);
+      m_ctrlGfxApi.SetCurSel(1);
+      break;
+    case GAT_RT:
+      m_ctrlGfxApi.SetCurSel(2);
       break;
 #endif // SE1_VULKAN
     }

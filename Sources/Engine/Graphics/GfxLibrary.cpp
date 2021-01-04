@@ -48,7 +48,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #ifdef SE1_VULKAN
 #include <Engine/Graphics/Vulkan/SvkMain.h>
-#include <Engine/Raytracing/SSRT.h>
 #endif
 
 // control for partial usage of compiled vertex arrays
@@ -178,9 +177,6 @@ extern INDEX d3d_iFinish = 0;
 extern INDEX gfx_vk_iPresentMode = 0;           // what present mode to use: 0=FIFO, 1=Mailbox, 2=Immediate
 extern INDEX gfx_vk_iMSAA = 0;                  // MSAA: 0=1x, 1=2x, 2=4x, 3=8x
 
-// Ray tracing
-extern INDEX srt_bEnableRayTracing = TRUE;
-
 // API common controls
 extern INDEX gap_iUseTextureUnits = 4;
 extern INDEX gap_iTextureFiltering  = 21;       // bilinear by default
@@ -307,6 +303,7 @@ static INDEX sys_bHasCVAs = 0;
 static INDEX sys_bUsingOpenGL = 0;
 extern INDEX sys_bUsingDirect3D = 0;
 extern INDEX sys_bUsingVulkan = 0;
+extern INDEX sys_bUsingRayTracing = 0;
 
 /*
  * Low level hook flags
@@ -497,7 +494,7 @@ static void GAPInfo(void)
   ASSERT( eAPI==GAT_OGL || eAPI==GAT_D3D || eAPI==GAT_NONE);
 #else // SE1_D3D
 #ifdef SE1_VULKAN
-  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_RT || eAPI == GAT_NONE);
 #else
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_VULKAN
@@ -511,6 +508,7 @@ static void GAPInfo(void)
 #endif // SE1_D3D
 #ifdef SE1_VULKAN
     && _pGfx->gl_SvkMain->gl_VkInstance==VK_NULL_HANDLE
+    && _pGfx->gl_SSRT == nullptr
 #endif // SE1_VULKAN
 
     ) || eAPI==GAT_NONE) {
@@ -527,6 +525,7 @@ static void GAPInfo(void)
 #endif // SE1_D3D
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK) CPrintF("Vulkan\n");
+  else if (eAPI == GAT_RT) CPrintF("Vulkan Ray Tracing\n");
 #endif // SE1_VULKAN
   
   // and number of adapters
@@ -743,6 +742,10 @@ static void GAPInfo(void)
   {
     CPrintF("Using Vulkan API.\n");
   }
+  if (eAPI == GAT_RT)
+  {
+    CPrintF("Using ray tracing.\n");
+  }
 #endif // SE1_VULKAN
 }
 
@@ -762,6 +765,7 @@ extern void UpdateGfxSysCVars(void)
   sys_bHasCVAs = 1;
   sys_bUsingOpenGL = 0;
   sys_bUsingVulkan = 0;
+  sys_bUsingRayTracing = 0;
   sys_bUsingDirect3D = 0;
   if( _pGfx->gl_iMaxTextureAnisotropy>1) sys_bHasTextureAnisotropy = 1;
   if( _pGfx->gl_fMaxTextureLODBias>0) sys_bHasTextureLODBias = 1;
@@ -785,6 +789,7 @@ extern void UpdateGfxSysCVars(void)
 
 #ifdef SE1_VULKAN
   if (_pGfx->gl_eCurrentAPI == GAT_VK) sys_bUsingVulkan = 1;
+  if (_pGfx->gl_eCurrentAPI == GAT_RT) sys_bUsingRayTracing = 1;
 #endif // SE1_VULKAN
 }
 
@@ -1024,6 +1029,7 @@ CGfxLibrary::CGfxLibrary(void)
 
 #ifdef SE1_VULKAN
   gl_SvkMain = nullptr;
+  gl_SSRT = nullptr;
 #endif // SE1_VULKAN
 
   // reset profiling counters
@@ -1042,8 +1048,6 @@ CGfxLibrary::CGfxLibrary(void)
 
   // reset GFX API function pointers
   GFX_SetFunctionPointers( (INDEX)GAT_NONE);
-
-  gl_SSRT = new SSRT::SSRTMain();
 }
 
 
@@ -1139,8 +1143,6 @@ void CGfxLibrary::Init(void)
 
   _pShell->DeclareSymbol("persistent user INDEX gfx_vk_iPresentMode;", &gfx_vk_iPresentMode);
   _pShell->DeclareSymbol("persistent user INDEX gfx_vk_iMSAA;", &gfx_vk_iMSAA);
-
-  _pShell->DeclareSymbol("persistent user INDEX srt_bEnableRayTracing;", &srt_bEnableRayTracing);
 
   _pShell->DeclareSymbol("persistent user INDEX gap_iUseTextureUnits;",   &gap_iUseTextureUnits);
   _pShell->DeclareSymbol("persistent user INDEX gap_iTextureFiltering;",  &gap_iTextureFiltering);
@@ -1287,6 +1289,7 @@ void CGfxLibrary::Init(void)
   _pShell->DeclareSymbol( "INDEX sys_bUsingOpenGL;",   &sys_bUsingOpenGL);
   _pShell->DeclareSymbol( "INDEX sys_bUsingDirect3D;", &sys_bUsingDirect3D);
   _pShell->DeclareSymbol( "INDEX sys_bUsingVulkan;", &sys_bUsingVulkan);
+  _pShell->DeclareSymbol( "INDEX sys_bUsingRayTracing;", &sys_bUsingRayTracing);
 
   // initialize gfx APIs support
   InitAPIs();
@@ -1436,6 +1439,13 @@ BOOL CGfxLibrary::StartDisplayMode( enum GfxAPIType eAPI, INDEX iAdapter, PIX pi
 
     gl_eCurrentAPI = GAT_VK;
   }
+  else if (eAPI == GAT_RT)
+  {
+    bSuccess = InitDriver_RayTracing();
+    if (!bSuccess) return FALSE;
+
+    gl_eCurrentAPI = GAT_RT;
+  }
 #endif // SE1_VULKAN
 
   // no driver
@@ -1490,6 +1500,11 @@ void CGfxLibrary::StopDisplayMode(void)
     EndDriver_Vulkan();
     MonitorsOn();
   }
+  else if (gl_eCurrentAPI == GAT_RT)
+  { // Vulkan ray tracing
+    EndDriver_RayTracing();
+    MonitorsOn();
+  }
 #endif // SE1_VULKAN
   else
   { // none
@@ -1521,6 +1536,7 @@ BOOL CGfxLibrary::SetCurrentViewport(CViewPort *pvp)
 #endif // SE1_D3D
 #ifdef SE1_VULKAN
   if (gl_eCurrentAPI == GAT_VK) return SetCurrentViewport_Vulkan(pvp);
+  if (gl_eCurrentAPI == GAT_RT) return SetCurrentViewport_RayTracing(pvp);
 #endif // SE1_VULKAN
   if( gl_eCurrentAPI==GAT_NONE) return TRUE;
   ASSERTALWAYS( "SetCurrenViewport: Wrong API!");
@@ -1531,6 +1547,11 @@ BOOL CGfxLibrary::SetCurrentViewport(CViewPort *pvp)
 // Lock a drawport for drawing
 BOOL CGfxLibrary::LockDrawPort( CDrawPort *pdpToLock)
 {
+  if (gl_eCurrentAPI == GAT_RT)
+  {
+    return TRUE;
+  }
+
   // check API
 #ifdef SE1_D3D
   ASSERT( gl_eCurrentAPI==GAT_OGL || gl_eCurrentAPI==GAT_D3D || gl_eCurrentAPI==GAT_NONE);
@@ -1603,6 +1624,11 @@ BOOL CGfxLibrary::LockDrawPort( CDrawPort *pdpToLock)
 // Unlock a drawport after drawing
 void CGfxLibrary::UnlockDrawPort( CDrawPort *pdpToUnlock)
 {
+  if (gl_eCurrentAPI == GAT_RT)
+  {
+    return;
+  }
+
   // check API
 #ifdef SE1_D3D
   ASSERT(gl_eCurrentAPI == GAT_OGL || gl_eCurrentAPI == GAT_D3D || gl_eCurrentAPI == GAT_NONE);
@@ -1817,6 +1843,12 @@ static BOOL GenerateGammaTable(void);
  */
 void CGfxLibrary::SwapBuffers(CViewPort *pvp)
 {
+  if (gl_eCurrentAPI == GAT_RT)
+  {
+    EndFrame_RayTracing();
+    return;
+  }
+
   // check API
 #ifdef SE1_D3D
   ASSERT(gl_eCurrentAPI == GAT_OGL || gl_eCurrentAPI == GAT_D3D || gl_eCurrentAPI == GAT_NONE);
@@ -1925,14 +1957,10 @@ void CGfxLibrary::SwapBuffers(CViewPort *pvp)
 #ifdef SE1_VULKAN
   else if (gl_eCurrentAPI == GAT_VK)
   {
-    // force finishing of all rendering operations (if required)
-    //if (vk_iFinish == 2) gfxFinish();
-
     // end recording to cmd buffers
-    if (GFX_bRenderingScene) 
+    if (GFX_bRenderingScene)
     {
       gl_SvkMain->EndFrame();
-      gl_SSRT->EndFrame();
     }
 
     SwapBuffers_Vulkan();
@@ -2064,10 +2092,16 @@ BOOL CGfxLibrary::LockRaster( CRaster *praToLock)
     } // mark it
 #endif // SE1_D3D
 #ifdef SE1_VULKAN
-    if (gl_eCurrentAPI == GAT_VK && !GFX_bRenderingScene)
+    if (!GFX_bRenderingScene)
     {
-      gl_SvkMain->StartFrame();
-      gl_SSRT->StartFrame();
+      if (gl_eCurrentAPI == GAT_RT)
+      {
+        StartFrame_RayTracing(praToLock);
+      }
+      else if (gl_eCurrentAPI == GAT_VK)
+      {
+        gl_SvkMain->StartFrame(); 
+      }
     }
 #endif // SE1_VULKAN
 

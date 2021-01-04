@@ -570,6 +570,7 @@ if not exist $(SolutionDir)RTGL1\Build\Release\x64-Release-Light\RayTracedGL1.li
     <ClCompile Include="Base\Unzip.cpp" />
     <ClCompile Include="Base\Updateable.cpp" />
     <ClCompile Include="GameAgent\GameAgent.cpp" />
+    <ClCompile Include="Graphics\Gfx_RayTracing.cpp" />
     <ClCompile Include="Graphics\Gfx_Vulkan.cpp" />
     <ClCompile Include="Graphics\Gfx_Vulkan_Textures.cpp" />
     <ClCompile Include="Graphics\Gfx_wrapper_Vulkan.cpp">

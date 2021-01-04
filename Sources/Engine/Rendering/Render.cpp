@@ -965,8 +965,7 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
     woWorld.CalculateNonDirectionalShadows();
   }
 
-  extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing)
+  if (_pGfx->gl_eCurrentAPI == GAT_RT)
   {
     SSRT::CWorldRenderingInfo renderInfo = {};
     renderInfo.world = &woWorld;
@@ -1071,7 +1070,7 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
     _pGfx->gl_SSRT->ProcessWorld(renderInfo);
 
     // don't render world using rasterization
-    //return;
+    return;
   }
 
   // take first renderer object

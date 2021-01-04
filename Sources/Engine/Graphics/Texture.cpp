@@ -707,7 +707,7 @@ void CTextureData::Read_t( CTStream *inFile)
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #elif SE1_VULKAN
-  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_RT || eAPI == GAT_NONE);
 #else // SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_D3D
@@ -1191,6 +1191,12 @@ void CTextureData::SetAsCurrent( INDEX iFrameNo/*=0*/, BOOL bForceUpload/*=FALSE
 {
   // check API
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
+
+  if (eAPI == GAT_RT)
+  {
+    return;
+  }
+
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #elif SE1_VULKAN
