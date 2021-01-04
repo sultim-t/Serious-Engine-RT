@@ -1238,7 +1238,7 @@ void CDrawPort::GrabScreen( class CImageInfo &iiGrabbedImage, INDEX iGrabZBuffer
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
 #ifdef SE1_VULKAN
-  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_RT || eAPI == GAT_NONE);
 #else
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_VULKAN
@@ -1330,7 +1330,10 @@ void CDrawPort::GrabScreen( class CImageInfo &iiGrabbedImage, INDEX iGrabZBuffer
 #ifdef SE1_VULKAN
   else if (eAPI == GAT_VK)
   {
-    // TODO: Vulkan: screen grabbing
+    CPrintF("Screen grabbing is not implemented for Vulkan.\n");
+  }
+  else if (eAPI == GAT_RT)
+  {
     CPrintF("Screen grabbing is not implemented for Vulkan.\n");
   }
 #endif // SE1_VULKAN

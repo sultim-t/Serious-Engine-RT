@@ -143,7 +143,14 @@ SSRTMain::~SSRTMain()
 
 void SSRTMain::CopyTransform(RgTransform &dst, const CAbstractGeometry &src)
 {
-  memcpy(&dst.matrix, src.absRotation.matrix, sizeof(src.absRotation.matrix));
+  for (uint32_t i = 0; i < 3; i++)
+  {
+    for (uint32_t j = 0; j < 3; j++)
+    {
+      dst.matrix[i][j] = src.absRotation.matrix[i][j];
+    }
+  }
+
   dst.matrix[0][3] = src.absPosition(1);
   dst.matrix[1][3] = src.absPosition(2);
   dst.matrix[2][3] = src.absPosition(3);
@@ -287,21 +294,9 @@ CWorld *SSRTMain::GetCurrentWorld()
 
 void SSRTMain::StartFrame(CViewPort *pvp)
 {
-  currentFirstPersonModelCount = 0;
-
-  CWorld *pwo = GetCurrentWorld();
-  if (pwo == nullptr)
-  {
-    StopWorld();
-  }
 
   curWindowWidth = pvp->vp_Raster.ra_Width;
   curWindowHeight = pvp->vp_Raster.ra_Height;
-
-  RgResult r = rgStartFrame(instance, curWindowWidth, curWindowHeight);
-  RG_CHECKERROR(r);
-
-  isFrameStarted = true;
 }
 
 void SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
@@ -316,6 +311,29 @@ void SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
     return;
   }
 
+  // INIT
+  if (instance == 0)
+  {
+    Init();
+  }
+
+  // START FRAME
+  {
+    currentFirstPersonModelCount = 0;
+
+    CWorld *pwo = GetCurrentWorld();
+    if (pwo == nullptr)
+    {
+      StopWorld();
+    }
+
+    RgResult r = rgStartFrame(instance, curWindowWidth, curWindowHeight);
+    RG_CHECKERROR(r);
+
+    isFrameStarted = true;
+
+  }
+  
   // check if need to reload new world
   if (world->GetName() != currentWorldName)
   {
@@ -363,6 +381,37 @@ void SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
     }
   }
 
+  // END FRAME
+  {
+    if (!isFrameStarted)
+    {
+      return;
+    }
+
+    RgDrawFrameInfo frameInfo = {};
+    frameInfo.renderWidth = curWindowWidth;
+    frameInfo.renderHeight = curWindowHeight;
+
+    memcpy(frameInfo.view, worldRenderInfo.viewMatrix, 16 * sizeof(float));
+    memcpy(frameInfo.viewInversed, worldRenderInfo.viewMatrixInversed, 16 * sizeof(float));
+    memcpy(frameInfo.projection, worldRenderInfo.projectionMatrix, 16 * sizeof(float));
+    memcpy(frameInfo.projectionInversed, worldRenderInfo.projectionMatrixInversed, 16 * sizeof(float));
+
+    RgResult r = rgDrawFrame(instance, &frameInfo);
+    RG_CHECKERROR(r);
+
+    // models will be rescanned in the beginning of the frame
+    // it's done because of dynamic vertex data
+    entityToModel.clear();
+    models.clear();
+
+    // lights will be readded too
+    sphLights.clear();
+    dirLights.clear();
+
+    isFrameStarted = false;
+  }
+
 #if DUMP_GEOMETRY_TO_OBJ
   // stop program to prevent dump file grow
   ASSERTALWAYS("Geometry was dumped. App will be terminated.");
@@ -371,7 +420,7 @@ void SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
 
 void SSRTMain::ProcessFirstPersonModel(const CFirstPersonModelInfo &info)
 {
-  RT_AddFirstPersonModel(info.modelObject, info.renderModel, SSRT_FIRSTPERSON_ENTITY_START_ID + currentFirstPersonModelCount, this);
+  //RT_AddFirstPersonModel(info.modelObject, info.renderModel, SSRT_FIRSTPERSON_ENTITY_START_ID + currentFirstPersonModelCount, this);
   currentFirstPersonModelCount++;
 }
 
@@ -382,33 +431,6 @@ void SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
 
 void SSRTMain::EndFrame()
 {
-  if (!isFrameStarted)
-  {
-    return;
-  }
-
-  RgDrawFrameInfo frameInfo = {};
-  frameInfo.renderWidth = curWindowWidth;
-  frameInfo.renderHeight = curWindowHeight;
-
-  memcpy(frameInfo.view, worldRenderInfo.viewMatrix, 16 * sizeof(float));
-  memcpy(frameInfo.viewInversed, worldRenderInfo.viewMatrixInversed, 16 * sizeof(float));
-  memcpy(frameInfo.projection, worldRenderInfo.projectionMatrix, 16 * sizeof(float));
-  memcpy(frameInfo.projectionInversed, worldRenderInfo.projectionMatrixInversed, 16 * sizeof(float));
-
-  RgResult r = rgDrawFrame(instance, &frameInfo);
-  RG_CHECKERROR(r);
-
-  // models will be rescanned in the beginning of the frame
-  // it's done because of dynamic vertex data
-  entityToModel.clear();
-  models.clear();
-
-  // lights will be readded too
-  sphLights.clear();
-  dirLights.clear();
-
-  isFrameStarted = false;
 }
 
 void SSRTMain::SetWorld(CWorld *pwld)

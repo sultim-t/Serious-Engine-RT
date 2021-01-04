@@ -1064,6 +1064,10 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
         MakeRotationMatrix(m, viewerPl.pl_OrientationAngle);
 
         fill(renderInfo.viewMatrixInversed, m, v);
+
+        renderInfo.viewMatrixInversed[4] = -renderInfo.viewMatrixInversed[4];
+        renderInfo.viewMatrixInversed[5] = -renderInfo.viewMatrixInversed[5];
+        renderInfo.viewMatrixInversed[6] = -renderInfo.viewMatrixInversed[6];
       }
     }
 

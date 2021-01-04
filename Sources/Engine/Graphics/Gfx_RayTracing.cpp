@@ -58,7 +58,6 @@ BOOL CGfxLibrary::InitDriver_RayTracing()
   ASSERT(gl_SSRT == nullptr);
 
   gl_SSRT = new SSRT::SSRTMain();
-  gl_SSRT->Init();
 
   return TRUE;
 }
