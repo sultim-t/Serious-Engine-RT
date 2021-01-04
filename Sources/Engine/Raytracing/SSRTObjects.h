@@ -17,7 +17,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Entities/Entity.h>
 #include <Engine/Brushes/Brush.h>
-#include <stdint.h>
+#include <RTGL1/RTGL1.h>
 
 class CRenderModel;
 
@@ -91,6 +91,7 @@ struct CAbstractGeometry : RTObject
   INDEX               *indices;
   // material ID for each triangle (i.e. for each 3 indices)
   CTriangleMaterial   *materialIDs;
+  RgGeometry          rgGeomId;
 };
 
 
@@ -157,8 +158,10 @@ struct CWorldRenderingInfo
   // optional matrices
   // perspective projection matrix
   float           projectionMatrix[16];
+  float           projectionMatrixInversed[16];
   // view matrix
   float           viewMatrix[16];
+  float           viewMatrixInversed[16];
 };
 
 

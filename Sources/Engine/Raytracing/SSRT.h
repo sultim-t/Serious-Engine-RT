@@ -44,6 +44,8 @@ private:
   // otherwise rasterization pass will be used (e.g. for HUD)
   bool                  isRenderingWorld;
 
+  uint32_t              curWindowWidth, curWindowHeight;
+
   // these arrays hold information about all objects in a world
   std::vector<CModelGeometry>             models;
   std::vector<CBrushGeometry>             staticBrushes;
@@ -63,15 +65,29 @@ private:
   std::map<ULONG, std::vector<INDEX>>     entityToStaticBrush;
   std::map<ULONG, std::vector<INDEX>>     entityToMovableBrush;
 
+private:
+  RgInstance instance;
+
 public:
+  SSRTMain() = default;
+  ~SSRTMain();
+
+  SSRTMain(const SSRTMain &other) = delete;
+  SSRTMain(SSRTMain &&other) noexcept = delete;
+  SSRTMain &operator=(const SSRTMain &other) = delete;
+  SSRTMain &operator=(SSRTMain &&other) noexcept = delete;
+
   void Init();
-  
+  void Destroy();
+
+  void CopyTransform(RgTransform &dst, const CAbstractGeometry &src);
+
   void AddModel(const CModelGeometry &model);
   void AddBrush(const CBrushGeometry &brush, bool isMovable);
   void AddLight(const CSphereLight &sphLt);
   void AddLight(const CDirectionalLight &dirLt);
 
-  void StartFrame();
+  void StartFrame(CViewPort *pvp);
 
   // Process world geometry: build acceleration structures and reload textures 
   // when required (always for dynamic objects, once for static).

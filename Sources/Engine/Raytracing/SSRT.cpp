@@ -21,67 +21,105 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Base/Shell.h>
 #include <Engine/World/World.h>
+#include <Engine/Graphics/ViewPort.h>
 
 #include <Engine/Templates/DynamicContainer.cpp>
 
 #include <Engine/Raytracing/SSRTObjects.h>
 #include <Engine/Raytracing/RTProcessing.h>
 
+
+#define VK_USE_PLATFORM_WIN32_KHR
+#include <vulkan/vulkan.h>
+
+
+#define RG_CHECKERROR(x) ASSERT(x == RG_SUCCESS)
+
+
 extern CShell *_pShell;
+
 
 // dump brushes and models to .obj files;
 // use it with care, all calls must be done for one frame
 // (offsets are local static variables)
 #define DUMP_GEOMETRY_TO_OBJ 0
+#if DUMP_GEOMETRY_TO_OBJ
+static void ExportGeometry(const CAbstractGeometry &geom, INDEX offset, const char *path)
+#endif
+
 
 namespace SSRT
 {
-
 void SSRTMain::Init()
 {
+  RgInstanceCreateInfo info = {};
+  info.name = "RTGL1 Test";
+  info.physicalDeviceIndex = 0;
+  info.enableValidationLayer = RG_TRUE;
 
+  info.vertexPositionStride = sizeof(GFXVertex);
+  info.vertexNormalStride = sizeof(GFXNormal);
+  info.vertexTexCoordStride = sizeof(GFXTexCoord);
+  info.vertexColorStride = sizeof(uint32_t);
+  info.rasterizedDataBufferSize = 32 * 1024 * 1024;
+
+  const char *pWindowExtensions[] = {
+    VK_KHR_SURFACE_EXTENSION_NAME,
+    VK_KHR_WIN32_SURFACE_EXTENSION_NAME
+  };
+
+  info.ppWindowExtensions = pWindowExtensions;
+  info.windowExtensionCount = sizeof(pWindowExtensions) / sizeof(const char *);
+
+  info.pfnCreateSurface = [] (uint64_t vkInstance, uint64_t *pResultVkSurfaceKHR)
+  {
+    VkInstance instance = reinterpret_cast<VkInstance>(vkInstance);
+
+    VkSurfaceKHR surface;
+
+    HINSTANCE hInstance = GetModuleHandle(NULL);
+    extern HWND _hwndMain;
+
+    VkWin32SurfaceCreateInfoKHR createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+    createInfo.pNext = nullptr;
+    createInfo.hinstance = hInstance;
+    createInfo.hwnd = _hwndMain;
+    VkResult r = vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface);
+    ASSERT(r == VK_SUCCESS);
+
+    *pResultVkSurfaceKHR = reinterpret_cast<uint64_t>(surface);
+  };
+
+  info.pfnDebugPrint = [] (const char *msg)
+  {
+    CPrintF(msg);
+  };
+
+  RgResult r = rgCreateInstance(&info, &instance);
+  RG_CHECKERROR(r);
 }
 
-#if DUMP_GEOMETRY_TO_OBJ
-static void ExportGeometry(const CAbstractGeometry &geom, INDEX offset, const char *path)
+void SSRTMain::Destroy()
 {
-  FILE *file = fopen(path, "a");
-  if (file == nullptr)
+  if (instance != 0)
   {
-    return;
+    rgDestroyInstance(instance);
   }
-
-  for (INDEX i = 0; i < geom.vertexCount; i++)
-  {
-    FLOAT3D p = FLOAT3D(geom.vertices[i].x, geom.vertices[i].y, geom.vertices[i].z);
-    FLOAT3D n = geom.normals ? FLOAT3D(geom.normals[i].nx, geom.normals[i].ny, geom.normals[i].nz) : FLOAT3D(0, 1, 0);
-    FLOAT2D t = geom.texCoords ? FLOAT2D(geom.texCoords[i].s, geom.texCoords[i].t) : FLOAT2D();
-
-    p = p * geom.absRotation + geom.absPosition;
-    n = n * geom.absRotation;
-
-    fprintf(file, "v %.3f %.3f %.3f\n", p(1), p(2), p(3));
-    fprintf(file, "vn %.3f %.3f %.3f\n", n(1), n(2), n(3));
-    fprintf(file, "vt %.3f %.3f\n", t(1), t(2));
-  }
-
-  fprintf(file, "g %d\n", geom.entityID);
-
-  INDEX triangleCount = geom.indexCount / 3;
-
-  for (INDEX i = 0; i < triangleCount; i++)
-  {
-    // obj indices start with 1
-    INDEX a = geom.indices[i * 3 + 0] + offset + 1;
-    INDEX b = geom.indices[i * 3 + 1] + offset + 1;
-    INDEX c = geom.indices[i * 3 + 2] + offset + 1;
-
-    fprintf(file, "f %d/%d/%d %d/%d/%d %d/%d/%d\n", a, a, a, b, b, b, c, c, c);
-  }
-
-  fclose(file);
 }
-#endif
+
+SSRTMain::~SSRTMain()
+{
+  Destroy();
+}
+
+void SSRTMain::CopyTransform(RgTransform &dst, const CAbstractGeometry &src)
+{
+  memcpy(&dst.matrix, src.absRotation.matrix, sizeof(src.absRotation.matrix));
+  dst.matrix[0][3] = src.absPosition(1);
+  dst.matrix[1][3] = src.absPosition(2);
+  dst.matrix[2][3] = src.absPosition(3);
+}
 
 void SSRTMain::AddModel(const CModelGeometry &model)
 {
@@ -99,7 +137,26 @@ void SSRTMain::AddModel(const CModelGeometry &model)
 
   AddRTObject(model, models, entityToModel);
 
-  // RT: TODO: send info to RTGL1
+  // send info to RTGL1
+  RgGeometryUploadInfo dnInfo = {};
+  dnInfo.geomType = RG_GEOMETRY_TYPE_DYNAMIC;
+  dnInfo.vertexCount = model.vertexCount;
+  dnInfo.vertexData = (float *) model.vertices;
+  dnInfo.normalData = (float *) model.normals;
+  dnInfo.texCoordData = (float *) model.texCoords;
+  dnInfo.colorData = nullptr;
+  dnInfo.indexCount = model.indexCount;
+  dnInfo.indexData = (uint32_t *) model.indices;
+  dnInfo.geomMaterial = {
+    RG_NO_TEXTURE,
+    RG_NO_TEXTURE,
+    RG_NO_TEXTURE
+  };
+  CopyTransform(dnInfo.transform, model);
+
+  RgGeometry geomId;
+  RgResult r = rgUploadGeometry(instance, &dnInfo, &geomId);
+  RG_CHECKERROR(r);
 }
 
 
@@ -131,6 +188,14 @@ void SSRTMain::AddBrush(const CBrushGeometry &brush, bool isMovable)
     targetBrush.absRotation = brush.absRotation;
     targetBrush.color = brush.color;
 
+    RgUpdateTransformInfo updateInfo = {};
+    updateInfo.movableStaticGeom = targetBrush.rgGeomId;
+    CopyTransform(updateInfo.transform, targetBrush);
+
+    RgGeometry geomId;
+    RgResult r = rgUpdateGeometryTransform(instance, &updateInfo);
+    RG_CHECKERROR(r);
+
     return;
   }
 
@@ -148,7 +213,27 @@ void SSRTMain::AddBrush(const CBrushGeometry &brush, bool isMovable)
 
   AddRTObject(brush, brushArray, entityToBrush);
 
-  // RT: TODO: send info to RTGL1
+  // send info to RTGL1
+  RgGeometryUploadInfo stInfo = {};
+  stInfo.geomType = isMovable ? RG_GEOMETRY_TYPE_STATIC_MOVABLE : RG_GEOMETRY_TYPE_STATIC;
+  stInfo.vertexCount = brush.vertexCount;
+  stInfo.vertexData = (float*)brush.vertices;
+  stInfo.normalData = (float*)brush.normals;
+  stInfo.texCoordData = (float*)brush.texCoords;
+  stInfo.colorData = nullptr;
+  stInfo.indexCount = brush.indexCount;
+  stInfo.indexData = (uint32_t*)brush.indices;
+  stInfo.geomMaterial = {
+    RG_NO_TEXTURE,
+    RG_NO_TEXTURE,
+    RG_NO_TEXTURE
+  };
+
+  CopyTransform(stInfo.transform, brush);
+
+  RgGeometry geomId;
+  RgResult r = rgUploadGeometry(instance, &stInfo, &geomId);
+  RG_CHECKERROR(r);
 }
 
 void SSRTMain::AddLight(const CSphereLight &sphLt)
@@ -172,7 +257,7 @@ CWorld *SSRTMain::GetCurrentWorld()
   return pwo;
 }
 
-void SSRTMain::StartFrame()
+void SSRTMain::StartFrame(CViewPort *pvp)
 {
   extern INDEX srt_bEnableRayTracing;
   srt_bEnableRayTracing = Clamp(srt_bEnableRayTracing, 0L, 1L);
@@ -184,6 +269,15 @@ void SSRTMain::StartFrame()
   {
     StopWorld();
   }
+
+  RECT rectWindow;
+  GetClientRect(pvp->vp_hWnd, &rectWindow);
+
+  curWindowWidth = rectWindow.right - rectWindow.left;
+  curWindowHeight = rectWindow.bottom - rectWindow.top;
+
+  RgResult r = rgStartFrame(instance, curWindowWidth, curWindowHeight);
+  RG_CHECKERROR(r);
 }
 
 void SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
@@ -268,6 +362,18 @@ void SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
 
 void SSRTMain::EndFrame()
 {
+  RgDrawFrameInfo frameInfo = {};
+  frameInfo.renderWidth = curWindowWidth;
+  frameInfo.renderHeight = curWindowHeight;
+
+  memcpy(frameInfo.view, worldRenderInfo.viewMatrix, 16 * sizeof(float));
+  memcpy(frameInfo.viewInversed, worldRenderInfo.viewMatrixInversed, 16 * sizeof(float));
+  memcpy(frameInfo.projection, worldRenderInfo.projectionMatrix, 16 * sizeof(float));
+  memcpy(frameInfo.projectionInversed, worldRenderInfo.projectionMatrixInversed, 16 * sizeof(float));
+
+  RgResult r = rgDrawFrame(instance, &frameInfo);
+  RG_CHECKERROR(r);
+
   // models will be rescanned in the beginning of the frame
   // it's done because of dynamic vertex data
   entityToModel.clear();
@@ -281,6 +387,9 @@ void SSRTMain::EndFrame()
 void SSRTMain::SetWorld(CWorld *pwld)
 {
   currentWorldName = pwld->GetName();
+
+  RgResult r = rgStartNewScene(instance);
+  RG_CHECKERROR(r);
 
   // find all brushes, their geomtry won't change,
   // but movable brushes have dynamic transformation 
@@ -313,3 +422,46 @@ void SSRTMain::StopWorld()
 }
 
 }
+
+
+#if DUMP_GEOMETRY_TO_OBJ
+static void ExportGeometry(const CAbstractGeometry &geom, INDEX offset, const char *path)
+{
+  FILE *file = fopen(path, "a");
+  if (file == nullptr)
+  {
+    return;
+  }
+
+  for (INDEX i = 0; i < geom.vertexCount; i++)
+  {
+    FLOAT3D p = FLOAT3D(geom.vertices[i].x, geom.vertices[i].y, geom.vertices[i].z);
+    FLOAT3D n = geom.normals ? FLOAT3D(geom.normals[i].nx, geom.normals[i].ny, geom.normals[i].nz) : FLOAT3D(0, 1, 0);
+    FLOAT2D t = geom.texCoords ? FLOAT2D(geom.texCoords[i].s, geom.texCoords[i].t) : FLOAT2D();
+
+    p = p * geom.absRotation + geom.absPosition;
+    n = n * geom.absRotation;
+
+    fprintf(file, "v %.3f %.3f %.3f\n", p(1), p(2), p(3));
+    fprintf(file, "vn %.3f %.3f %.3f\n", n(1), n(2), n(3));
+    fprintf(file, "vt %.3f %.3f\n", t(1), t(2));
+  }
+
+  fprintf(file, "g %d\n", geom.entityID);
+
+  INDEX triangleCount = geom.indexCount / 3;
+
+  for (INDEX i = 0; i < triangleCount; i++)
+  {
+    // obj indices start with 1
+    INDEX a = geom.indices[i * 3 + 0] + offset + 1;
+    INDEX b = geom.indices[i * 3 + 1] + offset + 1;
+    INDEX c = geom.indices[i * 3 + 2] + offset + 1;
+
+    fprintf(file, "f %d/%d/%d %d/%d/%d %d/%d/%d\n", a, a, a, b, b, b, c, c, c);
+  }
+
+  fclose(file);
+}
+#endif
+

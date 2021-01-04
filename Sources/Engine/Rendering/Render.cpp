@@ -61,6 +61,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Raytracing/SSRT.h>
 
+#include "Graphics/Vulkan/VulkanInclude.h"
+
 extern BOOL _bSomeDarkExists;
 extern INDEX d3d_bAlternateDepthReads;
 
@@ -1018,10 +1020,12 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
 
         renderInfo.fovH = ppr.FOVR();
 
-        // optional
         // calculate projection matrix
         extern void Svk_MatFrustum(float *result, float fLeft, float fRight, float fBottom, float fTop, float fNear, float fFar);
         Svk_MatFrustum(renderInfo.projectionMatrix, fLeft, fRight, fTop, fBottom, fNear, fFar);
+
+        extern void Svk_MatInverse(float *result, const float *m);
+        Svk_MatInverse(renderInfo.projectionMatrixInversed, renderInfo.projectionMatrix);
       }
     }
     
@@ -1029,19 +1033,39 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
     {
       const CPlacement3D &viewerPl = prProjection->ViewerPlacementR();
 
-      renderInfo.viewerPosition = viewerPl.pl_PositionVector;
-      MakeRotationMatrix(renderInfo.viewerRotation, viewerPl.pl_OrientationAngle);
+      // view position, rotation
+      {
+        renderInfo.viewerPosition = viewerPl.pl_PositionVector;
+        MakeRotationMatrix(renderInfo.viewerRotation, viewerPl.pl_OrientationAngle);
+      }
 
-      // optional
-      FLOAT3D v = -viewerPl.pl_PositionVector;
-      FLOATmatrix3D m;
-      MakeInverseRotationMatrix(m, viewerPl.pl_OrientationAngle);
+      auto fill = [] (float *glm, const FLOATmatrix3D &m, const FLOAT3D &v)
+      {
+        glm[0] = m(1, 1);  glm[4] = m(1, 2);  glm[8] = m(1, 3);   glm[12] = v(1);
+        glm[1] = m(2, 1);  glm[5] = m(2, 2);  glm[9] = m(2, 3);   glm[13] = v(2);
+        glm[2] = m(3, 1);  glm[6] = m(3, 2);  glm[10] = m(3, 3);  glm[14] = v(3);
+        glm[3] = 0;        glm[7] = 0;        glm[11] = 0;        glm[15] = 1;
+      };
 
-      float *glm = renderInfo.viewMatrix;
-      glm[0] = m(1, 1);  glm[4] = m(1, 2);  glm[8] = m(1, 3);   glm[12] = v(1);
-      glm[1] = m(2, 1);  glm[5] = m(2, 2);  glm[9] = m(2, 3);   glm[13] = v(2);
-      glm[2] = m(3, 1);  glm[6] = m(3, 2);  glm[10] = m(3, 3);  glm[14] = v(3);
-      glm[3] = 0;        glm[7] = 0;        glm[11] = 0;        glm[15] = 1;
+      // view
+      {
+        FLOAT3D v = -viewerPl.pl_PositionVector;
+
+        FLOATmatrix3D m;
+        MakeInverseRotationMatrix(m, viewerPl.pl_OrientationAngle);
+
+        fill(renderInfo.viewMatrix, m, v);
+      }
+
+      // view inversed
+      {
+        FLOAT3D v = viewerPl.pl_PositionVector;
+
+        FLOATmatrix3D m;
+        MakeRotationMatrix(m, viewerPl.pl_OrientationAngle);
+
+        fill(renderInfo.viewMatrixInversed, m, v);
+      }
     }
 
     _pGfx->gl_SSRT->ProcessWorld(renderInfo);

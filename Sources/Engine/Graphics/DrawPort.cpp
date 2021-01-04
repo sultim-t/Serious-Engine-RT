@@ -46,11 +46,14 @@ extern INDEX ogl_iFinish;
 extern INDEX d3d_iFinish;
 
 
+namespace SSRT
+{
 // Special static variables that are set in InitTexture(..) and used 
 // in FlushRenderingQueue(..). Those functions are used in the following pattern:
 // InitTexture -> AddTexture -> ... -> AddTexture -> FlushRenderingQueue
 static CTextureData *ssrt_pTextureData = nullptr;
 static GfxWrap ssrt_eWrap = GFX_REPEAT;
+}
 
 
 
@@ -1935,8 +1938,8 @@ void CDrawPort::InitTexture( class CTextureObject *pTO, const BOOL bClamp/*=FALS
     
     if (srt_bEnableRayTracing)
     {
-      ssrt_pTextureData = ptd;
-      ssrt_eWrap = eWrap;
+      SSRT::ssrt_pTextureData = ptd;
+      SSRT::ssrt_eWrap = eWrap;
     }
     else
     {
@@ -1947,7 +1950,7 @@ void CDrawPort::InitTexture( class CTextureObject *pTO, const BOOL bClamp/*=FALS
   {
     if (srt_bEnableRayTracing)
     {
-      ssrt_pTextureData = nullptr;
+      SSRT::ssrt_pTextureData = nullptr;
     }
 
     // no texture
@@ -2080,12 +2083,12 @@ void CDrawPort::FlushRenderingQueue(void) const
     hudInfo.blendEnable = true;
     hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
     hudInfo.blendFuncDst = GFX_INV_SRC_ALPHA;
-    hudInfo.textureEnable = ssrt_pTextureData != nullptr;
+    hudInfo.textureEnable = SSRT::ssrt_pTextureData != nullptr;
 
     if (hudInfo.textureEnable)
     {
-      hudInfo.textureData = ssrt_pTextureData;
-      hudInfo.textureWrapU = hudInfo.textureWrapV = ssrt_eWrap;
+      hudInfo.textureData = SSRT::ssrt_pTextureData;
+      hudInfo.textureWrapU = hudInfo.textureWrapV = SSRT::ssrt_eWrap;
     }
 
     hudInfo.pPositions = &_avtxCommon[0];
@@ -2098,7 +2101,7 @@ void CDrawPort::FlushRenderingQueue(void) const
     // indices will be set there
     _pGfx->gl_SSRT->ProcessHudElement(hudInfo);
 
-    ssrt_pTextureData = nullptr;
+    SSRT::ssrt_pTextureData = nullptr;
   }
 
   gfxFlushElements(); 
@@ -2111,12 +2114,6 @@ void CDrawPort::FlushRenderingQueue(void) const
 void CDrawPort::BlendScreen(void)
 {
   if( dp_ulBlendingA==0) return;
-
-  extern INDEX srt_bEnableRayTracing;
-  if (srt_bEnableRayTracing)
-  {
-
-  }
 
   ULONG fix1oA = 65536 / dp_ulBlendingA;
   ULONG ulRA = (dp_ulBlendingRA*fix1oA)>>16;

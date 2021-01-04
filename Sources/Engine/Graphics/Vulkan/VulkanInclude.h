@@ -134,6 +134,7 @@ void Svk_MatSetIdentity(float *result);
 void Svk_MatMultiply(float *result, const float *a, const float *b);
 void Svk_MatFrustum(float *result, float fLeft, float fRight, float fBottom, float fTop, float fNear, float fFar);
 void Svk_MatOrtho(float *result, float fLeft, float fRight, float fBottom, float fTop, float fNear, float fFar);
+void Svk_MatInverse(float *result, const float *m);
 
 #endif
 #endif
