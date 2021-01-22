@@ -1023,9 +1023,10 @@ void CDrawPort::Fill(PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight,
     if (eAPI == GAT_RT)
     {
       SSRT::CHudElementInfo hudInfo = {};
-      hudInfo.blendEnable = true;
-      hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
-      hudInfo.blendFuncDst = GFX_INV_SRC_ALPHA;
+      // hudInfo.blendEnable = true;
+      // hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
+      // hudInfo.blendFuncDst = GFX_INV_SRC_ALPHA;
+      hudInfo.textureData = nullptr;
 
       hudInfo.pPositions = &_avtxCommon[0];
       hudInfo.pTexCoords = &_atexCommon[0];
@@ -1740,10 +1741,9 @@ void CDrawPort::PutText( const CTString &strText, PIX pixX0, PIX pixY0, const CO
   if (eAPI == GAT_RT && _avtxCommon.Count() > 0)
   {
     SSRT::CHudElementInfo hudInfo = {};
-    hudInfo.blendEnable = true;
-    hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
-    hudInfo.blendFuncDst = GFX_INV_SRC_ALPHA;
-    hudInfo.textureEnable = true;
+    // hudInfo.blendEnable = true;
+    // hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
+    // hudInfo.blendFuncDst = GFX_INV_SRC_ALPHA;
     hudInfo.textureData = &td;
     hudInfo.textureWrapU = hudInfo.textureWrapV = GFX_REPEAT;
 
@@ -1904,10 +1904,9 @@ void CDrawPort::PutTexture( class CTextureObject *pTO,
   if (eAPI == GAT_RT)
   {    
     SSRT::CHudElementInfo hudInfo = {};
-    hudInfo.blendEnable = true;
-    hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
-    hudInfo.blendFuncDst = GFX_INV_SRC_ALPHA;
-    hudInfo.textureEnable = true;
+    // hudInfo.blendEnable = true;
+    // hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
+    // hudInfo.blendFuncDst = GFX_INV_SRC_ALPHA;
     hudInfo.textureData = ptd;
     hudInfo.textureWrapU = hudInfo.textureWrapV = GFX_REPEAT;
 
@@ -2086,16 +2085,13 @@ void CDrawPort::FlushRenderingQueue(void) const
   if (eAPI == GAT_RT)
   {
     SSRT::CHudElementInfo hudInfo = {};
-    hudInfo.blendEnable = true;
-    hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
-    hudInfo.blendFuncDst = GFX_INV_SRC_ALPHA;
-    hudInfo.textureEnable = SSRT::ssrt_pTextureData != nullptr;
+    // hudInfo.blendEnable = true;
+    // hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
+    // hudInfo.blendFuncDst = GFX_INV_SRC_ALPHA;
 
-    if (hudInfo.textureEnable)
-    {
-      hudInfo.textureData = SSRT::ssrt_pTextureData;
-      hudInfo.textureWrapU = hudInfo.textureWrapV = SSRT::ssrt_eWrap;
-    }
+    // ssrt_pTextureData can be nullptr
+    hudInfo.textureData = SSRT::ssrt_pTextureData;
+    hudInfo.textureWrapU = hudInfo.textureWrapV = SSRT::ssrt_eWrap;
 
     hudInfo.pPositions = &_avtxCommon[0];
     hudInfo.pTexCoords = &_atexCommon[0];
@@ -2163,11 +2159,11 @@ void CDrawPort::BlendScreen(void)
   if (eAPI == GAT_RT && _avtxCommon.Count() > 0)
   {
     SSRT::CHudElementInfo hudInfo = {};
-    hudInfo.blendEnable = true;
-    hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
-    hudInfo.blendFuncDst = GFX_INV_SRC_ALPHA;
-    hudInfo.textureEnable = false;
-
+    // hudInfo.blendEnable = true;
+    // hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
+    // hudInfo.blendFuncDst = GFX_INV_SRC_ALPHA;
+    hudInfo.textureData = nullptr;
+    
     hudInfo.pPositions = pvtx;
     hudInfo.pTexCoords = ptex;
     hudInfo.pColors = pcol;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2020 Sultim Tsyrendashiev
+/* Copyright (c) 2020-2021 Sultim Tsyrendashiev
 This program is free software; you can redistribute it and/or modify
 it under the terms of version 2 of the GNU General Public License as published by
 the Free Software Foundation
@@ -19,38 +19,24 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <stdio.h>
 
-#include <Engine/Base/Shell.h>
-#include <Engine/World/World.h>
 #include <Engine/Graphics/ViewPort.h>
+#include <Engine/World/World.h>
 
 #include <Engine/Templates/DynamicContainer.cpp>
 
 #include <Engine/Raytracing/SSRTObjects.h>
-#include <Engine/Raytracing/RTProcessing.h>
-
 
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
 
-
-#define RG_CHECKERROR(x) ASSERT(x == RG_SUCCESS)
-
-
-extern CShell *_pShell;
-
-
-// dump brushes and models to .obj files;
-// use it with care, all calls must be done for one frame
-// (offsets are local static variables)
-#define DUMP_GEOMETRY_TO_OBJ 0
-#if DUMP_GEOMETRY_TO_OBJ
-static void ExportGeometry(const CAbstractGeometry &geom, INDEX offset, const char *path)
-#endif
-
-
-namespace SSRT
-{
-void SSRTMain::Init()
+SSRT::SSRTMain::SSRTMain() :
+  worldRenderInfo({}),
+  currentScene(nullptr),
+  currentFirstPersonModelCount(0),
+  isFrameStarted(false),
+  curWindowWidth(0),
+  curWindowHeight(0),
+  instance(RG_NULL_HANDLE)
 {
   RgInstanceCreateInfo info = {};
   info.name = "Serious Engine RT";
@@ -61,7 +47,8 @@ void SSRTMain::Init()
   info.vertexNormalStride = sizeof(GFXNormal);
   info.vertexTexCoordStride = sizeof(GFXTexCoord);
   info.vertexColorStride = sizeof(uint32_t);
-  info.rasterizedDataBufferSize = 32 * 1024 * 1024;
+  info.rasterizedMaxIndexCount = 8192;
+  info.rasterizedMaxVertexCount = 4096;
 
   const char *pWindowExtensions[] = {
     VK_KHR_SURFACE_EXTENSION_NAME,
@@ -100,428 +87,135 @@ void SSRTMain::Init()
   RG_CHECKERROR(r);
 }
 
-void SSRTMain::Destroy()
+SSRT::SSRTMain::~SSRTMain()
 {
+  if (currentScene != nullptr)
+  {
+    delete currentScene;
+    currentScene = nullptr;
+  }
+
   worldRenderInfo = {};
-  currentWorldName.Clear();
   currentFirstPersonModelCount = 0;
 
   curWindowWidth = 0;
   curWindowHeight = 0;
 
-  models.clear();
-  staticBrushes.clear();
-  movableBrushes.clear();
-  sphLights.clear();
-  dirLights.clear();
-
-  entityToModel.clear();
-  entityToStaticBrush.clear();
-  entityToMovableBrush.clear();
-
-  if (instance != 0)
+  if (instance != RG_NULL_HANDLE)
   {
-    rgDestroyInstance(instance);
-
-    instance = 0;
-  }
-}
-
-SSRTMain::SSRTMain() :
-  worldRenderInfo({}),
-  currentFirstPersonModelCount(0),
-  isFrameStarted(false),
-  curWindowWidth(0),
-  curWindowHeight(0),
-  instance(0)
-{}
-
-SSRTMain::~SSRTMain()
-{
-  Destroy();
-}
-
-void SSRTMain::CopyTransform(RgTransform &dst, const CAbstractGeometry &src)
-{
-  for (uint32_t i = 0; i < 3; i++)
-  {
-    for (uint32_t j = 0; j < 3; j++)
-    {
-      dst.matrix[i][j] = src.absRotation.matrix[i][j];
-    }
-  }
-
-  dst.matrix[0][3] = src.absPosition(1);
-  dst.matrix[1][3] = src.absPosition(2);
-  dst.matrix[2][3] = src.absPosition(3);
-}
-
-void SSRTMain::AddModel(const CModelGeometry &model)
-{
-  if (model.vertices == nullptr || model.vertexCount == 0 
-      || model.indices == nullptr || model.indexCount == 0)
-  {
-    return;
-  }
-
-#if DUMP_GEOMETRY_TO_OBJ
-  static INDEX offset = 0;
-  ExportGeometry(model, offset, "MODELS.obj");
-  offset += model.vertexCount;
-#endif
-
-  AddRTObject(model, models, entityToModel);
-
-  // send info to RTGL1
-  RgGeometryUploadInfo dnInfo = {};
-  dnInfo.geomType = RG_GEOMETRY_TYPE_DYNAMIC;
-  dnInfo.vertexCount = model.vertexCount;
-  dnInfo.vertexData = (float *) model.vertices;
-  dnInfo.normalData = (float *) model.normals;
-  dnInfo.texCoordData = (float *) model.texCoords;
-  dnInfo.colorData = nullptr;
-  dnInfo.indexCount = model.indexCount;
-  dnInfo.indexData = (uint32_t *) model.indices;
-  dnInfo.geomMaterial = {
-    RG_NO_TEXTURE,
-    RG_NO_TEXTURE,
-    RG_NO_TEXTURE
-  };
-  CopyTransform(dnInfo.transform, model);
-
-  RgGeometry geomId;
-  RgResult r = rgUploadGeometry(instance, &dnInfo, &geomId);
-  RG_CHECKERROR(r);
-}
-
-
-void SSRTMain::AddBrush(const CBrushGeometry &brush, bool isMovable)
-{
-  if (brush.vertices == nullptr || brush.vertexCount == 0
-      || brush.indices == nullptr || brush.indexCount == 0)
-  {
-    return;
-  }
-
-  auto &brushArray = isMovable ? movableBrushes : staticBrushes;
-  auto &entityToBrush = isMovable ? entityToMovableBrush : entityToStaticBrush;
-
-  auto &found = entityToBrush.find(brush.entityID);
-
-  // if it's already added
-  if (found != entityToBrush.end())
-  {
-    // entity must have only 1 brush
-    // TODO: RT: delete "entityToBrush" maps?
-    ASSERT(found->second.size() == 1);
-    ASSERT(brush.entityID == brushArray[found->second[0]].entityID);
-
-    auto &targetBrush = brushArray[found->second[0]];
-    
-    targetBrush.isEnabled = brush.isEnabled;
-    targetBrush.absPosition = brush.absPosition;
-    targetBrush.absRotation = brush.absRotation;
-    targetBrush.color = brush.color;
-
-    RgUpdateTransformInfo updateInfo = {};
-    updateInfo.movableStaticGeom = targetBrush.rgGeomId;
-    CopyTransform(updateInfo.transform, targetBrush);
-
-    RgGeometry geomId;
-    RgResult r = rgUpdateGeometryTransform(instance, &updateInfo);
+    RgResult r = rgDestroyInstance(instance);
     RG_CHECKERROR(r);
 
-    return;
+    instance = RG_NULL_HANDLE;
   }
-
-  if (brush.vertices == nullptr || brush.vertexCount == 0 ||
-      brush.indices == nullptr || brush.indexCount == 0)
-  {
-    return;
-  }
-
-#if DUMP_GEOMETRY_TO_OBJ
-  static INDEX offset = 0;
-  ExportGeometry(brush, offset, "BRUSHES.obj");
-  offset += brush.vertexCount;
-#endif
-
-  AddRTObject(brush, brushArray, entityToBrush);
-
-  // send info to RTGL1
-  RgGeometryUploadInfo stInfo = {};
-  stInfo.geomType = isMovable ? RG_GEOMETRY_TYPE_STATIC_MOVABLE : RG_GEOMETRY_TYPE_STATIC;
-  stInfo.vertexCount = brush.vertexCount;
-  stInfo.vertexData = (float*)brush.vertices;
-  stInfo.normalData = (float*)brush.normals;
-  stInfo.texCoordData = (float*)brush.texCoords;
-  stInfo.colorData = nullptr;
-  stInfo.indexCount = brush.indexCount;
-  stInfo.indexData = (uint32_t*)brush.indices;
-  stInfo.geomMaterial = {
-    RG_NO_TEXTURE,
-    RG_NO_TEXTURE,
-    RG_NO_TEXTURE
-  };
-
-  CopyTransform(stInfo.transform, brush);
-
-  RgGeometry geomId;
-  RgResult r = rgUploadGeometry(instance, &stInfo, &geomId);
-  RG_CHECKERROR(r);
 }
 
-void SSRTMain::AddLight(const CSphereLight &sphLt)
+void SSRT::SSRTMain::StartFrame(CViewPort *pvp)
 {
-  sphLights.push_back(sphLt);
-}
-
-void SSRTMain::AddLight(const CDirectionalLight &dirLt)
-{
-  dirLights.push_back(dirLt);
-}
-
-CWorld *SSRTMain::GetCurrentWorld()
-{
-#ifdef _WIN64
-  CWorld *pwo = (CWorld *) _pShell->GetUINT64("pwoCurrentWorld64_0", "pwoCurrentWorld64_1");
-#else
-  CWorld *pwo = (CWorld *) _pShell->GetINDEX("pwoCurrentWorld");
-#endif
-
-  return pwo;
-}
-
-void SSRTMain::StartFrame(CViewPort *pvp)
-{
-
   curWindowWidth = pvp->vp_Raster.ra_Width;
   curWindowHeight = pvp->vp_Raster.ra_Height;
 }
 
-void SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
+void SSRT::SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
 {
-  CWorld *world = info.world;
-
-  CWorld *pwo = GetCurrentWorld();
-  ASSERT(world == pwo);
-
-  if (world == nullptr)
-  {
-    return;
-  }
-
-  // INIT
-  if (instance == 0)
-  {
-    Init();
-  }
-
-  // START FRAME
+#pragma region START FRAME
+  // TODO: MOVE OUT
   {
     currentFirstPersonModelCount = 0;
 
-    CWorld *pwo = GetCurrentWorld();
-    if (pwo == nullptr)
-    {
-      StopWorld();
-    }
-
-    RgResult r = rgStartFrame(instance, curWindowWidth, curWindowHeight);
+    RgResult r = rgStartFrame(instance, curWindowWidth, curWindowHeight, true);
     RG_CHECKERROR(r);
 
     isFrameStarted = true;
-
   }
-  
-  // check if need to reload new world
-  if (world->GetName() != currentWorldName)
+#pragma endregion
+
+
+
+  // if no world
+  if (info.world == nullptr)
   {
-    SetWorld(world);
+    // delete current scene
+    if (currentScene != nullptr)
+    {
+      delete currentScene;
+      currentScene = nullptr;
+    }
+
+    return;
+  }
+
+  // if a new world was requested, recreate the scene
+  if (currentScene == nullptr || info.world->GetName() != currentScene->GetWorldName())
+  {
+    if (currentScene!= nullptr)
+    {
+      delete currentScene;
+    }
+
+    currentScene = new Scene(instance, info.world);
   }
 
   worldRenderInfo = info;
 
-  // check all movable brushes, models and light sources
-  FOREACHINDYNAMICCONTAINER(world->wo_cenEntities, CEntity, iten)
+  // update models and movable brushes in scene
+  currentScene->Update(info.viewerEntityID);
+
+
+
+#pragma region END FRAME
+  // TODO: DELETE
   {
-    if (iten->en_ulID == info.viewerEntityID)
-    {
-      continue;
-    }
-
-    if (iten->en_RenderType == CEntity::RT_MODEL)
-    {
-      // add it as a model and scan for light sources
-      RT_AddModelEntity(&iten.Current(), this);
-    }
-    else if (iten->en_RenderType == CEntity::RT_BRUSH && (iten->en_ulPhysicsFlags & EPF_MOVABLE))
-    {
-      if ((iten->en_ulFlags & ENF_HIDDEN) || (iten->en_ulFlags & ENF_ZONING))
-      {
-        return;
-      }
-
-      // if it's a movable brush
-      const CPlacement3D &placement = iten->GetLerpedPlacement();
-
-      FLOAT3D position = placement.pl_PositionVector;
-      FLOATmatrix3D rotation;
-      MakeRotationMatrix(rotation, placement.pl_OrientationAngle);
-
-      // update its transform
-      CBrushGeometry brushInfo = {};
-      brushInfo.entityID = iten->en_ulID;
-      brushInfo.isEnabled = true;
-      brushInfo.absPosition = position;
-      brushInfo.absRotation = rotation;
-
-      // leave vertex data empty, it won't be updated
-      AddBrush(brushInfo, true);
-    }
+    EndFrame();
   }
-
-  // END FRAME
-  {
-    if (!isFrameStarted)
-    {
-      return;
-    }
-
-    RgDrawFrameInfo frameInfo = {};
-    frameInfo.renderWidth = curWindowWidth;
-    frameInfo.renderHeight = curWindowHeight;
-
-    memcpy(frameInfo.view, worldRenderInfo.viewMatrix, 16 * sizeof(float));
-    memcpy(frameInfo.viewInversed, worldRenderInfo.viewMatrixInversed, 16 * sizeof(float));
-    memcpy(frameInfo.projection, worldRenderInfo.projectionMatrix, 16 * sizeof(float));
-    memcpy(frameInfo.projectionInversed, worldRenderInfo.projectionMatrixInversed, 16 * sizeof(float));
-
-    RgResult r = rgDrawFrame(instance, &frameInfo);
-    RG_CHECKERROR(r);
-
-    // models will be rescanned in the beginning of the frame
-    // it's done because of dynamic vertex data
-    entityToModel.clear();
-    models.clear();
-
-    // lights will be readded too
-    sphLights.clear();
-    dirLights.clear();
-
-    isFrameStarted = false;
-  }
-
-#if DUMP_GEOMETRY_TO_OBJ
-  // stop program to prevent dump file grow
-  ASSERTALWAYS("Geometry was dumped. App will be terminated.");
-#endif
+#pragma endregion 
 }
 
-void SSRTMain::ProcessFirstPersonModel(const CFirstPersonModelInfo &info)
+void SSRT::SSRTMain::ProcessFirstPersonModel(const CFirstPersonModelInfo &info)
 {
   //RT_AddFirstPersonModel(info.modelObject, info.renderModel, SSRT_FIRSTPERSON_ENTITY_START_ID + currentFirstPersonModelCount, this);
   currentFirstPersonModelCount++;
 }
 
-void SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
+void SSRT::SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
 {
-  // RT: TODO: send hud info to RTGL1
-}
-
-void SSRTMain::EndFrame()
-{
-}
-
-void SSRTMain::SetWorld(CWorld *pwld)
-{
-  currentWorldName = pwld->GetName();
-
-  RgResult r = rgStartNewScene(instance);
-  RG_CHECKERROR(r);
-
-  // find all brushes, their geomtry won't change,
-  // but movable brushes have dynamic transformation 
-  // and they'll be updated on a frame start
-
-  FOREACHINDYNAMICCONTAINER(pwld->wo_cenEntities, CEntity, iten)
-  {
-    // if it is any brush
-    if (iten->en_RenderType == CEntity::RT_BRUSH)
-    {
-      // add all of its sectors
-      RT_AddNonZoningBrush(&iten.Current(), NULL, this);
-    }
-  }
-
-  r = rgSubmitStaticGeometries(instance);
-  RG_CHECKERROR(r);
-}
-
-void SSRTMain::StopWorld()
-{
-  //RgResult r;
-
-  //r = rgStartNewScene(instance);
-  //RG_CHECKERROR(r);
-
-  //r = rgSubmitStaticGeometries(instance);
-  //RG_CHECKERROR(r);
-
-  currentWorldName = "";
-
-  models.clear();
-  staticBrushes.clear();
-  movableBrushes.clear();
-  sphLights.clear();
-  dirLights.clear();
-
-  entityToModel.clear();
-  entityToStaticBrush.clear();
-  entityToMovableBrush.clear();
-}
-
-}
-
-
-#if DUMP_GEOMETRY_TO_OBJ
-static void ExportGeometry(const CAbstractGeometry &geom, INDEX offset, const char *path)
-{
-  FILE *file = fopen(path, "a");
-  if (file == nullptr)
+  if (!isFrameStarted)
   {
     return;
   }
 
-  for (INDEX i = 0; i < geom.vertexCount; i++)
-  {
-    FLOAT3D p = FLOAT3D(geom.vertices[i].x, geom.vertices[i].y, geom.vertices[i].z);
-    FLOAT3D n = geom.normals ? FLOAT3D(geom.normals[i].nx, geom.normals[i].ny, geom.normals[i].nz) : FLOAT3D(0, 1, 0);
-    FLOAT2D t = geom.texCoords ? FLOAT2D(geom.texCoords[i].s, geom.texCoords[i].t) : FLOAT2D();
+  RgRasterizedGeometryUploadInfo rasterInfo = {};
+  rasterInfo.vertexCount = hud.vertexCount;
+  rasterInfo.vertexData = (float*)hud.pPositions;
+  rasterInfo.vertexStride = sizeof(GFXVertex4);
+  rasterInfo.texCoordData = (float*)hud.pTexCoords;
+  rasterInfo.texCoordStride = sizeof(GFXTexCoord);
+  rasterInfo.colorData = (uint32_t*)hud.pColors;
+  rasterInfo.colorStride = sizeof(GFXColor);
+  rasterInfo.indexCount = hud.indexCount;
+  rasterInfo.indexData = (uint32_t*)hud.pIndices;
+  rasterInfo.textures = { RG_NO_MATERIAL,RG_NO_MATERIAL, RG_NO_MATERIAL };
 
-    p = p * geom.absRotation + geom.absPosition;
-    n = n * geom.absRotation;
-
-    fprintf(file, "v %.3f %.3f %.3f\n", p(1), p(2), p(3));
-    fprintf(file, "vn %.3f %.3f %.3f\n", n(1), n(2), n(3));
-    fprintf(file, "vt %.3f %.3f\n", t(1), t(2));
-  }
-
-  fprintf(file, "g %d\n", geom.entityID);
-
-  INDEX triangleCount = geom.indexCount / 3;
-
-  for (INDEX i = 0; i < triangleCount; i++)
-  {
-    // obj indices start with 1
-    INDEX a = geom.indices[i * 3 + 0] + offset + 1;
-    INDEX b = geom.indices[i * 3 + 1] + offset + 1;
-    INDEX c = geom.indices[i * 3 + 2] + offset + 1;
-
-    fprintf(file, "f %d/%d/%d %d/%d/%d %d/%d/%d\n", a, a, a, b, b, b, c, c, c);
-  }
-
-  fclose(file);
+  RgResult r = rgUploadRasterizedGeometry(instance, &rasterInfo);
+  RG_CHECKERROR(r);
 }
-#endif
 
+void SSRT::SSRTMain::EndFrame()
+{
+  if (!isFrameStarted)
+  {
+    return;
+  }
+
+  RgDrawFrameInfo frameInfo = {};
+  frameInfo.renderWidth = curWindowWidth;
+  frameInfo.renderHeight = curWindowHeight;
+
+  memcpy(frameInfo.view,        worldRenderInfo.viewMatrix,       16 * sizeof(float));
+  memcpy(frameInfo.projection,  worldRenderInfo.projectionMatrix, 16 * sizeof(float));
+
+  RgResult r = rgDrawFrame(instance, &frameInfo);
+  RG_CHECKERROR(r);
+
+  isFrameStarted = false;
+}

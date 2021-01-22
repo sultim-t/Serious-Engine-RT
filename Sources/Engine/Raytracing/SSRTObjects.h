@@ -1,4 +1,4 @@
-/* Copyright (c) 2020 Sultim Tsyrendashiev
+/* Copyright (c) 2020-2021 Sultim Tsyrendashiev
 This program is free software; you can redistribute it and/or modify
 it under the terms of version 2 of the GNU General Public License as published by
 the Free Software Foundation
@@ -18,6 +18,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Entities/Entity.h>
 #include <Engine/Brushes/Brush.h>
 #include <RTGL1/RTGL1.h>
+
+#define RG_CHECKERROR(x) ASSERT(x == RG_SUCCESS)
 
 class CRenderModel;
 
@@ -90,7 +92,7 @@ struct CAbstractGeometry : RTObject
   INDEX               indexCount;
   INDEX               *indices;
   // material ID for each triangle (i.e. for each 3 indices)
-  CTriangleMaterial   *materialIDs;
+  CTriangleMaterial   materials;
   RgGeometry          rgGeomId;
 };
 
@@ -146,6 +148,7 @@ struct CWorldRenderingInfo
   uint32_t        screenY;
   uint32_t        screenWidth;
   uint32_t        screenHeight;
+
   ULONG           viewerEntityID;
   CWorld          *world;
 
@@ -158,10 +161,8 @@ struct CWorldRenderingInfo
   // optional matrices
   // perspective projection matrix
   float           projectionMatrix[16];
-  float           projectionMatrixInversed[16];
   // view matrix
   float           viewMatrix[16];
-  float           viewMatrixInversed[16];
 };
 
 
@@ -177,11 +178,14 @@ struct CFirstPersonModelInfo
 // Note: depth test/write is disabled for HUD
 struct CHudElementInfo
 {
-  bool            alphaTest;
-  bool            blendEnable;
-  GfxBlend        blendFuncSrc;
-  GfxBlend        blendFuncDst;
-  bool            textureEnable;
+  // always FALSE
+  // bool            alphaTest;
+  // always TRUE
+  // bool            blendEnable;
+  // always GFX_SRC_ALPHA
+  //GfxBlend        blendFuncSrc;
+  // always GFX_INV_SRC_ALPHA
+  //GfxBlend        blendFuncDst;
   GfxWrap         textureWrapU;
   GfxWrap         textureWrapV;
   CTextureData    *textureData;

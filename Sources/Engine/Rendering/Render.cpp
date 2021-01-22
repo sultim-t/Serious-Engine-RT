@@ -61,8 +61,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Raytracing/SSRT.h>
 
-#include "Graphics/Vulkan/VulkanInclude.h"
-
 extern BOOL _bSomeDarkExists;
 extern INDEX d3d_bAlternateDepthReads;
 
@@ -1022,9 +1020,6 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
         // calculate projection matrix
         extern void Svk_MatFrustum(float *result, float fLeft, float fRight, float fBottom, float fTop, float fNear, float fFar);
         Svk_MatFrustum(renderInfo.projectionMatrix, fLeft, fRight, fTop, fBottom, fNear, fFar);
-
-        extern void Svk_MatInverse(float *result, const float *m);
-        Svk_MatInverse(renderInfo.projectionMatrixInversed, renderInfo.projectionMatrix);
       }
     }
     
@@ -1048,26 +1043,21 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
 
       // view
       {
-        FLOAT3D v = -viewerPl.pl_PositionVector;
-
-        FLOATmatrix3D m;
-        MakeInverseRotationMatrix(m, viewerPl.pl_OrientationAngle);
-
-        fill(renderInfo.viewMatrix, m, v);
-      }
-
-      // view inversed
-      {
         FLOAT3D v = viewerPl.pl_PositionVector;
 
         FLOATmatrix3D m;
         MakeRotationMatrix(m, viewerPl.pl_OrientationAngle);
 
-        fill(renderInfo.viewMatrixInversed, m, v);
+        float invViewerTransform[16];
+        fill(invViewerTransform, m, v);
 
-        renderInfo.viewMatrixInversed[4] = -renderInfo.viewMatrixInversed[4];
-        renderInfo.viewMatrixInversed[5] = -renderInfo.viewMatrixInversed[5];
-        renderInfo.viewMatrixInversed[6] = -renderInfo.viewMatrixInversed[6];
+        // invert Y axis
+        invViewerTransform[4] = -invViewerTransform[4];
+        invViewerTransform[5] = -invViewerTransform[5];
+        invViewerTransform[6] = -invViewerTransform[6];
+
+        extern void Svk_MatInverse(float *result, const float *m);
+        Svk_MatInverse(renderInfo.viewMatrix, invViewerTransform);
       }
     }
 

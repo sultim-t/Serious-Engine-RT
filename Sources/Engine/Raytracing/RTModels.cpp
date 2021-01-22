@@ -1,4 +1,4 @@
-/* Copyright (c) 2020 Sultim Tsyrendashiev
+/* Copyright (c) 2020-2021 Sultim Tsyrendashiev
 This program is free software; you can redistribute it and/or modify
 it under the terms of version 2 of the GNU General Public License as published by
 the Free Software Foundation
@@ -43,7 +43,7 @@ struct RT_VertexData
 };
 
 
-static void RT_AddLight(const CLightSource *plsLight, SSRT::SSRTMain *ssrt)
+static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *scene)
 {
   ASSERT(plsLight != NULL);
 
@@ -77,7 +77,7 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::SSRTMain *ssrt)
     // for a reference: sun is 0.5 degrees
     light.angularSize = 5.0f;
 
-    ssrt->AddLight(light);
+    scene->AddLight(light);
   }
   else
   {
@@ -93,7 +93,7 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::SSRTMain *ssrt)
     light.intensity = 1.0f;
     light.sphereRadius = radius;
 
-    ssrt->AddLight(light);
+    scene->AddLight(light);
   }
 }
 
@@ -199,7 +199,7 @@ static BOOL RT_CreateAttachment(const CModelObject &moParent, const CRenderModel
 
 
 //void CModelObject::SetupModelRendering( CRenderModel &rm)
-static void RT_SetupModelRendering(const CModelObject &mo, CRenderModel &rm, SSRT::SSRTMain *ssrt)
+static void RT_SetupModelRendering(const CModelObject &mo, CRenderModel &rm, SSRT::Scene *scene)
 {
   // get model's data and lerp info, GetData()
   rm.rm_pmdModelData = (CModelData *)mo.ao_AnimData;
@@ -302,7 +302,7 @@ static void RT_SetupModelRendering(const CModelObject &mo, CRenderModel &rm, SSR
     RT_CreateAttachment(mo, rm, *pamo);
     
     // prepare if visible
-    RT_SetupModelRendering(pamo->amo_moModelObject, *pamo->amo_prm, ssrt);
+    RT_SetupModelRendering(pamo->amo_moModelObject, *pamo->amo_prm, scene);
   }
 }
 
@@ -312,7 +312,7 @@ static void RT_SetupModelRendering(const CModelObject &mo, CRenderModel &rm, SSR
 static void RT_RenderOneSide(ULONG entityID, CRenderModel &rm,
                       const RT_VertexData &vd, BOOL bBackSide, 
                       const INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH], INDEX attchCount,
-                      SSRT::SSRTMain *ssrt)
+                      SSRT::Scene *scene)
 {
   // set face culling
   if (bBackSide)
@@ -414,14 +414,14 @@ static void RT_RenderOneSide(ULONG entityID, CRenderModel &rm,
       modelInfo.attchPath[i] = attchPath[i];
     }
 
-    ssrt->AddModel(modelInfo);
+    scene->AddModel(modelInfo);
   }
 }
 
 
 
 static void RT_RenderModel_View(ULONG entityID, const CModelObject &mo, CRenderModel &rm,
-                         const INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH], INDEX attchCount, SSRT::SSRTMain *ssrt)
+                         const INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH], INDEX attchCount, SSRT::Scene *scene)
 //void CModelObject::RenderModel_View(CRenderModel &rm)
 {
   // TODO: RT: use this if some additional transformation is required for weapons
@@ -680,7 +680,7 @@ static void RT_RenderModel_View(ULONG entityID, const CModelObject &mo, CRenderM
 
     // RT: everything is set, copy model data to SSRT
     //RT_RenderOneSide(rm, TRUE);
-    RT_RenderOneSide(entityID, rm, vd, FALSE, attchPath, attchCount, ssrt);
+    RT_RenderOneSide(entityID, rm, vd, FALSE, attchPath, attchCount, scene);
   }
 
   // adjust z-buffer and blending functions
@@ -707,7 +707,7 @@ static void RT_RenderModel_View(ULONG entityID, const CModelObject &mo, CRenderM
 
 
 //void CModelObject::RenderModel(CRenderModel &rm)
-static void RT_RenderModel(ULONG entityID, const CModelObject &mo, CRenderModel &rm, INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH], INDEX attchCount, SSRT::SSRTMain *ssrt)
+static void RT_RenderModel(ULONG entityID, const CModelObject &mo, CRenderModel &rm, INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH], INDEX attchCount, SSRT::Scene *scene)
 {
   // skip invisible models
   if (mo.mo_Stretch == FLOAT3D(0, 0, 0)) return;
@@ -722,7 +722,7 @@ static void RT_RenderModel(ULONG entityID, const CModelObject &mo, CRenderModel 
     //if (rm.rm_ulFlags & (RMF_FOG | RMF_HAZE)) CalculateBoundingBox(this, rm);
     // render complete model
     //rm.SetModelView();
-    RT_RenderModel_View(entityID, mo, rm, attchPath, attchCount, ssrt);
+    RT_RenderModel_View(entityID, mo, rm, attchPath, attchCount, scene);
   }
 
   // if too many attachments on attachments
@@ -745,7 +745,7 @@ static void RT_RenderModel(ULONG entityID, const CModelObject &mo, CRenderModel 
     // we're assuming that each attachment uses its unique amo_iAttachedPosition
     attchPath[attchCount] = pamo->amo_iAttachedPosition;
     
-    RT_RenderModel(entityID, pamo->amo_moModelObject, *pamo->amo_prm, attchPath, attchCount + 1, ssrt);
+    RT_RenderModel(entityID, pamo->amo_moModelObject, *pamo->amo_prm, attchPath, attchCount + 1, scene);
   }
 }
 
@@ -754,7 +754,7 @@ static void RT_RenderModel(ULONG entityID, const CModelObject &mo, CRenderModel 
 //                               const FLOAT fDistanceFactor, BOOL bRenderShadow, ULONG ulDMFlags)
 static void RT_RenderOneModel(const CEntity &en, const CModelObject &moModel, const CPlacement3D &plModel,
                        const FLOAT fDistanceFactor, BOOL bRenderShadow, ULONG ulDMFlags, 
-                       SSRT::SSRTMain *ssrt)
+                       SSRT::Scene *scene)
 {
   // skip invisible models
   if (moModel.mo_Stretch == FLOAT3D(0, 0, 0)) return;
@@ -772,7 +772,7 @@ static void RT_RenderOneModel(const CEntity &en, const CModelObject &moModel, co
   //if (ulDMFlags & DMF_FOG)      rm.rm_ulFlags |= RMF_FOG;
   //if (ulDMFlags & DMF_HAZE)     rm.rm_ulFlags |= RMF_HAZE;
 
-  ULONG viewerEntityID = -1; // ssrt->GetViewerEntityID();
+  ULONG viewerEntityID = -1; // scene->GetViewerEntityID();
 
   // mark that we don't actualy need entire model
   if (viewerEntityID == en.en_ulID)
@@ -786,7 +786,7 @@ static void RT_RenderOneModel(const CEntity &en, const CModelObject &moModel, co
   }*/
 
   // prepare CRenderModel structure for rendering of one model
-  RT_SetupModelRendering(moModel, rm, ssrt);
+  RT_SetupModelRendering(moModel, rm, scene);
 
   // if the entity is not the viewer, or this is not primary renderer
   if (viewerEntityID != en.en_ulID)
@@ -800,7 +800,7 @@ static void RT_RenderOneModel(const CEntity &en, const CModelObject &moModel, co
     }
 
     // RT: process a model with all its attachmnets
-    RT_RenderModel(en.en_ulID, moModel, rm, attchPath, 0, ssrt);
+    RT_RenderModel(en.en_ulID, moModel, rm, attchPath, 0, scene);
   }
   else
   {
@@ -816,7 +816,7 @@ static void RT_RenderOneModel(const CEntity &en, const CModelObject &moModel, co
 
 
 // CRenderer::RenderModels(BOOL bBackground)
-static void RT_Post_RenderModels(const CEntity &en, const CModelObject &mo, SSRT::SSRTMain *ssrt)
+static void RT_Post_RenderModels(const CEntity &en, const CModelObject &mo, SSRT::Scene *scene)
 {
   if (!gfx_bRenderModels)
   {
@@ -831,11 +831,11 @@ static void RT_Post_RenderModels(const CEntity &en, const CModelObject &mo, SSRT
     return;
   }
 
-  RT_RenderOneModel(en, mo, en.GetLerpedPlacement(), 0, TRUE, 0, ssrt);
+  RT_RenderOneModel(en, mo, en.GetLerpedPlacement(), 0, TRUE, 0, scene);
 }
 
 
-void RT_AddModelEntity(const CEntity *penModel, SSRT::SSRTMain *ssrt)
+void RT_AddModelEntity(const CEntity *penModel, SSRT::Scene *scene)
 {
   // if the entity is currently active or hidden, don't add it again
   if (penModel->en_ulFlags & (ENF_INRENDERING | ENF_HIDDEN))
@@ -853,7 +853,7 @@ void RT_AddModelEntity(const CEntity *penModel, SSRT::SSRTMain *ssrt)
   const CLightSource *pls = ((CEntity *) penModel)->GetLightSource();
   if (pls != NULL)
   {
-    RT_AddLight(pls, ssrt);
+    RT_AddLight(pls, scene);
   }
 
   // get its model object
@@ -904,13 +904,13 @@ void RT_AddModelEntity(const CEntity *penModel, SSRT::SSRTMain *ssrt)
   //dm.dm_ulFlags |= DMF_VISIBLE;
 
   // RT: call it here to bypass re_admDelayedModels list
-  RT_Post_RenderModels(*penModel, *pmoModelObject, ssrt);
+  RT_Post_RenderModels(*penModel, *pmoModelObject, scene);
 }
 
 
-void RT_AddFirstPersonModel(const CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::SSRTMain *ssrt)
+void RT_AddFirstPersonModel(const CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::Scene *scene)
 {
-  RT_SetupModelRendering(*mo, *rm, ssrt);
+  RT_SetupModelRendering(*mo, *rm, scene);
 
   // attachment path for SSRT::CModelGeometry,
   INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH];
@@ -921,7 +921,7 @@ void RT_AddFirstPersonModel(const CModelObject *mo, CRenderModel *rm, ULONG enti
   }
 
   // RT: process a model with all its attachmnets
-  RT_RenderModel(entityId, *mo, *rm, attchPath, 0, ssrt);
+  RT_RenderModel(entityId, *mo, *rm, attchPath, 0, scene);
 
   extern CStaticStackArray<CRenderModel> _armRenderModels;
   _armRenderModels.PopAll();

@@ -15,14 +15,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #pragma once
 
-namespace SSRT
+#include "SSRTObjects.h"
+
+class Utils
 {
-class Scene;
-}
-
-class CRenderModel;
-
-void RT_AddNonZoningBrush(CEntity *penBrush, SSRT::Scene *scene);
-
-void RT_AddModelEntity(const CEntity *penModel, SSRT::Scene *ssrt);
-void RT_AddFirstPersonModel(const CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::Scene *scene);
+public:
+  static CWorld *GetCurrentWorld();
+  static void CopyTransform(RgTransform &dst, const SSRT::CAbstractGeometry &src);
+  static void CopyTransform(RgTransform &dst, const CPlacement3D &placement);
+};

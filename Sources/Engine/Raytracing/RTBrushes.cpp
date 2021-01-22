@@ -1,4 +1,4 @@
-/* Copyright (c) 2020 Sultim Tsyrendashiev
+/* Copyright (c) 2020-2021 Sultim Tsyrendashiev
 This program is free software; you can redistribute it and/or modify
 it under the terms of version 2 of the GNU General Public License as published by
 the Free Software Foundation
@@ -30,7 +30,7 @@ static CStaticStackArray<INDEX> RT_AllSectorIndices;
 static CStaticStackArray<INDEX> RT_AllBrushMaterialIndices;
 
 
-static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
+static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::Scene *scene)
 {
   CBrush3D *brush = bscSector.bsc_pbmBrushMip->bm_pbrBrush;
   if (brush->br_pfsFieldSettings != NULL)
@@ -45,7 +45,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
     // for texture cordinates and transparency/translucency processing
   #pragma region MakeScreenPolygon
 
-    if ((polygon.bpo_ulFlags & BPOF_PORTAL) || (polygon.bpo_ulFlags & BPOF_INVISIBLE))
+    if ((polygon.bpo_ulFlags & BPOF_PORTAL)/* || (polygon.bpo_ulFlags & BPOF_INVISIBLE)*/)
     {
       continue;
     }
@@ -118,7 +118,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::SSRTMain *ssrt)
 }
 
 
-void RT_AddNonZoningBrush(CEntity *penBrush, CBrushSector *pbscThatAdds, SSRT::SSRTMain *ssrt)
+void RT_AddNonZoningBrush(CEntity *penBrush, SSRT::Scene *scene)
 {
   RT_AllSectorVertices.PopAll();
   RT_AllSectorIndices.PopAll();
@@ -166,11 +166,6 @@ void RT_AddNonZoningBrush(CEntity *penBrush, CBrushSector *pbscThatAdds, SSRT::S
         break;
       }
     }
-
-    if (isVisible)
-    {
-      break;
-    }
   }
 
   if (!isVisible)
@@ -193,7 +188,7 @@ void RT_AddNonZoningBrush(CEntity *penBrush, CBrushSector *pbscThatAdds, SSRT::S
       if (!(itbsc->bsc_ulFlags & BSCF_HIDDEN))
       {
         // add that sector to active sectors
-        RT_AddActiveSector(itbsc.Current(), ssrt);
+        RT_AddActiveSector(itbsc.Current(), scene);
       }
     }
 
@@ -225,7 +220,7 @@ void RT_AddNonZoningBrush(CEntity *penBrush, CBrushSector *pbscThatAdds, SSRT::S
     brushInfo.indexCount = RT_AllSectorIndices.Count();
     brushInfo.indices = &RT_AllSectorIndices[0];
 
-    ssrt->AddBrush(brushInfo, isMovable);
+    scene->AddBrush(brushInfo, isMovable);
   }
 
   RT_AllSectorVertices.PopAll();

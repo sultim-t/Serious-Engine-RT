@@ -759,6 +759,8 @@ if not exist $(SolutionDir)RTGL1\Build\Release\x64-Release-Light\RayTracedGL1.li
     </ClCompile>
     <ClCompile Include="Raytracing\SSRT.cpp" />
     <ClCompile Include="Raytracing\SSRTObjects.cpp" />
+    <ClCompile Include="Raytracing\Utils.cpp" />
+    <ClCompile Include="Raytracing\Scene.cpp" />
     <ClCompile Include="Sound\SoundData.cpp" />
     <ClCompile Include="Sound\SoundDecoder.cpp" />
     <ClCompile Include="Sound\SoundLibrary.cpp" />
@@ -1215,9 +1217,12 @@ if not exist $(SolutionDir)RTGL1\Build\Release\x64-Release-Light\RayTracedGL1.li
     <ClInclude Include="Graphics\ViewPort.h" />
     <ClCompile Include="Raytracing\RTBrushes.cpp" />
     <ClCompile Include="Raytracing\RTModels.cpp" />
+    <ClInclude Include="Raytracing\GeometryExporter.h" />
     <ClInclude Include="Raytracing\RTProcessing.h" />
     <ClInclude Include="Raytracing\SSRT.h" />
     <ClInclude Include="Raytracing\SSRTObjects.h" />
+    <ClInclude Include="Raytracing\Utils.h" />
+    <ClInclude Include="Raytracing\Scene.h" />
     <ClInclude Include="Sound\al_functions.h" />
     <ClInclude Include="Sound\DSound.h" />
     <ClInclude Include="Sound\eax.h" />

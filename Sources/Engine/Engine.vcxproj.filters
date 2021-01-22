@@ -808,6 +808,12 @@
     <ClCompile Include="Graphics\Gfx_RayTracing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Raytracing\Utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Raytracing\Scene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Base\Anim.h">
@@ -1453,6 +1459,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Raytracing\RTProcessing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Raytracing\GeometryExporter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Raytracing\Utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Raytracing\Scene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
