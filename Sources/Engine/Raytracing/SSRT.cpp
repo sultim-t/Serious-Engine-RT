@@ -48,8 +48,8 @@ SSRT::SSRTMain::SSRTMain() :
   info.vertexNormalStride = sizeof(GFXNormal);
   info.vertexTexCoordStride = sizeof(GFXTexCoord);
   info.vertexColorStride = sizeof(uint32_t);
-  info.rasterizedMaxIndexCount = 8192;
-  info.rasterizedMaxVertexCount = 4096;
+  info.rasterizedMaxVertexCount = 1 << 16;
+  info.rasterizedMaxIndexCount = info.rasterizedMaxVertexCount * 3 / 2;
 
   const char *pWindowExtensions[] = {
     VK_KHR_SURFACE_EXTENSION_NAME,
@@ -113,25 +113,31 @@ SSRT::SSRTMain::~SSRTMain()
 
 void SSRT::SSRTMain::StartFrame(CViewPort *pvp)
 {
+  if (isFrameStarted)
+  {
+    // ASSERTALWAYS("Frame was already started.");
+    return;
+  }
+
+  RgResult r = rgStartFrame(instance, curWindowWidth, curWindowHeight, true);
+  RG_CHECKERROR(r);
+
+  isFrameStarted = true;
+
+  wasWorldProcessed = false;
+  currentFirstPersonModelCount = 0;
+
   curWindowWidth = pvp->vp_Raster.ra_Width;
   curWindowHeight = pvp->vp_Raster.ra_Height;
 }
 
 void SSRT::SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
 {
-#pragma region START FRAME
-  // TODO: MOVE OUT
+  if (!isFrameStarted)
   {
-    currentFirstPersonModelCount = 0;
-
-    RgResult r = rgStartFrame(instance, curWindowWidth, curWindowHeight, true);
-    RG_CHECKERROR(r);
-
-    isFrameStarted = true;
+    // ASSERTALWAYS("Frame must be started to process world.");
+    return;
   }
-#pragma endregion
-
-
 
   wasWorldProcessed = true;
 
@@ -156,21 +162,15 @@ void SSRT::SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
 
   // update models and movable brushes in scene
   currentScene->Update(info.viewerEntityID);
-
-
-
-#pragma region END FRAME
-  // TODO: DELETE
-  {
-    EndFrame();
-  }
-#pragma endregion 
 }
 
 void SSRT::SSRTMain::ProcessFirstPersonModel(const CFirstPersonModelInfo &info)
 {
-  //RT_AddFirstPersonModel(info.modelObject, info.renderModel, SSRT_FIRSTPERSON_ENTITY_START_ID + currentFirstPersonModelCount, this);
-  currentFirstPersonModelCount++;
+  if (currentScene != nullptr && wasWorldProcessed)
+  {
+    currentScene->AddFirstPersonModel(info, SSRT_FIRSTPERSON_ENTITY_START_ID + currentFirstPersonModelCount);
+    currentFirstPersonModelCount++;
+  }
 }
 
 void SSRT::SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
@@ -200,6 +200,7 @@ void SSRT::SSRTMain::EndFrame()
 {
   if (!isFrameStarted)
   {
+    // ASSERTALWAYS("Frame wasn't started.");
     return;
   }
 

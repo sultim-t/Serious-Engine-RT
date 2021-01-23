@@ -167,6 +167,11 @@ void SSRT::Scene::AddLight(const CDirectionalLight &dirLt)
   dirLights.push_back(dirLt);
 }
 
+void SSRT::Scene::AddFirstPersonModel(const CFirstPersonModelInfo &info, ULONG entityId)
+{
+  RT_AddFirstPersonModel(info.modelObject, info.renderModel, entityId, this);
+}
+
 void SSRT::Scene::ProcessBrushes()
 {
   RgResult r = rgStartNewScene(instance);

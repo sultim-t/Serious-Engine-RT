@@ -1547,17 +1547,12 @@ BOOL CGfxLibrary::SetCurrentViewport(CViewPort *pvp)
 // Lock a drawport for drawing
 BOOL CGfxLibrary::LockDrawPort( CDrawPort *pdpToLock)
 {
-  if (gl_eCurrentAPI == GAT_RT)
-  {
-    return TRUE;
-  }
-
   // check API
 #ifdef SE1_D3D
   ASSERT( gl_eCurrentAPI==GAT_OGL || gl_eCurrentAPI==GAT_D3D || gl_eCurrentAPI==GAT_NONE);
 #else // SE1_D3D
 #ifdef SE1_VULKAN
-  ASSERT(gl_eCurrentAPI == GAT_OGL || gl_eCurrentAPI == GAT_VK || gl_eCurrentAPI == GAT_NONE);
+  ASSERT(gl_eCurrentAPI == GAT_OGL || gl_eCurrentAPI == GAT_VK || gl_eCurrentAPI == GAT_RT || gl_eCurrentAPI == GAT_NONE);
 #else
   ASSERT(gl_eCurrentAPI == GAT_OGL || gl_eCurrentAPI == GAT_NONE);
 #endif // SE1_VULKAN
@@ -1610,6 +1605,10 @@ BOOL CGfxLibrary::LockDrawPort( CDrawPort *pdpToLock)
     const PIX pixMaxSJ = pdpToLock->dp_ScissorMaxJ;
 
     SetViewport_Vulkan(pixMinSI, pixMinSJ, pixMaxSI - pixMinSI + 1, pixMaxSJ - pixMinSJ + 1, 0, 1);
+  }
+  else if (gl_eCurrentAPI == GAT_RT)
+  {
+    // TODO?: SetViewport_RayTracing();
   }
 #endif // SE1_VULKAN
 
@@ -1843,18 +1842,12 @@ static BOOL GenerateGammaTable(void);
  */
 void CGfxLibrary::SwapBuffers(CViewPort *pvp)
 {
-  if (gl_eCurrentAPI == GAT_RT)
-  {
-    EndFrame_RayTracing();
-    return;
-  }
-
   // check API
 #ifdef SE1_D3D
   ASSERT(gl_eCurrentAPI == GAT_OGL || gl_eCurrentAPI == GAT_D3D || gl_eCurrentAPI == GAT_NONE);
 #else // SE1_D3D
 #ifdef SE1_VULKAN
-  ASSERT(gl_eCurrentAPI == GAT_OGL || gl_eCurrentAPI == GAT_VK || gl_eCurrentAPI == GAT_NONE);
+  ASSERT(gl_eCurrentAPI == GAT_OGL || gl_eCurrentAPI == GAT_VK || gl_eCurrentAPI == GAT_RT || gl_eCurrentAPI == GAT_NONE);
 #else
   ASSERT(gl_eCurrentAPI == GAT_OGL || gl_eCurrentAPI == GAT_NONE);
 #endif // SE1_VULKAN
@@ -1867,8 +1860,13 @@ void CGfxLibrary::SwapBuffers(CViewPort *pvp)
     return;
   }
 
-  // optimize memory used by cached shadow maps and update shadowmap counters
-  ReduceShadows();
+#ifdef SE1_VULKAN
+  if (gl_eCurrentAPI != GAT_RT)
+#endif
+  {
+    // optimize memory used by cached shadow maps and update shadowmap counters
+    ReduceShadows();
+  }
 
   // check and eventually adjust texture filtering and LOD biasing
   gfxSetTextureFiltering( gap_iTextureFiltering, gap_iTextureAnisotropy);
@@ -1967,6 +1965,13 @@ void CGfxLibrary::SwapBuffers(CViewPort *pvp)
 
     // force finishing of all rendering operations (if required)
     //if (vk_iFinish == 3) gfxFinish();
+  }
+  else if (gl_eCurrentAPI == GAT_RT)
+  {
+    // if (GFX_bRenderingScene)
+    {
+      EndFrame_RayTracing();
+    }
   }
 #endif // SE1_VK
 

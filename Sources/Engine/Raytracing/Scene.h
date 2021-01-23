@@ -41,6 +41,7 @@ public:
   void AddLight(const CSphereLight &sphLt);
   void AddLight(const CDirectionalLight &dirLt);
 
+  void AddFirstPersonModel(const CFirstPersonModelInfo &info, ULONG entityId);
   void Update(ULONG viewerEntityID);
 
   const CTString &GetWorldName() const;

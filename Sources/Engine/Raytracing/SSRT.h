@@ -63,6 +63,7 @@ private:
   ULONG                 currentFirstPersonModelCount;
 
   bool                  isFrameStarted;
+private:
   uint32_t              curWindowWidth, curWindowHeight;
 
   RgInstance instance;
