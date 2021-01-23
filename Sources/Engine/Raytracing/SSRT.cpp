@@ -32,6 +32,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 SSRT::SSRTMain::SSRTMain() :
   worldRenderInfo({}),
   currentScene(nullptr),
+  wasWorldProcessed(false),
   currentFirstPersonModelCount(0),
   isFrameStarted(false),
   curWindowWidth(0),
@@ -132,15 +133,14 @@ void SSRT::SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
 
 
 
+  wasWorldProcessed = true;
+
   // if no world
   if (info.world == nullptr)
   {
     // delete current scene
-    if (currentScene != nullptr)
-    {
-      delete currentScene;
-      currentScene = nullptr;
-    }
+    delete currentScene;
+    currentScene = nullptr;
 
     return;
   }
@@ -148,11 +148,7 @@ void SSRT::SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
   // if a new world was requested, recreate the scene
   if (currentScene == nullptr || info.world->GetName() != currentScene->GetWorldName())
   {
-    if (currentScene!= nullptr)
-    {
-      delete currentScene;
-    }
-
+    delete currentScene;
     currentScene = new Scene(instance, info.world);
   }
 
@@ -206,6 +202,15 @@ void SSRT::SSRTMain::EndFrame()
   {
     return;
   }
+
+  // if world processing wasn't done, then there is no world
+  if (!wasWorldProcessed)
+  {
+    delete currentScene;
+    currentScene = nullptr;
+  }
+
+  wasWorldProcessed = false;
 
   RgDrawFrameInfo frameInfo = {};
   frameInfo.renderWidth = curWindowWidth;

@@ -56,6 +56,7 @@ private:
   CWorldRenderingInfo   worldRenderInfo;
 
   Scene                 *currentScene;
+  bool                  wasWorldProcessed;
 
   // each first person model (left, right revolver, other weapons) should have its 
   // fake entity to attach to, this counter will be used to simulate ID for fake entity

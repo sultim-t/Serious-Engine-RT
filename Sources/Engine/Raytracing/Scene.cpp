@@ -26,14 +26,19 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "GeometryExporter.h"
 #include "RTProcessing.h"
 
-SSRT::Scene::Scene(RgInstance _instance, CWorld *_pWorld) : instance(_instance), pWorld(_pWorld)
+SSRT::Scene::Scene(RgInstance _instance, CWorld *_pWorld)
+  : instance(_instance), pWorld(_pWorld), worldName(_pWorld->GetName())
 {
+  CPrintF("SSRT scene was created.\n");
+
   // upload static geometry (brushes)
   ProcessBrushes();
 }
 
 SSRT::Scene::~Scene()
 {
+  CPrintF("SSRT scene was deleted.\n");
+
   RgResult r = rgStartNewScene(instance);
   RG_CHECKERROR(r);
 
@@ -55,7 +60,7 @@ void SSRT::Scene::Update(ULONG viewerEntityID)
 
 const CTString &SSRT::Scene::GetWorldName() const
 {
-  return pWorld->GetName();
+  return worldName;
 }
 
 void SSRT::Scene::AddModel(const CModelGeometry &model)
@@ -138,7 +143,7 @@ void SSRT::Scene::UpdateMovableBrush(ULONG entityId, const CPlacement3D &placeme
 
   if (it == entityToMovableBrush.end())
   {
-    ASSERTALWAYS("Movable brush wasn't uploaded");
+    // ASSERTALWAYS("Movable brush wasn't uploaded");
     return;
   }
 

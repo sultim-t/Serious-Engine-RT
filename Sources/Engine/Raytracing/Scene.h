@@ -59,6 +59,7 @@ private:
   //        in one geometry while processing so vector.size()==1)
   // - An entity can have one light source "attached" to it.
   CWorld *pWorld;
+  CTString worldName;
 
   // Get movable brush geometry index by entity ID
   std::map<ULONG, RgGeometry>     entityToMovableBrush;
