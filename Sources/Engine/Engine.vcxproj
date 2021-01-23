@@ -573,6 +573,10 @@ if not exist $(SolutionDir)RTGL1\Build\Release\x64-Release-Light\RayTracedGL1.li
     <ClCompile Include="Graphics\Gfx_RayTracing.cpp" />
     <ClCompile Include="Graphics\Gfx_Vulkan.cpp" />
     <ClCompile Include="Graphics\Gfx_Vulkan_Textures.cpp" />
+    <ClCompile Include="Graphics\Gfx_wrapper_Raytracing.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Graphics\Gfx_wrapper_Vulkan.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

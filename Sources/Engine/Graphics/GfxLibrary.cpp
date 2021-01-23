@@ -1608,7 +1608,12 @@ BOOL CGfxLibrary::LockDrawPort( CDrawPort *pdpToLock)
   }
   else if (gl_eCurrentAPI == GAT_RT)
   {
-    // TODO?: SetViewport_RayTracing();
+    const PIX pixMinSI = pdpToLock->dp_ScissorMinI;
+    const PIX pixMaxSI = pdpToLock->dp_ScissorMaxI;
+    const PIX pixMinSJ = pdpToLock->dp_ScissorMinJ;
+    const PIX pixMaxSJ = pdpToLock->dp_ScissorMaxJ;
+
+    SetViewport_RayTracing(pixMinSI, pixMinSJ, pixMaxSI - pixMinSI + 1, pixMaxSJ - pixMinSJ + 1, 0, 1);
   }
 #endif // SE1_VULKAN
 

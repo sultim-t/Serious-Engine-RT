@@ -330,10 +330,6 @@ void CDrawPort::SetOrtho(void) const
 #ifdef SE1_D3D
    || (d3d_iFinish==3 && _pGfx->gl_eCurrentAPI==GAT_D3D)
 #endif // SE1_D3D
-#ifdef SE1_VULKAN
-    // TODO: Vulkan: draw port set ortho: wait all cmds to finish?
-#endif // SE1_VULKAN
-
    ) gfxFinish();
 
   // prepare ortho dimensions
@@ -365,9 +361,6 @@ void CDrawPort::SetProjection(CAnyProjection3D &apr) const
 #ifdef SE1_D3D
    || (d3d_iFinish==3 && _pGfx->gl_eCurrentAPI==GAT_D3D)
 #endif // SE1_D3D
-#ifdef SE1_VULKAN
-    // TODO
-#endif // SE1_VULKAN
    ) gfxFinish();
 
   // if isometric projection

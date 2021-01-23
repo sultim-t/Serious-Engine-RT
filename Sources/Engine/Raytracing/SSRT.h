@@ -52,6 +52,10 @@ public:
 
   void EndFrame();
 
+  void SetProjectionMatrix(const float *pMatrix);
+  void SetViewMatrix(const float *pMatrix);
+  void SetViewport(float leftUpperX, float leftUpperY, float width, float height, float minDepth, float maxDepth);
+
 private:
   CWorldRenderingInfo   worldRenderInfo;
 
@@ -63,8 +67,12 @@ private:
   ULONG                 currentFirstPersonModelCount;
 
   bool                  isFrameStarted;
-private:
   uint32_t              curWindowWidth, curWindowHeight;
+
+  // this matrices are used for rasterized geometry, such as HUD
+  float                 projMatrix[16];
+  float                 viewMatrix[16];
+  RgViewport            currentViewport;
 
   RgInstance instance;
 };

@@ -249,3 +249,10 @@ void CGfxLibrary::EndFrame_RayTracing()
 
   gl_SSRT->EndFrame();
 }
+
+void CGfxLibrary::SetViewport_RayTracing(float leftUpperX, float leftUpperY, float width, float height, float minDepth, float maxDepth)
+{
+  ASSERT(gl_SSRT != nullptr);
+
+  gl_SSRT->SetViewport(leftUpperX, leftUpperY, width, height, minDepth, maxDepth);
+}

@@ -248,6 +248,7 @@ private:
   BOOL SetCurrentViewport_RayTracing(CViewPort *pvp);
   void StartFrame_RayTracing(CRaster *pRaster);
   void EndFrame_RayTracing();
+  void SetViewport_RayTracing(float leftUpperX, float leftUpperY, float width, float height, float minDepth, float maxDepth);
 
 public:
 

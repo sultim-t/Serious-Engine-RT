@@ -816,6 +816,7 @@ extern ULONG gfxGetColorMask(void)
 #include "GFX_wrapper_OpenGL.cpp"
 #include "GFX_wrapper_Direct3D.cpp"
 #include "Gfx_wrapper_Vulkan.cpp"
+#include "Gfx_wrapper_Raytracing.cpp"
 
 
 
@@ -839,31 +840,6 @@ static void none_SetColorArray( GFXColor *pcol) { NOTHING; };
 static void none_DrawElements( INDEX ctElem, INDEX *pidx) { NOTHING; };
 static void none_SetConstantColor( COLOR col) { NOTHING; };
 static void none_SetColorMask( ULONG ulColorMask) { NOTHING; };
-
-
-
-// DUMMY FUNCTIONS FOR RAY TRACING API
-static void ssrt_void(void){ NOTHING; }
-static void ssrt_BlendFunc( GfxBlend eSrc, GfxBlend eDst) { NOTHING; }
-static void ssrt_DepthFunc( GfxComp eFunc) { NOTHING; }
-static void ssrt_DepthRange( FLOAT fMin, FLOAT fMax) { NOTHING; }
-static void ssrt_CullFace( GfxFace eFace) { NOTHING; }
-static void ssrt_ClipPlane( const DOUBLE *pdViewPlane) { NOTHING; }
-static void ssrt_SetOrtho(   const FLOAT fLeft, const FLOAT fRight, const FLOAT fTop, const FLOAT fBottom, const FLOAT fNear, const FLOAT fFar, const BOOL bSubPixelAdjust) { NOTHING; }
-static void ssrt_SetFrustum( const FLOAT fLeft, const FLOAT fRight, const FLOAT fTop, const FLOAT fBottom, const FLOAT fNear, const FLOAT fFar) { NOTHING; }
-static void ssrt_SetMatrix( const FLOAT *pfMatrix) { NOTHING; }
-static void ssrt_PolygonMode( GfxPolyMode ePolyMode) { NOTHING; }
-static void ssrt_SetTextureWrapping( enum GfxWrap eWrapU, enum GfxWrap eWrapV) { NOTHING; }
-static void ssrt_SetTextureModulation( INDEX iScale) { NOTHING; }
-static void ssrt_GenDelTexture( ULONG &ulTexObject) { NOTHING; }
-static void ssrt_SetVertexArray( GFXVertex4 *pvtx, INDEX ctVtx) { NOTHING; }
-static void ssrt_SetNormalArray( GFXNormal *pnor) { NOTHING; }
-static void ssrt_SetTexCoordArray( GFXTexCoord *ptex, BOOL b4) { NOTHING; }
-static void ssrt_SetColorArray( GFXColor *pcol) { NOTHING; }
-static void ssrt_DrawElements( INDEX ctElem, INDEX *pidx) { NOTHING; }
-static void ssrt_SetConstantColor( COLOR col) { NOTHING; }
-static void ssrt_SetColorMask( ULONG ulColorMask) { NOTHING; }
-
 
 
 
@@ -1053,8 +1029,8 @@ extern void GFX_SetFunctionPointers( INDEX iAPI)
     gfxClipPlane            = &ssrt_ClipPlane;
     gfxSetOrtho             = &ssrt_SetOrtho;
     gfxSetFrustum           = &ssrt_SetFrustum;
-    gfxSetTextureMatrix     = &ssrt_SetMatrix;
-    gfxSetViewMatrix        = &ssrt_SetMatrix;
+    gfxSetTextureMatrix     = &ssrt_SetTextureMatrix;
+    gfxSetViewMatrix        = &ssrt_SetViewMatrix;
     gfxPolygonMode          = &ssrt_PolygonMode;
     gfxSetTextureWrapping   = &ssrt_SetTextureWrapping;
     gfxSetTextureModulation = &ssrt_SetTextureModulation;

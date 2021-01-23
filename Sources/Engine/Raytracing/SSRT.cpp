@@ -191,6 +191,11 @@ void SSRT::SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
   rasterInfo.indexCount = hud.indexCount;
   rasterInfo.indexData = (uint32_t*)hud.pIndices;
   rasterInfo.textures = { RG_NO_MATERIAL,RG_NO_MATERIAL, RG_NO_MATERIAL };
+  rasterInfo.viewport = currentViewport;
+
+  extern void Svk_MatMultiply(float *result, const float *a, const float *b);
+  Svk_MatMultiply(rasterInfo.viewProjection, viewMatrix, projMatrix);
+
 
   RgResult r = rgUploadRasterizedGeometry(instance, &rasterInfo);
   RG_CHECKERROR(r);
@@ -224,4 +229,22 @@ void SSRT::SSRTMain::EndFrame()
   RG_CHECKERROR(r);
 
   isFrameStarted = false;
+}
+
+void SSRT::SSRTMain::SetProjectionMatrix(const float *pMatrix)
+{
+  memcpy(projMatrix, pMatrix, 16 * sizeof(float));
+}
+
+void SSRT::SSRTMain::SetViewMatrix(const float *pMatrix)
+{
+  memcpy(viewMatrix, pMatrix, 16 * sizeof(float));
+}
+
+void SSRT::SSRTMain::SetViewport(float leftUpperX, float leftUpperY, float width, float height, float minDepth, float maxDepth)
+{
+  currentViewport.x = leftUpperX;
+  currentViewport.y = leftUpperY;
+  currentViewport.width = width;
+  currentViewport.height = height;
 }
