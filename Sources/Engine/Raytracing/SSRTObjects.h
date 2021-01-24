@@ -151,16 +151,44 @@ struct CHudElementInfo
   //GfxBlend        blendFuncSrc;
   // always GFX_INV_SRC_ALPHA
   //GfxBlend        blendFuncDst;
-  GfxWrap         textureWrapU;
-  GfxWrap         textureWrapV;
-  CTextureData    *textureData;
 
-  GFXVertex4      *pPositions; 
-  GFXTexCoord     *pTexCoords;
-  GFXColor        *pColors; 
-  INDEX           vertexCount;
-  INDEX           *pIndices; 
-  INDEX           indexCount;
+  RgSamplerAddressMode  textureWrapU;
+  RgSamplerAddressMode  textureWrapV;
+
+  CTextureData          *textureData;
+
+  GFXVertex4            *pPositions; 
+  GFXTexCoord           *pTexCoords;
+  GFXColor              *pColors; 
+  INDEX                 vertexCount;
+
+  INDEX                 *pIndices; 
+  INDEX                 indexCount;
+};
+
+
+struct CPreparedTextureInfo
+{
+  uint32_t              textureIndex;
+  void                  *imageData;
+  bool                  isDynamic;
+  bool                  generateMipmaps;
+  RgSamplerFilter       filter;
+  RgSamplerAddressMode  wrapU;
+  RgSamplerAddressMode  wrapV;
+};
+
+
+struct CPreparedAnimatedTextureInfo
+{
+  uint32_t              textureIndex;
+  void                  *frameData;
+  uint32_t              frameCount;
+  uint64_t              frameStride;
+  bool                  generateMipmaps;
+  RgSamplerFilter       filter;
+  RgSamplerAddressMode  wrapU;
+  RgSamplerAddressMode  wrapV;
 };
 
 }

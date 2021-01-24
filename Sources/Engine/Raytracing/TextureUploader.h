@@ -16,6 +16,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #pragma once
 
 #include "RTGL1/RTGL1.h"
+#include "Engine/Raytracing/SSRTObjects.h"
 
 namespace SSRT
 {
@@ -30,6 +31,10 @@ public:
   TextureUploader(TextureUploader &&other) noexcept = delete;
   TextureUploader &operator=(const TextureUploader &other) = delete;
   TextureUploader &operator=(TextureUploader &&other) noexcept = delete;
+
+  uint32_t GenerateIndex();
+  void UploadTexture(const CPreparedTextureInfo &info);
+  void UploadTexture(const CPreparedAnimatedTextureInfo &animInfo);
 
   RgMaterial Get(CTextureData *pTexture);
 

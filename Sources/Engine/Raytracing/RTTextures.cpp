@@ -20,6 +20,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Graphics/Texture.h>
 #include <Engine/Graphics/TextureEffects.h>
 
+#include <Engine/Raytracing/SSRTObjects.h>
+#include <Engine/Raytracing/TextureUploader.h>
+
 
 extern INDEX tex_iNormalQuality;
 extern INDEX tex_iAnimationQuality;
@@ -32,6 +35,22 @@ extern INDEX tex_iFiltering;
 
 extern INDEX gap_bAllowSingleMipmap;
 extern FLOAT gfx_tmProbeDecay;
+
+
+static void UnpackTexParams(const CTexParams &tpLocal, RgSamplerFilter *filter, RgSamplerAddressMode *wrapU, RgSamplerAddressMode *wrapV)
+{
+  switch (tpLocal.tp_iFilter)
+  {
+    case 110:  case 10:
+    case 111:  case 11:
+    case 112:  case 12:   *filter = RG_SAMPLER_FILTER_NEAREST; break;
+
+    default:              *filter = RG_SAMPLER_FILTER_LINEAR; break;
+  }
+
+  *wrapU = tpLocal.tp_eWrapU == GFX_REPEAT ? RG_SAMPLER_ADDRESS_MODE_REPEAT : RG_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+  *wrapV = tpLocal.tp_eWrapV == GFX_REPEAT ? RG_SAMPLER_ADDRESS_MODE_REPEAT : RG_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+}
 
 
 static INDEX GetWantedMipmapLevel(const CTextureData &td, PIX *pPixWidth, PIX *pPixHeight)
@@ -170,14 +189,10 @@ static void ProcessEffectTexture(CTextureData &td, bool *pBNoDiscard, bool *pBNe
   }
 }
 
-static void SetCurrentAndUpload(CTextureData &td, PIX pixWidth, PIX pixHeight, bool bNoDiscard)
+static void SetCurrentAndUpload(CTextureData &td, PIX pixWidth, PIX pixHeight, SSRT::TextureUploader *uploader)
 {
   // check whether frames are present
   ASSERT(td.td_pulFrames != NULL && td.td_pulFrames[0] != 0xDEADBEEF);
-
-  // must discard uploaded texture if single mipmap flag has been changed
-  const BOOL bLastSingleMipmap = td.td_ulFlags & TEX_SINGLEMIPMAP;
-  bNoDiscard = (bNoDiscard && bLastSingleMipmap == td.td_tpLocal.tp_bSingleMipmap);
 
   // update flag
   if (td.td_tpLocal.tp_bSingleMipmap)
@@ -193,20 +208,33 @@ static void SetCurrentAndUpload(CTextureData &td, PIX pixWidth, PIX pixHeight, b
   if (td.td_ctFrames > 1)
   {
     // animation textures
-    for (INDEX iFr = 0; iFr < td.td_ctFrames; iFr++)
-    {
-      // determine frame offset and upload texture frame
-      ULONG *pulCurrentFrame = td.td_pulFrames + (iFr * td.td_slFrameSize / BYTES_PER_TEXEL);
 
-      gfxSetTexture(td.td_pulObjects[iFr], td.td_tpLocal);
-      gfxUploadTexture(pulCurrentFrame, pixWidth, pixHeight, td.td_ulInternalFormat, bNoDiscard);
-    }
+    SSRT::CPreparedAnimatedTextureInfo info = {};
+    info.textureIndex = td.td_ulObject;
+    info.frameData = td.td_pulFrames;
+    info.frameCount = td.td_ctFrames;
+    info.frameStride = td.td_slFrameSize / BYTES_PER_TEXEL;
+    info.generateMipmaps = !td.td_tpLocal.tp_bSingleMipmap;
+
+    UnpackTexParams(td.td_tpLocal, &info.filter, &info.wrapU, &info.wrapV);
+
+    // instead of gfxUploadTexture
+    uploader->UploadTexture(info);
   }
   else
   {
     // single-frame textures
-    gfxSetTexture(td.td_ulObject, td.td_tpLocal);
-    gfxUploadTexture(td.td_pulFrames, pixWidth, pixHeight, td.td_ulInternalFormat, bNoDiscard);
+
+    SSRT::CPreparedTextureInfo info = {};
+    info.textureIndex = td.td_ulObject;
+    info.imageData = td.td_pulFrames;
+    info.isDynamic = td.td_ptegEffect != NULL;
+    info.generateMipmaps = !td.td_tpLocal.tp_bSingleMipmap;
+
+    UnpackTexParams(td.td_tpLocal, &info.filter, &info.wrapU, &info.wrapV);
+
+    // instead of gfxUploadTexture
+    uploader->UploadTexture(info);
   }
 
   // clear local texture parameters because we need to correct later texture setting
@@ -224,19 +252,18 @@ static void SetCurrentAndUpload(CTextureData &td, PIX pixWidth, PIX pixHeight, b
 static void SetCurrent(CTextureData &td)
 {
   // set corresponding probe or texture frame as current
-  ULONG ulTexObject = td.td_ulObject;
 
   // RT: td_pulObjects is empty (commented previously) 
 
-  // set real texture and mark that this texture has been drawn
-  gfxSetTexture(ulTexObject, td.td_tpLocal);
+  // RT: texture was already uploaded
+  //gfxSetTexture(td.td_ulObject, td.td_tpLocal);
   td.MarkDrawn();
 }
 
 
 // RT: This function is a copy of CTextureData::SetAsCurrent
 // but modified for 
-void RT_SetTextureAsCurrent(CTextureData *textureData, INDEX frameIndex/*=0*/, BOOL forceUpload/*=false*/)
+void RT_SetTextureAsCurrent(CTextureData *textureData, SSRT::TextureUploader *uploader, INDEX frameIndex/*=0*/, bool forceUpload/*=false*/)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_RT);
 
@@ -274,10 +301,13 @@ void RT_SetTextureAsCurrent(CTextureData *textureData, INDEX frameIndex/*=0*/, B
   //     as animated textures have only one material index too
 
   // if not already generated, generate bind number(s) and force upload
-  if ((td.td_ctFrames > 1 && td.td_pulObjects == NULL) || (td.td_ctFrames <= 1 && td.td_ulObject == NONE))
+  if (td.td_ctFrames <= 1 && td.td_ulObject == NONE)
   {
     // check whether frames are present
     ASSERT(td.td_pulFrames != NULL && td.td_pulFrames[0] != 0xDEADBEEF);
+
+    // RT: generate index for this texture
+    td.td_ulObject = uploader->GenerateIndex();
 
     // must do initial uploading
     bNeedUpload = true;
@@ -287,7 +317,7 @@ void RT_SetTextureAsCurrent(CTextureData *textureData, INDEX frameIndex/*=0*/, B
   // if needs to be uploaded
   if (bNeedUpload)
   {
-    SetCurrentAndUpload(td, pixWidth, pixHeight, bNoDiscard);
+    SetCurrentAndUpload(td, pixWidth, pixHeight, uploader);
   }
   else
   {
@@ -295,5 +325,5 @@ void RT_SetTextureAsCurrent(CTextureData *textureData, INDEX frameIndex/*=0*/, B
   }
 
   // debug check
-  ASSERT((td.td_ctFrames > 1 && td.td_pulObjects != NULL) || (td.td_ctFrames <= 1 && td.td_ulObject != NONE));
+  ASSERT(td.td_ctFrames <= 1 && td.td_ulObject != NONE);
 }

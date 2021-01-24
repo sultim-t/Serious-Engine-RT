@@ -18,6 +18,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 namespace SSRT
 {
 class Scene;
+class TextureUploader;
 }
 
 class CRenderModel;
@@ -27,4 +28,4 @@ void RT_AddNonZoningBrush(CEntity *penBrush, SSRT::Scene *scene);
 void RT_AddModelEntity(const CEntity *penModel, const FLOAT3D *viewerPos, SSRT::Scene *ssrt);
 void RT_AddFirstPersonModel(CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::Scene *scene);
 
-void RT_SetTextureAsCurrent(CTextureData *textureData, INDEX frameIndex = 0, bool forceUpload = false);
+void RT_SetTextureAsCurrent(CTextureData *textureData, SSRT::TextureUploader *uploader, INDEX frameIndex = 0, bool forceUpload = false);
