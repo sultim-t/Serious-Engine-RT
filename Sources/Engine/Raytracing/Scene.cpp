@@ -47,7 +47,7 @@ SSRT::Scene::~Scene()
   RG_CHECKERROR(r);
 }
 
-void SSRT::Scene::Update(ULONG viewerEntityID)
+void SSRT::Scene::Update(const FLOAT3D &viewerPos, ULONG viewerEntityID)
 {
   // clear previous data
   sphLights.clear();
@@ -55,7 +55,7 @@ void SSRT::Scene::Update(ULONG viewerEntityID)
 
   // upload dynamic geometry (models)
   // and scan for movable geometry
-  ProcessDynamicGeometry(viewerEntityID);
+  ProcessDynamicGeometry(viewerPos, viewerEntityID);
 }
 
 const CTString &SSRT::Scene::GetWorldName() const
@@ -196,7 +196,7 @@ void SSRT::Scene::ProcessBrushes()
   RG_CHECKERROR(r);
 }
 
-void SSRT::Scene::ProcessDynamicGeometry(ULONG viewerEntityID)
+void SSRT::Scene::ProcessDynamicGeometry(const FLOAT3D &viewerPos, ULONG viewerEntityID)
 {
   // check all movable brushes, models and light sources
   FOREACHINDYNAMICCONTAINER(pWorld->wo_cenEntities, CEntity, iten)
@@ -209,7 +209,7 @@ void SSRT::Scene::ProcessDynamicGeometry(ULONG viewerEntityID)
     if (iten->en_RenderType == CEntity::RT_MODEL)
     {
       // add it as a model and scan for light sources
-      RT_AddModelEntity(&iten.Current(), this);
+      RT_AddModelEntity(&iten.Current(), &viewerPos, this);
     }
     else if (iten->en_RenderType == CEntity::RT_BRUSH && (iten->en_ulPhysicsFlags & EPF_MOVABLE))
     {

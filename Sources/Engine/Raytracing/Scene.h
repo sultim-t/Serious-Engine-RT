@@ -42,13 +42,13 @@ public:
   void AddLight(const CDirectionalLight &dirLt);
 
   void AddFirstPersonModel(const CFirstPersonModelInfo &info, ULONG entityId);
-  void Update(ULONG viewerEntityID);
+  void Update(const FLOAT3D &viewerPos, ULONG viewerEntityID);
 
   const CTString &GetWorldName() const;
 
 private:
   void ProcessBrushes();
-  void ProcessDynamicGeometry(ULONG viewerEntityID);
+  void ProcessDynamicGeometry(const FLOAT3D &viewerPos, ULONG viewerEntityID);
   void UpdateMovableBrush(ULONG entityId, const CPlacement3D &placement);
 
 private:

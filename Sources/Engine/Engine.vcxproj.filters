@@ -817,6 +817,9 @@
     <ClCompile Include="Graphics\Gfx_wrapper_Raytracing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Raytracing\TextureUploader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Base\Anim.h">
@@ -1471,6 +1474,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Raytracing\Scene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Raytracing\TextureUploader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

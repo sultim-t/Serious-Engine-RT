@@ -781,6 +781,7 @@ if not exist $(SolutionDir)RTGL1\Build\Release\x64-Release-Light\RayTracedGL1.li
     <ClCompile Include="Models\RenderModel_Mask.cpp" />
     <ClCompile Include="Models\RenderModel_View.cpp" />
     <ClCompile Include="Models\VertexGetting.cpp" />
+    <ClCompile Include="Raytracing\TextureUploader.cpp" />
     <ClCompile Include="World\PhysicsProfile.cpp" />
     <ClCompile Include="World\World.cpp" />
     <ClCompile Include="World\WorldCollision.cpp" />
@@ -1311,6 +1312,7 @@ if not exist $(SolutionDir)RTGL1\Build\Release\x64-Release-Light\RayTracedGL1.li
     <ClInclude Include="Light\Gradient.h" />
     <ClInclude Include="Light\LensFlares.h" />
     <ClInclude Include="Light\LightSource.h" />
+    <ClInclude Include="Raytracing\TextureUploader.h" />
     <ClInclude Include="zlib\deflate.h" />
     <ClInclude Include="zlib\infblock.h" />
     <ClInclude Include="zlib\infcodes.h" />

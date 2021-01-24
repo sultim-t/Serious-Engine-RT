@@ -24,5 +24,5 @@ class CRenderModel;
 
 void RT_AddNonZoningBrush(CEntity *penBrush, SSRT::Scene *scene);
 
-void RT_AddModelEntity(const CEntity *penModel, SSRT::Scene *ssrt);
-void RT_AddFirstPersonModel(const CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::Scene *scene);
+void RT_AddModelEntity(const CEntity *penModel, const FLOAT3D *viewerPos, SSRT::Scene *ssrt);
+void RT_AddFirstPersonModel(CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::Scene *scene);

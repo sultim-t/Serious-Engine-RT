@@ -30,6 +30,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 extern INDEX gfx_bRenderModels;
 extern INDEX gfx_bRenderPredicted;
 
+extern FLOAT mdl_fLODMul;
+extern FLOAT mdl_fLODAdd;
+
 
 static CStaticStackArray<INDEX> RT_AllModelMaterialIndices;
 
@@ -199,10 +202,10 @@ static BOOL RT_CreateAttachment(const CModelObject &moParent, const CRenderModel
 
 
 //void CModelObject::SetupModelRendering( CRenderModel &rm)
-static void RT_SetupModelRendering(const CModelObject &mo, CRenderModel &rm, SSRT::Scene *scene)
+static void RT_SetupModelRendering(CModelObject &mo, CRenderModel &rm, const FLOAT3D *viewerPos, SSRT::Scene *scene)
 {
   // get model's data and lerp info, GetData()
-  rm.rm_pmdModelData = (CModelData *)mo.ao_AnimData;
+  rm.rm_pmdModelData = mo.GetData();
   mo.GetFrame(rm.rm_iFrame0, rm.rm_iFrame1, rm.rm_fRatio);
 
   const INDEX ctVertices = rm.rm_pmdModelData->md_VerticesCt;
@@ -248,27 +251,18 @@ static void RT_SetupModelRendering(const CModelObject &mo, CRenderModel &rm, SSR
   // rm.rm_pmdModelData->md_Flags&MF_HALF_FACE_FORWARD -- only X,Z face viewer
   // rm.rm_pmdModelData->md_Flags&MF_FACE_FORWARD      -- face viewer
 
-  //// get mip factor from projection (if needed)
-  //if ((INDEX &) rm.rm_fDistanceFactor == 12345678)
-  //{
-  //  FLOAT3D vObjectAbs;
-  //  _aprProjection->PreClip(rm.rm_vObjectPosition, vObjectAbs);
-  //  rm.rm_fDistanceFactor = _aprProjection->MipFactor(Min(vObjectAbs(3), 0.0f));
-  //}
-  //// adjust mip factor in case of dynamic stretch factor
-  //if (mo_Stretch != FLOAT3D(1, 1, 1))
-  //{
-  //  rm.rm_fMipFactor = rm.rm_fDistanceFactor - Log2(Max(mo_Stretch(1), Max(mo_Stretch(2), mo_Stretch(3))));
-  //}
-  //else
-  //{
-  //  rm.rm_fMipFactor = rm.rm_fDistanceFactor;
-  //}
-  //// adjust mip factor by custom settings
-  //rm.rm_fMipFactor = rm.rm_fMipFactor * mdl_fLODMul + mdl_fLODAdd;
+  FLOAT distance = viewerPos == nullptr ? 0 : (*viewerPos - rm.rm_vObjectPosition).Length();
+
+  if (mo.mo_Stretch != FLOAT3D(1, 1, 1))
+  {
+    distance *= Max(mo.mo_Stretch(1), Max(mo.mo_Stretch(2), mo.mo_Stretch(3)));
+  }
+
+  const float rtLodFix = +0.2f;
+  rm.rm_fMipFactor = Log2(distance) * (mdl_fLODMul + rtLodFix) + mdl_fLODAdd;
 
   // get current mip model using mip factor
-  rm.rm_iMipLevel = 0;//mo.GetMipModel(rm.rm_fMipFactor);
+  rm.rm_iMipLevel = mo.GetMipModel(rm.rm_fMipFactor);
   //mo.mo_iLastRenderMipLevel = rm.rm_iMipLevel;
   // get current vertices mask
   rm.rm_pmmiMip = &rm.rm_pmdModelData->md_MipInfos[ rm.rm_iMipLevel ];
@@ -302,7 +296,7 @@ static void RT_SetupModelRendering(const CModelObject &mo, CRenderModel &rm, SSR
     RT_CreateAttachment(mo, rm, *pamo);
     
     // prepare if visible
-    RT_SetupModelRendering(pamo->amo_moModelObject, *pamo->amo_prm, scene);
+    RT_SetupModelRendering(pamo->amo_moModelObject, *pamo->amo_prm, viewerPos, scene);
   }
 }
 
@@ -752,9 +746,10 @@ static void RT_RenderModel(ULONG entityID, const CModelObject &mo, CRenderModel 
 
 //void CRenderer::RenderOneModel(CEntity &en, CModelObject &moModel, const CPlacement3D &plModel,
 //                               const FLOAT fDistanceFactor, BOOL bRenderShadow, ULONG ulDMFlags)
-static void RT_RenderOneModel(const CEntity &en, const CModelObject &moModel, const CPlacement3D &plModel,
-                       const FLOAT fDistanceFactor, BOOL bRenderShadow, ULONG ulDMFlags, 
-                       SSRT::Scene *scene)
+static void RT_RenderOneModel(
+  const CEntity &en, CModelObject &moModel, const CPlacement3D &plModel,
+  const FLOAT fDistanceFactor, BOOL bRenderShadow, ULONG ulDMFlags,
+  const FLOAT3D *viewerPos, SSRT::Scene *scene)
 {
   // skip invisible models
   if (moModel.mo_Stretch == FLOAT3D(0, 0, 0)) return;
@@ -786,7 +781,7 @@ static void RT_RenderOneModel(const CEntity &en, const CModelObject &moModel, co
   }*/
 
   // prepare CRenderModel structure for rendering of one model
-  RT_SetupModelRendering(moModel, rm, scene);
+  RT_SetupModelRendering(moModel, rm, viewerPos, scene);
 
   // if the entity is not the viewer, or this is not primary renderer
   if (viewerEntityID != en.en_ulID)
@@ -816,7 +811,7 @@ static void RT_RenderOneModel(const CEntity &en, const CModelObject &moModel, co
 
 
 // CRenderer::RenderModels(BOOL bBackground)
-static void RT_Post_RenderModels(const CEntity &en, const CModelObject &mo, SSRT::Scene *scene)
+static void RT_Post_RenderModels(const CEntity &en, CModelObject &mo, const FLOAT3D *viewerPos, SSRT::Scene *scene)
 {
   if (!gfx_bRenderModels)
   {
@@ -831,11 +826,11 @@ static void RT_Post_RenderModels(const CEntity &en, const CModelObject &mo, SSRT
     return;
   }
 
-  RT_RenderOneModel(en, mo, en.GetLerpedPlacement(), 0, TRUE, 0, scene);
+  RT_RenderOneModel(en, mo, en.GetLerpedPlacement(), 0, TRUE, 0, viewerPos, scene);
 }
 
 
-void RT_AddModelEntity(const CEntity *penModel, SSRT::Scene *scene)
+void RT_AddModelEntity(const CEntity *penModel, const FLOAT3D *viewerPos, SSRT::Scene *scene)
 {
   // if the entity is currently active or hidden, don't add it again
   if (penModel->en_ulFlags & (ENF_INRENDERING | ENF_HIDDEN))
@@ -857,7 +852,7 @@ void RT_AddModelEntity(const CEntity *penModel, SSRT::Scene *scene)
   }
 
   // get its model object
-  const CModelObject *pmoModelObject;
+  CModelObject *pmoModelObject;
   if (penModel->en_RenderType != CEntity::RT_BRUSH &&
       penModel->en_RenderType != CEntity::RT_FIELDBRUSH)
   {
@@ -904,13 +899,13 @@ void RT_AddModelEntity(const CEntity *penModel, SSRT::Scene *scene)
   //dm.dm_ulFlags |= DMF_VISIBLE;
 
   // RT: call it here to bypass re_admDelayedModels list
-  RT_Post_RenderModels(*penModel, *pmoModelObject, scene);
+  RT_Post_RenderModels(*penModel, *pmoModelObject, viewerPos, scene);
 }
 
 
-void RT_AddFirstPersonModel(const CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::Scene *scene)
+void RT_AddFirstPersonModel(CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::Scene *scene)
 {
-  RT_SetupModelRendering(*mo, *rm, scene);
+  RT_SetupModelRendering(*mo, *rm, nullptr, scene);
 
   // attachment path for SSRT::CModelGeometry,
   INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH];

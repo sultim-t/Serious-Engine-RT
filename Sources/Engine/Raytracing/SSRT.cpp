@@ -29,6 +29,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
 
+#ifndef NDEBUG
+constexpr const char *OverridenTexturesPath = "../../OverridenTextures/";
+#else
+constexpr const char *OverridenTexturesPath = "../OverridenTextures/";
+#endif
+
+
 SSRT::SSRTMain::SSRTMain() :
   worldRenderInfo({}),
   currentScene(nullptr),
@@ -50,6 +57,11 @@ SSRT::SSRTMain::SSRTMain() :
   info.vertexColorStride = sizeof(uint32_t);
   info.rasterizedMaxVertexCount = 1 << 16;
   info.rasterizedMaxIndexCount = info.rasterizedMaxVertexCount * 3 / 2;
+
+  info.overridenTexturesFolderPath = OverridenTexturesPath;
+  info.overrideAlbedoAlphaTexturePostfix = "";
+  info.overrideNormalMetallicTexturePostfix = "_n";
+  info.overrideEmissionRoughnessTexturePostfix = "_e";
 
   const char *pWindowExtensions[] = {
     VK_KHR_SURFACE_EXTENSION_NAME,
@@ -161,7 +173,7 @@ void SSRT::SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
   worldRenderInfo = info;
 
   // update models and movable brushes in scene
-  currentScene->Update(info.viewerEntityID);
+  currentScene->Update(info.viewerPosition, info.viewerEntityID);
 }
 
 void SSRT::SSRTMain::ProcessFirstPersonModel(const CFirstPersonModelInfo &info)
@@ -190,12 +202,16 @@ void SSRT::SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
   rasterInfo.colorStride = sizeof(GFXColor);
   rasterInfo.indexCount = hud.indexCount;
   rasterInfo.indexData = (uint32_t*)hud.pIndices;
-  rasterInfo.textures = { RG_NO_MATERIAL,RG_NO_MATERIAL, RG_NO_MATERIAL };
   rasterInfo.viewport = currentViewport;
+  rasterInfo.textures = 
+  {
+    RG_NO_MATERIAL,
+    RG_NO_MATERIAL,
+    RG_NO_MATERIAL
+  };
 
   extern void Svk_MatMultiply(float *result, const float *a, const float *b);
   Svk_MatMultiply(rasterInfo.viewProjection, viewMatrix, projMatrix);
-
 
   RgResult r = rgUploadRasterizedGeometry(instance, &rasterInfo);
   RG_CHECKERROR(r);
@@ -210,11 +226,11 @@ void SSRT::SSRTMain::EndFrame()
   }
 
   // if world processing wasn't done, then there is no world
-  if (!wasWorldProcessed)
+  /*if (!wasWorldProcessed)
   {
     delete currentScene;
     currentScene = nullptr;
-  }
+  }*/
 
   wasWorldProcessed = false;
 

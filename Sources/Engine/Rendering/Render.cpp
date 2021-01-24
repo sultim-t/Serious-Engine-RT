@@ -957,12 +957,6 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
     woWorld.wo_pecWorldBaseClass->ec_pdecDLLClass->dec_OnWorldRender(&woWorld);
   }
 
-  if(_wrpWorldRenderPrefs.GetShadowsType() == CWorldRenderPrefs::SHT_FULL)
-  {
-    // calculate all non directional shadows that are not up to date
-    woWorld.CalculateNonDirectionalShadows();
-  }
-
   if (_pGfx->gl_eCurrentAPI == GAT_RT)
   {
     SSRT::CWorldRenderingInfo renderInfo = {};
@@ -1065,6 +1059,12 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
 
     // don't render world using rasterization
     return;
+  }
+
+  if (_wrpWorldRenderPrefs.GetShadowsType() == CWorldRenderPrefs::SHT_FULL)
+  {
+    // calculate all non directional shadows that are not up to date
+    woWorld.CalculateNonDirectionalShadows();
   }
 
   // take first renderer object
