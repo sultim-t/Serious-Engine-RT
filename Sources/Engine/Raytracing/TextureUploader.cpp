@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021 Sultim Tsyrendashiev
+/* Copyright (c) 2021 Sultim Tsyrendashiev
 This program is free software; you can redistribute it and/or modify
 it under the terms of version 2 of the GNU General Public License as published by
 the Free Software Foundation
@@ -13,18 +13,21 @@ You should have received a copy of the GNU General Public License along
 with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
-#pragma once
+#include "StdH.h"
+#include "TextureUploader.h"
 
-namespace SSRT
+#include <Engine/Graphics/Texture.h>
+
+SSRT::TextureUploader::TextureUploader(RgInstance _instance) : instance(_instance)
 {
-class Scene;
 }
 
-class CRenderModel;
+SSRT::TextureUploader::~TextureUploader()
+{
+}
 
-void RT_AddNonZoningBrush(CEntity *penBrush, SSRT::Scene *scene);
-
-void RT_AddModelEntity(const CEntity *penModel, const FLOAT3D *viewerPos, SSRT::Scene *ssrt);
-void RT_AddFirstPersonModel(CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::Scene *scene);
-
-void RT_SetTextureAsCurrent(CTextureData *textureData, INDEX frameIndex = 0, bool forceUpload = false);
+RgMaterial SSRT::TextureUploader::Get(CTextureData *pTexture)
+{
+  return RG_NO_MATERIAL;
+  //pTexture->
+}

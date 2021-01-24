@@ -613,7 +613,7 @@ extern INDEX gfxGetFormatPixRatio( ULONG ulTextureFormat)
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #elif SE1_VULKAN
-  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_RT || eAPI == GAT_NONE);
 #else // SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_D3D
@@ -624,7 +624,7 @@ extern INDEX gfxGetFormatPixRatio( ULONG ulTextureFormat)
   else if( eAPI==GAT_D3D) return GetFormatPixRatio_D3D( (D3DFORMAT)ulTextureFormat);
 #endif // SE1_D3D
 #ifdef SE1_VULKAN
-  else if (eAPI == GAT_VK)
+  else if (eAPI == GAT_VK || eAPI == GAT_RT)
   {
     return 4;
   }

@@ -137,7 +137,7 @@ public:
   CViewPort *gl_pvpActive;   // active viewport
   HINSTANCE  gl_hiDriver;    // DLL handle
 
-  GfxAPIType   gl_eCurrentAPI;  // (0=none, 1=OpenGL, 2=DirectX8, 2=Vulkan) 
+  GfxAPIType   gl_eCurrentAPI;  // (-1=none, 0=OpenGL, 1=DirectX8, 1=Vulkan, 2=VulkanRayTracing) 
   CDisplayMode gl_dmCurrentDisplayMode;
   INDEX gl_iCurrentAdapter;
   INDEX gl_iCurrentDepth; 

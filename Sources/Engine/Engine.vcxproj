@@ -761,6 +761,7 @@ if not exist $(SolutionDir)RTGL1\Build\Release\x64-Release-Light\RayTracedGL1.li
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">StdH.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">StdH.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="Raytracing\RTTextures.cpp" />
     <ClCompile Include="Raytracing\SSRT.cpp" />
     <ClCompile Include="Raytracing\SSRTObjects.cpp" />
     <ClCompile Include="Raytracing\Utils.cpp" />

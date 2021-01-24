@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021 Sultim Tsyrendashiev
+/* Copyright (c) 2021 Sultim Tsyrendashiev
 This program is free software; you can redistribute it and/or modify
 it under the terms of version 2 of the GNU General Public License as published by
 the Free Software Foundation
@@ -15,16 +15,29 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #pragma once
 
+#include "RTGL1/RTGL1.h"
+
 namespace SSRT
 {
-class Scene;
+
+class TextureUploader
+{
+public:
+  TextureUploader(RgInstance instance);
+  ~TextureUploader();
+
+  TextureUploader(const TextureUploader &other) = delete;
+  TextureUploader(TextureUploader &&other) noexcept = delete;
+  TextureUploader &operator=(const TextureUploader &other) = delete;
+  TextureUploader &operator=(TextureUploader &&other) noexcept = delete;
+
+  RgMaterial Get(CTextureData *pTexture);
+
+private:
+  RgInstance instance;
+
+};
+
 }
 
-class CRenderModel;
 
-void RT_AddNonZoningBrush(CEntity *penBrush, SSRT::Scene *scene);
-
-void RT_AddModelEntity(const CEntity *penModel, const FLOAT3D *viewerPos, SSRT::Scene *ssrt);
-void RT_AddFirstPersonModel(CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::Scene *scene);
-
-void RT_SetTextureAsCurrent(CTextureData *textureData, INDEX frameIndex = 0, bool forceUpload = false);

@@ -158,6 +158,9 @@ void CGfxLibrary::InitContext_RayTracing()
   // update console system vars
   extern void UpdateGfxSysCVars(void);
   UpdateGfxSysCVars();
+
+  extern void ReloadTextures(void);
+  ReloadTextures();
 }
 
 void CGfxLibrary::EndDriver_RayTracing()
