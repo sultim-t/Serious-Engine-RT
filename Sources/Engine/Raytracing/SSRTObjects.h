@@ -55,11 +55,12 @@ struct CAbstractGeometry
   GFXVertex           *vertices;
   GFXNormal           *normals;
   GFXTexCoord         *texCoords;
+
   // each 3 indices make a triangle
   INDEX               indexCount;
   INDEX               *indices;
-  // 
-  CTextureData        *textureDatas[3]  = {};
+
+  CTextureObject      *textures[3];
 };
 
 
@@ -155,6 +156,7 @@ struct CHudElementInfo
   RgSamplerAddressMode  textureWrapU;
   RgSamplerAddressMode  textureWrapV;
 
+  // use CTextureData, assuming that there is only 1 frame
   CTextureData          *textureData;
 
   GFXVertex4            *pPositions; 
@@ -170,8 +172,11 @@ struct CHudElementInfo
 struct CPreparedTextureInfo
 {
   uint32_t              textureIndex;
-  void                  *imageData;
+  const CTFileName      *path;
   bool                  isDynamic;
+  void                  *imageData;
+  uint32_t              width;
+  uint32_t              height;
   bool                  generateMipmaps;
   RgSamplerFilter       filter;
   RgSamplerAddressMode  wrapU;
@@ -182,9 +187,12 @@ struct CPreparedTextureInfo
 struct CPreparedAnimatedTextureInfo
 {
   uint32_t              textureIndex;
+  const CTFileName      *path;
   void                  *frameData;
   uint32_t              frameCount;
   uint64_t              frameStride;
+  uint32_t              width;
+  uint32_t              height;
   bool                  generateMipmaps;
   RgSamplerFilter       filter;
   RgSamplerAddressMode  wrapU;

@@ -36,7 +36,7 @@ public:
   void UploadTexture(const CPreparedTextureInfo &info);
   void UploadTexture(const CPreparedAnimatedTextureInfo &animInfo);
 
-  RgMaterial Get(CTextureData *pTexture);
+  RgMaterial Get(CTextureObject *pTexture);
 
 private:
   RgInstance instance;

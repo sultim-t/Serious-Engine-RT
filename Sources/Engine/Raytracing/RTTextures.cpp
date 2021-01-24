@@ -211,10 +211,13 @@ static void SetCurrentAndUpload(CTextureData &td, PIX pixWidth, PIX pixHeight, S
 
     SSRT::CPreparedAnimatedTextureInfo info = {};
     info.textureIndex = td.td_ulObject;
+    info.width = td.GetWidth();
+    info.height = td.GetHeight();
     info.frameData = td.td_pulFrames;
     info.frameCount = td.td_ctFrames;
     info.frameStride = td.td_slFrameSize / BYTES_PER_TEXEL;
     info.generateMipmaps = !td.td_tpLocal.tp_bSingleMipmap;
+    info.path = &td.GetName();
 
     UnpackTexParams(td.td_tpLocal, &info.filter, &info.wrapU, &info.wrapV);
 
@@ -227,9 +230,12 @@ static void SetCurrentAndUpload(CTextureData &td, PIX pixWidth, PIX pixHeight, S
 
     SSRT::CPreparedTextureInfo info = {};
     info.textureIndex = td.td_ulObject;
+    info.width = td.GetWidth();
+    info.height = td.GetHeight();
     info.imageData = td.td_pulFrames;
     info.isDynamic = td.td_ptegEffect != NULL;
     info.generateMipmaps = !td.td_tpLocal.tp_bSingleMipmap;
+    info.path = &td.GetName();
 
     UnpackTexParams(td.td_tpLocal, &info.filter, &info.wrapU, &info.wrapV);
 
@@ -263,19 +269,18 @@ static void SetCurrent(CTextureData &td)
 
 // RT: This function is a copy of CTextureData::SetAsCurrent
 // but modified for 
-void RT_SetTextureAsCurrent(CTextureData *textureData, SSRT::TextureUploader *uploader, INDEX frameIndex/*=0*/, bool forceUpload/*=false*/)
+unsigned RT_SetTextureAsCurrent(CTextureData *textureData, SSRT::TextureUploader *uploader)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_RT);
 
   if (textureData == nullptr)
   {
-    return;
+    return 0;
   }
 
   CTextureData &td = *textureData;
-  ASSERT(frameIndex < td.td_ctFrames);
 
-  bool bNeedUpload  = forceUpload;
+  bool bNeedUpload  = false; // forceUpload;
   bool bNoDiscard   = true;
 
   PIX  pixWidth   = td.GetPixWidth();
@@ -288,8 +293,7 @@ void RT_SetTextureAsCurrent(CTextureData *textureData, SSRT::TextureUploader *up
   if (td.td_ptegEffect != NULL)
   {
     // effect texture must have only one frame
-    ASSERT(frameIndex == 0);
-
+    // ASSERT(frameIndex == 0);
     ProcessEffectTexture(td, &bNoDiscard, &bNeedUpload, &pixWidth, &pixHeight);
   }
 
@@ -326,4 +330,7 @@ void RT_SetTextureAsCurrent(CTextureData *textureData, SSRT::TextureUploader *up
 
   // debug check
   ASSERT(td.td_ctFrames <= 1 && td.td_ulObject != NONE);
+
+  // RT: this field is used for texture index
+  return td.td_ulObject;
 }

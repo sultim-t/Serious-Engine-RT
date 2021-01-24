@@ -28,4 +28,4 @@ void RT_AddNonZoningBrush(CEntity *penBrush, SSRT::Scene *scene);
 void RT_AddModelEntity(const CEntity *penModel, const FLOAT3D *viewerPos, SSRT::Scene *ssrt);
 void RT_AddFirstPersonModel(CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::Scene *scene);
 
-void RT_SetTextureAsCurrent(CTextureData *textureData, SSRT::TextureUploader *uploader, INDEX frameIndex = 0, bool forceUpload = false);
+unsigned RT_SetTextureAsCurrent(CTextureData *textureData, SSRT::TextureUploader *uploader);
