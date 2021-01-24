@@ -210,7 +210,7 @@ static void SetCurrentAndUpload(CTextureData &td, PIX pixWidth, PIX pixHeight, S
     // animation textures
 
     SSRT::CPreparedAnimatedTextureInfo info = {};
-    info.textureIndex = td.td_ulObject;
+    info.textureID = td.td_ulObject;
     info.width = td.GetWidth();
     info.height = td.GetHeight();
     info.frameData = td.td_pulFrames;
@@ -229,7 +229,7 @@ static void SetCurrentAndUpload(CTextureData &td, PIX pixWidth, PIX pixHeight, S
     // single-frame textures
 
     SSRT::CPreparedTextureInfo info = {};
-    info.textureIndex = td.td_ulObject;
+    info.textureID = td.td_ulObject;
     info.width = td.GetWidth();
     info.height = td.GetHeight();
     info.imageData = td.td_pulFrames;
@@ -305,13 +305,13 @@ unsigned RT_SetTextureAsCurrent(CTextureData *textureData, SSRT::TextureUploader
   //     as animated textures have only one material index too
 
   // if not already generated, generate bind number(s) and force upload
-  if (td.td_ctFrames <= 1 && td.td_ulObject == NONE)
+  if (td.td_ulObject == NONE)
   {
     // check whether frames are present
     ASSERT(td.td_pulFrames != NULL && td.td_pulFrames[0] != 0xDEADBEEF);
 
     // RT: generate index for this texture
-    td.td_ulObject = uploader->GenerateIndex();
+    td.td_ulObject = uploader->GenerateTextureID();
 
     // must do initial uploading
     bNeedUpload = true;
@@ -329,7 +329,7 @@ unsigned RT_SetTextureAsCurrent(CTextureData *textureData, SSRT::TextureUploader
   }
 
   // debug check
-  ASSERT(td.td_ctFrames <= 1 && td.td_ulObject != NONE);
+  ASSERT(td.td_ulObject != NONE);
 
   // RT: this field is used for texture index
   return td.td_ulObject;

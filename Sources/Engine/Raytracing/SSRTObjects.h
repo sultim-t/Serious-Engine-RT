@@ -171,7 +171,7 @@ struct CHudElementInfo
 
 struct CPreparedTextureInfo
 {
-  uint32_t              textureIndex;
+  uint32_t              textureID;
   const CTFileName      *path;
   bool                  isDynamic;
   void                  *imageData;
@@ -186,7 +186,7 @@ struct CPreparedTextureInfo
 
 struct CPreparedAnimatedTextureInfo
 {
-  uint32_t              textureIndex;
+  uint32_t              textureID;
   const CTFileName      *path;
   void                  *frameData;
   uint32_t              frameCount;

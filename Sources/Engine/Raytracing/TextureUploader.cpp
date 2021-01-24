@@ -21,24 +21,78 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Graphics/Texture.h>
 #include <Engine/Raytracing/RTProcessing.h>
 
-#define OVERRIDEN_TEXTURE_FILE_EXTENSION ".png"
+#define TEXTURE_INDEX_OFFSET              1
+#define FRAMES_TO_WAIT_FOR_DESTROY        3
+#define TEXTURE_COUNT_ALLOC_STEP          512
+#define OVERRIDEN_TEXTURE_FILE_EXTENSION  ".png"
+
+uint32_t SSRT::TextureUploader::IndexToID(uint32_t index)
+{
+  return index + TEXTURE_INDEX_OFFSET;
+}
+
+uint32_t SSRT::TextureUploader::IDToIndex(uint32_t id)
+{
+  ASSERT(id != 0);
+  return id - TEXTURE_INDEX_OFFSET;
+}
 
 SSRT::TextureUploader::TextureUploader(RgInstance _instance) : instance(_instance)
 {
+  wasUsed.resize(TEXTURE_COUNT_ALLOC_STEP);
+  materials.resize(TEXTURE_COUNT_ALLOC_STEP);
+  materialExist.resize(TEXTURE_COUNT_ALLOC_STEP);
 }
 
 SSRT::TextureUploader::~TextureUploader()
 {
+  RgResult r;
+
+  for (uint32_t i = 0; i < materials.size(); i++)
+  {
+    if (materialExist[i])
+    {
+      r = rgDestroyMaterial(instance, materials[i]);
+      RG_CHECKERROR(r);
+    }
+  }
 }
 
-uint32_t SSRT::TextureUploader::GenerateIndex()
+uint32_t SSRT::TextureUploader::GenerateTextureID()
 {
-  return 1;
-  // TODO: generate index
+  // find empty in materials
+  auto it = 
+    std::find(materialExist.begin(), materialExist.end(), false);
+
+  uint32_t textureIndex;
+
+  if (it != materialExist.end())
+  {
+    textureIndex = (uint32_t)std::distance(materialExist.begin(), it);
+  }
+  else
+  {
+    // realloc all arrays if not enough indices
+    uint32_t oldSize = (uint32_t)materialExist.size();
+    uint32_t newSize = oldSize + TEXTURE_COUNT_ALLOC_STEP;
+
+    materialExist.resize(newSize);
+    materials.resize(newSize);
+    wasUsed.resize(newSize);
+
+    textureIndex = oldSize + 1 + TEXTURE_INDEX_OFFSET;
+  }
+
+  return IndexToID(textureIndex);
 }
 
 void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
 {
+  uint32_t textureIndex = IDToIndex(info.textureID);
+
+  // must not be uploaded yet
+  ASSERT(!materialExist[textureIndex]);
+
   RgMaterial material;
 
   const CTString &overridenPath = info.path->FileDir() + info.path->FileName() + OVERRIDEN_TEXTURE_FILE_EXTENSION;
@@ -74,11 +128,16 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
     RG_CHECKERROR(r);
   }
 
-  // TODO: register material by texture index
+  AddMaterial(textureIndex, material);
 }
 
 void SSRT::TextureUploader::UploadTexture(const CPreparedAnimatedTextureInfo &animInfo)
 {
+  uint32_t textureIndex = IDToIndex(animInfo.textureID);
+
+  // must not be uploaded yet
+  ASSERT(!materialExist[textureIndex]);
+
   RgMaterial material;
   std::vector<RgStaticMaterialCreateInfo> frames(animInfo.frameCount);
 
@@ -108,7 +167,7 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedAnimatedTextureInfo &an
   RgResult r = rgCreateAnimatedMaterial(instance, &info, &material);
   RG_CHECKERROR(r);
 
-  // TODO: register material by texture index
+  AddMaterial(textureIndex, material);
 }
 
 RgMaterial SSRT::TextureUploader::Get(CTextureObject *pTexture)
@@ -118,7 +177,51 @@ RgMaterial SSRT::TextureUploader::Get(CTextureObject *pTexture)
     return RG_NO_MATERIAL;
   }
 
-  RT_SetTextureAsCurrent(pTexture, this);
+  CTextureData *td = (CTextureData *)pTexture->GetData();
 
+  // update texture, and upload if needed
+  uint32_t textureID = RT_SetTextureAsCurrent(td, this);
+  uint32_t textureIndex = IDToIndex(textureID);
 
+  ASSERT(materialExist[textureIndex]);
+
+  wasUsed[textureIndex] = FRAMES_TO_WAIT_FOR_DESTROY;
+  return materials[textureIndex];
 }
+
+void SSRT::TextureUploader::AddMaterial(uint32_t textureIndex, RgMaterial material)
+{
+  // set default values
+  wasUsed[textureIndex] = FRAMES_TO_WAIT_FOR_DESTROY;
+  materialExist[textureIndex] = true;
+  materials[textureIndex] = material;
+}
+
+void SSRT::TextureUploader::DestroyMaterial(uint32_t textureIndex)
+{
+  ASSERT(materialExist[textureIndex]);
+
+  RgResult r = rgDestroyMaterial(instance, materials[textureIndex]);
+  RG_CHECKERROR(r);
+
+  materialExist[textureIndex] = false;
+  materials[textureIndex] = RG_NO_MATERIAL;
+}
+
+void SSRT::TextureUploader::PrepareForFrame()
+{
+  for (uint32_t i = 0; i < wasUsed.size(); i++)
+  {
+    // if has time to stay
+    if (wasUsed[i] > 0)
+    {
+      wasUsed[i]--;
+    }
+    // if should be deleted and material exist
+    else if (materialExist[i])
+    {
+      DestroyMaterial(i);
+    }
+  }
+}
+

@@ -52,6 +52,7 @@ public:
 
   void EndFrame();
 
+  // Functions for GFX wrapper
   void SetProjectionMatrix(const float *pMatrix);
   void SetViewMatrix(const float *pMatrix);
   void SetViewport(float leftUpperX, float leftUpperY, float width, float height, float minDepth, float maxDepth);
