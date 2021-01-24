@@ -33,44 +33,11 @@ namespace SSRT
 #define SSRT_MATERIAL_LAYER_COUNT 3
 
 
-struct RTObject
+struct CAbstractGeometry
 {
-  ULONG           entityID;
-  bool            isEnabled;
+  ULONG               entityID;
+  bool                isEnabled;
 
-public:
-  //ULONG           GetEnitityID() const;
-  bool            operator==(const RTObject &other) const;
-
-  virtual         ~RTObject() = 0;
-};
-
-
-struct CTexture
-{
-  const char      *name;
-
-};
-
-
-struct CMaterial
-{
-  // ID of this material
-  uint32_t        materialId;
-  // base texture data
-  CTextureData    *textureData;
-};
-
-
-// Each triangle has 3 materials (the 4th one is shadowlayer)
-struct CTriangleMaterial
-{
-  uint32_t        layerMaterialId[SSRT_MATERIAL_LAYER_COUNT];
-};
-
-
-struct CAbstractGeometry : RTObject
-{
   // absolute position and rotation
   FLOAT3D             absPosition;
   FLOATmatrix3D       absRotation;
@@ -91,9 +58,8 @@ struct CAbstractGeometry : RTObject
   // each 3 indices make a triangle
   INDEX               indexCount;
   INDEX               *indices;
-  // material ID for each triangle (i.e. for each 3 indices)
-  CTriangleMaterial   materials;
-  RgGeometry          rgGeomId;
+  // 
+  CTextureData        *textureDatas[3]  = {};
 };
 
 
@@ -102,12 +68,7 @@ struct CModelGeometry : public CAbstractGeometry
 {
   // path to attachment using attachment position ID,
   // -1 means the end of the list
-  INDEX           attchPath[SSRT_MAX_ATTACHMENT_DEPTH];
-  // for first person weapons
-  bool            isFirstPerson;
-
-public:
-  //CModelObject    *GetModelObject();
+  INDEX           attchPath[SSRT_MAX_ATTACHMENT_DEPTH] = {};
   bool            operator==(const CModelGeometry &other) const;
 };
 
@@ -116,15 +77,16 @@ public:
 // If it's movable, then transformation can be changed
 struct CBrushGeometry : public CAbstractGeometry
 {
-public:
-  //bool            IsMovable() const;
-  //CBrush3D        *GetOriginalBrush();
+  bool            isMovable = false;
   bool            operator==(const CBrushGeometry &other) const;
 };
 
 
-struct CDirectionalLight : public RTObject
+struct CDirectionalLight
 {
+  ULONG           entityID;
+  bool            isEnabled;
+
   FLOAT3D         direction;
   COLOR           color;
   // directional light angular size on a sky in degrees
@@ -132,8 +94,11 @@ struct CDirectionalLight : public RTObject
 };
 
 
-struct CSphereLight : public RTObject
+struct CSphereLight
 {
+  ULONG           entityID;
+  bool            isEnabled;
+
   FLOAT3D         absPosition;
   COLOR           color;
   float           intensity;

@@ -219,8 +219,9 @@ void RT_AddNonZoningBrush(CEntity *penBrush, SSRT::Scene *scene)
     brushInfo.normals = nullptr;
     brushInfo.indexCount = RT_AllSectorIndices.Count();
     brushInfo.indices = &RT_AllSectorIndices[0];
+    brushInfo.isMovable = isMovable;
 
-    scene->AddBrush(brushInfo, isMovable);
+    scene->AddBrush(brushInfo);
   }
 
   RT_AllSectorVertices.PopAll();

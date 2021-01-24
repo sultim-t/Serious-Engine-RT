@@ -93,7 +93,7 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
   GeometryExporter::ExportGeometry(model);
 }
 
-void SSRT::Scene::AddBrush(const CBrushGeometry &brush, bool isMovable)
+void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
 {
   if (brush.vertices == nullptr || brush.vertexCount == 0 || brush.indices == nullptr || brush.indexCount == 0)
   {
@@ -103,7 +103,7 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush, bool isMovable)
   RgGeometry geomIndex;
 
   RgGeometryUploadInfo stInfo = {};
-  stInfo.geomType = isMovable ? 
+  stInfo.geomType = brush.isMovable ?
     RG_GEOMETRY_TYPE_STATIC_MOVABLE :
     RG_GEOMETRY_TYPE_STATIC;
   stInfo.vertexCount = brush.vertexCount;
@@ -124,7 +124,7 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush, bool isMovable)
   RgResult r = rgUploadGeometry(instance, &stInfo, &geomIndex);
   RG_CHECKERROR(r);
 
-  if (isMovable)
+  if (brush.isMovable)
   {
   #ifndef NDEBUG
     auto it = entityToMovableBrush.find(brush.entityID);

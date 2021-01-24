@@ -37,7 +37,7 @@ public:
   Scene &operator=(Scene &&other) noexcept = delete;
 
   void AddModel(const CModelGeometry &model);
-  void AddBrush(const CBrushGeometry &brush, bool isMovable);
+  void AddBrush(const CBrushGeometry &brush);
   void AddLight(const CSphereLight &sphLt);
   void AddLight(const CDirectionalLight &dirLt);
 

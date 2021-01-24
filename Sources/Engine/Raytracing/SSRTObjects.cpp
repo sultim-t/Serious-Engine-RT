@@ -19,42 +19,15 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 namespace SSRT
 {
 
-//ULONG RTObject::GetEnitityID() const
-//{
-//  return entityID;
-//}
-
-bool RTObject::operator==(const RTObject &other) const
-{
-  return false;
-}
-
-RTObject::~RTObject()
-{}
-
-
-//inline CBrush3D *CBrushGeometry::GetOriginalBrush()
-//{
-//  ASSERT(pOriginalEntity != nullptr);
-//  return pOriginalEntity->en_pbrBrush;
-//}
-
 bool CBrushGeometry::operator==(const CBrushGeometry &other) const
 {
-  if (this->entityID != other.entityID)
+  if (this->entityID != other.entityID || isMovable != other.isMovable)
   {
     return false;
   }
 
   return true;
 }
-
-
-//CModelObject *CModelGeometry::GetModelObject()
-//{
-//  ASSERT(pOriginalEntity != nullptr);
-//  return pOriginalEntity->en_pmoModelObject;
-//}
 
 bool CModelGeometry::operator==(const CModelGeometry &other) const
 {
@@ -78,12 +51,5 @@ bool CModelGeometry::operator==(const CModelGeometry &other) const
 
   return true;
 }
-
-
-//bool CBrushGeometry::IsMovable() const
-//{
-//  ASSERT(pOriginalEntity != nullptr);
-//  return pOriginalEntity->en_ulPhysicsFlags & EPF_MOVABLE;
-//}
 
 }
