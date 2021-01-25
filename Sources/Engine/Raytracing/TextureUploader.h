@@ -36,11 +36,12 @@ public:
 
   // For identification and using as CTextureData::td_ulObject
   uint32_t GenerateTextureID();
+  void DeleteTexture(uint32_t textureID);
+
   void UploadTexture(const CPreparedTextureInfo &info);
   void UploadTexture(const CPreparedAnimatedTextureInfo &animInfo);
 
-  void PrepareForFrame();
-  RgMaterial Get(CTextureObject *pTexture);
+  RgMaterial GetMaterial(CTextureData *pTexture, uint32_t textureFrameIndex = 0);
 
 private:
   void AddMaterial(uint32_t textureIndex, RgMaterial material);
@@ -52,11 +53,8 @@ private:
 private:
   RgInstance instance;
 
-  std::vector<uint32_t> wasUsed;
-
   std::vector<bool> materialExist;
   std::vector<RgMaterial> materials;
-
 };
 
 }

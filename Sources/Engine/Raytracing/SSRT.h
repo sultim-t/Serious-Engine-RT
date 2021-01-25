@@ -19,6 +19,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Brushes/Brush.h>
 
 #include <Engine/Raytracing/Scene.h>
+#include <Engine/Raytracing/TextureUploader.h>
 
 #include <RTGL1/RTGL1.h>
 
@@ -56,6 +57,7 @@ public:
   void SetProjectionMatrix(const float *pMatrix);
   void SetViewMatrix(const float *pMatrix);
   void SetViewport(float leftUpperX, float leftUpperY, float width, float height, float minDepth, float maxDepth);
+  void DeleteTexture(uint32_t textureID);
 
 private:
   CWorldRenderingInfo   worldRenderInfo;
@@ -75,7 +77,9 @@ private:
   float                 viewMatrix[16];
   RgViewport            currentViewport;
 
-  RgInstance instance;
+  TextureUploader       *textureUploader;
+
+  RgInstance            instance;
 };
 
 }

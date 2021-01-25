@@ -1034,8 +1034,8 @@ extern void GFX_SetFunctionPointers( INDEX iAPI)
     gfxPolygonMode          = &ssrt_PolygonMode;
     gfxSetTextureWrapping   = &ssrt_SetTextureWrapping;
     gfxSetTextureModulation = &ssrt_SetTextureModulation;
-    gfxGenerateTexture      = &ssrt_GenDelTexture;
-    gfxDeleteTexture        = &ssrt_GenDelTexture;   
+    gfxGenerateTexture      = &ssrt_GenerateTexture;
+    gfxDeleteTexture        = &ssrt_DeleteTexture;
     gfxSetVertexArray       = &ssrt_SetVertexArray;  
     gfxSetNormalArray       = &ssrt_SetNormalArray;  
     gfxSetTexCoordArray     = &ssrt_SetTexCoordArray;

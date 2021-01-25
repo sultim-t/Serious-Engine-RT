@@ -95,6 +95,17 @@ extern void DetermineSupportedTextureFormats( GfxAPIType eAPI)
     // grayscale
     TS.ts_tfL8      = VK_FORMAT_R8G8B8A8_UNORM;
   }
+  if (eAPI == GAT_RT)
+  {
+    // won't be used, so set just any number
+    TS.ts_tfRGBA8 = 1;
+    TS.ts_tfRGB8 = 1;
+    TS.ts_tfRGB5 = 1;
+    TS.ts_tfRGBA4 = 1;
+    TS.ts_tfRGB5A1 = 1;
+    TS.ts_tfLA8 = 1;
+    TS.ts_tfL8 = 1;
+  }
 #endif // SE1_VULKAN
 }
 
@@ -107,7 +118,7 @@ extern void UpdateTextureSettings(void)
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #elif SE1_VULKAN
-  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_RT || eAPI == GAT_NONE);
 #else // SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_D3D

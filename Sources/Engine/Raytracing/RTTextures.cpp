@@ -211,8 +211,8 @@ static void SetCurrentAndUpload(CTextureData &td, PIX pixWidth, PIX pixHeight, S
 
     SSRT::CPreparedAnimatedTextureInfo info = {};
     info.textureID = td.td_ulObject;
-    info.width = td.GetWidth();
-    info.height = td.GetHeight();
+    info.width = td.GetPixWidth();
+    info.height = td.GetPixHeight();
     info.frameData = td.td_pulFrames;
     info.frameCount = td.td_ctFrames;
     info.frameStride = td.td_slFrameSize / BYTES_PER_TEXEL;
@@ -230,8 +230,8 @@ static void SetCurrentAndUpload(CTextureData &td, PIX pixWidth, PIX pixHeight, S
 
     SSRT::CPreparedTextureInfo info = {};
     info.textureID = td.td_ulObject;
-    info.width = td.GetWidth();
-    info.height = td.GetHeight();
+    info.width = td.GetPixWidth();
+    info.height = td.GetPixHeight();
     info.imageData = td.td_pulFrames;
     info.isDynamic = td.td_ptegEffect != NULL;
     info.generateMipmaps = !td.td_tpLocal.tp_bSingleMipmap;

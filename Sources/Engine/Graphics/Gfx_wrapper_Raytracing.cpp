@@ -80,6 +80,16 @@ static void ssrt_SetViewMatrix(const FLOAT *pfMatrix/*=NULL*/)
   }
 }
 
+static void ssrt_DeleteTexture(ULONG &ulTexObject)
+{
+  if (ulTexObject != 0)
+  {
+    _pGfx->gl_SSRT->DeleteTexture(ulTexObject);
+
+    ulTexObject = 0;
+  }
+}
+
 
 // DUMMY FUNCTIONS FOR RAY TRACING API
 static void ssrt_void(void){ NOTHING; }
@@ -92,7 +102,7 @@ static void ssrt_SetTextureMatrix( const FLOAT *pfMatrix) { NOTHING; }
 static void ssrt_PolygonMode( GfxPolyMode ePolyMode) { NOTHING; }
 static void ssrt_SetTextureWrapping( enum GfxWrap eWrapU, enum GfxWrap eWrapV) { NOTHING; }
 static void ssrt_SetTextureModulation( INDEX iScale) { NOTHING; }
-static void ssrt_GenDelTexture( ULONG &ulTexObject) { NOTHING; }
+static void ssrt_GenerateTexture( ULONG &ulTexObject) { NOTHING; }
 static void ssrt_SetVertexArray( GFXVertex4 *pvtx, INDEX ctVtx) { NOTHING; }
 static void ssrt_SetNormalArray( GFXNormal *pnor) { NOTHING; }
 static void ssrt_SetTexCoordArray( GFXTexCoord *ptex, BOOL b4) { NOTHING; }

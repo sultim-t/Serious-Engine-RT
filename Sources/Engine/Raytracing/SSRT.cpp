@@ -98,6 +98,8 @@ SSRT::SSRTMain::SSRTMain() :
 
   RgResult r = rgCreateInstance(&info, &instance);
   RG_CHECKERROR(r);
+
+  textureUploader = new TextureUploader(instance);
 }
 
 SSRT::SSRTMain::~SSRTMain()
@@ -113,6 +115,8 @@ SSRT::SSRTMain::~SSRTMain()
 
   curWindowWidth = 0;
   curWindowHeight = 0;
+
+  delete textureUploader;
 
   if (instance != RG_NULL_HANDLE)
   {
@@ -205,7 +209,7 @@ void SSRT::SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
   rasterInfo.viewport = currentViewport;
   rasterInfo.textures = 
   {
-    RG_NO_MATERIAL,
+    textureUploader->GetMaterial(hud.textureData),
     RG_NO_MATERIAL,
     RG_NO_MATERIAL
   };
@@ -263,4 +267,9 @@ void SSRT::SSRTMain::SetViewport(float leftUpperX, float leftUpperY, float width
   currentViewport.y = leftUpperY;
   currentViewport.width = width;
   currentViewport.height = height;
+}
+
+void SSRT::SSRTMain::DeleteTexture(uint32_t textureID)
+{
+  textureUploader->DeleteTexture(textureID);
 }
