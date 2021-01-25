@@ -54,6 +54,12 @@ static enum FPUPrecisionType _fpuOldPrecision;
 // begin/end model rendering to screen
 void BeginModelRenderingView( CAnyProjection3D &prProjection, CDrawPort *pdp)
 {
+  // ignore for RT
+  if (_pGfx->gl_eCurrentAPI == GAT_RT)
+  {
+    return;
+  }
+
   ASSERT( _iRenderingType==0 && _pdp==NULL);
 
   // set 3D projection
@@ -88,6 +94,12 @@ void BeginModelRenderingView( CAnyProjection3D &prProjection, CDrawPort *pdp)
 
 void EndModelRenderingView( BOOL bRestoreOrtho/*=TRUE*/)
 {
+  // ignore for RT
+  if (_pGfx->gl_eCurrentAPI == GAT_RT)
+  {
+    return;
+  }
+
   ASSERT( _iRenderingType==1 && _pdp!=NULL);
   // assure that FPU precision was low all the model rendering time, then revert to old FPU precision
   ASSERT( GetFPUPrecision()==FPT_24BIT);
@@ -463,15 +475,18 @@ void CModelObject::SetupModelRendering( CRenderModel &rm)
 {
   // weapons are rendered using this function directly from PlayerWeapons.es,
   // so if ray tracing is enabled and it's a weapon, add it to SSRT
-  if (_pGfx->gl_eCurrentAPI == GAT_RT && (rm.rm_ulFlags & RMF_WEAPON))
+  if (_pGfx->gl_eCurrentAPI == GAT_RT)
   {
-    SSRT::CFirstPersonModelInfo fpInfo = {};
-    fpInfo.modelObject = this;
-    fpInfo.renderModel = &rm;
-    fpInfo.fovH = ((CPerspectiveProjection3D &) _aprProjection).FOVR();
+    if (rm.rm_ulFlags & RMF_WEAPON)
+    {
+      SSRT::CFirstPersonModelInfo fpInfo = {};
+      fpInfo.modelObject = this;
+      fpInfo.renderModel = &rm;
+      fpInfo.fovH = ((CPerspectiveProjection3D &)_aprProjection).FOVR();
 
-    // RenderModel(..) will be executed there
-    _pGfx->gl_SSRT->ProcessFirstPersonModel(fpInfo);
+      // RenderModel(..) will be executed there
+      _pGfx->gl_SSRT->ProcessFirstPersonModel(fpInfo);
+    }
 
     return;
   }
@@ -595,9 +610,10 @@ void CModelObject::SetupModelRendering( CRenderModel &rm)
 // render model
 void CModelObject::RenderModel( CRenderModel &rm)
 { 
-  // weapons are processed in SetupModelRendering()
-  if (_pGfx->gl_eCurrentAPI == GAT_RT && (rm.rm_ulFlags & RMF_WEAPON))
+  if (_pGfx->gl_eCurrentAPI == GAT_RT)
   {
+    // Note: weapons are processed in SetupModelRendering()
+
     return;
   }
 
@@ -669,6 +685,12 @@ void CModelObject::RenderShadow( CRenderModel &rm, const CPlacement3D &plLight,
                                  const FLOAT fFallOff, const FLOAT fHotSpot, const FLOAT fIntensity,
                                  const FLOATplane3D &plShadowPlane)
 {
+  // ignore for RT
+  if (_pGfx->gl_eCurrentAPI == GAT_RT)
+  {
+    return;
+  }
+
   // if shadows are not rendered for current mip or model is half/full face-forward, do nothing
   if( !HasShadow(rm.rm_iMipLevel)
    || (rm.rm_pmdModelData->md_Flags&(MF_FACE_FORWARD|MF_HALF_FACE_FORWARD))) return;
