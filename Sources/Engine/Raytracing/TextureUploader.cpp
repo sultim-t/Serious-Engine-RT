@@ -90,17 +90,16 @@ void SSRT::TextureUploader::DeleteTexture(uint32_t textureID)
 
 void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
 {
-  uint32_t textureIndex = IDToIndex(info.textureID);
-
-  // must not be uploaded yet
-  ASSERT(!materialExist[textureIndex]);
-
   RgMaterial material;
+  uint32_t textureIndex = IDToIndex(info.textureID);
 
   const CTString &overridenPath = info.path->FileDir() + info.path->FileName() + OVERRIDEN_TEXTURE_FILE_EXTENSION;
 
   if (!info.isDynamic)
   {
+    // static textures must not be uploaded yet 
+    ASSERT(!materialExist[textureIndex]);
+
     RgStaticMaterialCreateInfo stInfo = {};
     stInfo.size.width = info.width;
     stInfo.size.height = info.height;
@@ -117,17 +116,37 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
   }
   else
   {
-    RgDynamicMaterialCreateInfo dninfo = {};
-    dninfo.size.width = info.width;
-    dninfo.size.height = info.height;
-    dninfo.data = (uint32_t*)info.imageData;
-    dninfo.useMipmaps = info.generateMipmaps;
-    dninfo.filter = info.filter;
-    dninfo.addressModeU = info.wrapU;
-    dninfo.addressModeV = info.wrapV;
+    // if material already exist, then must just update it, without creating
+    bool onlyUpdate = materialExist[textureIndex];
 
-    RgResult r = rgCreateDynamicMaterial(instance, &dninfo, &material);
-    RG_CHECKERROR(r);
+    if (!onlyUpdate)
+    {
+      RgDynamicMaterialCreateInfo dninfo = {};
+      dninfo.size.width = info.width;
+      dninfo.size.height = info.height;
+      dninfo.data = (uint32_t *)info.imageData;
+      dninfo.useMipmaps = info.generateMipmaps;
+      dninfo.filter = info.filter;
+      dninfo.addressModeU = info.wrapU;
+      dninfo.addressModeV = info.wrapV;
+
+      RgResult r = rgCreateDynamicMaterial(instance, &dninfo, &material);
+      RG_CHECKERROR(r);
+    }
+    else
+    {
+      material = materials[textureIndex];
+
+      RgDynamicMaterialUpdateInfo updateInfo = {};
+      updateInfo.dynamicMaterial = material;
+      updateInfo.data = (uint32_t *)info.imageData;
+
+      RgResult r = rgUpdateDynamicMaterial(instance, &updateInfo);
+      RG_CHECKERROR(r);
+
+      // don't add
+      return;
+    }
   }
 
   AddMaterial(textureIndex, material);

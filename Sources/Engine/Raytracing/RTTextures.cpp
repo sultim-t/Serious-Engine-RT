@@ -234,7 +234,7 @@ static void SetCurrentAndUpload(CTextureData &td, PIX pixWidth, PIX pixHeight, S
     info.height = td.GetPixHeight();
     info.imageData = td.td_pulFrames;
     info.isDynamic = td.td_ptegEffect != NULL;
-    info.generateMipmaps = !td.td_tpLocal.tp_bSingleMipmap;
+    info.generateMipmaps = td.td_ptegEffect != NULL ? false : !td.td_tpLocal.tp_bSingleMipmap;
     info.path = &td.GetName();
 
     UnpackTexParams(td.td_tpLocal, &info.filter, &info.wrapU, &info.wrapV);

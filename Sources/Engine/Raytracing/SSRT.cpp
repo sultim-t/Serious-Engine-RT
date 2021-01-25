@@ -171,7 +171,7 @@ void SSRT::SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
   if (currentScene == nullptr || info.world->GetName() != currentScene->GetWorldName())
   {
     delete currentScene;
-    currentScene = new Scene(instance, info.world);
+    currentScene = new Scene(instance, info.world, textureUploader);
   }
 
   worldRenderInfo = info;

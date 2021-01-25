@@ -26,8 +26,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "GeometryExporter.h"
 #include "RTProcessing.h"
 
-SSRT::Scene::Scene(RgInstance _instance, CWorld *_pWorld)
-  : instance(_instance), pWorld(_pWorld), worldName(_pWorld->GetName())
+SSRT::Scene::Scene(RgInstance _instance, CWorld *_pWorld, TextureUploader *_textureUploader)
+:
+  instance(_instance),
+  pWorld(_pWorld),
+  worldName(_pWorld->GetName()),
+  textureUploader(_textureUploader)
 {
   CPrintF("SSRT scene was created.\n");
 
@@ -70,6 +74,17 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
     return;
   }
 
+  constexpr uint32_t MaxTextureLayers = 3;
+
+  CTextureData *tds[MaxTextureLayers];
+  INDEX tdFrames[MaxTextureLayers];
+
+  for (uint32_t i = 0; i < MaxTextureLayers; i++)
+  {
+    tds[i] = model.textures[i] != nullptr ? (CTextureData *)model.textures[i]->GetData() : nullptr;
+    tdFrames[i] = model.textures[i] != nullptr ? model.textures[0]->GetFrame() : 0;
+  }
+
   RgGeometryUploadInfo dnInfo = {};
   dnInfo.geomType = RG_GEOMETRY_TYPE_DYNAMIC;
   dnInfo.vertexCount = model.vertexCount;
@@ -80,9 +95,9 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
   dnInfo.indexCount = model.indexCount;
   dnInfo.indexData = (uint32_t *)model.indices;
   dnInfo.geomMaterial = {
-    RG_NO_MATERIAL,
-    RG_NO_MATERIAL,
-    RG_NO_MATERIAL
+    textureUploader->GetMaterial(tds[0], tdFrames[0]),
+    textureUploader->GetMaterial(tds[1], tdFrames[1]),
+    textureUploader->GetMaterial(tds[2], tdFrames[2]),
   };
 
   Utils::CopyTransform(dnInfo.transform, model);

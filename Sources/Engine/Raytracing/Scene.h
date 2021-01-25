@@ -19,8 +19,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <vector>
 
 #include <Engine/Raytracing/SSRTObjects.h>
-
-#include <RTGL1/RTGL1.h>
+#include <Engine/Raytracing/TextureUploader.h>
 
 namespace SSRT
 {
@@ -28,7 +27,7 @@ namespace SSRT
 class Scene
 {
 public:
-  Scene(RgInstance instance, CWorld *pWorld);
+  Scene(RgInstance instance, CWorld *pWorld, TextureUploader *textureUploader);
   ~Scene();
 
   Scene(const Scene &other) = delete;
@@ -53,6 +52,7 @@ private:
 
 private:
   RgInstance instance;
+  TextureUploader *textureUploader;
 
   // - Every entity can be either model or brush
   // - A model can have attachments that are models too
@@ -68,8 +68,6 @@ private:
   // Scene light sources, cleaned up by the end of a frame
   std::vector<CSphereLight>       sphLights;
   std::vector<CDirectionalLight>  dirLights;
-
-
 };
 
 }

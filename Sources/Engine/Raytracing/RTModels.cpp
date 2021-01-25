@@ -303,7 +303,7 @@ static void RT_SetupModelRendering(CModelObject &mo, CRenderModel &rm, const FLO
 
 // RT: add vertices to corresponding CModelObject
 //void RenderOneSide( CRenderModel &rm, BOOL bBackSide, ULONG ulLayerFlags)
-static void RT_RenderOneSide(ULONG entityID, CRenderModel &rm,
+static void RT_RenderOneSide(ULONG entityID, CRenderModel &rm, CTextureObject *texture,
                       const RT_VertexData &vd, BOOL bBackSide, 
                       const INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH], INDEX attchCount,
                       SSRT::Scene *scene)
@@ -402,6 +402,7 @@ static void RT_RenderOneSide(ULONG entityID, CRenderModel &rm,
     modelInfo.texCoords = vd.texCoords;
     modelInfo.indexCount = indexCount;
     modelInfo.indices = indices;
+    modelInfo.textures[0] = texture;
 
     for (INDEX i = 0; i < SSRT_MAX_ATTACHMENT_DEPTH; i++)
     {
@@ -414,7 +415,7 @@ static void RT_RenderOneSide(ULONG entityID, CRenderModel &rm,
 
 
 
-static void RT_RenderModel_View(ULONG entityID, const CModelObject &mo, CRenderModel &rm,
+static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &rm,
                          const INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH], INDEX attchCount, SSRT::Scene *scene)
 //void CModelObject::RenderModel_View(CRenderModel &rm)
 {
@@ -674,7 +675,7 @@ static void RT_RenderModel_View(ULONG entityID, const CModelObject &mo, CRenderM
 
     // RT: everything is set, copy model data to SSRT
     //RT_RenderOneSide(rm, TRUE);
-    RT_RenderOneSide(entityID, rm, vd, FALSE, attchPath, attchCount, scene);
+    RT_RenderOneSide(entityID, rm, &mo.mo_toTexture, vd, FALSE, attchPath, attchCount, scene);
   }
 
   // adjust z-buffer and blending functions
@@ -701,7 +702,7 @@ static void RT_RenderModel_View(ULONG entityID, const CModelObject &mo, CRenderM
 
 
 //void CModelObject::RenderModel(CRenderModel &rm)
-static void RT_RenderModel(ULONG entityID, const CModelObject &mo, CRenderModel &rm, INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH], INDEX attchCount, SSRT::Scene *scene)
+static void RT_RenderModel(ULONG entityID, CModelObject &mo, CRenderModel &rm, INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH], INDEX attchCount, SSRT::Scene *scene)
 {
   // skip invisible models
   if (mo.mo_Stretch == FLOAT3D(0, 0, 0)) return;
