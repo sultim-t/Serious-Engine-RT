@@ -20,18 +20,17 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Templates/DynamicContainer.cpp>
 
+#include "RTProcessing.h"
 #include "Utils.h"
-
 #define DUMP_GEOMETRY_TO_OBJ 0
 #include "GeometryExporter.h"
-#include "RTProcessing.h"
 
 SSRT::Scene::Scene(RgInstance _instance, CWorld *_pWorld, TextureUploader *_textureUploader)
 :
   instance(_instance),
   pWorld(_pWorld),
-  worldName(_pWorld->GetName()),
-  textureUploader(_textureUploader)
+  textureUploader(_textureUploader),
+  worldName(_pWorld->GetName())
 {
   CPrintF("SSRT scene was created.\n");
 
@@ -67,22 +66,21 @@ const CTString &SSRT::Scene::GetWorldName() const
   return worldName;
 }
 
+const CWorld *SSRT::Scene::GetWorld() const
+{
+  return pWorld;
+}
+
+CWorld *SSRT::Scene::GetWorld()
+{
+  return pWorld;
+}
+
 void SSRT::Scene::AddModel(const CModelGeometry &model)
 {
   if (model.vertices == nullptr || model.vertexCount == 0 || model.indices == nullptr || model.indexCount == 0)
   {
     return;
-  }
-
-  constexpr uint32_t MaxTextureLayers = 3;
-
-  CTextureData *tds[MaxTextureLayers];
-  INDEX tdFrames[MaxTextureLayers];
-
-  for (uint32_t i = 0; i < MaxTextureLayers; i++)
-  {
-    tds[i] = model.textures[i] != nullptr ? (CTextureData *)model.textures[i]->GetData() : nullptr;
-    tdFrames[i] = model.textures[i] != nullptr ? model.textures[0]->GetFrame() : 0;
   }
 
   RgGeometryUploadInfo dnInfo = {};
@@ -94,10 +92,11 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
   dnInfo.colorData = nullptr;
   dnInfo.indexCount = model.indexCount;
   dnInfo.indexData = (uint32_t *)model.indices;
-  dnInfo.geomMaterial = {
-    textureUploader->GetMaterial(tds[0], tdFrames[0]),
-    textureUploader->GetMaterial(tds[1], tdFrames[1]),
-    textureUploader->GetMaterial(tds[2], tdFrames[2]),
+  dnInfo.geomMaterial = 
+  {
+    textureUploader->GetMaterial(model.textures[0], model.textureFrames[0]),
+    textureUploader->GetMaterial(model.textures[1], model.textureFrames[1]),
+    textureUploader->GetMaterial(model.textures[2], model.textureFrames[2]),
   };
 
   Utils::CopyTransform(dnInfo.transform, model);
@@ -128,10 +127,11 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
   stInfo.colorData = nullptr;
   stInfo.indexCount = brush.indexCount;
   stInfo.indexData = (uint32_t *)brush.indices;
-  stInfo.geomMaterial = {
-    RG_NO_MATERIAL,
-    RG_NO_MATERIAL,
-    RG_NO_MATERIAL
+  stInfo.geomMaterial = 
+  {
+    textureUploader->GetMaterial(brush.textures[0], brush.textureFrames[0]),
+    textureUploader->GetMaterial(brush.textures[1], brush.textureFrames[1]),
+    textureUploader->GetMaterial(brush.textures[2], brush.textureFrames[2]),
   };
 
   Utils::CopyTransform(stInfo.transform, brush);
@@ -143,7 +143,14 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
   {
   #ifndef NDEBUG
     auto it = entityToMovableBrush.find(brush.entityID);
-    ASSERTMSG(it == entityToMovableBrush.end(), "Movable brush with the same entity ID was already added");
+    //ASSERTMSG(it == entityToMovableBrush.end(), "Movable brush with the same entity ID was already added");
+
+    // RODO: REVERT THIS!!!
+    if (it == entityToMovableBrush.end())
+    {
+      return;
+    }
+
   #endif
 
     entityToMovableBrush[brush.entityID] = geomIndex;

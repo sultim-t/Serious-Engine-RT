@@ -44,6 +44,8 @@ public:
   void Update(const FLOAT3D &viewerPos, ULONG viewerEntityID);
 
   const CTString &GetWorldName() const;
+  const CWorld *GetWorld() const;
+  CWorld *GetWorld();
 
 private:
   void ProcessBrushes();
