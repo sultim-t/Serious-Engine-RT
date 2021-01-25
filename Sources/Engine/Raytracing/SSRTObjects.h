@@ -60,7 +60,8 @@ struct CAbstractGeometry
   INDEX               indexCount;
   INDEX               *indices;
 
-  CTextureObject      *textures[3];
+  CTextureData        *textures[3];
+  INDEX               textureFrames[3];
 };
 
 

@@ -303,7 +303,7 @@ static void RT_SetupModelRendering(CModelObject &mo, CRenderModel &rm, const FLO
 
 // RT: add vertices to corresponding CModelObject
 //void RenderOneSide( CRenderModel &rm, BOOL bBackSide, ULONG ulLayerFlags)
-static void RT_RenderOneSide(ULONG entityID, CRenderModel &rm, CTextureObject *texture,
+static void RT_RenderOneSide(ULONG entityID, CRenderModel &rm, CTextureObject *to,
                       const RT_VertexData &vd, BOOL bBackSide, 
                       const INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH], INDEX attchCount,
                       SSRT::Scene *scene)
@@ -402,7 +402,10 @@ static void RT_RenderOneSide(ULONG entityID, CRenderModel &rm, CTextureObject *t
     modelInfo.texCoords = vd.texCoords;
     modelInfo.indexCount = indexCount;
     modelInfo.indices = indices;
-    modelInfo.textures[0] = texture;
+
+    CTextureData *td = to != nullptr ? (CTextureData *)to->GetData() : nullptr;
+    modelInfo.textures[0] = td;
+    modelInfo.textureFrames[0] = to != nullptr && td != nullptr ? to->GetFrame() : 0;
 
     for (INDEX i = 0; i < SSRT_MAX_ATTACHMENT_DEPTH; i++)
     {
