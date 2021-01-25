@@ -215,7 +215,7 @@ static void SetCurrentAndUpload(CTextureData &td, PIX pixWidth, PIX pixHeight, S
     info.height = td.GetPixHeight();
     info.frameData = td.td_pulFrames;
     info.frameCount = td.td_ctFrames;
-    info.frameStride = td.td_slFrameSize / BYTES_PER_TEXEL;
+    info.frameStride = td.td_slFrameSize;
     info.generateMipmaps = !td.td_tpLocal.tp_bSingleMipmap;
     info.path = &td.GetName();
 

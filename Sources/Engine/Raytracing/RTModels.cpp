@@ -255,7 +255,7 @@ static void RT_SetupModelRendering(CModelObject &mo, CRenderModel &rm, const FLO
 
   if (mo.mo_Stretch != FLOAT3D(1, 1, 1))
   {
-    distance *= Max(mo.mo_Stretch(1), Max(mo.mo_Stretch(2), mo.mo_Stretch(3)));
+    distance /= Max(mo.mo_Stretch(1), Max(mo.mo_Stretch(2), mo.mo_Stretch(3)));
   }
 
   const float rtLodFix = +0.2f;
