@@ -514,6 +514,12 @@ extern SLONG gfxGetTextureSize( ULONG ulTexObject, BOOL bHasMipmaps/*=TRUE*/)
 
   // determine API
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
+
+  if (eAPI == GAT_RT)
+  {
+    return 0;
+  }
+
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #elif SE1_VULKAN

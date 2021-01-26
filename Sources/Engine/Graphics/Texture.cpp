@@ -1203,6 +1203,7 @@ void CTextureData::SetAsCurrent( INDEX iFrameNo/*=0*/, BOOL bForceUpload/*=FALSE
   // check API
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 
+  // RT: using cutsom SetAsCurrent in RTTextures.cpp
   if (eAPI == GAT_RT)
   {
     return;
@@ -1479,16 +1480,34 @@ void CTextureData::Unbind(void)
   td_tvLastDrawn = 0I64;
 
   // only if bound
-  if( td_ulObject==NONE) {
-    ASSERT( td_ulProbeObject==NONE);
+  if (td_ulObject == NONE)
+  {
+    ASSERT(td_ulProbeObject == NONE);
     return;
   }
+
   // free frame number(s)
-  if( td_ctFrames>1) { // animation
-    for( INDEX iFrame=0; iFrame<td_ctFrames; iFrame++) gfxDeleteTexture( td_pulObjects[iFrame]);
-    FreeMemory( td_pulObjects);
-    td_pulObjects = NULL;
-  } else { // single-frame
+  if (td_ctFrames > 1)
+  {
+    // RT: only one handle is stored for aniamted textures
+    if (_pGfx->gl_eCurrentAPI == GAT_RT)
+    {
+      gfxDeleteTexture(td_ulObject);
+    }
+    else
+    {
+      // animation
+      for (INDEX iFrame = 0; iFrame < td_ctFrames; iFrame++)
+      {
+        gfxDeleteTexture(td_pulObjects[iFrame]);
+      }
+
+      FreeMemory(td_pulObjects);
+      td_pulObjects = NULL;
+    }
+  }
+  else
+  { // single-frame
     gfxDeleteTexture(td_ulObject);
   }
   // delete probe texture, too
@@ -1764,7 +1783,15 @@ SLONG CTextureData::GetUsedMemory(void)
 {
   // readout texture object
   ULONG ulTexObject = td_ulObject;
-  if( td_ctFrames>1) ulTexObject = td_pulObjects[0];
+
+  if (td_ctFrames > 1)
+  {
+    // RT: td_pulObjects is empty
+    if (_pGfx->gl_eCurrentAPI != GAT_RT)
+    {
+      ulTexObject = td_pulObjects[0];
+    }
+  }
 
   // add structure size and anim block size
   SLONG slUsed = sizeof(*this) + CAnimData::GetUsedMemory()-sizeof(CAnimData);

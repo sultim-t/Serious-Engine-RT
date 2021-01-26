@@ -278,45 +278,66 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
     // TODO: RT: more than 1 texture coords for brushes
   #ifdef MAX_BRUSH_TEXTURE_COUNT_IS_ONE
     uint32_t iLayer = 0;
+  #else
+    for (uint32_t iLayer =0;)
   #endif
+    CTextureData *ptd = (CTextureData *)polygon.bpo_abptTextures[iLayer].bpt_toTexture.GetData();
+    if (ptd != nullptr)
     {
-      FLOATplane3D &plane = polygon.bpo_pbplPlane->bpl_plAbsolute;
+      const FLOAT mulU = 1024.0f / (float)ptd->GetWidth();
+      const FLOAT mulV = 1024.0f / (float)ptd->GetHeight();
 
-      /*const FLOAT3D &vO = sppo.spo_amvMapping[iLayer].mv_vO;
-      const FLOAT3D &vU = sppo.spo_amvMapping[iLayer].mv_vU;
-      const FLOAT3D &vV = sppo.spo_amvMapping[iLayer].mv_vV;*/
+      FLOATplane3D &plane = polygon.bpo_pbplPlane->bpl_plRelative;
 
-      CMappingVectors vec;
-      vec.FromPlane(plane);
+      CMappingVectors mvBrushSpace;
+      mvBrushSpace.FromPlane(plane);
 
-      /*CMappingVectors vecAdj;
-      polygon.bpo_abptTextures[iLayer].bpt_mdMapping.MakeMappingVectors(vec, vecAdj);
+      CMappingVectors amvMapping;
 
-      //const FLOAT3D vO(0, 0, 0);
-      const FLOAT3D &vO = vecAdj.mv_vO;
-      const FLOAT3D &vU = vecAdj.mv_vU;
-      const FLOAT3D &vV = vecAdj.mv_vV;*/
+      if ((polygon.bpo_abptTextures[iLayer].s.bpt_ubFlags & (BPTF_CLAMPU | BPTF_CLAMPV)) == 0)
+      {
+        // make a mapping adjusted for texture wrapping
+        const MEX mexMaskU = ptd->GetWidth() - 1;
+        const MEX mexMaskV = ptd->GetHeight() - 1;
+
+        CMappingDefinition mdTmp = polygon.bpo_abptTextures[iLayer].bpt_mdMapping;
+        mdTmp.md_fUOffset = (FloatToInt(mdTmp.md_fUOffset * 1024.0f) & mexMaskU) / 1024.0f;
+        mdTmp.md_fVOffset = (FloatToInt(mdTmp.md_fVOffset * 1024.0f) & mexMaskV) / 1024.0f;
+
+        const FLOAT3D vOffset = plane.ReferencePoint() - mvBrushSpace.mv_vO;
+
+        const FLOAT fS = vOffset % mvBrushSpace.mv_vU;
+        const FLOAT fT = vOffset % mvBrushSpace.mv_vV;
+        const FLOAT fU = fS * mdTmp.md_fUoS + fT * mdTmp.md_fUoT + mdTmp.md_fUOffset;
+        const FLOAT fV = fS * mdTmp.md_fVoS + fT * mdTmp.md_fVoT + mdTmp.md_fVOffset;
+
+        mdTmp.md_fUOffset += (FloatToInt(fU * 1024.0f) & ~mexMaskU) / 1024.0f;
+        mdTmp.md_fVOffset += (FloatToInt(fV * 1024.0f) & ~mexMaskV) / 1024.0f;
+
+        // make texture mapping vectors from default vectors of the plane
+        mdTmp.MakeMappingVectors(mvBrushSpace, amvMapping);
+      }
+      else
+      {
+        polygon.bpo_abptTextures[iLayer].bpt_mdMapping.MakeMappingVectors(mvBrushSpace, amvMapping);
+      }
+
+      // adjust MEX
+      amvMapping.mv_vU *= mulU;
+      amvMapping.mv_vV *= mulV;
+
+      const FLOAT3D &vO = amvMapping.mv_vO;
+      const FLOAT3D &vU = amvMapping.mv_vU;
+      const FLOAT3D &vV = amvMapping.mv_vV;
 
       for (INDEX i = 0; i < vertCount; i++)
       {
-        /*const FLOAT fDX = vertices[i].x - vO(1);
-        const FLOAT fDY = vertices[i].y - vO(2);
-        const FLOAT fDZ = vertices[i].z - vO(3);
+          const FLOAT fDX = vertices[i].x - vO(1);
+          const FLOAT fDY = vertices[i].y - vO(2);
+          const FLOAT fDZ = vertices[i].z - vO(3);
 
-        texCoords[i].s = vU(1) * fDX + vU(2) * fDY + vU(3) * fDZ;
-        texCoords[i].t = vV(1) * fDX + vV(2) * fDY + vV(3) * fDZ;*/
-
-        MEX2D mex;
-
-        polygon.bpo_abptTextures[iLayer].bpt_mdMapping.GetTextureCoordinates(vec, polygon.bpo_apbvxTriangleVertices[i]->bvx_vAbsolute, mex);
-
-        auto &to = polygon.bpo_abptTextures[iLayer].bpt_toTexture;
-
-        if (to.GetData() != nullptr)
-        { 
-          texCoords[i].s = (float)mex.vector[0] / (float)to.GetWidth();
-          texCoords[i].t = (float)mex.vector[1] / (float)to.GetHeight();
-        }
+          texCoords[i].s = vU(1) * fDX + vU(2) * fDY + vU(3) * fDZ;
+          texCoords[i].t = vV(1) * fDX + vV(2) * fDY + vV(3) * fDZ;
       }
     }
 
