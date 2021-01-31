@@ -103,7 +103,9 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *scene)
 
 // Create render model structure for rendering an attached model
 //BOOL CModelObject::CreateAttachment( CRenderModel &rmMain, CAttachmentModelObject &amo)
-static BOOL RT_CreateAttachment(const CModelObject &moParent, const CRenderModel &rmMain, const CAttachmentModelObject &amo)
+static BOOL RT_CreateAttachment(const CModelObject &moParent, 
+                                const CRenderModel &rmMain, 
+                                const CAttachmentModelObject &amo)
 {
   CRenderModel &rmAttached = *amo.amo_prm;
   rmAttached.rm_ulFlags = rmMain.rm_ulFlags & (RMF_FOG | RMF_HAZE | RMF_WEAPON) | RMF_ATTACHMENT;
@@ -202,7 +204,10 @@ static BOOL RT_CreateAttachment(const CModelObject &moParent, const CRenderModel
 
 
 //void CModelObject::SetupModelRendering( CRenderModel &rm)
-static void RT_SetupModelRendering(CModelObject &mo, CRenderModel &rm, const FLOAT3D *viewerPos, SSRT::Scene *scene)
+static void RT_SetupModelRendering(CModelObject &mo, 
+                                   CRenderModel &rm, 
+                                   const FLOAT3D *viewerPos, 
+                                   SSRT::Scene *scene)
 {
   // get model's data and lerp info, GetData()
   rm.rm_pmdModelData = mo.GetData();
@@ -301,12 +306,40 @@ static void RT_SetupModelRendering(CModelObject &mo, CRenderModel &rm, const FLO
 }
 
 
+// RT: SetRenderingParameters(..) in RenderModel_View.cpp
+static RgGeometryPassThroughType GetPassThroughType(SurfaceTranslucencyType stt, bool forceTranslucency = false)
+{
+  if (stt == STT_TRANSLUCENT || (forceTranslucency && ((stt == STT_OPAQUE) || (stt == STT_TRANSPARENT))))
+  {
+    return RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_UNDER;
+  }
+  else if (stt == STT_ADD)
+  {
+    return RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_ADDITIVE;
+  }
+  else if (stt == STT_TRANSPARENT)
+  {
+    return RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
+  }
+  else if (stt == STT_MULTIPLY)
+  {
+    return RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_UNDER;
+  }
+
+  return RG_GEOMETRY_PASS_THROUGH_TYPE_OPAQUE;
+}
+
+
 // RT: add vertices to corresponding CModelObject
 //void RenderOneSide( CRenderModel &rm, BOOL bBackSide, ULONG ulLayerFlags)
-static void RT_RenderOneSide(ULONG entityID, CRenderModel &rm, CTextureObject *to,
-                      const RT_VertexData &vd, BOOL bBackSide, 
-                      const INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH], INDEX attchCount,
-                      SSRT::Scene *scene)
+static void RT_RenderOneSide(ULONG entityID, 
+                             CRenderModel &rm, 
+                             CTextureObject *to,
+                             const RT_VertexData &vd, 
+                             BOOL bBackSide,            
+                             const INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH],
+                             bool forceTranslucency,
+                             SSRT::Scene *scene)
 {
   // set face culling
   if (bBackSide)
@@ -338,8 +371,7 @@ static void RT_RenderOneSide(ULONG entityID, CRenderModel &rm, CTextureObject *t
         break;
       }
 
-      // RT: let's assume that every surface is opaque for now
-#if 0
+    #if 0
       // skip surface if ... 
       if (!(ulFlags & SRF_DIFFUSE)  // not in this layer,
           || (bBackSide && !(ulFlags & SRF_DOUBLESIDED)) // rendering back side and surface is not double sided,
@@ -355,11 +387,16 @@ static void RT_RenderOneSide(ULONG entityID, CRenderModel &rm, CTextureObject *t
         ctElements = 0;
         continue;
       }
+    #endif
 
       // get rendering parameters
       SurfaceTranslucencyType stt = ms.ms_sttTranslucencyType;
 
+      // TODO: RT: make models to be flushed if translucency types of its parts are diferrent
+      sttLast = stt;
+
       // if surface uses rendering parameters different than last one
+    #if 0
       if (sttLast != stt)
       {
         // set up new API states
@@ -373,7 +410,7 @@ static void RT_RenderOneSide(ULONG entityID, CRenderModel &rm, CTextureObject *t
         iStartElem += ctElements;
         ctElements = 0;
       }
-#endif
+    #endif
 
       // batch the surface polygons for rendering
       ctElements += ms.ms_ctSrfEl;
@@ -411,6 +448,8 @@ static void RT_RenderOneSide(ULONG entityID, CRenderModel &rm, CTextureObject *t
     {
       modelInfo.attchPath[i] = attchPath[i];
     }
+
+    modelInfo.passThroughType = GetPassThroughType(sttLast, forceTranslucency);
 
     scene->AddModel(modelInfo);
   }
@@ -468,7 +507,7 @@ static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &
 
 
   // set forced translucency and color mask
-  //_bForceTranslucency = ((rm.rm_colBlend & CT_AMASK) >> CT_ASHIFT) != CT_OPAQUE;
+  bool forceTranslucency = ((rm.rm_colBlend & CT_AMASK) >> CT_ASHIFT) != CT_OPAQUE;
   ULONG ulColorMask = mo.mo_ColorMask;
 
   // adjust all surfaces' params for eventual forced-translucency case
@@ -678,7 +717,7 @@ static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &
 
     // RT: everything is set, copy model data to SSRT
     //RT_RenderOneSide(rm, TRUE);
-    RT_RenderOneSide(entityID, rm, &mo.mo_toTexture, vd, FALSE, attchPath, attchCount, scene);
+    RT_RenderOneSide(entityID, rm, &mo.mo_toTexture, vd, FALSE, attchPath, forceTranslucency, scene);
   }
 
   // adjust z-buffer and blending functions

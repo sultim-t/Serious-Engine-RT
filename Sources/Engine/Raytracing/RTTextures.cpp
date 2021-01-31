@@ -272,11 +272,7 @@ static void SetCurrent(CTextureData &td)
 unsigned RT_SetTextureAsCurrent(CTextureData *textureData, SSRT::TextureUploader *uploader)
 {
   ASSERT(_pGfx->gl_eCurrentAPI == GAT_RT);
-
-  if (textureData == nullptr)
-  {
-    return 0;
-  }
+  ASSERT(textureData != nullptr);
 
   CTextureData &td = *textureData;
 

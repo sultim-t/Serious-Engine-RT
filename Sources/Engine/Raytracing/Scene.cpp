@@ -85,6 +85,7 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
 
   RgGeometryUploadInfo dnInfo = {};
   dnInfo.geomType = RG_GEOMETRY_TYPE_DYNAMIC;
+  dnInfo.passThroughType = model.passThroughType;
   dnInfo.vertexCount = model.vertexCount;
   dnInfo.vertexData = (float *)model.vertices;
   dnInfo.normalData = (float *)model.normals;
@@ -120,6 +121,7 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
   stInfo.geomType = brush.isMovable ?
     RG_GEOMETRY_TYPE_STATIC_MOVABLE :
     RG_GEOMETRY_TYPE_STATIC;
+  stInfo.passThroughType = brush.passThroughType;
   stInfo.vertexCount = brush.vertexCount;
   stInfo.vertexData = (float *)brush.vertices;
   stInfo.normalData = (float *)brush.normals;
@@ -141,19 +143,14 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
 
   if (brush.isMovable)
   {
-  #ifndef NDEBUG
     auto it = entityToMovableBrush.find(brush.entityID);
-    //ASSERTMSG(it == entityToMovableBrush.end(), "Movable brush with the same entity ID was already added");
 
-    // RODO: REVERT THIS!!!
     if (it == entityToMovableBrush.end())
     {
-      return;
+      entityToMovableBrush[brush.entityID] = {};
     }
 
-  #endif
-
-    entityToMovableBrush[brush.entityID] = geomIndex;
+    entityToMovableBrush[brush.entityID].push_back(geomIndex);
   }
 
   GeometryExporter::ExportGeometry(brush);
@@ -169,14 +166,18 @@ void SSRT::Scene::UpdateMovableBrush(ULONG entityId, const CPlacement3D &placeme
     return;
   }
 
-  RgGeometry geomIndex = it->second;
+  RgResult r;
 
   RgUpdateTransformInfo updateInfo = {};
-  updateInfo.movableStaticGeom = geomIndex;
   Utils::CopyTransform(updateInfo.transform, placement);
 
-  RgResult r = rgUpdateGeometryTransform(instance, &updateInfo);
-  RG_CHECKERROR(r);
+  for (RgGeometry geomIndex : it->second)
+  {
+    updateInfo.movableStaticGeom = geomIndex;
+
+    r = rgUpdateGeometryTransform(instance, &updateInfo);
+    RG_CHECKERROR(r);
+  }
 }
 
 void SSRT::Scene::AddLight(const CSphereLight &sphLt)

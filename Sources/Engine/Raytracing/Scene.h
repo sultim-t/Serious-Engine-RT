@@ -65,7 +65,7 @@ private:
   CTString worldName;
 
   // Get movable brush geometry index by entity ID
-  std::map<ULONG, RgGeometry>     entityToMovableBrush;
+  std::map<ULONG, std::vector<RgGeometry>> entityToMovableBrush;
 
   // Scene light sources, cleaned up by the end of a frame
   std::vector<CSphereLight>       sphLights;
