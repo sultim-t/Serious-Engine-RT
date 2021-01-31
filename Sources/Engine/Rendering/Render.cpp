@@ -970,8 +970,7 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
     // RT: copied from CDrawPort::SetProjection which is called from BeginModelRenderingView(..)
     {
       // copy projection
-      CAnyProjection3D proj;
-      proj = prProjection;
+      CAnyProjection3D proj = prProjection;
       // reset transformation for projection matrix calculation
       proj->ObjectPlacementL() = CPlacement3D(FLOAT3D(0, 0, 0), ANGLE3D(0, 0, 0));
       proj->Prepare();

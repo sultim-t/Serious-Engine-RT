@@ -72,21 +72,16 @@ static RgGeometryPassThroughType GetPassThroughType(SurfaceTranslucencyType stt,
 
 // RT: same as PrepareView(..) from RenderModel.cpp
 //     but view transfomation is not applied
-static void RT_PrepareView(CRenderModel &rm, const FLOATmatrix3D &viewerRotation)
+static bool RT_PrepareRotation(const CRenderModel &rm, const FLOATmatrix3D &viewerRotation, FLOATmatrix3D &m)
 {
-  // RT: Note: actually, we shouldn't modify "rm.rm_mObjectRotation"
-
   ULONG flags = rm.rm_pmdModelData->md_Flags;
 
   // RT: do nothing if normal
   if ((flags & MF_FACE_FORWARD) == 0 && 
       (flags & MF_HALF_FACE_FORWARD) == 0)
   {
-    return;
+    return false;
   }
-
-  // RT: result matrix
-  FLOATmatrix3D m;
 
   // if half face forward
   if (flags & MF_HALF_FACE_FORWARD)
@@ -133,8 +128,7 @@ static void RT_PrepareView(CRenderModel &rm, const FLOATmatrix3D &viewerRotation
     m(3, 1) = 0;  m(3, 2) = 0;  m(3, 3) = 1;
   }
 
-  // RT: copy to original (shouldn't be done, actually!)
-  rm.rm_mObjectRotation = m;
+  return true;
 }
 
 
@@ -151,13 +145,16 @@ static void FlushModelInfo(ULONG entityID,
   // RT: flush all
   ASSERT(indexCount > 0);
 
-  // TODO: RT: default, MF_HALF_FACE_FORWARD, MF_FACE_FORWARD
+  // RT: update rotation if MF_FACE_FORWARD or MF_HALF_FACE_FORWARD
+  FLOATmatrix3D m;
+  bool tr = RT_PrepareRotation(rm, pScene->GetViewerRotation(), m);
+
 
   SSRT::CModelGeometry modelInfo = {};
   modelInfo.entityID = entityID;
   modelInfo.isEnabled = true;
   modelInfo.absPosition = rm.rm_vObjectPosition;
-  modelInfo.absRotation = rm.rm_mObjectRotation;
+  modelInfo.absRotation = tr ? m : rm.rm_mObjectRotation;
   modelInfo.color = RGBAToColor(255, 255, 255, 255);
   modelInfo.vertexCount = vd.vertexCount;
   modelInfo.vertices = vd.vertices;
@@ -382,9 +379,6 @@ static void RT_SetupModelRendering(CModelObject &mo,
   //{
   //  rm.rm_ulFlags |= RMF_INVERTED;
   //}
-
-  // RT: update rotation if MF_FACE_FORWARD or MF_HALF_FACE_FORWARD
-  RT_PrepareView(rm, scene->GetViewerRotation());
 
   FLOAT distance = (scene->GetViewerPosition() - rm.rm_vObjectPosition).Length();
 
@@ -876,7 +870,10 @@ static void RT_RenderOneModel(const CEntity &en,
                               SSRT::Scene *scene)
 {
   // skip invisible models
-  if (moModel.mo_Stretch == FLOAT3D(0, 0, 0)) return;
+  if (moModel.mo_Stretch == FLOAT3D(0, 0, 0))
+  {
+    return;
+  }
 
   // prepare render model structure
   CRenderModel rm;
@@ -1018,6 +1015,49 @@ void RT_AddModelEntity(const CEntity *penModel, SSRT::Scene *scene)
 
 void RT_AddFirstPersonModel(CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::Scene *scene)
 {
+  auto &v = rm->rm_vObjectPosition;
+  auto &m = rm->rm_mObjectRotation;
+
+  float localToCamera[] =
+  {
+    m(1, 1), m(1, 2), m(1, 3), v(1),
+    m(2, 1), m(2, 2), m(2, 3), v(2),
+    m(3, 1), m(3, 2), m(3, 3), v(3),
+    0,       0,       0,       1
+  };
+
+  const auto &cv = scene->GetViewerPosition();
+  const auto &cm = scene->GetViewerRotation();
+
+  float cameraToGlobal[] =
+  {
+    cm(1, 1), cm(1, 2), cm(1, 3), cv(1),
+    cm(2, 1), cm(2, 2), cm(2, 3), cv(2),
+    cm(3, 1), cm(3, 2), cm(3, 3), cv(3),
+    0,        0,        0,        1
+  };
+
+  // local to global
+  float g[4][4];
+
+  extern void Svk_MatMultiply(float *result, const float *a, const float *b);
+  Svk_MatMultiply((float *)g, cameraToGlobal, localToCamera);
+
+  v =
+  {
+    g[0][3],
+    g[1][3],
+    g[2][3]
+  };
+
+  for (uint32_t i = 0; i < 3; i++)
+  {
+    for (uint32_t j = 0; j < 3; j++)
+    {
+      m.matrix[i][j] = g[i][j];
+    }
+  }
+
   RT_SetupModelRendering(*mo, *rm, scene);
 
   // attachment path for SSRT::CModelGeometry,
