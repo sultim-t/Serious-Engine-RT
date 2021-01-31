@@ -29,6 +29,7 @@ SSRT::Scene::Scene(RgInstance _instance, CWorld *_pWorld, TextureUploader *_text
 :
   instance(_instance),
   pWorld(_pWorld),
+  viewerEntityID(UINT32_MAX),
   textureUploader(_textureUploader),
   worldName(_pWorld->GetName())
 {
@@ -50,15 +51,19 @@ SSRT::Scene::~Scene()
   RG_CHECKERROR(r);
 }
 
-void SSRT::Scene::Update(const FLOAT3D &viewerPos, ULONG viewerEntityID)
+void SSRT::Scene::Update(const FLOAT3D &_viewerPosition, const FLOATmatrix3D &_viewerRotation, ULONG _viewerEntityID)
 {
+  this->viewerEntityID = _viewerEntityID;
+  this->viewerPosition = _viewerPosition;
+  this->viewerRotation = _viewerRotation;
+
   // clear previous data
   sphLights.clear();
   dirLights.clear();
 
   // upload dynamic geometry (models)
   // and scan for movable geometry
-  ProcessDynamicGeometry(viewerPos, viewerEntityID);
+  ProcessDynamicGeometry();
 }
 
 const CTString &SSRT::Scene::GetWorldName() const
@@ -192,6 +197,11 @@ void SSRT::Scene::AddLight(const CDirectionalLight &dirLt)
 
 void SSRT::Scene::AddFirstPersonModel(const CFirstPersonModelInfo &info, ULONG entityId)
 {
+  if (entityId == viewerEntityID)
+  {
+    return;
+  }
+
   RT_AddFirstPersonModel(info.modelObject, info.renderModel, entityId, this);
 }
 
@@ -219,7 +229,7 @@ void SSRT::Scene::ProcessBrushes()
   RG_CHECKERROR(r);
 }
 
-void SSRT::Scene::ProcessDynamicGeometry(const FLOAT3D &viewerPos, ULONG viewerEntityID)
+void SSRT::Scene::ProcessDynamicGeometry()
 {
   // check all movable brushes, models and light sources
   FOREACHINDYNAMICCONTAINER(pWorld->wo_cenEntities, CEntity, iten)
@@ -232,7 +242,7 @@ void SSRT::Scene::ProcessDynamicGeometry(const FLOAT3D &viewerPos, ULONG viewerE
     if (iten->en_RenderType == CEntity::RT_MODEL)
     {
       // add it as a model and scan for light sources
-      RT_AddModelEntity(&iten.Current(), &viewerPos, this);
+      RT_AddModelEntity(&iten.Current(), this);
     }
     else if (iten->en_RenderType == CEntity::RT_BRUSH && (iten->en_ulPhysicsFlags & EPF_MOVABLE))
     {
@@ -245,4 +255,19 @@ void SSRT::Scene::ProcessDynamicGeometry(const FLOAT3D &viewerPos, ULONG viewerE
       UpdateMovableBrush(iten->en_ulID, iten->GetLerpedPlacement());
     }
   }
+}
+
+ULONG SSRT::Scene::GetViewerEntityID() const
+{
+  return viewerEntityID;
+}
+
+const FLOAT3D &SSRT::Scene::GetViewerPosition() const
+{
+  return viewerPosition;
+}
+
+const FLOATmatrix3D &SSRT::Scene::GetViewerRotation() const
+{
+  return viewerRotation;
 }

@@ -39,9 +39,12 @@ public:
   void AddBrush(const CBrushGeometry &brush);
   void AddLight(const CSphereLight &sphLt);
   void AddLight(const CDirectionalLight &dirLt);
+  ULONG GetViewerEntityID() const;
+  const FLOAT3D &GetViewerPosition() const;
+  const FLOATmatrix3D &GetViewerRotation() const;
 
   void AddFirstPersonModel(const CFirstPersonModelInfo &info, ULONG entityId);
-  void Update(const FLOAT3D &viewerPos, ULONG viewerEntityID);
+  void Update(const FLOAT3D &viewerPosition, const FLOATmatrix3D &viewerRotation, ULONG viewerEntityID);
 
   const CTString &GetWorldName() const;
   const CWorld *GetWorld() const;
@@ -49,7 +52,7 @@ public:
 
 private:
   void ProcessBrushes();
-  void ProcessDynamicGeometry(const FLOAT3D &viewerPos, ULONG viewerEntityID);
+  void ProcessDynamicGeometry();
   void UpdateMovableBrush(ULONG entityId, const CPlacement3D &placement);
 
 private:
@@ -63,6 +66,10 @@ private:
   // - An entity can have one light source "attached" to it.
   CWorld *pWorld;
   CTString worldName;
+
+  ULONG viewerEntityID;
+  FLOAT3D viewerPosition;
+  FLOATmatrix3D viewerRotation;
 
   // Get movable brush geometry index by entity ID
   std::map<ULONG, std::vector<RgGeometry>> entityToMovableBrush;

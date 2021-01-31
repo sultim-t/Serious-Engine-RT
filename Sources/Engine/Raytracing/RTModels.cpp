@@ -46,6 +46,141 @@ struct RT_VertexData
 };
 
 
+// RT: SetRenderingParameters(..) in RenderModel_View.cpp
+static RgGeometryPassThroughType GetPassThroughType(SurfaceTranslucencyType stt, bool forceTranslucency = false)
+{
+  if (stt == STT_TRANSLUCENT || (forceTranslucency && ((stt == STT_OPAQUE) || (stt == STT_TRANSPARENT))))
+  {
+    return RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_UNDER;
+  }
+  else if (stt == STT_ADD)
+  {
+    return RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_ADDITIVE;
+  }
+  else if (stt == STT_TRANSPARENT)
+  {
+    return RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
+  }
+  else if (stt == STT_MULTIPLY)
+  {
+    return RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_UNDER;
+  }
+
+  return RG_GEOMETRY_PASS_THROUGH_TYPE_OPAQUE;
+}
+
+
+// RT: same as PrepareView(..) from RenderModel.cpp
+//     but view transfomation is not applied
+static void RT_PrepareView(CRenderModel &rm, const FLOATmatrix3D &viewerRotation)
+{
+  // RT: Note: actually, we shouldn't modify "rm.rm_mObjectRotation"
+
+  ULONG flags = rm.rm_pmdModelData->md_Flags;
+
+  // RT: do nothing if normal
+  if ((flags & MF_FACE_FORWARD) == 0 && 
+      (flags & MF_HALF_FACE_FORWARD) == 0)
+  {
+    return;
+  }
+
+  // RT: result matrix
+  FLOATmatrix3D m;
+
+  // if half face forward
+  if (flags & MF_HALF_FACE_FORWARD)
+  {
+    // get the y-axis vector of object rotation
+    FLOAT3D vY(rm.rm_mObjectRotation(1, 2), rm.rm_mObjectRotation(2, 2), rm.rm_mObjectRotation(3, 2));
+
+    // find z axis of viewer
+    FLOAT3D vViewerZ(viewerRotation(3, 1), viewerRotation(3, 2), viewerRotation(3, 3));
+
+    // calculate x and z axis vectors to make object head towards viewer
+    FLOAT3D vX = (-vViewerZ) * vY;
+    vX.Normalize();
+    FLOAT3D vZ = vY * vX;
+
+    // compose the rotation matrix back from those angles
+    m(1, 1) = vX(1);  m(1, 2) = vY(1);  m(1, 3) = vZ(1);
+    m(2, 1) = vX(2);  m(2, 2) = vY(2);  m(2, 3) = vZ(2);
+    m(3, 1) = vX(3);  m(3, 2) = vY(3);  m(3, 3) = vZ(3);
+
+  }
+  // if full face forward
+  else if (flags & MF_FACE_FORWARD)
+  {
+    // use just object banking for rotation
+    FLOAT fSinP = -rm.rm_mObjectRotation(2, 3);
+    FLOAT fCosP = Sqrt(1 - fSinP * fSinP);
+    FLOAT fSinB, fCosB;
+
+    if (fCosP > 0.001f)
+    {
+      const FLOAT f1oCosP = 1.0f / fCosP;
+      fSinB = rm.rm_mObjectRotation(2, 1) * f1oCosP;
+      fCosB = rm.rm_mObjectRotation(2, 2) * f1oCosP;
+    }
+    else
+    {
+      fSinB = 0.0f;
+      fCosB = 1.0f;
+    }
+
+    m(1, 1) = +fCosB;  m(1, 2) = -fSinB;  m(1, 3) = 0;
+    m(2, 1) = +fSinB;  m(2, 2) = +fCosB;  m(2, 3) = 0;
+    m(3, 1) = 0;  m(3, 2) = 0;  m(3, 3) = 1;
+  }
+
+  // RT: copy to original (shouldn't be done, actually!)
+  rm.rm_mObjectRotation = m;
+}
+
+
+static void FlushModelInfo(ULONG entityID, 
+                           CRenderModel &rm, 
+                           CTextureObject *to,
+                           const INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH],
+                           INDEX *pIndices, INDEX indexCount, 
+                           const RT_VertexData &vd,
+                           SurfaceTranslucencyType stt,
+                           bool forceTranslucency,
+                           SSRT::Scene *pScene)
+{
+  // RT: flush all
+  ASSERT(indexCount > 0);
+
+  // TODO: RT: default, MF_HALF_FACE_FORWARD, MF_FACE_FORWARD
+
+  SSRT::CModelGeometry modelInfo = {};
+  modelInfo.entityID = entityID;
+  modelInfo.isEnabled = true;
+  modelInfo.absPosition = rm.rm_vObjectPosition;
+  modelInfo.absRotation = rm.rm_mObjectRotation;
+  modelInfo.color = RGBAToColor(255, 255, 255, 255);
+  modelInfo.vertexCount = vd.vertexCount;
+  modelInfo.vertices = vd.vertices;
+  modelInfo.normals = vd.normals;
+  modelInfo.texCoords = vd.texCoords;
+  modelInfo.indexCount = indexCount;
+  modelInfo.indices = pIndices;
+
+  CTextureData *td = to != nullptr ? (CTextureData *)to->GetData() : nullptr;
+  modelInfo.textures[0] = td;
+  modelInfo.textureFrames[0] = to != nullptr && td != nullptr ? to->GetFrame() : 0;
+
+  for (INDEX i = 0; i < SSRT_MAX_ATTACHMENT_DEPTH; i++)
+  {
+    modelInfo.attchPath[i] = attchPath[i];
+  }
+
+  modelInfo.passThroughType = GetPassThroughType(stt, forceTranslucency);
+
+  pScene->AddModel(modelInfo);
+}
+
+
 static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *scene)
 {
   ASSERT(plsLight != NULL);
@@ -206,7 +341,6 @@ static BOOL RT_CreateAttachment(const CModelObject &moParent,
 //void CModelObject::SetupModelRendering( CRenderModel &rm)
 static void RT_SetupModelRendering(CModelObject &mo, 
                                    CRenderModel &rm, 
-                                   const FLOAT3D *viewerPos, 
                                    SSRT::Scene *scene)
 {
   // get model's data and lerp info, GetData()
@@ -249,14 +383,10 @@ static void RT_SetupModelRendering(CModelObject &mo,
   //  rm.rm_ulFlags |= RMF_INVERTED;
   //}
 
-  // prepare projections
-  //PrepareView(rm);
+  // RT: update rotation if MF_FACE_FORWARD or MF_HALF_FACE_FORWARD
+  RT_PrepareView(rm, scene->GetViewerRotation());
 
-  // TODO: RT: detect if models must be aligned with a viewer
-  // rm.rm_pmdModelData->md_Flags&MF_HALF_FACE_FORWARD -- only X,Z face viewer
-  // rm.rm_pmdModelData->md_Flags&MF_FACE_FORWARD      -- face viewer
-
-  FLOAT distance = viewerPos == nullptr ? 0 : (*viewerPos - rm.rm_vObjectPosition).Length();
+  FLOAT distance = (scene->GetViewerPosition() - rm.rm_vObjectPosition).Length();
 
   if (mo.mo_Stretch != FLOAT3D(1, 1, 1))
   {
@@ -301,32 +431,8 @@ static void RT_SetupModelRendering(CModelObject &mo,
     RT_CreateAttachment(mo, rm, *pamo);
     
     // prepare if visible
-    RT_SetupModelRendering(pamo->amo_moModelObject, *pamo->amo_prm, viewerPos, scene);
+    RT_SetupModelRendering(pamo->amo_moModelObject, *pamo->amo_prm, scene);
   }
-}
-
-
-// RT: SetRenderingParameters(..) in RenderModel_View.cpp
-static RgGeometryPassThroughType GetPassThroughType(SurfaceTranslucencyType stt, bool forceTranslucency = false)
-{
-  if (stt == STT_TRANSLUCENT || (forceTranslucency && ((stt == STT_OPAQUE) || (stt == STT_TRANSPARENT))))
-  {
-    return RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_UNDER;
-  }
-  else if (stt == STT_ADD)
-  {
-    return RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_ADDITIVE;
-  }
-  else if (stt == STT_TRANSPARENT)
-  {
-    return RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
-  }
-  else if (stt == STT_MULTIPLY)
-  {
-    return RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_UNDER;
-  }
-
-  return RG_GEOMETRY_PASS_THROUGH_TYPE_OPAQUE;
 }
 
 
@@ -359,6 +465,20 @@ static void RT_RenderOneSide(ULONG entityID,
   INDEX iStartElem = 0;
   INDEX ctElements = 0;
   ModelMipInfo &mmi = *rm.rm_pmmiMip;
+
+  auto flushModel = [entityID, &rm, &to, attchPath, &mmi, &vd, scene, &sttLast, forceTranslucency] (INDEX firstIndex, INDEX indexCount)
+  {
+    ASSERT(firstIndex >= 0);
+    if (indexCount <= 0)
+    {
+      return;
+    }
+
+    FlushModelInfo(entityID, rm, to, attchPath,
+                   &mmi.mmpi_aiElements[firstIndex], indexCount,
+                   vd, sttLast, forceTranslucency, scene);
+  };
+
   {
     FOREACHINSTATICARRAY(mmi.mmpi_MappingSurfaces, MappingSurface, itms)
     {
@@ -371,7 +491,6 @@ static void RT_RenderOneSide(ULONG entityID,
         break;
       }
 
-    #if 0
       // skip surface if ... 
       if (!(ulFlags & SRF_DIFFUSE)  // not in this layer,
           || (bBackSide && !(ulFlags & SRF_DOUBLESIDED)) // rendering back side and surface is not double sided,
@@ -380,79 +499,38 @@ static void RT_RenderOneSide(ULONG entityID,
       {
         if (ctElements > 0)
         {
-          FlushElements(ctElements, &mmi.mmpi_aiElements[ iStartElem ]);
+          flushModel(iStartElem, ctElements);
         }
 
         iStartElem += ctElements + ms.ms_ctSrfEl;
         ctElements = 0;
         continue;
       }
-    #endif
 
       // get rendering parameters
       SurfaceTranslucencyType stt = ms.ms_sttTranslucencyType;
 
-      // TODO: RT: make models to be flushed if translucency types of its parts are diferrent
-      sttLast = stt;
-
       // if surface uses rendering parameters different than last one
-    #if 0
       if (sttLast != stt)
       {
         // set up new API states
         if (ctElements > 0)
         {
-          FlushElements(ctElements, &mmi.mmpi_aiElements[ iStartElem ]);
+          flushModel(iStartElem, ctElements);
         }
 
-        SetRenderingParameters(stt, slBump);
+        // SetRenderingParameters(stt, slBump);
         sttLast = stt;
         iStartElem += ctElements;
         ctElements = 0;
       }
-    #endif
 
       // batch the surface polygons for rendering
       ctElements += ms.ms_ctSrfEl;
     }
   }
 
-  // RT: flush all
-  if (ctElements > 0)
-  {
-    //FlushElements(ctElements, &mmi.mmpi_aiElements[ iStartElem ]);
-
-    INDEX *indices = &mmi.mmpi_aiElements[iStartElem];
-    INDEX indexCount = ctElements;
-
-    // TODO: RT: default, MF_HALF_FACE_FORWARD, MF_FACE_FORWARD
-
-    SSRT::CModelGeometry modelInfo = {};
-    modelInfo.entityID = entityID;
-    modelInfo.isEnabled = true;
-    modelInfo.absPosition = rm.rm_vObjectPosition;
-    modelInfo.absRotation = rm.rm_mObjectRotation;
-    modelInfo.color = RGBAToColor(255, 255, 255, 255);
-    modelInfo.vertexCount = vd.vertexCount;
-    modelInfo.vertices = vd.vertices;
-    modelInfo.normals = vd.normals;
-    modelInfo.texCoords = vd.texCoords;
-    modelInfo.indexCount = indexCount;
-    modelInfo.indices = indices;
-
-    CTextureData *td = to != nullptr ? (CTextureData *)to->GetData() : nullptr;
-    modelInfo.textures[0] = td;
-    modelInfo.textureFrames[0] = to != nullptr && td != nullptr ? to->GetFrame() : 0;
-
-    for (INDEX i = 0; i < SSRT_MAX_ATTACHMENT_DEPTH; i++)
-    {
-      modelInfo.attchPath[i] = attchPath[i];
-    }
-
-    modelInfo.passThroughType = GetPassThroughType(sttLast, forceTranslucency);
-
-    scene->AddModel(modelInfo);
-  }
+  flushModel(iStartElem, ctElements);
 }
 
 
@@ -506,8 +584,8 @@ static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &
   ASSERT(_anorSrfBase.Count() == 0);  _anorSrfBase.Push(_ctAllSrfVx);
 
 
-  // set forced translucency and color mask
-  bool forceTranslucency = ((rm.rm_colBlend & CT_AMASK) >> CT_ASHIFT) != CT_OPAQUE;
+  // TODO: RT: models: forced translucency? Problems with palms in Alley of Sphinxes 
+  bool forceTranslucency = false; // ((rm.rm_colBlend & CT_AMASK) >> CT_ASHIFT) != CT_OPAQUE;
   ULONG ulColorMask = mo.mo_ColorMask;
 
   // adjust all surfaces' params for eventual forced-translucency case
@@ -789,10 +867,13 @@ static void RT_RenderModel(ULONG entityID, CModelObject &mo, CRenderModel &rm, I
 
 //void CRenderer::RenderOneModel(CEntity &en, CModelObject &moModel, const CPlacement3D &plModel,
 //                               const FLOAT fDistanceFactor, BOOL bRenderShadow, ULONG ulDMFlags)
-static void RT_RenderOneModel(
-  const CEntity &en, CModelObject &moModel, const CPlacement3D &plModel,
-  const FLOAT fDistanceFactor, BOOL bRenderShadow, ULONG ulDMFlags,
-  const FLOAT3D *viewerPos, SSRT::Scene *scene)
+static void RT_RenderOneModel(const CEntity &en, 
+                              CModelObject &moModel, 
+                              const CPlacement3D &plModel,
+                              const FLOAT fDistanceFactor, 
+                              BOOL bRenderShadow, 
+                              ULONG ulDMFlags,
+                              SSRT::Scene *scene)
 {
   // skip invisible models
   if (moModel.mo_Stretch == FLOAT3D(0, 0, 0)) return;
@@ -810,13 +891,11 @@ static void RT_RenderOneModel(
   //if (ulDMFlags & DMF_FOG)      rm.rm_ulFlags |= RMF_FOG;
   //if (ulDMFlags & DMF_HAZE)     rm.rm_ulFlags |= RMF_HAZE;
 
-  ULONG viewerEntityID = -1; // scene->GetViewerEntityID();
-
-  // mark that we don't actualy need entire model
-  if (viewerEntityID == en.en_ulID)
+  // RT: it's guaranteed that this function won't be called for viewer entity
+  /*if (viewerEntityID == en.en_ulID)
   {
     rm.rm_ulFlags |= RMF_SPECTATOR;
-  }
+  }*/
 
   /*if (IsOfClass(&en, "Player Weapons"))
   {
@@ -824,29 +903,18 @@ static void RT_RenderOneModel(
   }*/
 
   // prepare CRenderModel structure for rendering of one model
-  RT_SetupModelRendering(moModel, rm, viewerPos, scene);
+  RT_SetupModelRendering(moModel, rm, scene);
 
-  // if the entity is not the viewer, or this is not primary renderer
-  if (viewerEntityID != en.en_ulID)
-  {  
-    // attachment path for SSRT::CModelGeometry,
-    INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH];
-    for (INDEX i = 0; i < SSRT_MAX_ATTACHMENT_DEPTH; i++)
-    {
-      // init all as -1
-      attchPath[i] = -1;
-    }
-
-    // RT: process a model with all its attachmnets
-    RT_RenderModel(en.en_ulID, moModel, rm, attchPath, 0, scene);
-  }
-  else
+  // attachment path for SSRT::CModelGeometry,
+  INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH];
+  for (INDEX i = 0; i < SSRT_MAX_ATTACHMENT_DEPTH; i++)
   {
-    //// just remember the shading info (needed for first-person-weapon rendering)
-    //_vViewerLightDirection = rm.rm_vLightDirection;
-    //_colViewerLight = rm.rm_colLight;
-    //_colViewerAmbient = rm.rm_colAmbient;
+    // init all as -1
+    attchPath[i] = -1;
   }
+
+  // RT: process a model with all its attachmnets
+  RT_RenderModel(en.en_ulID, moModel, rm, attchPath, 0, scene);
 
   extern CStaticStackArray<CRenderModel> _armRenderModels;
   _armRenderModels.PopAll();
@@ -854,7 +922,9 @@ static void RT_RenderOneModel(
 
 
 // CRenderer::RenderModels(BOOL bBackground)
-static void RT_Post_RenderModels(const CEntity &en, CModelObject &mo, const FLOAT3D *viewerPos, SSRT::Scene *scene)
+static void RT_Post_RenderModels(const CEntity &en, 
+                                 CModelObject &mo, 
+                                 SSRT::Scene *scene)
 {
   if (!gfx_bRenderModels)
   {
@@ -869,11 +939,11 @@ static void RT_Post_RenderModels(const CEntity &en, CModelObject &mo, const FLOA
     return;
   }
 
-  RT_RenderOneModel(en, mo, en.GetLerpedPlacement(), 0, TRUE, 0, viewerPos, scene);
+  RT_RenderOneModel(en, mo, en.GetLerpedPlacement(), 0, TRUE, 0, scene);
 }
 
 
-void RT_AddModelEntity(const CEntity *penModel, const FLOAT3D *viewerPos, SSRT::Scene *scene)
+void RT_AddModelEntity(const CEntity *penModel, SSRT::Scene *scene)
 {
   // if the entity is currently active or hidden, don't add it again
   if (penModel->en_ulFlags & (ENF_INRENDERING | ENF_HIDDEN))
@@ -942,13 +1012,13 @@ void RT_AddModelEntity(const CEntity *penModel, const FLOAT3D *viewerPos, SSRT::
   //dm.dm_ulFlags |= DMF_VISIBLE;
 
   // RT: call it here to bypass re_admDelayedModels list
-  RT_Post_RenderModels(*penModel, *pmoModelObject, viewerPos, scene);
+  RT_Post_RenderModels(*penModel, *pmoModelObject, scene);
 }
 
 
 void RT_AddFirstPersonModel(CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::Scene *scene)
 {
-  RT_SetupModelRendering(*mo, *rm, nullptr, scene);
+  RT_SetupModelRendering(*mo, *rm, scene);
 
   // attachment path for SSRT::CModelGeometry,
   INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH];

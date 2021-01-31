@@ -177,7 +177,7 @@ void SSRT::SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
   worldRenderInfo = info;
 
   // update models and movable brushes in scene
-  currentScene->Update(info.viewerPosition, info.viewerEntityID);
+  currentScene->Update(info.viewerPosition, info.viewerRotation, info.viewerEntityID);
 }
 
 void SSRT::SSRTMain::ProcessFirstPersonModel(const CFirstPersonModelInfo &info)
