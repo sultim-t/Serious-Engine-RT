@@ -196,6 +196,13 @@ void SSRT::SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
     return;
   }
 
+  // override texture wrapping
+  if (hud.textureData != nullptr)
+  {
+    hud.textureData->td_tpLocal.tp_eWrapU = hud.textureWrapU;
+    hud.textureData->td_tpLocal.tp_eWrapV = hud.textureWrapV;
+  }
+
   RgRasterizedGeometryUploadInfo rasterInfo = {};
   rasterInfo.vertexCount = hud.vertexCount;
   rasterInfo.vertexData = (float*)hud.pPositions;

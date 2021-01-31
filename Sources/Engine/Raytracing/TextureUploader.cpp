@@ -77,7 +77,7 @@ uint32_t SSRT::TextureUploader::GenerateTextureID()
     materialExist.resize(newSize);
     materials.resize(newSize);
 
-    textureIndex = oldSize + 1 + TEXTURE_INDEX_OFFSET;
+    textureIndex = oldSize;
   }
 
   return IndexToID(textureIndex);
@@ -108,7 +108,7 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
     stInfo.filter = info.filter;
     stInfo.addressModeU = info.wrapU;
     stInfo.addressModeV = info.wrapV;
-    stInfo.disableOverride = true;
+    stInfo.disableOverride = false;
     stInfo.relativePath = overridenPath;
 
     RgResult r = rgCreateStaticMaterial(instance, &stInfo, &material);
@@ -207,7 +207,7 @@ RgMaterial SSRT::TextureUploader::GetMaterial(CTextureData *pTexture, uint32_t t
   RgMaterial mat = materials[textureIndex];
 
   // if an animated material
-  if (pTexture->td_ctFrames > 0)
+  if (pTexture->td_ctFrames > 1)
   {
     // update frame index
     RgResult r = rgChangeAnimatedMaterialFrame(instance, mat, textureFrameIndex);

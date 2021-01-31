@@ -43,9 +43,6 @@ struct CAbstractGeometry
   FLOATmatrix3D       absRotation;
 
   COLOR               color;
-  // if geometry is using only one material, then 
-  // this value will be used, otherwise look at materialIds
-  uint32_t            globalMaterialId;
 
   // Data that should be set to the renderer,
   // vertices are already animated.
@@ -62,6 +59,8 @@ struct CAbstractGeometry
 
   CTextureData        *textures[3];
   INDEX               textureFrames[3];
+
+  RgGeometryPassThroughType passThroughType;
 };
 
 
@@ -146,27 +145,27 @@ struct CFirstPersonModelInfo
 struct CHudElementInfo
 {
   // always FALSE
-  // bool            alphaTest;
+  // bool         alphaTest;
   // always TRUE
-  // bool            blendEnable;
+  // bool         blendEnable;
   // always GFX_SRC_ALPHA
-  //GfxBlend        blendFuncSrc;
+  //GfxBlend      blendFuncSrc;
   // always GFX_INV_SRC_ALPHA
-  //GfxBlend        blendFuncDst;
+  //GfxBlend      blendFuncDst;
 
-  RgSamplerAddressMode  textureWrapU;
-  RgSamplerAddressMode  textureWrapV;
+  GfxWrap         textureWrapU;
+  GfxWrap         textureWrapV;
 
   // use CTextureData, assuming that there is only 1 frame
-  CTextureData          *textureData;
+  CTextureData    *textureData;
 
-  GFXVertex4            *pPositions; 
-  GFXTexCoord           *pTexCoords;
-  GFXColor              *pColors; 
-  INDEX                 vertexCount;
+  GFXVertex4      *pPositions; 
+  GFXTexCoord     *pTexCoords;
+  GFXColor        *pColors; 
+  INDEX           vertexCount;
 
-  INDEX                 *pIndices; 
-  INDEX                 indexCount;
+  INDEX           *pIndices; 
+  INDEX           indexCount;
 };
 
 

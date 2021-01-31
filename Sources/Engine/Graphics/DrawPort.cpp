@@ -1738,7 +1738,7 @@ void CDrawPort::PutText( const CTString &strText, PIX pixX0, PIX pixY0, const CO
     // hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
     // hudInfo.blendFuncDst = GFX_INV_SRC_ALPHA;
     hudInfo.textureData = &td;
-    hudInfo.textureWrapU = hudInfo.textureWrapV = RG_SAMPLER_ADDRESS_MODE_REPEAT;
+    hudInfo.textureWrapU = hudInfo.textureWrapV = GFX_REPEAT;
 
     hudInfo.pPositions = &_avtxCommon[0];
     hudInfo.pTexCoords = &_atexCommon[0];
@@ -1901,7 +1901,7 @@ void CDrawPort::PutTexture( class CTextureObject *pTO,
     // hudInfo.blendFuncSrc = GFX_SRC_ALPHA;
     // hudInfo.blendFuncDst = GFX_INV_SRC_ALPHA;
     hudInfo.textureData = ptd;
-    hudInfo.textureWrapU = hudInfo.textureWrapV = RG_SAMPLER_ADDRESS_MODE_REPEAT;
+    hudInfo.textureWrapU = hudInfo.textureWrapV = GFX_REPEAT;
 
     hudInfo.pPositions = &_avtxCommon[0];
     hudInfo.pTexCoords = &_atexCommon[0];
@@ -2084,9 +2084,7 @@ void CDrawPort::FlushRenderingQueue(void) const
 
     // ssrt_pTextureData can be nullptr
     hudInfo.textureData = SSRT::ssrt_pTextureData;
-    hudInfo.textureWrapU = hudInfo.textureWrapV = SSRT::ssrt_eWrap == GFX_REPEAT ? 
-      RG_SAMPLER_ADDRESS_MODE_REPEAT :
-      RG_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    hudInfo.textureWrapU = hudInfo.textureWrapV = SSRT::ssrt_eWrap;
 
     hudInfo.pPositions = &_avtxCommon[0];
     hudInfo.pTexCoords = &_atexCommon[0];
