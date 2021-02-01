@@ -72,7 +72,7 @@ static RgGeometryPassThroughType GetPassThroughType(SurfaceTranslucencyType stt,
 
 // RT: same as PrepareView(..) from RenderModel.cpp
 //     but view transfomation is not applied
-static bool RT_PrepareRotation(const CRenderModel &rm, const FLOATmatrix3D &viewerRotation, FLOATmatrix3D &m)
+static bool RT_PrepareRotation(const CRenderModel &rm, const FLOAT3D &viewerPos, const FLOATmatrix3D &viewerRotation, FLOATmatrix3D &m)
 {
   ULONG flags = rm.rm_pmdModelData->md_Flags;
 
@@ -89,8 +89,8 @@ static bool RT_PrepareRotation(const CRenderModel &rm, const FLOATmatrix3D &view
     // get the y-axis vector of object rotation
     FLOAT3D vY(rm.rm_mObjectRotation(1, 2), rm.rm_mObjectRotation(2, 2), rm.rm_mObjectRotation(3, 2));
 
-    // find z axis of viewer
-    FLOAT3D vViewerZ(viewerRotation(3, 1), viewerRotation(3, 2), viewerRotation(3, 3));
+    // RT: 
+    FLOAT3D vViewerZ = (rm.rm_vObjectPosition - viewerPos).SafeNormalize();
 
     // calculate x and z axis vectors to make object head towards viewer
     FLOAT3D vX = (-vViewerZ) * vY;
@@ -101,7 +101,6 @@ static bool RT_PrepareRotation(const CRenderModel &rm, const FLOATmatrix3D &view
     m(1, 1) = vX(1);  m(1, 2) = vY(1);  m(1, 3) = vZ(1);
     m(2, 1) = vX(2);  m(2, 2) = vY(2);  m(2, 3) = vZ(2);
     m(3, 1) = vX(3);  m(3, 2) = vY(3);  m(3, 3) = vZ(3);
-
   }
   // if full face forward
   else if (flags & MF_FACE_FORWARD)
@@ -126,6 +125,8 @@ static bool RT_PrepareRotation(const CRenderModel &rm, const FLOATmatrix3D &view
     m(1, 1) = +fCosB;  m(1, 2) = -fSinB;  m(1, 3) = 0;
     m(2, 1) = +fSinB;  m(2, 2) = +fCosB;  m(2, 3) = 0;
     m(3, 1) = 0;  m(3, 2) = 0;  m(3, 3) = 1;
+
+    m = viewerRotation * m;
   }
 
   return true;
@@ -147,7 +148,7 @@ static void FlushModelInfo(ULONG entityID,
 
   // RT: update rotation if MF_FACE_FORWARD or MF_HALF_FACE_FORWARD
   FLOATmatrix3D m;
-  bool tr = RT_PrepareRotation(rm, pScene->GetViewerRotation(), m);
+  bool tr = RT_PrepareRotation(rm, pScene->GetViewerPosition(), pScene->GetViewerRotation(), m);
 
 
   SSRT::CModelGeometry modelInfo = {};
