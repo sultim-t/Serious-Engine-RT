@@ -1019,14 +1019,16 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
     // create view matrix
     {
       const CPlacement3D &viewerPl = prProjection->ViewerPlacementR();
+      const FLOAT3D &v = viewerPl.pl_PositionVector;
+      const ANGLE3D &r = viewerPl.pl_OrientationAngle;
 
       // view position, rotation
       {
-        renderInfo.viewerPosition = viewerPl.pl_PositionVector;
-        MakeRotationMatrix(renderInfo.viewerRotation, viewerPl.pl_OrientationAngle);
+        renderInfo.viewerPosition = v;
+        MakeRotationMatrix(renderInfo.viewerRotation, r);
       }
 
-      auto fill = [] (float *glm, const FLOATmatrix3D &m, const FLOAT3D &v)
+      auto fillColumnMajor = [] (float *glm, const FLOATmatrix3D &m, const FLOAT3D &v)
       {
         glm[0] = m(1, 1);  glm[4] = m(1, 2);  glm[8] = m(1, 3);   glm[12] = v(1);
         glm[1] = m(2, 1);  glm[5] = m(2, 2);  glm[9] = m(2, 3);   glm[13] = v(2);
@@ -1036,21 +1038,23 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
 
       // view
       {
-        FLOAT3D v = viewerPl.pl_PositionVector;
-
         FLOATmatrix3D m;
-        MakeRotationMatrix(m, viewerPl.pl_OrientationAngle);
+        MakeInverseRotationMatrix(m, r);
 
-        float invViewerTransform[16];
-        fill(invViewerTransform, m, v);
+        // inverse Y axis for Vulkan
+        m(2, 1) = -m(2, 1);
+        m(2, 2) = -m(2, 2);
+        m(2, 3) = -m(2, 3);
 
-        // invert Y axis
-        invViewerTransform[4] = -invViewerTransform[4];
-        invViewerTransform[5] = -invViewerTransform[5];
-        invViewerTransform[6] = -invViewerTransform[6];
+        // 4th column of (T*M)^-1 = M^(-1)*T^(-1),
+        FLOAT3D t =
+        {
+          -v % FLOAT3D(m(1, 1), m(1, 2), m(1, 3)),
+          -v % FLOAT3D(m(2, 1), m(2, 2), m(2, 3)),
+          -v % FLOAT3D(m(3, 1), m(3, 2), m(3, 3))
+        };
 
-        extern void Svk_MatInverse(float *result, const float *m);
-        Svk_MatInverse(renderInfo.viewMatrix, invViewerTransform);
+        fillColumnMajor(renderInfo.viewMatrix, m, t);
       }
     }
 
