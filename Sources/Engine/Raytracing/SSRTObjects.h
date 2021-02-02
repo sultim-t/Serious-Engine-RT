@@ -42,7 +42,7 @@ struct CAbstractGeometry
   FLOAT3D             absPosition;
   FLOATmatrix3D       absRotation;
 
-  COLOR               color;
+  GFXColor            color;
 
   // Data that should be set to the renderer,
   // vertices are already animated.

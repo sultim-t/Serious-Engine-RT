@@ -34,9 +34,6 @@ extern FLOAT mdl_fLODMul;
 extern FLOAT mdl_fLODAdd;
 
 
-static CStaticStackArray<INDEX> RT_AllModelMaterialIndices;
-
-
 struct RT_VertexData
 {
   GFXVertex   *vertices;
@@ -51,7 +48,7 @@ static RgGeometryPassThroughType GetPassThroughType(SurfaceTranslucencyType stt,
 {
   if (stt == STT_TRANSLUCENT || (forceTranslucency && ((stt == STT_OPAQUE) || (stt == STT_TRANSPARENT))))
   {
-    return RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_UNDER;
+    return RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
   }
   else if (stt == STT_ADD)
   {

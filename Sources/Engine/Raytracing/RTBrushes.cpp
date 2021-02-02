@@ -37,9 +37,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 static CStaticStackArray<GFXVertex> RT_AllSectorVertices;
 static CStaticStackArray<INDEX> RT_AllSectorIndices;
 static CStaticStackArray<GFXTexCoord> RT_AllSectorTexCoords;
-static CStaticStackArray<GFXColor> RT_AllSectorColors;
-static CBrushPolygonTexture *RT_LastSectorTextures[MAX_BRUSH_TEXTURE_COUNT];
-static UBYTE RT_LastBlendings[MAX_BRUSH_TEXTURE_COUNT];
 
 
 struct RT_WorldBaseIgnore
@@ -63,37 +60,22 @@ static const RT_WorldBaseIgnore RT_WorldBaseForceInvisible[] =
 };
 
 
-static RgGeometryPassThroughType GetPassThroughType(UBYTE blending)
+static RgGeometryPassThroughType RT_GetPassThroughType(uint32_t flags)
 {
-  switch (blending)
+  switch (flags)
   {
-    case STXF_BLEND_OPAQUE: // opaque texturing
-    {
-      return RG_GEOMETRY_PASS_THROUGH_TYPE_OPAQUE;
-    }
-    case STXF_BLEND_ALPHA:  // blend using texture alpha
-    {
-      //gfxBlendFunc(GFX_SRC_ALPHA, GFX_INV_SRC_ALPHA);
-      return RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
-    }
-    case STXF_BLEND_ADD:  // add to screen
-    {
-      // gfxBlendFunc(GFX_ONE, GFX_ONE);
-      return RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_ADDITIVE;
-    }
-    case STXF_BLEND_SHADE: // screen*texture*2
-    {
-      //gfxBlendFunc(GFX_DST_COLOR, GFX_SRC_COLOR);
-      return RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_UNDER;
-    }
-    default: ASSERTALWAYS("RTBrushes::GetPassThroughType::Wrong blending flag");
+    case BPOF_TRANSPARENT:  return RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
+    case BPOF_TRANSLUCENT:  return RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_UNDER;
+    default:                return RG_GEOMETRY_PASS_THROUGH_TYPE_OPAQUE;
   }
-
-  return RG_GEOMETRY_PASS_THROUGH_TYPE_OPAQUE;
 }
 
 
-static void FlushBrushInfo(CEntity *penBrush, SSRT::Scene *scene)
+static void RT_FlushBrushInfo(CEntity *penBrush, 
+                              CBrushPolygonTexture *textures[MAX_BRUSH_TEXTURE_COUNT], 
+                              uint32_t flags,
+                              COLOR color,
+                              SSRT::Scene *scene)
 {
   if (RT_AllSectorVertices.Count() == 0 || RT_AllSectorIndices.Count() == 0)
   {
@@ -114,7 +96,7 @@ static void FlushBrushInfo(CEntity *penBrush, SSRT::Scene *scene)
   brushInfo.entityID = penBrush->en_ulID;
   brushInfo.isEnabled = true;
   brushInfo.isMovable = isMovable;
-  brushInfo.color = RGBAToColor(255, 255, 255, 255);
+  brushInfo.color = ByteSwap(color);
 
   brushInfo.absPosition = position;
   brushInfo.absRotation = rotation;
@@ -122,7 +104,6 @@ static void FlushBrushInfo(CEntity *penBrush, SSRT::Scene *scene)
   brushInfo.vertexCount = RT_AllSectorVertices.Count();
   brushInfo.vertices = &RT_AllSectorVertices[0];
   brushInfo.texCoords = &RT_AllSectorTexCoords[0];
-  //brushInfo.colors = &RT_AllSectorColors[0];
   brushInfo.normals = nullptr;
 
   brushInfo.indexCount = RT_AllSectorIndices.Count();
@@ -130,12 +111,12 @@ static void FlushBrushInfo(CEntity *penBrush, SSRT::Scene *scene)
 
   for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
   {
-    if (RT_LastSectorTextures[i] == nullptr)
+    if (textures[i] == nullptr)
     {
       continue;
     }
 
-    CTextureObject &to = RT_LastSectorTextures[i]->bpt_toTexture;
+    CTextureObject &to = textures[i]->bpt_toTexture;
     CTextureData *td = (CTextureData *)to.GetData();
 
     if (td != nullptr)
@@ -146,39 +127,26 @@ static void FlushBrushInfo(CEntity *penBrush, SSRT::Scene *scene)
   }
 
   // get main texture's blending
-  brushInfo.passThroughType = GetPassThroughType(RT_LastBlendings[0]);
+  brushInfo.passThroughType = RT_GetPassThroughType(flags);
 
   scene->AddBrush(brushInfo);
 
   RT_AllSectorVertices.PopAll();
   RT_AllSectorIndices.PopAll();
   RT_AllSectorTexCoords.PopAll();
-  RT_AllSectorColors.PopAll();
-  for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
-  {
-    RT_LastSectorTextures[i] = nullptr;
-    RT_LastBlendings[i] = 0;
-  }
 }
 
 
-static bool AreLastTexturesSame(CBrushPolygonTexture textures[3])
+static bool RT_AreTexturesSame(CBrushPolygonTexture *pPrevTextures[MAX_BRUSH_TEXTURE_COUNT],
+                               CBrushPolygonTexture curTextures[MAX_BRUSH_TEXTURE_COUNT])
 {
   CTextureData *cur[MAX_BRUSH_TEXTURE_COUNT];
   CTextureData *last[MAX_BRUSH_TEXTURE_COUNT];
 
   for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
   {
-    cur[i] = (CTextureData *)textures[i].bpt_toTexture.GetData();
-
-    if (RT_LastSectorTextures[i] != nullptr)
-    {
-      last[i] = (CTextureData *)RT_LastSectorTextures[i]->bpt_toTexture.GetData();
-    }
-    else
-    {
-      last[i] = nullptr;
-    }
+    last[i] = pPrevTextures[i] == nullptr? nullptr : (CTextureData *)pPrevTextures[i]->bpt_toTexture.GetData();
+    cur[i] = (CTextureData *)curTextures[i].bpt_toTexture.GetData();
   }
 
   for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
@@ -204,83 +172,130 @@ static bool AreLastTexturesSame(CBrushPolygonTexture textures[3])
 
 static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT::Scene *scene)
 {
+  ASSERT(RT_AllSectorVertices.Count() == 0 || RT_AllSectorIndices.Count() == 0);
+
   CBrush3D *brush = bscSector.bsc_pbmBrushMip->bm_pbrBrush;
   if (brush->br_pfsFieldSettings != NULL)
   {
     return;
   }
 
+  // keep last rendered info, to batch geometry
+  CBrushPolygonTexture *pLastTextures[MAX_BRUSH_TEXTURE_COUNT] = {};
+  COLOR lastColor = C_WHITE | CT_OPAQUE;
+  uint32_t lastFlags = UINT32_MAX;
+
   FOREACHINSTATICARRAY(bscSector.bsc_abpoPolygons, CBrushPolygon, itpo)
   {
     CBrushPolygon &polygon = *itpo;
 
-    // for texture cordinates and transparency/translucency processing
-  #pragma region MakeScreenPolygon
-
+    // only portals that are translucent should be rendered
     bool isPortal = polygon.bpo_ulFlags & BPOF_PORTAL;
     bool isTranslucent = polygon.bpo_ulFlags & BPOF_TRANSLUCENT;
 
-    if ((isPortal && !isTranslucent) || (polygon.bpo_ulFlags & BPOF_INVISIBLE) || (polygon.bpo_ulFlags & BPOF_OCCLUDER))
+    // if shouldn't be rendered in game
+    if ((isPortal && !isTranslucent) ||
+        (polygon.bpo_ulFlags & BPOF_INVISIBLE) ||
+        (polygon.bpo_ulFlags & BPOF_OCCLUDER))
     {
       continue;
     }
 
+    // for texture cordinates and transparency/translucency processing
+  #pragma region MakeScreenPolygon
 
-    // TODO: RT: texture coordinates for brushes
-    //RT_SetOneTextureParameters(polygon, sppo, 0, scene->GetWorld());
-    //RT_SetOneTextureParameters(polygon, sppo, 1, scene->GetWorld());
-    //RT_SetOneTextureParameters(polygon, sppo, 2, scene->GetWorld());
+    uint32_t flags = 0;
 
     if (polygon.bpo_ulFlags & BPOF_TRANSPARENT)
     {
-      // TODO: RT: if needs alpha keying
+      flags |= BPOF_TRANSPARENT;
+    }
+
+    if (isPortal && isTranslucent)
+    {
+      flags |= BPOF_TRANSLUCENT;
     }
 
     COLOR colorTotal = C_WHITE | CT_OPAQUE;
 
-    const float fOpacity = brush->br_penEntity->GetOpacity();
-
-    UBYTE layerBlendings[MAX_BRUSH_TEXTURE_COUNT] = {};
-
-    if (fOpacity < 1)
+    // if GF_FLAT mode, i.e. pspo->spo_aptoTextures[0]==NULL || !bTexture0
+    if (polygon.bpo_abptTextures[0].bpt_toTexture.GetData() == nullptr)
     {
-      const SLONG slOpacity = NormFloatToByte(fOpacity);
-
+      // polygon's color
+      colorTotal = polygon.bpo_colColor;
+    }
+    else
+    {
       for (INDEX i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
       {
         CBrushPolygonTexture &layerTexture = polygon.bpo_abptTextures[i];
         CTextureBlending &tb = scene->GetWorld()->wo_atbTextureBlendings[layerTexture.s.bpt_ubBlend];
-
         COLOR colorLayer = layerTexture.s.bpt_colColor;
 
-        layerBlendings[i] = tb.tb_ubBlendingType;
-        UBYTE &layerBlending = layerBlendings[i];
+        const float fOpacity = brush->br_penEntity->GetOpacity();
 
-        // if texture is opaque 
-        if ((layerBlending & STXF_BLEND_MASK) == 0)
+        // process transparency color
+        if (fOpacity < 1)
         {
-          // set it to blend with opaque alpha
-          layerBlending |= STXF_BLEND_ALPHA;
-          colorLayer |= CT_AMASK;
-        }
-        // if texture is blended
-        if (layerBlending & STXF_BLEND_ALPHA)
-        {
-          // adjust it's alpha factor
-          SLONG slAlpha = (colorLayer & CT_AMASK) >> CT_ASHIFT;
-          slAlpha = (slAlpha * slOpacity) >> 8;
+          const SLONG slOpacity = NormFloatToByte(fOpacity);
+          UBYTE &layerBlending = tb.tb_ubBlendingType;
 
-          colorLayer &= ~CT_AMASK;
-          colorLayer |= slAlpha;
+          // if texture is opaque 
+          if ((layerBlending & STXF_BLEND_MASK) == 0)
+          {
+            // set it to blend with opaque alpha
+            layerBlending |= STXF_BLEND_ALPHA;
+            colorLayer |= CT_AMASK;
+          }
+
+          // if texture is blended
+          if (layerBlending & STXF_BLEND_ALPHA)
+          {
+            // adjust it's alpha factor
+            SLONG slAlpha = (colorLayer & CT_AMASK) >> CT_ASHIFT;
+            slAlpha = (slAlpha * slOpacity) >> 8;
+
+            colorLayer &= ~CT_AMASK;
+            colorLayer |= slAlpha;
+          }
         }
 
         colorLayer = MulColors(colorLayer, tb.tb_colMultiply);
         colorTotal = MulColors(colorTotal, colorLayer);
       }
     }
+
   #pragma endregion
 
+  #pragma region 
+    // if settings are different
+    if (!RT_AreTexturesSame(pLastTextures, polygon.bpo_abptTextures) ||
+        lastColor != colorTotal ||
+        lastFlags != flags)
+    {
+      // flush last saved info, and start new recordings
+      RT_FlushBrushInfo(penBrush, pLastTextures, lastFlags, lastColor, scene);
 
+      // save new last info
+      lastColor = colorTotal;
+      flags = lastFlags;
+      for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
+      {
+        pLastTextures[i] = &polygon.bpo_abptTextures[i];
+
+        auto *td = (CTextureData *)pLastTextures[i]->bpt_toTexture.GetData();
+
+        if (td != nullptr)
+        {
+          // set new local params for the texture
+          td->td_tpLocal.tp_eWrapU = pLastTextures[i]->s.bpt_ubFlags & BPTF_CLAMPU ? GFX_CLAMP : GFX_REPEAT;
+          td->td_tpLocal.tp_eWrapV = pLastTextures[i]->s.bpt_ubFlags & BPTF_CLAMPV ? GFX_CLAMP : GFX_REPEAT;
+        }
+      }
+    }
+  #pragma endregion
+
+  #pragma region Vertex/index data generation
     INDEX firstVertexId = RT_AllSectorVertices.Count();
     INDEX vertCount = polygon.bpo_apbvxTriangleVertices.Count();
 
@@ -385,23 +400,6 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
       }
     }
 
-
-    // from RSSetTextureColors(..) in DrawPort_RenderScene.cpp
-    GFXColor *colors = RT_AllSectorColors.Push(vertCount);
-
-    // if GF_FLAT mode, i.e. pspo->spo_aptoTextures[0]==NULL || !bTexture0
-    if (polygon.bpo_abptTextures[0].bpt_toTexture.GetData() == nullptr)
-    {
-      colorTotal = polygon.bpo_colColor;
-    }
-
-    GFXColor gfxTotalColor = ByteSwap(colorTotal);
-    for (INDEX i = 0; i < vertCount; i++)
-    {
-      colors[i] = gfxTotalColor;
-    }
-
-
     // index data
     INDEX indexCount = polygon.bpo_aiTriangleElements.Count();
     INDEX *origIndices = &polygon.bpo_aiTriangleElements[0];
@@ -413,58 +411,16 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
     {
       indices[i] = origIndices[i] + firstVertexId;
     }
-
-
-    // flush info if previous textures or blendings were not the same
-    if (!AreLastTexturesSame(polygon.bpo_abptTextures) || layerBlendings[0] != RT_LastBlendings[0])
-    {
-      for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
-      {
-        RT_LastSectorTextures[i] = &polygon.bpo_abptTextures[i];
-
-        if (RT_LastSectorTextures[i] == nullptr)
-        {
-          continue;
-        }
-
-        auto *td = (CTextureData *)RT_LastSectorTextures[i]->bpt_toTexture.GetData();
-
-        if (td == nullptr)
-        {
-          continue;
-        }
-
-        const CBrushPolygonTexture &bpt = polygon.bpo_abptTextures[i];
-
-        // set new local params for the texture
-        td->td_tpLocal.tp_eWrapU = bpt.s.bpt_ubFlags & BPTF_CLAMPU ? GFX_CLAMP : GFX_REPEAT;
-        td->td_tpLocal.tp_eWrapV = bpt.s.bpt_ubFlags & BPTF_CLAMPV ? GFX_CLAMP : GFX_REPEAT;
-      }
-
-      FlushBrushInfo(penBrush, scene);
-    }
+  #pragma endregion
   }
 
-  for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
-  {
-    RT_LastSectorTextures[i] = nullptr;
-    RT_LastBlendings[i] = 0;
-  }
+  // flush what's left
+  RT_FlushBrushInfo(penBrush, pLastTextures, lastFlags, lastColor, scene);
 }
 
 
-void RT_AddNonZoningBrush(CEntity *penBrush, SSRT::Scene *scene)
+void RT_AddBrushEntity(CEntity *penBrush, SSRT::Scene *scene)
 {
-  RT_AllSectorVertices.PopAll();
-  RT_AllSectorIndices.PopAll();
-  RT_AllSectorTexCoords.PopAll();
-  RT_AllSectorColors.PopAll();
-  for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
-  {
-    RT_LastSectorTextures[i] = nullptr;
-    RT_LastBlendings[i] = 0;
-  }
-
   ASSERT(penBrush != NULL);
   // get its brush
   CBrush3D &brBrush = *penBrush->en_pbrBrush;
@@ -517,8 +473,6 @@ void RT_AddNonZoningBrush(CEntity *penBrush, SSRT::Scene *scene)
   // if brush mip exists for that mip factor
   if (pbm != NULL)
   {
-    ASSERT(RT_AllSectorVertices.Count() == 0 && RT_AllSectorIndices.Count() == 0);
-
     // for each sector
     FOREACHINDYNAMICARRAY(pbm->bm_abscSectors, CBrushSector, itbsc)
     {
@@ -529,7 +483,12 @@ void RT_AddNonZoningBrush(CEntity *penBrush, SSRT::Scene *scene)
         RT_AddActiveSector(itbsc.Current(), penBrush, scene);
       }
     }
-
-    FlushBrushInfo(penBrush, scene);
   }
+}
+
+void RT_BrushClear()
+{
+  RT_AllSectorVertices.Clear();
+  RT_AllSectorIndices.Clear();
+  RT_AllSectorTexCoords.Clear();
 }

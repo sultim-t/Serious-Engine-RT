@@ -245,9 +245,11 @@ void SSRT::Scene::ProcessBrushes()
     if (iten->en_RenderType == CEntity::RT_BRUSH)
     {
       // add all of its sectors
-      RT_AddNonZoningBrush(&iten.Current(), this);
+      RT_AddBrushEntity(&iten.Current(), this);
     }
   }
+
+  RT_BrushClear();
 
   // submit
   r = rgSubmitStaticGeometries(instance);
