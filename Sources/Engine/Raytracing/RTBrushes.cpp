@@ -42,6 +42,27 @@ static CBrushPolygonTexture *RT_LastSectorTextures[MAX_BRUSH_TEXTURE_COUNT];
 static UBYTE RT_LastBlendings[MAX_BRUSH_TEXTURE_COUNT];
 
 
+struct RT_WorldBaseIgnore
+{
+  const char *worldName;
+  FLOAT3D position;
+};
+
+
+// Positions of unnecessary brushes (that also have "World Base" names)
+static const FLOAT3D RT_WorldBaseForceInvisibleEpsilon = { 0.5f, 0.5f, 0.5f };
+static const RT_WorldBaseIgnore RT_WorldBaseForceInvisible[] =
+{
+  { "01_Hatshepsut",        { 0, 1152, 64 }       },
+  { "02_SandCanyon",        { 224, 128, -312}     },
+  { "02_SandCanyon",        { 224, 128, -120}     },
+  { "02_SandCanyon",        { -98.5f, 113.5f, 18} },
+  { "04_ValleyOfTheKings",  { 0, 96, 0 }          },
+  { "05_MoonMountains",     { -64, 80, -64}       },
+  { "06_Oasis",             { 128, -16, 0}        },
+};
+
+
 static RgGeometryPassThroughType GetPassThroughType(UBYTE blending)
 {
   switch (blending)
@@ -53,7 +74,7 @@ static RgGeometryPassThroughType GetPassThroughType(UBYTE blending)
     case STXF_BLEND_ALPHA:  // blend using texture alpha
     {
       //gfxBlendFunc(GFX_SRC_ALPHA, GFX_INV_SRC_ALPHA);
-      return RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_UNDER;
+      return RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
     }
     case STXF_BLEND_ADD:  // add to screen
     {
@@ -196,7 +217,10 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
     // for texture cordinates and transparency/translucency processing
   #pragma region MakeScreenPolygon
 
-    if ((polygon.bpo_ulFlags & BPOF_PORTAL)/* || (polygon.bpo_ulFlags & BPOF_INVISIBLE)*/)
+    bool isPortal = polygon.bpo_ulFlags & BPOF_PORTAL;
+    bool isTranslucent = polygon.bpo_ulFlags & BPOF_TRANSLUCENT;
+
+    if ((isPortal && !isTranslucent) || (polygon.bpo_ulFlags & BPOF_INVISIBLE) || (polygon.bpo_ulFlags & BPOF_OCCLUDER))
     {
       continue;
     }
@@ -420,6 +444,12 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
       FlushBrushInfo(penBrush, scene);
     }
   }
+
+  for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
+  {
+    RT_LastSectorTextures[i] = nullptr;
+    RT_LastBlendings[i] = 0;
+  }
 }
 
 
@@ -440,47 +470,49 @@ void RT_AddNonZoningBrush(CEntity *penBrush, SSRT::Scene *scene)
   CBrush3D &brBrush = *penBrush->en_pbrBrush;
 
   // if hidden
-  if (penBrush->en_ulFlags & ENF_HIDDEN)
+  if (penBrush->en_ulFlags & ENF_HIDDEN || penBrush->en_ulFlags & ENF_INVISIBLE)
   {
     // skip it
     return;
   }
 
-  // RT: this must not happen, as iteration in AddAllEntities is done over all brushes
-  //// if the brush is already added
-  //if (brBrush.br_lnInActiveBrushes.IsLinked())
-  //  return;
-
-  //if (penBrush->en_ulFlags & ENF_ZONING)
-  //  return;
-
-  // skip whole non-zoning brush if all polygons in all sectors are invisible for rendering 
-  bool isVisible = false;
-
-  // test every brush polygon for it's visibility flag
-  // for every sector in brush
-  FOREACHINDYNAMICARRAY(brBrush.GetFirstMip()->bm_abscSectors, CBrushSector, itbsc)
+  // ugly way to remove terrain planes above the world
+  if (!(penBrush->en_ulFlags & ENF_ZONING) && penBrush->GetName() == "World Base")
   {
-    // for all polygons in sector
-    FOREACHINSTATICARRAY(itbsc->bsc_abpoPolygons, CBrushPolygon, itpo)
+    // check if it's exactly those unnecessary polygons
+    for (auto &ignore : RT_WorldBaseForceInvisible)
     {
-      // advance to next polygon if invisible
-      CBrushPolygon &bpo = *itpo;
-      if (!(bpo.bpo_ulFlags & BPOF_INVISIBLE))
+      // if not for the current world
+      if (penBrush->GetWorld() == nullptr || penBrush->GetWorld()->wo_fnmFileName.FileName() != ignore.worldName)
       {
-        isVisible = true;
-        break;
+        continue;
+      }
+
+      FLOAT3D lowerBound = penBrush->GetPlacement().pl_PositionVector - RT_WorldBaseForceInvisibleEpsilon;
+      FLOAT3D upperBound = penBrush->GetPlacement().pl_PositionVector + RT_WorldBaseForceInvisibleEpsilon;
+
+      bool isInside = true;
+
+      for (uint32_t i = 1; i <= 3; i++)
+      {
+        // if not inside bounds
+        if (ignore.position(i) > upperBound(i) || ignore.position(i) < lowerBound(i))
+        {
+          isInside = false;
+          break;
+        }
+      }
+      
+      if (isInside)
+      {
+        return;
       }
     }
   }
 
-  if (!isVisible)
-  {
-    return;
-  }
 
   // RT: get highest mip
-  CBrushMip *pbm = brBrush.GetBrushMipByDistance(0);
+  CBrushMip *pbm = brBrush.GetFirstMip();
 
   // if brush mip exists for that mip factor
   if (pbm != NULL)
