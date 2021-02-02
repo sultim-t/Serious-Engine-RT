@@ -167,7 +167,6 @@ void SSRT::Scene::UpdateMovableBrush(ULONG entityId, const CPlacement3D &placeme
 
   if (it == entityToMovableBrush.end())
   {
-    // ASSERTALWAYS("Movable brush wasn't uploaded");
     return;
   }
 
@@ -175,6 +174,32 @@ void SSRT::Scene::UpdateMovableBrush(ULONG entityId, const CPlacement3D &placeme
 
   RgUpdateTransformInfo updateInfo = {};
   Utils::CopyTransform(updateInfo.transform, placement);
+
+  // for each part of this entity
+  for (RgGeometry geomIndex : it->second)
+  {
+    updateInfo.movableStaticGeom = geomIndex;
+
+    r = rgUpdateGeometryTransform(instance, &updateInfo);
+    RG_CHECKERROR(r);
+  }
+}
+
+void SSRT::Scene::HideMovableBrush(ULONG entityId)
+{
+  auto it = entityToMovableBrush.find(entityId);
+
+  // ignore if it wasn't registered
+  if (it == entityToMovableBrush.end())
+  {
+    return;
+  }
+
+  RgResult r;
+
+  // to hide brush, let the trasform be null
+  RgUpdateTransformInfo updateInfo = {};
+  updateInfo.transform = {};
 
   for (RgGeometry geomIndex : it->second)
   {
@@ -246,13 +271,16 @@ void SSRT::Scene::ProcessDynamicGeometry()
     }
     else if (iten->en_RenderType == CEntity::RT_BRUSH && (iten->en_ulPhysicsFlags & EPF_MOVABLE))
     {
-      if ((iten->en_ulFlags & ENF_HIDDEN) /*|| (iten->en_ulFlags & ENF_ZONING)*/)
+      if (iten->en_ulFlags & ENF_HIDDEN)
       {
-        continue;
+        // try to hide
+        HideMovableBrush(iten->en_ulID);
       }
-
-      // if it's a movable brush, update transform
-      UpdateMovableBrush(iten->en_ulID, iten->GetLerpedPlacement());
+      else
+      {      
+        // if it's a visible movable brush, update transform
+        UpdateMovableBrush(iten->en_ulID, iten->GetLerpedPlacement());
+      }
     }
   }
 }

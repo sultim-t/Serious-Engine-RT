@@ -54,6 +54,7 @@ private:
   void ProcessBrushes();
   void ProcessDynamicGeometry();
   void UpdateMovableBrush(ULONG entityId, const CPlacement3D &placement);
+  void HideMovableBrush(ULONG entityId);
 
 private:
   RgInstance instance;
