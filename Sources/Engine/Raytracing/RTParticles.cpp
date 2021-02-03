@@ -54,7 +54,7 @@ void RT_AddAllParticles(CWorld *pWorld, CEntity *penViewer, SSRT::Scene *scene)
 
   FOREACHINDYNAMICCONTAINER(pWorld->wo_cenEntities, CEntity, iten)
   {
-    if (iten->en_RenderType != CEntity::RT_MODEL)
+    /*if (iten->en_RenderType != CEntity::RT_MODEL)
     {
       continue;
     }
@@ -64,11 +64,11 @@ void RT_AddAllParticles(CWorld *pWorld, CEntity *penViewer, SSRT::Scene *scene)
     if ((bBackground && !bIsBackground) || (!bBackground && bIsBackground))
     {
       continue;
-    }
+    }*/
 
     RT_sCurrentScene = scene;
 
-    Particle_PrepareEntity(0, 0, 0, penViewer);
+    Particle_PrepareEntity(4.0f, 0, 0, penViewer);
     ASSERT(_Particle_penCurrentViewer == penViewer);
 
     // RT: this will call function in DrawPort_Particles.cpp
@@ -179,10 +179,9 @@ void RT_Particle_SetTexturePart(MEX mexWidth, MEX mexHeight, INDEX iCol, INDEX i
 
 static FLOAT3D RT_GetViewDirection()
 {
-  if (_Particle_penCurrentViewer != nullptr)
+  if (RT_sCurrentScene != nullptr)
   {
-    FLOATmatrix3D m;
-    MakeRotationMatrix(m, _Particle_penCurrentViewer->GetPlacement().pl_OrientationAngle);
+    const FLOATmatrix3D &m = RT_sCurrentScene->GetViewerRotation();
 
     return FLOAT3D(m(1, 3), m(2, 3), m(3, 3));
   }
@@ -197,14 +196,22 @@ static void RT_GetViewVectors(FLOAT3D &x, FLOAT3D &y, ANGLE additionalBanking = 
 {
   if (_Particle_penCurrentViewer != nullptr)
   {
-    ANGLE3D a = _Particle_penCurrentViewer->GetPlacement().pl_OrientationAngle;
-    a(3) += additionalBanking;
+    const FLOATmatrix3D &m = RT_sCurrentScene->GetViewerRotation();
 
-    FLOATmatrix3D m;
-    MakeRotationMatrix(m, a);
+    if (additionalBanking == 0)
+    {
+      x = FLOAT3D(m(1, 1), m(2, 1), m(3, 1));
+      y = FLOAT3D(m(1, 2), m(2, 2), m(3, 2));
+    }
+    else
+    {
+      FLOATmatrix3D a;
+      MakeRotationMatrix(a, { 0, 0, additionalBanking });
 
-    x = FLOAT3D(m(1, 1), m(2, 1), m(3, 1));
-    y = FLOAT3D(m(1, 2), m(2, 2), m(3, 2));
+      a = m * a;
+      x = FLOAT3D(a(1, 1), a(2, 1), a(3, 1));
+      y = FLOAT3D(a(1, 2), a(2, 2), a(3, 2));
+    }
   }
   else
   {
@@ -228,7 +235,7 @@ void RT_Particle_RenderSquare(const FLOAT3D &vPos, FLOAT fSize, ANGLE aRotation,
   FLOAT3D dx, dy;
 
   // rotate dx and dy
-  RT_GetViewVectors(dx, dy, aRotation);
+  RT_GetViewVectors(dx, dy, 0);
 
   dx *= fRX;
   dy *= fRY;
