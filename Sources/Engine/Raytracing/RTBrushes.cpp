@@ -94,7 +94,6 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
 
   SSRT::CBrushGeometry brushInfo = {};
   brushInfo.entityID = penBrush->en_ulID;
-  brushInfo.isEnabled = true;
   brushInfo.isMovable = isMovable;
   brushInfo.color = ByteSwap(color);
 
@@ -278,7 +277,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
 
       // save new last info
       lastColor = colorTotal;
-      flags = lastFlags;
+      lastFlags = flags;
       for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
       {
         pLastTextures[i] = &polygon.bpo_abptTextures[i];
