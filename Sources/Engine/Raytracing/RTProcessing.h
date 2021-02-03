@@ -34,7 +34,7 @@ void RT_AddFirstPersonModel(CModelObject *mo, CRenderModel *rm, ULONG entityId, 
 // Process particles to be added to the scene.
 // It calls CEntity::RenderParticles function for each model entity,
 // which calls RT_Particle_* functions that are defined down below. 
-void RT_AddParticles(CWorld *pWorld, CEntity *penViewer, SSRT::Scene *scene);
+void RT_AddAllParticles(CWorld *pWorld, CEntity *penViewer, SSRT::Scene *scene);
 void RT_Particle_PrepareTexture(CTextureObject *pto, enum ParticleBlendType pbt);
 void RT_Particle_SetTexturePart(MEX mexWidth, MEX mexHeight, INDEX iCol, INDEX iRow);
 void RT_Particle_RenderSquare(const FLOAT3D &vPos, FLOAT fSize, ANGLE aRotation, COLOR col, FLOAT fYRatio);

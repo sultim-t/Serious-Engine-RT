@@ -36,6 +36,7 @@ public:
   Scene &operator=(Scene &&other) noexcept = delete;
 
   void AddModel(const CModelGeometry &model);
+  void AddParticles(const CParticlesGeometry &info);
   void AddBrush(const CBrushGeometry &brush);
   void AddLight(const CSphereLight &sphLt);
   void AddLight(const CDirectionalLight &dirLt);

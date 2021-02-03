@@ -39,27 +39,24 @@ static FLOAT          RT_fTextureCorrectionU, RT_fTextureCorrectionV;
 static GFXTexCoord    RT_atex[4];
 static CTextureData   *RT_ptd = NULL;
 static INDEX          RT_iFrame = 0;
+static RgGeometryPassThroughType RT_ePassThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
+
+static SSRT::Scene *RT_sCurrentScene;
 
 
-void RT_AddParticles(CWorld *pWorld, CEntity *penViewer, SSRT::Scene *scene)
+void RT_AddAllParticles(CWorld *pWorld, CEntity *penViewer, SSRT::Scene *scene)
 {
   const bool bBackground = false;
   CAnyProjection3D emptyProjection = {};
 
-  if (bBackground)
-  {
-    Particle_PrepareSystem(nullptr, emptyProjection);
-  }
-  else
-  {
-    Particle_PrepareSystem(nullptr, emptyProjection);
-  }
+  // if (bBackground) {} else {}
+  Particle_PrepareSystem(nullptr, emptyProjection);
 
   FOREACHINDYNAMICCONTAINER(pWorld->wo_cenEntities, CEntity, iten)
   {
     if (iten->en_RenderType != CEntity::RT_MODEL)
     {
-      return;
+      continue;
     }
 
     BOOL bIsBackground = iten->en_ulFlags & ENF_BACKGROUND;
@@ -69,11 +66,15 @@ void RT_AddParticles(CWorld *pWorld, CEntity *penViewer, SSRT::Scene *scene)
       continue;
     }
 
+    RT_sCurrentScene = scene;
+
     Particle_PrepareEntity(0, 0, 0, penViewer);
+    ASSERT(_Particle_penCurrentViewer == penViewer);
 
     // RT: this will call function in DrawPort_Particles.cpp
     iten->RenderParticles();
 
+    RT_sCurrentScene = nullptr;
     _Particle_penCurrentViewer = NULL;
   }
 
@@ -81,7 +82,7 @@ void RT_AddParticles(CWorld *pWorld, CEntity *penViewer, SSRT::Scene *scene)
 }
 
 
-static void Particle_GenerateQuadIndices(SSRT::CParticlesGeometry *preparedInfo)
+static void RT_GenerateQuadIndices(SSRT::CParticlesGeometry *preparedInfo)
 {
   const INDEX ctElements = preparedInfo->vertexCount * 6 / 4;
   if (ctElements <= 0)
@@ -120,39 +121,27 @@ void RT_Particle_PrepareTexture(CTextureObject *pto, ParticleBlendType pbt)
   switch (pbt)
   {
     case PBT_BLEND:
-      gfxDisableDepthWrite();
-      gfxDisableAlphaTest();
-      gfxEnableBlend();
-      gfxBlendFunc(GFX_SRC_ALPHA, GFX_INV_SRC_ALPHA);
+      //  gfxBlendFunc(GFX_SRC_ALPHA, GFX_INV_SRC_ALPHA);
+      RT_ePassThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_UNDER;
       break;
     case PBT_ADD:
-      gfxDisableDepthWrite();
-      gfxDisableAlphaTest();
-      gfxEnableBlend();
-      gfxBlendFunc(GFX_ONE, GFX_ONE);
+      // gfxBlendFunc(GFX_ONE, GFX_ONE);
+      RT_ePassThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_ADDITIVE;
       break;
     case PBT_MULTIPLY:
-      gfxDisableDepthWrite();
-      gfxDisableAlphaTest();
-      gfxEnableBlend();
-      gfxBlendFunc(GFX_ZERO, GFX_INV_SRC_COLOR);
+      // gfxBlendFunc(GFX_ZERO, GFX_INV_SRC_COLOR);
+      RT_ePassThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_UNDER;
       break;
     case PBT_ADDALPHA:
-      gfxDisableDepthWrite();
-      gfxDisableAlphaTest();
-      gfxEnableBlend();
-      gfxBlendFunc(GFX_SRC_ALPHA, GFX_ONE);
+      // gfxBlendFunc(GFX_SRC_ALPHA, GFX_ONE);
+      RT_ePassThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
       break;
     case PBT_FLEX:
-      gfxDisableDepthWrite();
-      gfxDisableAlphaTest();
-      gfxEnableBlend();
-      gfxBlendFunc(GFX_ONE, GFX_INV_SRC_ALPHA);
+      // gfxBlendFunc(GFX_ONE, GFX_INV_SRC_ALPHA);
+      RT_ePassThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_UNDER;
       break;
     case PBT_TRANSPARENT:
-      gfxEnableDepthWrite();
-      gfxEnableAlphaTest();
-      gfxDisableBlend();
+      RT_ePassThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
       break;
   }
 
@@ -188,7 +177,7 @@ void RT_Particle_SetTexturePart(MEX mexWidth, MEX mexHeight, INDEX iCol, INDEX i
 }
 
 
-FLOAT3D RT_GetViewDirection()
+static FLOAT3D RT_GetViewDirection()
 {
   if (_Particle_penCurrentViewer != nullptr)
   {
@@ -204,7 +193,7 @@ FLOAT3D RT_GetViewDirection()
 }
 
 
-void RT_GetViewVectors(FLOAT3D &x, FLOAT3D &y, ANGLE additionalBanking = 0)
+static void RT_GetViewVectors(FLOAT3D &x, FLOAT3D &y, ANGLE additionalBanking = 0)
 {
   if (_Particle_penCurrentViewer != nullptr)
   {
@@ -305,10 +294,10 @@ void RT_Particle_RenderLine(const FLOAT3D &a, const FLOAT3D &b, FLOAT width, COL
   GFXColor *pcol = _acolCommon.Push(4);
 
   // prepare vertices
-  pvtx[0].x = a0(0);  pvtx[0].y = a0(1);  pvtx[0].z = a0(2);
-  pvtx[1].x = b0(0);  pvtx[1].y = b0(1);  pvtx[1].z = b0(2);
-  pvtx[2].x = b1(0);  pvtx[2].y = b1(1);  pvtx[2].z = b1(2);
-  pvtx[3].x = a1(0);  pvtx[3].y = a1(1);  pvtx[3].z = a1(2);
+  pvtx[0].x = a0(1);  pvtx[0].y = a0(2);  pvtx[0].z = a0(3);
+  pvtx[1].x = b0(1);  pvtx[1].y = b0(2);  pvtx[1].z = b0(3);
+  pvtx[2].x = b1(1);  pvtx[2].y = b1(2);  pvtx[2].z = b1(3);
+  pvtx[3].x = a1(1);  pvtx[3].y = a1(2);  pvtx[3].z = a1(3);
 
   // prepare texture coords 
   ptex[0] = RT_atex[0];
@@ -366,69 +355,35 @@ void RT_Particle_RenderQuad3D(const FLOAT3D &vPos0, const FLOAT3D &vPos1, const 
 
 void RT_Particle_Flush()
 {
-  // update stats
-  const INDEX ctParticles = _avtxCommon.Count() / 4;
-  
-  /*
-  _sfStats.IncrementCounter(CStatForm::SCI_PARTICLES, ctParticles);
-  _pGfx->gl_ctParticleTriangles += ctParticles * 2;
-  */
+  if (RT_sCurrentScene != nullptr && _avtxCommon.Count() > 0)
+  {
+    FLOATmatrix3D identity;
+    identity(1, 1) = 1; identity(1, 2) = 0; identity(1, 3) = 0;
+    identity(2, 1) = 0; identity(2, 2) = 1; identity(2, 3) = 0;
+    identity(3, 1) = 0; identity(3, 2) = 0; identity(3, 3) = 1;
 
-  /*
-  // determine need for clipping
-  if (_bNeedsClipping) gfxEnableClipping();
-  else gfxDisableClipping();
-  */
+    SSRT::CParticlesGeometry info = {};
+    info.entityID = UINT32_MAX;
+    info.absPosition = { 0,0,0 };
+    info.absRotation = identity;
+    info.passThroughType = RT_ePassThroughType;
+    info.vertexCount = _avtxCommon.Count();
+    info.vertices = &_avtxCommon[0];
+    info.normals = nullptr;
+    info.texCoords = &_atexCommon[0];
 
-  // TODO
+    // do we need multiple colors for particle batch?
+    info.color = _acolCommon[0];
 
-  // flush 1st layer
-  gfxFlushQuads();
+    info.textures[0] = RT_ptd;
+    info.textureFrames[0] = RT_iFrame;
 
-  /*
-  // maybe we need to render fog/haze layer
-  if (_bTransFogHaze)
-  { // setup haze/fog color and texture
-    GFXColor glcolFH;
-    gfxSetTextureWrapping(GFX_CLAMP, GFX_CLAMP);
-    if (_Particle_bHasHaze)
-    {
-      gfxSetTexture(_haze_ulTexture, _haze_tpLocal);
-      glcolFH.abgr = ByteSwap(AdjustColor(_haze_hp.hp_colColor, _slTexHueShift, _slTexSaturation));
-    }
-    else
-    {
-      gfxSetTexture(_fog_ulTexture, _fog_tpLocal);
-      glcolFH.abgr = ByteSwap(AdjustColor(_fog_fp.fp_colColor, _slTexHueShift, _slTexSaturation));
-    }
-    // prepare haze rendering parameters
-    gfxDisableAlphaTest();
-    gfxEnableBlend();
-    gfxBlendFunc(GFX_SRC_ALPHA, GFX_INV_SRC_ALPHA);
-    gfxDisableDepthWrite();
-    gfxDepthFunc(GFX_EQUAL); // adjust z-buffer compare
-    // copy fog/haze texture array to main texture array and set color to fog/haze
-    const INDEX ctVertices = _atexCommon.Count();
-    ASSERT(_atexFogHaze.Count() == ctVertices + 4);
-    memcpy(&_atexCommon[0], &_atexFogHaze[0], ctVertices * sizeof(GFXTexCoord));
-    for (INDEX i = 0; i < ctVertices; i++) _acolCommon[i] = glcolFH;
-    // render it
-    gfxFlushQuads();
-    // revert to old settings
-    gfxEnableAlphaTest();
-    gfxDisableBlend();
-    gfxDepthFunc(GFX_LESS_EQUAL);
-    _ptd->SetAsCurrent(_iFrame);
-    _pGfx->gl_ctParticleTriangles += ctParticles * 2;
+    RT_GenerateQuadIndices(&info);
+
+    RT_sCurrentScene->AddParticles(info);
   }
-  */
 
   // all done
   gfxResetArrays();
-
-  /*
-   _atexFogHaze.PopAll();
-  _bNeedsClipping = FALSE;
-  */
 }
 

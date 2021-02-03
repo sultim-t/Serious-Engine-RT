@@ -36,7 +36,6 @@ namespace SSRT
 struct CAbstractGeometry
 {
   ULONG               entityID;
-  bool                isEnabled;
 
   // absolute position and rotation
   FLOAT3D             absPosition;
@@ -81,6 +80,10 @@ struct CBrushGeometry : public CAbstractGeometry
   bool            isMovable = false;
   bool            operator==(const CBrushGeometry &other) const;
 };
+
+
+struct CParticlesGeometry : public CAbstractGeometry
+{};
 
 
 struct CDirectionalLight

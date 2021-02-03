@@ -150,10 +150,9 @@ static void FlushModelInfo(ULONG entityID,
 
   SSRT::CModelGeometry modelInfo = {};
   modelInfo.entityID = entityID;
-  modelInfo.isEnabled = true;
   modelInfo.absPosition = rm.rm_vObjectPosition;
   modelInfo.absRotation = tr ? m : rm.rm_mObjectRotation;
-  modelInfo.color = RGBAToColor(255, 255, 255, 255);
+  modelInfo.color = ByteSwap(RGBAToColor(255, 255, 255, 255));
   modelInfo.vertexCount = vd.vertexCount;
   modelInfo.vertices = vd.vertices;
   modelInfo.normals = vd.normals;
@@ -228,6 +227,20 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *scene)
 
     scene->AddLight(light);
   }
+}
+
+
+static float RT_GetMipFactor(const FLOAT3D &position, const CModelObject &mo, SSRT::Scene *scene)
+{
+  FLOAT distance = (scene->GetViewerPosition() - position).Length();
+
+  if (mo.mo_Stretch != FLOAT3D(1, 1, 1))
+  {
+    distance /= Max(mo.mo_Stretch(1), Max(mo.mo_Stretch(2), mo.mo_Stretch(3)));
+  }
+
+  const float rtLodFix = +0.2f;
+  return Log2(distance) * (mdl_fLODMul + rtLodFix) + mdl_fLODAdd;
 }
 
 
@@ -378,15 +391,7 @@ static void RT_SetupModelRendering(CModelObject &mo,
   //  rm.rm_ulFlags |= RMF_INVERTED;
   //}
 
-  FLOAT distance = (scene->GetViewerPosition() - rm.rm_vObjectPosition).Length();
-
-  if (mo.mo_Stretch != FLOAT3D(1, 1, 1))
-  {
-    distance /= Max(mo.mo_Stretch(1), Max(mo.mo_Stretch(2), mo.mo_Stretch(3)));
-  }
-
-  const float rtLodFix = +0.2f;
-  rm.rm_fMipFactor = Log2(distance) * (mdl_fLODMul + rtLodFix) + mdl_fLODAdd;
+  rm.rm_fMipFactor = RT_GetMipFactor(rm.rm_vObjectPosition, mo, scene);
 
   // get current mip model using mip factor
   rm.rm_iMipLevel = mo.GetMipModel(rm.rm_fMipFactor);
@@ -869,6 +874,12 @@ static void RT_RenderOneModel(const CEntity &en,
 {
   // skip invisible models
   if (moModel.mo_Stretch == FLOAT3D(0, 0, 0))
+  {
+    return;
+  }
+
+  // if too far
+  if (!moModel.IsModelVisible(RT_GetMipFactor(plModel.pl_PositionVector, moModel, scene)))
   {
     return;
   }

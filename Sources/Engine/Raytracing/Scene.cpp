@@ -113,6 +113,36 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
   GeometryExporter::ExportGeometry(model);
 }
 
+void SSRT::Scene::AddParticles(const CParticlesGeometry &info)
+{
+  if (info.vertices == nullptr || info.vertexCount == 0 || info.indices == nullptr || info.indexCount == 0)
+  {
+    return;
+  }
+
+  RgGeometryUploadInfo paInfo = {};
+  paInfo.geomType = RG_GEOMETRY_TYPE_DYNAMIC;
+  paInfo.passThroughType = info.passThroughType;
+  paInfo.vertexCount = info.vertexCount;
+  paInfo.vertexData = (float *)info.vertices;
+  paInfo.normalData = (float *)info.normals;
+  paInfo.texCoordData = (float *)info.texCoords;
+  paInfo.colorData = nullptr;
+  paInfo.indexCount = info.indexCount;
+  paInfo.indexData = (uint32_t *)info.indices;
+  paInfo.geomMaterial =
+  {
+    textureUploader->GetMaterial(info.textures[0], info.textureFrames[0]),
+    RG_NO_MATERIAL,
+    RG_NO_MATERIAL,
+  };
+
+  Utils::CopyTransform(paInfo.transform, info);
+
+  RgResult r = rgUploadGeometry(instance, &paInfo, nullptr);
+  RG_CHECKERROR(r);
+}
+
 void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
 {
   if (brush.vertices == nullptr || brush.vertexCount == 0 || brush.indices == nullptr || brush.indexCount == 0)
@@ -291,7 +321,7 @@ void SSRT::Scene::ProcessDynamicGeometry()
 
   if (viewer != nullptr)
   {
-    RT_AddParticles(pWorld, viewer, this);
+    RT_AddAllParticles(pWorld, viewer, this);
   }
 }
 
