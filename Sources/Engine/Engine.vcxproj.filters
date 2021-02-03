@@ -823,6 +823,9 @@
     <ClCompile Include="Raytracing\RTTextures.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Raytracing\RTParticles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Base\Anim.h">

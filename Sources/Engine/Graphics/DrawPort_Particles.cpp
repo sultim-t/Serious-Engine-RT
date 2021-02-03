@@ -27,6 +27,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Templates/StaticArray.cpp>
 #include <Engine/Templates/StaticStackArray.cpp>
 
+#include <Engine/Raytracing/RTProcessing.h>
 
 extern const FLOAT *pfSinTable;
 extern const FLOAT *pfCosTable;
@@ -57,6 +58,14 @@ static INDEX _iFrame = 0;
 // prepare particles for rendering
 void Particle_PrepareSystem( CDrawPort *pdpDrawPort, CAnyProjection3D &prProjection)
 {
+  if (_pGfx->gl_eCurrentAPI == GAT_RT)
+  {
+    _Particle_iCurrentDrawPort = 0;
+
+    gfxResetArrays();
+    return;
+  }
+
   _pDP = pdpDrawPort;
   _pprProjection = (CProjection3D*)&*prProjection;
   _fNearClipDistance = -prProjection->pr_NearClipDistance;
@@ -79,6 +88,11 @@ void Particle_PrepareSystem( CDrawPort *pdpDrawPort, CAnyProjection3D &prProject
 
 void Particle_EndSystem( BOOL bRestoreOrtho/*=TRUE*/)
 {
+  if (_pGfx->gl_eCurrentAPI == GAT_RT)
+  {
+    return;
+  }
+
   // reset projection and re-enable clipping
   if( bRestoreOrtho) _pDP->SetOrtho();
   gfxEnableClipping();
@@ -108,6 +122,12 @@ INDEX Particle_GetDrawPortID(void)
 
 void Particle_PrepareTexture( CTextureObject *pto, enum ParticleBlendType pbt)
 {
+  if (_pGfx->gl_eCurrentAPI == GAT_RT)
+  {
+    RT_Particle_PrepareTexture(pto, pbt);
+    return;
+  }
+
   // determine blend type
   switch( pbt) {
   case PBT_BLEND:
@@ -171,6 +191,12 @@ void Particle_PrepareTexture( CTextureObject *pto, enum ParticleBlendType pbt)
 
 void Particle_SetTexturePart( MEX mexWidth, MEX mexHeight, INDEX iCol, INDEX iRow)
 {
+  if (_pGfx->gl_eCurrentAPI == GAT_RT)
+  {
+    RT_Particle_SetTexturePart(mexWidth, mexHeight, iCol, iRow);
+    return;
+  }
+
   // prepare full texture for displaying
   MEXaabbox2D boxTextureClipped( MEX2D( mexWidth*(iCol+0), mexHeight*(iRow+0)),
                                  MEX2D( mexWidth*(iCol+1), mexHeight*(iRow+1)));
@@ -191,6 +217,12 @@ void Particle_SetTexturePart( MEX mexWidth, MEX mexHeight, INDEX iCol, INDEX iRo
 // add one particle square to rendering queue
 void Particle_RenderSquare( const FLOAT3D &vPos, FLOAT fSize, ANGLE aRotation, COLOR col, FLOAT fYRatio/*=1.0f*/)
 {
+  if (_pGfx->gl_eCurrentAPI == GAT_RT)
+  {
+    RT_Particle_RenderSquare(vPos, fSize, aRotation, col, fYRatio);
+    return;
+  }
+
   // trivial rejection
   if( fSize<0.0001f || ((col&CT_AMASK)>>CT_ASHIFT)<2) return;
 
@@ -288,6 +320,12 @@ void Particle_RenderSquare( const FLOAT3D &vPos, FLOAT fSize, ANGLE aRotation, C
 // add one particle line to rendering queue
 void Particle_RenderLine( const FLOAT3D &vPos0, const FLOAT3D &vPos1, FLOAT fWidth, COLOR col)
 {
+  if (_pGfx->gl_eCurrentAPI == GAT_RT)
+  {
+    RT_Particle_RenderLine(vPos0, vPos1, fWidth, col);
+    return;
+  }
+
   // trivial rejection
   if( fWidth<0 || ((col&CT_AMASK)>>CT_ASHIFT)<2) return;
 
@@ -390,6 +428,12 @@ void Particle_RenderLine( const FLOAT3D &vPos0, const FLOAT3D &vPos1, FLOAT fWid
 void Particle_RenderQuad3D( const FLOAT3D &vPos0, const FLOAT3D &vPos1, const FLOAT3D &vPos2,
                             const FLOAT3D &vPos3, COLOR col)
 {
+  if (_pGfx->gl_eCurrentAPI == GAT_RT)
+  {
+    RT_Particle_RenderQuad3D(vPos0, vPos1, vPos2, vPos3, col);
+    return;
+  }
+
   // trivial rejection
   if( ((col&CT_AMASK)>>CT_ASHIFT)<2) return;
 
@@ -506,6 +550,12 @@ void Particle_RenderQuad3D( const FLOAT3D &vPos0, const FLOAT3D &vPos1, const FL
 // flushes particle rendering queue (i.e. renders particle on screen)
 void Particle_Flush(void)
 {
+  if (_pGfx->gl_eCurrentAPI == GAT_RT)
+  {
+    RT_Particle_Flush();
+    return;
+  }
+
   // update stats
   const INDEX ctParticles = _avtxCommon.Count()/4;
   _sfStats.IncrementCounter( CStatForm::SCI_PARTICLES, ctParticles);
@@ -584,6 +634,11 @@ static int qsort_CompareZ3D( const void *pI0, const void *pI1) {
 // sorts particles by distance
 void Particle_Sort( BOOL b3D/*=FALSE*/)
 {
+  if (_pGfx->gl_eCurrentAPI == GAT_RT)
+  {
+    return;
+  }
+
   INDEX i;
   const INDEX ctParticles = _avtxCommon.Count()/4; 
   if( ctParticles<=0) return; // nothing to do!

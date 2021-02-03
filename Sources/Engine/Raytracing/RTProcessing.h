@@ -15,6 +15,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #pragma once
 
+#include "StdH.h"
+
 namespace SSRT
 {
 class Scene;
@@ -28,5 +30,16 @@ void RT_BrushClear();
 
 void RT_AddModelEntity(const CEntity *penModel, SSRT::Scene *ssrt);
 void RT_AddFirstPersonModel(CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::Scene *scene);
+
+// Process particles to be added to the scene.
+// It calls CEntity::RenderParticles function for each model entity,
+// which calls RT_Particle_* functions that are defined down below. 
+void RT_AddParticles(CWorld *pWorld, CEntity *penViewer, SSRT::Scene *scene);
+void RT_Particle_PrepareTexture(CTextureObject *pto, enum ParticleBlendType pbt);
+void RT_Particle_SetTexturePart(MEX mexWidth, MEX mexHeight, INDEX iCol, INDEX iRow);
+void RT_Particle_RenderSquare(const FLOAT3D &vPos, FLOAT fSize, ANGLE aRotation, COLOR col, FLOAT fYRatio);
+void RT_Particle_RenderLine(const FLOAT3D &vPos0, const FLOAT3D &vPos1, FLOAT fWidth, COLOR col);
+void RT_Particle_RenderQuad3D(const FLOAT3D &vPos0, const FLOAT3D &vPos1, const FLOAT3D &vPos2, const FLOAT3D &vPos3, COLOR col);
+void RT_Particle_Flush();
 
 unsigned RT_SetTextureAsCurrent(CTextureData *textureData, SSRT::TextureUploader *uploader);

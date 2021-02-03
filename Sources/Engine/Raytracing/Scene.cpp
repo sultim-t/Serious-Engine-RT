@@ -258,11 +258,14 @@ void SSRT::Scene::ProcessBrushes()
 
 void SSRT::Scene::ProcessDynamicGeometry()
 {
+  CEntity *viewer = nullptr;
+
   // check all movable brushes, models and light sources
   FOREACHINDYNAMICCONTAINER(pWorld->wo_cenEntities, CEntity, iten)
   {
     if (iten->en_ulID == viewerEntityID)
     {
+      viewer = (CEntity *)iten;
       continue;
     }
 
@@ -284,6 +287,11 @@ void SSRT::Scene::ProcessDynamicGeometry()
         UpdateMovableBrush(iten->en_ulID, iten->GetLerpedPlacement());
       }
     }
+  }
+
+  if (viewer != nullptr)
+  {
+    RT_AddParticles(pWorld, viewer, this);
   }
 }
 
