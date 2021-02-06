@@ -161,8 +161,17 @@ static void FlushModelInfo(ULONG entityID,
   modelInfo.indices = pIndices;
 
   CTextureData *td = to != nullptr ? (CTextureData *)to->GetData() : nullptr;
-  modelInfo.textures[0] = td;
-  modelInfo.textureFrames[0] = to != nullptr && td != nullptr ? to->GetFrame() : 0;
+
+  if (td != nullptr)
+  {
+    // must be repeat for all models, because of previous call 
+    // of gfxSetTextureWrapping(GFX_REPEAT, GFX_REPEAT)
+    td->td_tpLocal.tp_eWrapU = GFX_REPEAT;
+    td->td_tpLocal.tp_eWrapV = GFX_REPEAT;
+
+    modelInfo.textures[0] = td;
+    modelInfo.textureFrames[0] = to->GetFrame();
+  }
 
   for (INDEX i = 0; i < SSRT_MAX_ATTACHMENT_DEPTH; i++)
   {
@@ -731,9 +740,7 @@ static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &
     }
   }
 
-  // TODO: RT: texture loading
-  
-  
+  /*
   const CTextureData *ptdReflection = (const CTextureData *) mo.mo_toReflection.ao_AnimData;
   if ((ulMipLayerFlags & SRF_REFLECTIONS) && ptdReflection != NULL && bAllLayers)
   {
@@ -778,6 +785,8 @@ static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &
       // RT: TODO: process specularity
     }
   }
+
+  */
 
   // must render diffuse if there is no texture (white mode)
   if ((ulMipLayerFlags & SRF_DIFFUSE) || ptdDiff == NULL)

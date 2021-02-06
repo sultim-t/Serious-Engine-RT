@@ -274,23 +274,6 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
     {
       // flush last saved info, and start new recordings
       RT_FlushBrushInfo(penBrush, pLastTextures, lastFlags, lastColor, scene);
-
-      // save new last info
-      lastColor = colorTotal;
-      lastFlags = flags;
-      for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
-      {
-        pLastTextures[i] = &polygon.bpo_abptTextures[i];
-
-        auto *td = (CTextureData *)pLastTextures[i]->bpt_toTexture.GetData();
-
-        if (td != nullptr)
-        {
-          // set new local params for the texture
-          td->td_tpLocal.tp_eWrapU = pLastTextures[i]->s.bpt_ubFlags & BPTF_CLAMPU ? GFX_CLAMP : GFX_REPEAT;
-          td->td_tpLocal.tp_eWrapV = pLastTextures[i]->s.bpt_ubFlags & BPTF_CLAMPV ? GFX_CLAMP : GFX_REPEAT;
-        }
-      }
     }
   #pragma endregion
 
@@ -316,8 +299,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
     GFXTexCoord *texCoords = RT_AllSectorTexCoords.Push(vertCount);
 
     // TODO: RT: more than 1 texture coords for brushes
-    //for (uint32_t iLayer = 0; iLayer < MAX_BRUSH_TEXTURE_COUNT; iLayer++)
-    for (uint32_t iLayer = 0; iLayer < 1; iLayer++)
+    for (uint32_t iLayer = 0; iLayer < MAX_BRUSH_TEXTURE_COUNT; iLayer++)
     {
       CBrushPolygonTexture &layerTexture = polygon.bpo_abptTextures[iLayer];
 
@@ -411,6 +393,23 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
       indices[i] = origIndices[i] + firstVertexId;
     }
   #pragma endregion
+
+    // rewrite last info
+    lastColor = colorTotal;
+    lastFlags = flags;
+    for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
+    {
+      pLastTextures[i] = &polygon.bpo_abptTextures[i];
+
+      auto *td = (CTextureData *)pLastTextures[i]->bpt_toTexture.GetData();
+
+      if (td != nullptr)
+      {
+        // set new local params for the texture
+        td->td_tpLocal.tp_eWrapU = pLastTextures[i]->s.bpt_ubFlags & BPTF_CLAMPU ? GFX_CLAMP : GFX_REPEAT;
+        td->td_tpLocal.tp_eWrapV = pLastTextures[i]->s.bpt_ubFlags & BPTF_CLAMPV ? GFX_CLAMP : GFX_REPEAT;
+      }
+    }
   }
 
   // flush what's left
