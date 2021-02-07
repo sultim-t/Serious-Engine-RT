@@ -137,6 +137,7 @@ static void FlushModelInfo(ULONG entityID,
                            INDEX *pIndices, INDEX indexCount, 
                            const RT_VertexData &vd,
                            SurfaceTranslucencyType stt,
+                           GFXColor modelColor,
                            bool forceTranslucency,
                            SSRT::Scene *pScene)
 {
@@ -152,7 +153,9 @@ static void FlushModelInfo(ULONG entityID,
   modelInfo.entityID = entityID;
   modelInfo.absPosition = rm.rm_vObjectPosition;
   modelInfo.absRotation = tr ? m : rm.rm_mObjectRotation;
-  modelInfo.color = ByteSwap(RGBAToColor(255, 255, 255, 255));
+  modelInfo.color = modelColor.abgr;
+  modelInfo.isReflective = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_REFLECTIONS;
+  modelInfo.isSpecular = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_SPECULAR;
   modelInfo.vertexCount = vd.vertexCount;
   modelInfo.vertices = vd.vertices;
   modelInfo.normals = vd.normals;
@@ -379,6 +382,8 @@ static void RT_SetupModelRendering(CModelObject &mo,
     rm.rm_pFrame8_1 = &rm.rm_pmdModelData->md_FrameVertices8[ rm.rm_iFrame1 * ctVertices ];
   }
 
+  rm.rm_colBlend = 0xFFFFFFFF;
+
   // obtain current rendering preferences
   rm.rm_rtRenderType = _mrpModelRenderPrefs.GetRenderType();
   // remember blending color
@@ -395,10 +400,10 @@ static void RT_SetupModelRendering(CModelObject &mo,
   BOOL bYInverted = rm.rm_vStretch(2) < 0;
   BOOL bZInverted = rm.rm_vStretch(3) < 0;
   rm.rm_ulFlags &= ~RMF_INVERTED;
-  //if (bXInverted != bYInverted != bZInverted != _aprProjection->pr_bInverted) 
-  //{
-  //  rm.rm_ulFlags |= RMF_INVERTED;
-  //}
+  if (bXInverted != bYInverted != bZInverted != 0) 
+  {
+    rm.rm_ulFlags |= RMF_INVERTED;
+  }
 
   rm.rm_fMipFactor = RT_GetMipFactor(rm.rm_vObjectPosition, mo, scene);
 
@@ -444,12 +449,13 @@ static void RT_SetupModelRendering(CModelObject &mo,
 
 // RT: add vertices to corresponding CModelObject
 //void RenderOneSide( CRenderModel &rm, BOOL bBackSide, ULONG ulLayerFlags)
-static void RT_RenderOneSide(ULONG entityID, 
-                             CRenderModel &rm, 
+static void RT_RenderOneSide(ULONG entityID,
+                             CRenderModel &rm,
                              CTextureObject *to,
-                             const RT_VertexData &vd, 
-                             BOOL bBackSide,            
+                             const RT_VertexData &vd,
+                             BOOL bBackSide,
                              const INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH],
+                             GFXColor modelColor,
                              bool forceTranslucency,
                              SSRT::Scene *scene)
 {
@@ -472,7 +478,7 @@ static void RT_RenderOneSide(ULONG entityID,
   INDEX ctElements = 0;
   ModelMipInfo &mmi = *rm.rm_pmmiMip;
 
-  auto flushModel = [entityID, &rm, &to, attchPath, &mmi, &vd, scene, &sttLast, forceTranslucency] (INDEX firstIndex, INDEX indexCount)
+  auto flushModel = [entityID, &rm, &to, attchPath, &mmi, &vd, scene, &sttLast, modelColor, forceTranslucency] (INDEX firstIndex, INDEX indexCount)
   {
     ASSERT(firstIndex >= 0);
     if (indexCount <= 0)
@@ -482,7 +488,7 @@ static void RT_RenderOneSide(ULONG entityID,
 
     FlushModelInfo(entityID, rm, to, attchPath,
                    &mmi.mmpi_aiElements[firstIndex], indexCount,
-                   vd, sttLast, forceTranslucency, scene);
+                   vd, sttLast, modelColor, forceTranslucency, scene);
   };
 
   {
@@ -545,18 +551,9 @@ static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &
                          const INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH], INDEX attchCount, SSRT::Scene *scene)
 //void CModelObject::RenderModel_View(CRenderModel &rm)
 {
-  // TODO: RT: use this if some additional transformation is required for weapons
-  //(rm.rm_ulFlags & RMF_WEAPON)
-
-  // setup drawing direction (in case of mirror)
-  if (rm.rm_ulFlags & RMF_INVERTED)
-  {
-    //g fxFrontFace(GFX_CW);
-  }
-  else
-  {
-    //g fxFrontFace(GFX_CCW);
-  }
+  BOOL bXInverted = rm.rm_vStretch(1) < 0;
+  BOOL bYInverted = rm.rm_vStretch(2) < 0;
+  BOOL bZInverted = rm.rm_vStretch(3) < 0;
 
   // declare pointers for general usage
   INDEX iSrfVx0, ctSrfVx;
@@ -653,9 +650,17 @@ static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &
       for (INDEX iSrfVx = 0; iSrfVx < ctSrfVx; iSrfVx++)
       {
         const INDEX iMipVx = puwSrfToMip[ iSrfVx ];
-        pnorSrfBase[ iSrfVx ].nx = pnorMipBase[ iMipVx ].nx;
-        pnorSrfBase[ iSrfVx ].ny = pnorMipBase[ iMipVx ].ny;
-        pnorSrfBase[ iSrfVx ].nz = pnorMipBase[ iMipVx ].nz;
+
+        pnorSrfBase[iSrfVx].nx = pnorMipBase[iMipVx].nx;
+        pnorSrfBase[iSrfVx].ny = pnorMipBase[iMipVx].ny;
+        pnorSrfBase[iSrfVx].nz = pnorMipBase[iMipVx].nz;
+
+        if (rm.rm_ulFlags & RMF_INVERTED)
+        {
+          pnorSrfBase[iSrfVx].nx *= bXInverted ? -1 : 1;
+          pnorSrfBase[iSrfVx].ny *= bYInverted ? -1 : 1;
+          pnorSrfBase[iSrfVx].nz *= bZInverted ? -1 : 1;
+        }
       }
     }
   }
@@ -720,8 +725,7 @@ static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &
 
       // get surface diffuse color and combine with model color
       GFXColor colSrfDiff;
-      const COLOR colD = ms.ms_colDiffuse; // AdjustColor(ms.ms_colDiffuse, _slTexHueShift, _slTexSaturation);
-      colSrfDiff.MultiplyRGBA(colD, colMdlDiff);
+      colSrfDiff.MultiplyRGBA(ms.ms_colDiffuse, colMdlDiff);
 
       // setup texcoord array
       for (INDEX iSrfVx = 0; iSrfVx < ctSrfVx; iSrfVx++)
@@ -740,54 +744,6 @@ static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &
     }
   }
 
-  /*
-  const CTextureData *ptdReflection = (const CTextureData *) mo.mo_toReflection.ao_AnimData;
-  if ((ulMipLayerFlags & SRF_REFLECTIONS) && ptdReflection != NULL && bAllLayers)
-  {
-    // get model reflection color
-    GFXColor colMdlRefl;
-    const COLOR colR = AdjustColor(rm.rm_pmdModelData->md_colReflections, _slTexHueShift, _slTexSaturation);
-    colMdlRefl.abgr = ByteSwap(colR);
-    colMdlRefl.AttenuateA((rm.rm_colBlend &CT_AMASK) >> CT_ASHIFT);
-
-    // for each reflective surface in current mip model
-    FOREACHINSTATICARRAY(mmi.mmpi_MappingSurfaces, MappingSurface, itms)
-    {
-      const MappingSurface &ms = *itms;
-      iSrfVx0 = ms.ms_iSrfVx0;
-      ctSrfVx = ms.ms_ctSrfVx;
-      if ((ms.ms_ulRenderingFlags & SRF_INVISIBLE) || ctSrfVx == 0) break;  // done if found invisible or empty surface
-      if (!(ms.ms_ulRenderingFlags & SRF_REFLECTIONS)) continue;  // skip non-reflection surface
-      // cache surface pointers
-      UWORD *puwSrfToMip = &mmi.mmpi_auwSrfToMip[iSrfVx0];
-      GFXTexCoord *ptexSrfBase = &_atexSrfBase[iSrfVx0];
-      GFXColor *pcolSrfBase = &_acolSrfBase[iSrfVx0];
-      // get surface reflection color and combine with model color
-      GFXColor colSrfRefl;
-      const COLOR colR = AdjustColor(ms.ms_colReflections, _slTexHueShift, _slTexSaturation);
-      colSrfRefl.MultiplyRGBA(colR, colMdlRefl);
-
-      // RT: TODO: process reflectiveness
-    }
-  }
-
-  const CTextureData *ptdSpecular = (const CTextureData *) mo.mo_toSpecular.ao_AnimData;
-  if ((ulMipLayerFlags & SRF_SPECULAR) && ptdSpecular != NULL && bAllLayers)
-  {
-    FOREACHINSTATICARRAY(mmi.mmpi_MappingSurfaces, MappingSurface, itms)
-    {
-      const MappingSurface &ms = *itms;
-      iSrfVx0 = ms.ms_iSrfVx0;
-      ctSrfVx = ms.ms_ctSrfVx;
-      if ((ms.ms_ulRenderingFlags & SRF_INVISIBLE) || ctSrfVx == 0) break;  // done if found invisible or empty surface
-      if (!(ms.ms_ulRenderingFlags & SRF_SPECULAR)) continue;  // skip non-specular surface
-    
-      // RT: TODO: process specularity
-    }
-  }
-
-  */
-
   // must render diffuse if there is no texture (white mode)
   if ((ulMipLayerFlags & SRF_DIFFUSE) || ptdDiff == NULL)
   {
@@ -801,7 +757,7 @@ static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &
 
     // RT: everything is set, copy model data to SSRT
     //RT_RenderOneSide(rm, TRUE);
-    RT_RenderOneSide(entityID, rm, &mo.mo_toTexture, vd, FALSE, attchPath, forceTranslucency, scene);
+    RT_RenderOneSide(entityID, rm, &mo.mo_toTexture, vd, FALSE, attchPath, colMdlDiff, forceTranslucency, scene);
   }
 
   // adjust z-buffer and blending functions

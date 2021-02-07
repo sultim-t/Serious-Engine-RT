@@ -66,6 +66,8 @@ struct CAbstractGeometry
 // Dynamic geometry that changes every frame
 struct CModelGeometry : public CAbstractGeometry
 {
+  bool            isSpecular;
+  bool            isReflective;
   // path to attachment using attachment position ID,
   // -1 means the end of the list
   INDEX           attchPath[SSRT_MAX_ATTACHMENT_DEPTH] = {};

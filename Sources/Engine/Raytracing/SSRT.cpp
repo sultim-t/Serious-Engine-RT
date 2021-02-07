@@ -100,6 +100,8 @@ SSRT::SSRTMain::SSRTMain() :
   RG_CHECKERROR(r);
 
   textureUploader = new TextureUploader(instance);
+
+  Scene::InitShellVariables();
 }
 
 SSRT::SSRTMain::~SSRTMain()

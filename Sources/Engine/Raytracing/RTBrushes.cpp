@@ -35,6 +35,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 
 static CStaticStackArray<GFXVertex> RT_AllSectorVertices;
+static CStaticStackArray<GFXNormal> RT_AllSectorNormals;
 static CStaticStackArray<INDEX> RT_AllSectorIndices;
 static CStaticStackArray<GFXTexCoord> RT_AllSectorTexCoords;
 
@@ -95,7 +96,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   SSRT::CBrushGeometry brushInfo = {};
   brushInfo.entityID = penBrush->en_ulID;
   brushInfo.isMovable = isMovable;
-  brushInfo.color = ByteSwap(color);
+  brushInfo.color = 0xFFFFFFFF; // ByteSwap(color);
 
   brushInfo.absPosition = position;
   brushInfo.absRotation = rotation;
@@ -103,7 +104,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   brushInfo.vertexCount = RT_AllSectorVertices.Count();
   brushInfo.vertices = &RT_AllSectorVertices[0];
   brushInfo.texCoords = &RT_AllSectorTexCoords[0];
-  brushInfo.normals = nullptr;
+  brushInfo.normals = &RT_AllSectorNormals[0];
 
   brushInfo.indexCount = RT_AllSectorIndices.Count();
   brushInfo.indices = &RT_AllSectorIndices[0];
@@ -130,9 +131,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
 
   scene->AddBrush(brushInfo);
 
-  RT_AllSectorVertices.PopAll();
-  RT_AllSectorIndices.PopAll();
-  RT_AllSectorTexCoords.PopAll();
+  RT_BrushClear();
 }
 
 
@@ -266,7 +265,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
 
   #pragma endregion
 
-  #pragma region 
+  #pragma region Flush if different data
     // if settings are different
     if (!RT_AreTexturesSame(pLastTextures, polygon.bpo_abptTextures) ||
         lastColor != colorTotal ||
@@ -277,7 +276,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
     }
   #pragma endregion
 
-  #pragma region Vertex/index data generation
+  #pragma region Positions
     INDEX firstVertexId = RT_AllSectorVertices.Count();
     INDEX vertCount = polygon.bpo_apbvxTriangleVertices.Count();
 
@@ -293,8 +292,23 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
       vertices[i].z = brushVert->bvx_vRelative(3);
       vertices[i].shade = 0;
     }
+  #pragma endregion
 
+  #pragma region Normals
+    GFXNormal *normals = RT_AllSectorNormals.Push(vertCount);
 
+    for (INDEX i = 0; i < vertCount; i++)
+    {
+      float *planeNormal = polygon.bpo_pbplPlane->bpl_plRelative.vector;
+      normals[i].nx = planeNormal[0];
+      normals[i].ny = planeNormal[1];
+      normals[i].nz = planeNormal[2];
+      normals[i].ul = 0;
+    }
+
+  #pragma endregion
+
+  #pragma region Texture coordinates
     // tex coord data: from RSSetTextureCoords(..)
     GFXTexCoord *texCoords = RT_AllSectorTexCoords.Push(vertCount);
 
@@ -380,7 +394,9 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
         }
       }
     }
-
+  #pragma endregion
+  
+  #pragma region Indices
     // index data
     INDEX indexCount = polygon.bpo_aiTriangleElements.Count();
     INDEX *origIndices = &polygon.bpo_aiTriangleElements[0];
@@ -486,6 +502,7 @@ void RT_AddBrushEntity(CEntity *penBrush, SSRT::Scene *scene)
 
 void RT_BrushClear()
 {
+  RT_AllSectorNormals.Clear();
   RT_AllSectorVertices.Clear();
   RT_AllSectorIndices.Clear();
   RT_AllSectorTexCoords.Clear();

@@ -235,7 +235,7 @@ void RT_Particle_RenderSquare(const FLOAT3D &vPos, FLOAT fSize, ANGLE aRotation,
   FLOAT3D dx, dy;
 
   // rotate dx and dy
-  RT_GetViewVectors(dx, dy, 0);
+  RT_GetViewVectors(dx, dy, aRotation);
 
   dx *= fRX;
   dy *= fRY;

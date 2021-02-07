@@ -51,6 +51,8 @@ public:
   const CWorld *GetWorld() const;
   CWorld *GetWorld();
 
+  static void InitShellVariables();
+
 private:
   void ProcessBrushes();
   void ProcessDynamicGeometry();

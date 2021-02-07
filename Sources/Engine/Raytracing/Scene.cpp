@@ -16,6 +16,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "StdH.h"
 #include "Scene.h"
 
+#include <Engine/Base/Shell.h>
 #include <Engine/World/World.h>
 
 #include <Engine/Templates/DynamicContainer.cpp>
@@ -24,6 +25,22 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "Utils.h"
 #define DUMP_GEOMETRY_TO_OBJ 0
 #include "GeometryExporter.h"
+
+
+extern FLOAT srt_fDefaultSpecularMetallic = 0.15f;
+extern FLOAT srt_fDefaultSpecularRoughness = 0.05f;
+
+extern FLOAT srt_fDefaultReflectiveMetallic = 1.0f;
+extern FLOAT srt_fDefaultReflectiveRoughness = 0.0f;
+
+void SSRT::Scene::InitShellVariables()
+{
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fDefaultSpecularMetallic;", &srt_fDefaultSpecularMetallic);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fDefaultSpecularRoughness;", &srt_fDefaultSpecularRoughness);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fDefaultReflectiveMetallic;", &srt_fDefaultReflectiveMetallic);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fDefaultReflectiveRoughness;", &srt_fDefaultReflectiveRoughness);
+}
+
 
 SSRT::Scene::Scene(RgInstance _instance, CWorld *_pWorld, TextureUploader *_textureUploader)
 :
@@ -88,16 +105,32 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
     return;
   }
 
+  float metallic = 0.0f;
+  float roughness = 1.0f;
+
+  if (model.isSpecular)
+  {
+    roughness = srt_fDefaultSpecularRoughness;
+    metallic = srt_fDefaultSpecularMetallic;
+  }
+  else if (model.isReflective)
+  {
+    roughness = srt_fDefaultReflectiveRoughness;
+    metallic = srt_fDefaultReflectiveMetallic;
+  }
+  
   RgGeometryUploadInfo dnInfo = {};
   dnInfo.geomType = RG_GEOMETRY_TYPE_DYNAMIC;
   dnInfo.passThroughType = model.passThroughType;
   dnInfo.vertexCount = model.vertexCount;
-  dnInfo.vertexData = (float *)model.vertices;
-  dnInfo.normalData = (float *)model.normals;
-  dnInfo.texCoordData = (float *)model.texCoords;
-  dnInfo.colorData = nullptr;
+  dnInfo.vertexData = model.vertices;
+  dnInfo.normalData = model.normals;
+  dnInfo.texCoordData = model.texCoords;
+  dnInfo.color = model.color.abgr;
+  dnInfo.defaultMetallicity = metallic;
+  dnInfo.defaultRoughness = roughness;
   dnInfo.indexCount = model.indexCount;
-  dnInfo.indexData = (uint32_t *)model.indices;
+  dnInfo.indexData = model.indices;
   dnInfo.geomMaterial = 
   {
     textureUploader->GetMaterial(model.textures[0], model.textureFrames[0]),
@@ -124,12 +157,13 @@ void SSRT::Scene::AddParticles(const CParticlesGeometry &info)
   paInfo.geomType = RG_GEOMETRY_TYPE_DYNAMIC;
   paInfo.passThroughType = info.passThroughType;
   paInfo.vertexCount = info.vertexCount;
-  paInfo.vertexData = (float *)info.vertices;
-  paInfo.normalData = (float *)info.normals;
-  paInfo.texCoordData = (float *)info.texCoords;
-  paInfo.colorData = nullptr;
+  paInfo.vertexData = info.vertices;
+  paInfo.normalData = info.normals;
+  paInfo.texCoordData = info.texCoords;
+  paInfo.color = info.color.abgr;
+  paInfo.defaultRoughness = 1.0f;
   paInfo.indexCount = info.indexCount;
-  paInfo.indexData = (uint32_t *)info.indices;
+  paInfo.indexData = info.indices;
   paInfo.geomMaterial =
   {
     textureUploader->GetMaterial(info.textures[0], info.textureFrames[0]),
@@ -158,12 +192,13 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
     RG_GEOMETRY_TYPE_STATIC;
   stInfo.passThroughType = brush.passThroughType;
   stInfo.vertexCount = brush.vertexCount;
-  stInfo.vertexData = (float *)brush.vertices;
-  stInfo.normalData = (float *)brush.normals;
-  stInfo.texCoordData = (float *)brush.texCoords;
-  stInfo.colorData = nullptr;
+  stInfo.vertexData = brush.vertices;
+  stInfo.normalData = brush.normals;
+  stInfo.texCoordData = brush.texCoords;
+  stInfo.color = brush.color.abgr;
+  stInfo.defaultRoughness = 1.0f;
   stInfo.indexCount = brush.indexCount;
-  stInfo.indexData = (uint32_t *)brush.indices;
+  stInfo.indexData = brush.indices;
   stInfo.geomMaterial = 
   {
     textureUploader->GetMaterial(brush.textures[0], brush.textureFrames[0]),
@@ -284,6 +319,8 @@ void SSRT::Scene::ProcessBrushes()
   // submit
   r = rgSubmitStaticGeometries(instance);
   RG_CHECKERROR(r);
+
+  CPrintF("SSRT scene's brushes were uploaded.\n");
 }
 
 void SSRT::Scene::ProcessDynamicGeometry()
