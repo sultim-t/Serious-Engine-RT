@@ -66,7 +66,7 @@ static RgGeometryPassThroughType RT_GetPassThroughType(uint32_t flags)
   switch (flags)
   {
     case BPOF_TRANSPARENT:  return RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
-    case BPOF_TRANSLUCENT:  return RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_UNDER;
+    case BPOF_TRANSLUCENT:  return RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
     default:                return RG_GEOMETRY_PASS_THROUGH_TYPE_OPAQUE;
   }
 }
@@ -74,7 +74,7 @@ static RgGeometryPassThroughType RT_GetPassThroughType(uint32_t flags)
 
 static void RT_FlushBrushInfo(CEntity *penBrush, 
                               CBrushPolygonTexture *textures[MAX_BRUSH_TEXTURE_COUNT], 
-                              uint32_t flags,
+                              uint32_t polygonFlags,
                               COLOR color,
                               SSRT::Scene *scene)
 {
@@ -119,6 +119,8 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
     CTextureObject &to = textures[i]->bpt_toTexture;
     CTextureData *td = (CTextureData *)to.GetData();
 
+    brushInfo.textureObjects[i] = &to;
+
     if (td != nullptr)
     {
       brushInfo.textures[i] = td;
@@ -126,8 +128,8 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
     }
   }
 
-  // get main texture's blending
-  brushInfo.passThroughType = RT_GetPassThroughType(flags);
+  // get polygon's blending type
+  brushInfo.passThroughType = RT_GetPassThroughType(polygonFlags);
 
   scene->AddBrush(brushInfo);
 
@@ -202,16 +204,16 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
     // for texture cordinates and transparency/translucency processing
   #pragma region MakeScreenPolygon
 
-    uint32_t flags = 0;
+    uint32_t polygonFlags = 0;
 
     if (polygon.bpo_ulFlags & BPOF_TRANSPARENT)
     {
-      flags |= BPOF_TRANSPARENT;
+      polygonFlags |= BPOF_TRANSPARENT;
     }
 
     if (isPortal && isTranslucent)
     {
-      flags |= BPOF_TRANSLUCENT;
+      polygonFlags |= BPOF_TRANSLUCENT;
     }
 
     COLOR colorTotal = C_WHITE | CT_OPAQUE;
@@ -269,7 +271,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
     // if settings are different
     if (!RT_AreTexturesSame(pLastTextures, polygon.bpo_abptTextures) ||
         lastColor != colorTotal ||
-        lastFlags != flags)
+        lastFlags != polygonFlags)
     {
       // flush last saved info, and start new recordings
       RT_FlushBrushInfo(penBrush, pLastTextures, lastFlags, lastColor, scene);
@@ -412,7 +414,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
 
     // rewrite last info
     lastColor = colorTotal;
-    lastFlags = flags;
+    lastFlags = polygonFlags;
     for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
     {
       pLastTextures[i] = &polygon.bpo_abptTextures[i];
@@ -433,19 +435,8 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
 }
 
 
-void RT_AddBrushEntity(CEntity *penBrush, SSRT::Scene *scene)
+bool RT_IsBrushIgnored(CEntity *penBrush)
 {
-  ASSERT(penBrush != NULL);
-  // get its brush
-  CBrush3D &brBrush = *penBrush->en_pbrBrush;
-
-  // if hidden
-  if (penBrush->en_ulFlags & ENF_HIDDEN || penBrush->en_ulFlags & ENF_INVISIBLE)
-  {
-    // skip it
-    return;
-  }
-
   // ugly way to remove terrain planes above the world
   if (!(penBrush->en_ulFlags & ENF_ZONING) && penBrush->GetName() == "World Base")
   {
@@ -472,12 +463,34 @@ void RT_AddBrushEntity(CEntity *penBrush, SSRT::Scene *scene)
           break;
         }
       }
-      
+
       if (isInside)
       {
-        return;
+        return true;
       }
     }
+  }
+
+  return false;
+}
+
+
+void RT_AddBrushEntity(CEntity *penBrush, SSRT::Scene *scene)
+{
+  ASSERT(penBrush != NULL);
+  // get its brush
+  CBrush3D &brBrush = *penBrush->en_pbrBrush;
+
+  // if hidden
+  if (penBrush->en_ulFlags & ENF_HIDDEN || penBrush->en_ulFlags & ENF_INVISIBLE)
+  {
+    // skip it
+    return;
+  }
+
+  if (RT_IsBrushIgnored(penBrush))
+  {
+    return;
   }
 
 

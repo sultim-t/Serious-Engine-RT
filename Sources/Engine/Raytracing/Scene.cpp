@@ -60,10 +60,9 @@ SSRT::Scene::~Scene()
 {
   CPrintF("SSRT scene was deleted.\n");
 
+  // submit empty scene to destroy current
   RgResult r = rgStartNewScene(instance);
   RG_CHECKERROR(r);
-
-  // submit empty scene
   r = rgSubmitStaticGeometries(instance);
   RG_CHECKERROR(r);
 }
@@ -81,6 +80,9 @@ void SSRT::Scene::Update(const FLOAT3D &_viewerPosition, const FLOATmatrix3D &_v
   // upload dynamic geometry (models)
   // and scan for movable geometry
   ProcessDynamicGeometry();
+
+  // update textures for brushes
+  ProcessNonStaticTextures();
 }
 
 const CTString &SSRT::Scene::GetWorldName() const
@@ -211,6 +213,7 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
   RgResult r = rgUploadGeometry(instance, &stInfo, &geomIndex);
   RG_CHECKERROR(r);
 
+  // save movable brush info for updating
   if (brush.isMovable)
   {
     auto it = entityToMovableBrush.find(brush.entityID);
@@ -221,6 +224,19 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
     }
 
     entityToMovableBrush[brush.entityID].push_back(geomIndex);
+  }
+
+  // save effect and animated textures to update them each frame
+  for (uint32_t i = 0; i < 3; i++)
+  {
+    CTextureObject *to = brush.textureObjects[i];
+    CTextureData *td = brush.textures[i];
+
+    // if effect or animated
+    if (to && td && (td->td_ptegEffect != nullptr || td->td_ctFrames > 1))
+    {
+      brushNonStaticTextures.insert(brush.textureObjects[i]);
+    }
   }
 
   GeometryExporter::ExportGeometry(brush);
@@ -359,6 +375,17 @@ void SSRT::Scene::ProcessDynamicGeometry()
   if (viewer != nullptr)
   {
     RT_AddAllParticles(pWorld, viewer, this);
+  }
+}
+
+void SSRT::Scene::ProcessNonStaticTextures()
+{
+  for (CTextureObject *to : brushNonStaticTextures)
+  {
+    CTextureData *td = (CTextureData*)to->GetData();
+    uint32_t tdFrame = to->GetFrame();
+
+    textureUploader->GetMaterial(td, tdFrame);
   }
 }
 

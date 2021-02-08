@@ -68,9 +68,11 @@ struct CModelGeometry : public CAbstractGeometry
 {
   bool            isSpecular;
   bool            isReflective;
+
   // path to attachment using attachment position ID,
   // -1 means the end of the list
   INDEX           attchPath[SSRT_MAX_ATTACHMENT_DEPTH] = {};
+
   bool            operator==(const CModelGeometry &other) const;
 };
 
@@ -80,6 +82,8 @@ struct CModelGeometry : public CAbstractGeometry
 struct CBrushGeometry : public CAbstractGeometry
 {
   bool            isMovable = false;
+  CTextureObject  *textureObjects[3];
+
   bool            operator==(const CBrushGeometry &other) const;
 };
 

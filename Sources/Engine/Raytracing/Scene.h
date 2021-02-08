@@ -17,6 +17,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <map>
 #include <vector>
+#include <set>
 
 #include <Engine/Raytracing/SSRTObjects.h>
 #include <Engine/Raytracing/TextureUploader.h>
@@ -56,27 +57,32 @@ public:
 private:
   void ProcessBrushes();
   void ProcessDynamicGeometry();
+  void ProcessNonStaticTextures();
   void UpdateMovableBrush(ULONG entityId, const CPlacement3D &placement);
   void HideMovableBrush(ULONG entityId);
 
 private:
-  RgInstance instance;
-  TextureUploader *textureUploader;
+  RgInstance        instance;
+  TextureUploader   *textureUploader;
 
   // - Every entity can be either model or brush
   // - A model can have attachments that are models too
   // - A brush can have several sectors (but they're combined 
   //        in one geometry while processing so vector.size()==1)
   // - An entity can have one light source "attached" to it.
-  CWorld *pWorld;
-  CTString worldName;
+  CWorld            *pWorld;
+  CTString          worldName;
 
-  ULONG viewerEntityID;
-  FLOAT3D viewerPosition;
-  FLOATmatrix3D viewerRotation;
+  ULONG             viewerEntityID;
+  FLOAT3D           viewerPosition;
+  FLOATmatrix3D     viewerRotation;
 
   // Get movable brush geometry index by entity ID
   std::map<ULONG, std::vector<RgGeometry>> entityToMovableBrush;
+
+  // List of brush textures that must be updated each frame,
+  // as brushes are not processed every frame.
+  std::set<CTextureObject*>       brushNonStaticTextures;
 
   // Scene light sources, cleaned up by the end of a frame
   std::vector<CSphereLight>       sphLights;
