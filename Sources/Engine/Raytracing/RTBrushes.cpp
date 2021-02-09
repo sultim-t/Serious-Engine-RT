@@ -29,15 +29,14 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 
 
-// TODO: change to brush texture count to 3 after fixing
-#define MAX_BRUSH_TEXTURE_COUNT 1
+#define MAX_BRUSH_TEXTURE_COUNT 3
 
 
 
 static CStaticStackArray<GFXVertex> RT_AllSectorVertices;
 static CStaticStackArray<GFXNormal> RT_AllSectorNormals;
 static CStaticStackArray<INDEX> RT_AllSectorIndices;
-static CStaticStackArray<GFXTexCoord> RT_AllSectorTexCoords;
+static CStaticStackArray<GFXTexCoord> RT_AllSectorTexCoords[MAX_BRUSH_TEXTURE_COUNT];
 
 
 struct RT_WorldBaseIgnore
@@ -93,17 +92,19 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   FLOATmatrix3D rotation;
   MakeRotationMatrix(rotation, placement.pl_OrientationAngle);
 
+  GFXColor gcolor = GFXColor(color);
+  Vector<FLOAT, 4> fcolor = { gcolor.r / 255.0f, gcolor.g / 255.0f, gcolor.b / 255.0f, gcolor.a / 255.0f };
+
   SSRT::CBrushGeometry brushInfo = {};
   brushInfo.entityID = penBrush->en_ulID;
   brushInfo.isMovable = isMovable;
-  brushInfo.color = 0xFFFFFFFF; // ByteSwap(color);
 
   brushInfo.absPosition = position;
   brushInfo.absRotation = rotation;
 
   brushInfo.vertexCount = RT_AllSectorVertices.Count();
   brushInfo.vertices = &RT_AllSectorVertices[0];
-  brushInfo.texCoords = &RT_AllSectorTexCoords[0];
+  brushInfo.texCoords = &RT_AllSectorTexCoords[0][0];
   brushInfo.normals = &RT_AllSectorNormals[0];
 
   brushInfo.indexCount = RT_AllSectorIndices.Count();
@@ -125,8 +126,16 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
     {
       brushInfo.textures[i] = td;
       brushInfo.textureFrames[i] = to.GetFrame();
+
+      // texture modulation for second and third textures (RSSetInitialTextureParametersMT)
+      if (i > 0)
+      {
+        fcolor *= 2;
+      }
     }
   }
+
+  brushInfo.color = fcolor;
 
   // get polygon's blending type
   brushInfo.passThroughType = RT_GetPassThroughType(polygonFlags);
@@ -311,12 +320,12 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
   #pragma endregion
 
   #pragma region Texture coordinates
-    // tex coord data: from RSSetTextureCoords(..)
-    GFXTexCoord *texCoords = RT_AllSectorTexCoords.Push(vertCount);
-
-    // TODO: RT: more than 1 texture coords for brushes
     for (uint32_t iLayer = 0; iLayer < MAX_BRUSH_TEXTURE_COUNT; iLayer++)
-    {
+    {  
+      // tex coord data: from RSSetTextureCoords(..)
+      GFXTexCoord *texCoords = RT_AllSectorTexCoords[iLayer].Push(vertCount);
+
+
       CBrushPolygonTexture &layerTexture = polygon.bpo_abptTextures[iLayer];
 
       CTextureData *ptd = (CTextureData *)layerTexture.bpt_toTexture.GetData();
@@ -518,5 +527,9 @@ void RT_BrushClear()
   RT_AllSectorNormals.Clear();
   RT_AllSectorVertices.Clear();
   RT_AllSectorIndices.Clear();
-  RT_AllSectorTexCoords.Clear();
+
+  for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
+  {
+    RT_AllSectorTexCoords[i].Clear();
+  }
 }

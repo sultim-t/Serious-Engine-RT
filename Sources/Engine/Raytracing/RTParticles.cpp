@@ -380,7 +380,7 @@ void RT_Particle_Flush()
     info.texCoords = &_atexCommon[0];
 
     // do we need multiple colors for particle batch?
-    info.color = _acolCommon[0];
+    info.color = { _acolCommon[0].r / 256.0f, _acolCommon[0].g / 256.0f, _acolCommon[0].b / 256.0f, _acolCommon[0].a / 256.0f, };
 
     info.textures[0] = RT_ptd;
     info.textureFrames[0] = RT_iFrame;

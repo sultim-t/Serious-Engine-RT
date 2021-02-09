@@ -128,12 +128,13 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
   dnInfo.vertexData = model.vertices;
   dnInfo.normalData = model.normals;
   dnInfo.texCoordData = model.texCoords;
-  dnInfo.color = model.color.abgr;
   dnInfo.defaultMetallicity = metallic;
   dnInfo.defaultRoughness = roughness;
   dnInfo.indexCount = model.indexCount;
   dnInfo.indexData = model.indices;
-  dnInfo.geomMaterial = 
+
+  memcpy(dnInfo.color, model.color.vector, sizeof(float) * 4);
+  dnInfo.geomMaterial =
   {
     textureUploader->GetMaterial(model.textures[0], model.textureFrames[0]),
     textureUploader->GetMaterial(model.textures[1], model.textureFrames[1]),
@@ -162,10 +163,11 @@ void SSRT::Scene::AddParticles(const CParticlesGeometry &info)
   paInfo.vertexData = info.vertices;
   paInfo.normalData = info.normals;
   paInfo.texCoordData = info.texCoords;
-  paInfo.color = info.color.abgr;
   paInfo.defaultRoughness = 1.0f;
   paInfo.indexCount = info.indexCount;
   paInfo.indexData = info.indices;
+
+  memcpy(paInfo.color, info.color.vector, sizeof(float) * 4);
   paInfo.geomMaterial =
   {
     textureUploader->GetMaterial(info.textures[0], info.textureFrames[0]),
@@ -197,11 +199,12 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
   stInfo.vertexData = brush.vertices;
   stInfo.normalData = brush.normals;
   stInfo.texCoordData = brush.texCoords;
-  stInfo.color = brush.color.abgr;
   stInfo.defaultRoughness = 1.0f;
   stInfo.indexCount = brush.indexCount;
   stInfo.indexData = brush.indices;
-  stInfo.geomMaterial = 
+
+  memcpy(stInfo.color, brush.color.vector, sizeof(float) * 4);
+  stInfo.geomMaterial =
   {
     textureUploader->GetMaterial(brush.textures[0], brush.textureFrames[0]),
     textureUploader->GetMaterial(brush.textures[1], brush.textureFrames[1]),

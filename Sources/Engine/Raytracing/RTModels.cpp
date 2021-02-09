@@ -153,7 +153,7 @@ static void FlushModelInfo(ULONG entityID,
   modelInfo.entityID = entityID;
   modelInfo.absPosition = rm.rm_vObjectPosition;
   modelInfo.absRotation = tr ? m : rm.rm_mObjectRotation;
-  modelInfo.color = modelColor.abgr;
+  modelInfo.color = { modelColor.r / 255.0f, modelColor.g / 255.0f, modelColor.b / 255.0f, modelColor.a / 255.0f };
   modelInfo.isReflective = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_REFLECTIONS;
   modelInfo.isSpecular = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_SPECULAR;
   modelInfo.vertexCount = vd.vertexCount;
