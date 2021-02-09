@@ -104,7 +104,9 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
 
   brushInfo.vertexCount = RT_AllSectorVertices.Count();
   brushInfo.vertices = &RT_AllSectorVertices[0];
-  brushInfo.texCoords = &RT_AllSectorTexCoords[0][0];
+  brushInfo.texCoordLayers[0] = &RT_AllSectorTexCoords[0][0];
+  brushInfo.texCoordLayers[1] = &RT_AllSectorTexCoords[1][0];
+  brushInfo.texCoordLayers[2] = &RT_AllSectorTexCoords[2][0];
   brushInfo.normals = &RT_AllSectorNormals[0];
 
   brushInfo.indexCount = RT_AllSectorIndices.Count();

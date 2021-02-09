@@ -50,7 +50,7 @@ struct CAbstractGeometry
   INDEX               vertexCount;
   GFXVertex           *vertices;
   GFXNormal           *normals;
-  GFXTexCoord         *texCoords;
+  GFXTexCoord         *texCoordLayers[3];
 
   // each 3 indices make a triangle
   INDEX               indexCount;

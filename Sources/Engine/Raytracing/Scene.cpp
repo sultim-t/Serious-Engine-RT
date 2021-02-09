@@ -127,7 +127,9 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
   dnInfo.vertexCount = model.vertexCount;
   dnInfo.vertexData = model.vertices;
   dnInfo.normalData = model.normals;
-  dnInfo.texCoordData = model.texCoords;
+  dnInfo.texCoordLayerData[0] = model.texCoordLayers[0];
+  dnInfo.texCoordLayerData[1] = nullptr;
+  dnInfo.texCoordLayerData[2] = nullptr;
   dnInfo.defaultMetallicity = metallic;
   dnInfo.defaultRoughness = roughness;
   dnInfo.indexCount = model.indexCount;
@@ -137,8 +139,8 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
   dnInfo.geomMaterial =
   {
     textureUploader->GetMaterial(model.textures[0], model.textureFrames[0]),
-    textureUploader->GetMaterial(model.textures[1], model.textureFrames[1]),
-    textureUploader->GetMaterial(model.textures[2], model.textureFrames[2]),
+    RG_NO_MATERIAL,
+    RG_NO_MATERIAL,
   };
 
   Utils::CopyTransform(dnInfo.transform, model);
@@ -162,7 +164,9 @@ void SSRT::Scene::AddParticles(const CParticlesGeometry &info)
   paInfo.vertexCount = info.vertexCount;
   paInfo.vertexData = info.vertices;
   paInfo.normalData = info.normals;
-  paInfo.texCoordData = info.texCoords;
+  paInfo.texCoordLayerData[0] = info.texCoordLayers[0];
+  paInfo.texCoordLayerData[1] = nullptr;
+  paInfo.texCoordLayerData[2] = nullptr;
   paInfo.defaultRoughness = 1.0f;
   paInfo.indexCount = info.indexCount;
   paInfo.indexData = info.indices;
@@ -198,7 +202,9 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
   stInfo.vertexCount = brush.vertexCount;
   stInfo.vertexData = brush.vertices;
   stInfo.normalData = brush.normals;
-  stInfo.texCoordData = brush.texCoords;
+  stInfo.texCoordLayerData[0] = brush.texCoordLayers[0];
+  stInfo.texCoordLayerData[1] = brush.texCoordLayers[1];
+  stInfo.texCoordLayerData[2] = brush.texCoordLayers[2];
   stInfo.defaultRoughness = 1.0f;
   stInfo.indexCount = brush.indexCount;
   stInfo.indexData = brush.indices;

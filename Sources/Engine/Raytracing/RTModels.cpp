@@ -159,7 +159,7 @@ static void FlushModelInfo(ULONG entityID,
   modelInfo.vertexCount = vd.vertexCount;
   modelInfo.vertices = vd.vertices;
   modelInfo.normals = vd.normals;
-  modelInfo.texCoords = vd.texCoords;
+  modelInfo.texCoordLayers[0] = vd.texCoords;
   modelInfo.indexCount = indexCount;
   modelInfo.indices = pIndices;
 
