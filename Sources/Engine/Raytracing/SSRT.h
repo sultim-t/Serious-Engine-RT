@@ -60,6 +60,10 @@ public:
   void DeleteTexture(uint32_t textureID);
 
 private:
+  static void InitShellVariables();
+  static void NormalizeShellVariables();
+
+private:
   CWorldRenderingInfo   worldRenderInfo;
 
   Scene                 *currentScene;

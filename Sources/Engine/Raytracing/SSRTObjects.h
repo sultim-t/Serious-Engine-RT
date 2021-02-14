@@ -60,6 +60,7 @@ struct CAbstractGeometry
   INDEX               textureFrames[3];
 
   RgGeometryPassThroughType passThroughType;
+  RgGeometryVisibilityType visibilityType;
 };
 
 

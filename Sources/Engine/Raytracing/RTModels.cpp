@@ -183,6 +183,17 @@ static void FlushModelInfo(ULONG entityID,
 
   modelInfo.passThroughType = GetPassThroughType(stt, forceTranslucency);
 
+  bool isFirstPersonWeapon = entityID >= SSRT_FIRSTPERSON_ENTITY_START_ID;
+
+  if (isFirstPersonWeapon)
+  {
+    modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_FIRST_PERSON;
+  }
+  else if (entityID == pScene->GetViewerEntityID())
+  {
+    modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_FIRST_PERSON_VIEWER;
+  }
+
   pScene->AddModel(modelInfo);
 }
 

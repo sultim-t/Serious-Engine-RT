@@ -21,6 +21,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Graphics/ViewPort.h>
 #include <Engine/World/World.h>
+#include <Engine/Base/Shell.h>
 
 #include <Engine/Templates/DynamicContainer.cpp>
 
@@ -101,7 +102,26 @@ SSRT::SSRTMain::SSRTMain() :
 
   textureUploader = new TextureUploader(instance);
 
+  SSRTMain::InitShellVariables();
   Scene::InitShellVariables();
+}
+
+extern INDEX srt_bTonemappingUseDefault = 0;
+extern FLOAT srt_fTonemappingWhitePoint = 1.5f;
+extern FLOAT srt_fTonemappingMinLogLuminance = -10.0f;
+extern FLOAT srt_fTonemappingMaxLogLuminance = 2.0f;
+
+void SSRT::SSRTMain::InitShellVariables()
+{
+  _pShell->DeclareSymbol("persistent user INDEX srt_bTonemappingUseDefault;", &srt_bTonemappingUseDefault);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingWhitePoint;", &srt_fTonemappingWhitePoint);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMinLogLuminance;", &srt_fTonemappingMinLogLuminance);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMaxLogLuminance;", &srt_fTonemappingMaxLogLuminance);
+}
+
+void SSRT::SSRTMain::NormalizeShellVariables()
+{
+  srt_bTonemappingUseDefault = !!srt_bTonemappingUseDefault;
 }
 
 SSRT::SSRTMain::~SSRTMain()
@@ -131,6 +151,8 @@ SSRT::SSRTMain::~SSRTMain()
 
 void SSRT::SSRTMain::StartFrame(CViewPort *pvp)
 {
+  NormalizeShellVariables();
+
   if (isFrameStarted)
   {
     // ASSERTALWAYS("Frame was already started.");
@@ -245,11 +267,20 @@ void SSRT::SSRTMain::EndFrame()
     currentScene = nullptr;
   }*/
 
-  wasWorldProcessed = false;
-
   RgDrawFrameInfo frameInfo = {};
   frameInfo.renderWidth = curWindowWidth;
   frameInfo.renderHeight = curWindowHeight;
+
+  frameInfo.currentTime = _pTimer->GetLerpedCurrentTick();
+  // realTime = _pTimer->GetHighPrecisionTimer().GetSeconds();
+
+  // if world wasn't rendered, don't adapt
+  frameInfo.disableEyeAdaptation = !wasWorldProcessed;
+
+  frameInfo.overrideTonemappingParams = !srt_bTonemappingUseDefault;
+  frameInfo.luminanceWhitePoint = srt_fTonemappingWhitePoint;
+  frameInfo.minLogLuminance = srt_fTonemappingMinLogLuminance;
+  frameInfo.maxLogLuminance = srt_fTonemappingMaxLogLuminance;
 
   memcpy(frameInfo.view,        worldRenderInfo.viewMatrix,       16 * sizeof(float));
   memcpy(frameInfo.projection,  worldRenderInfo.projectionMatrix, 16 * sizeof(float));
@@ -257,6 +288,7 @@ void SSRT::SSRTMain::EndFrame()
   RgResult r = rgDrawFrame(instance, &frameInfo);
   RG_CHECKERROR(r);
 
+  wasWorldProcessed = false;
   isFrameStarted = false;
 }
 

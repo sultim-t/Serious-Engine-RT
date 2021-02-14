@@ -124,6 +124,7 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
   RgGeometryUploadInfo dnInfo = {};
   dnInfo.geomType = RG_GEOMETRY_TYPE_DYNAMIC;
   dnInfo.passThroughType = model.passThroughType;
+  dnInfo.visibilityType = model.visibilityType;
   dnInfo.vertexCount = model.vertexCount;
   dnInfo.vertexData = model.vertices;
   dnInfo.normalData = model.normals;
@@ -161,6 +162,7 @@ void SSRT::Scene::AddParticles(const CParticlesGeometry &info)
   RgGeometryUploadInfo paInfo = {};
   paInfo.geomType = RG_GEOMETRY_TYPE_DYNAMIC;
   paInfo.passThroughType = info.passThroughType;
+  paInfo.visibilityType = info.visibilityType;
   paInfo.vertexCount = info.vertexCount;
   paInfo.vertexData = info.vertices;
   paInfo.normalData = info.normals;
@@ -199,6 +201,7 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
     RG_GEOMETRY_TYPE_STATIC_MOVABLE :
     RG_GEOMETRY_TYPE_STATIC;
   stInfo.passThroughType = brush.passThroughType;
+  stInfo.visibilityType = brush.visibilityType;
   stInfo.vertexCount = brush.vertexCount;
   stInfo.vertexData = brush.vertices;
   stInfo.normalData = brush.normals;
@@ -312,11 +315,6 @@ void SSRT::Scene::AddLight(const CDirectionalLight &dirLt)
 
 void SSRT::Scene::AddFirstPersonModel(const CFirstPersonModelInfo &info, ULONG entityId)
 {
-  if (entityId == viewerEntityID)
-  {
-    return;
-  }
-
   RT_AddFirstPersonModel(info.modelObject, info.renderModel, entityId, this);
 }
 
@@ -358,7 +356,6 @@ void SSRT::Scene::ProcessDynamicGeometry()
     if (iten->en_ulID == viewerEntityID)
     {
       viewer = (CEntity *)iten;
-      continue;
     }
 
     if (iten->en_RenderType == CEntity::RT_MODEL)
