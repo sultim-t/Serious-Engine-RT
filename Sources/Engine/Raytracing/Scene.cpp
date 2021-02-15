@@ -33,12 +33,48 @@ extern FLOAT srt_fDefaultSpecularRoughness = 0.05f;
 extern FLOAT srt_fDefaultReflectiveMetallic = 1.0f;
 extern FLOAT srt_fDefaultReflectiveRoughness = 0.0f;
 
+extern INDEX srt_bEnableViewerShadows = 1;
+
+extern FLOAT srt_fLightDirectionalColorMultiplier = 10.0f;
+extern FLOAT srt_fLightDirectionalAngularDiameter = 0.5f;
+
+extern INDEX srt_iLightSphericalHSVThresholdHLower = 20;
+extern INDEX srt_iLightSphericalHSVThresholdHUpper = 45;
+extern INDEX srt_iLightSphericalHSVThresholdVLower = 80;
+extern INDEX srt_iLightSphericalHSVThresholdVUpper = 255;
+
 void SSRT::Scene::InitShellVariables()
 {
   _pShell->DeclareSymbol("persistent user FLOAT srt_fDefaultSpecularMetallic;", &srt_fDefaultSpecularMetallic);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fDefaultSpecularRoughness;", &srt_fDefaultSpecularRoughness);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fDefaultReflectiveMetallic;", &srt_fDefaultReflectiveMetallic);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fDefaultReflectiveRoughness;", &srt_fDefaultReflectiveRoughness);
+
+  _pShell->DeclareSymbol("persistent user INDEX srt_bEnableViewerShadows;", &srt_bEnableViewerShadows);
+
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightDirectionalColorMultiplier;", &srt_fLightDirectionalColorMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightDirectionalAngularDiameter;", &srt_fLightDirectionalAngularDiameter);
+
+  _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdHLower;", &srt_iLightSphericalHSVThresholdHLower);
+  _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdHUpper;", &srt_iLightSphericalHSVThresholdHUpper);
+  _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdVLower;", &srt_iLightSphericalHSVThresholdVLower);
+  _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdVUpper;", &srt_iLightSphericalHSVThresholdVUpper);
+}
+
+void SSRT::Scene::NormalizeShellVariables()
+{
+  srt_fDefaultSpecularMetallic = Clamp(srt_fDefaultSpecularMetallic, 0.0f, 1.0f);
+  srt_fDefaultSpecularRoughness = Clamp(srt_fDefaultSpecularRoughness, 0.0f, 1.0f);
+  srt_fDefaultReflectiveMetallic = Clamp(srt_fDefaultReflectiveMetallic, 0.0f, 1.0f);
+  srt_fDefaultReflectiveRoughness = Clamp(srt_fDefaultReflectiveRoughness, 0.0f, 1.0f);
+  srt_bEnableViewerShadows = !!srt_bEnableViewerShadows;
+  srt_fLightDirectionalColorMultiplier = Clamp(srt_fLightDirectionalColorMultiplier, 0.0f, 10000.0f);
+  srt_fLightDirectionalAngularDiameter = Clamp(srt_fLightDirectionalAngularDiameter, 0.0f, 10000.0f);
+
+  srt_iLightSphericalHSVThresholdHLower = Clamp<INDEX>(srt_iLightSphericalHSVThresholdHLower, 0, 255);
+  srt_iLightSphericalHSVThresholdHUpper = Clamp<INDEX>(srt_iLightSphericalHSVThresholdHUpper, 0, 255);
+  srt_iLightSphericalHSVThresholdVLower = Clamp<INDEX>(srt_iLightSphericalHSVThresholdVLower, 0, 255);
+  srt_iLightSphericalHSVThresholdVUpper = Clamp<INDEX>(srt_iLightSphericalHSVThresholdVUpper, 0, 255);
 }
 
 
@@ -72,6 +108,8 @@ void SSRT::Scene::Update(const FLOAT3D &_viewerPosition, const FLOATmatrix3D &_v
   this->viewerEntityID = _viewerEntityID;
   this->viewerPosition = _viewerPosition;
   this->viewerRotation = _viewerRotation;
+
+  NormalizeShellVariables();
 
   // clear previous data
   sphLights.clear();
@@ -136,7 +174,7 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
   dnInfo.indexCount = model.indexCount;
   dnInfo.indexData = model.indices;
 
-  memcpy(dnInfo.color, model.color.vector, sizeof(float) * 4);
+  dnInfo.color = { model.color(1), model.color(2), model.color(3), model.color(4) };
   dnInfo.geomMaterial =
   {
     textureUploader->GetMaterial(model.textures[0], model.textureFrames[0]),
@@ -173,7 +211,7 @@ void SSRT::Scene::AddParticles(const CParticlesGeometry &info)
   paInfo.indexCount = info.indexCount;
   paInfo.indexData = info.indices;
 
-  memcpy(paInfo.color, info.color.vector, sizeof(float) * 4);
+  paInfo.color = { info.color(1), info.color(2), info.color(3), info.color(4) };
   paInfo.geomMaterial =
   {
     textureUploader->GetMaterial(info.textures[0], info.textureFrames[0]),
@@ -212,7 +250,7 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
   stInfo.indexCount = brush.indexCount;
   stInfo.indexData = brush.indices;
 
-  memcpy(stInfo.color, brush.color.vector, sizeof(float) * 4);
+  stInfo.color = { brush.color(1), brush.color(2), brush.color(3), brush.color(4) };
   stInfo.geomMaterial =
   {
     textureUploader->GetMaterial(brush.textures[0], brush.textureFrames[0]),
@@ -305,11 +343,33 @@ void SSRT::Scene::HideMovableBrush(ULONG entityId)
 
 void SSRT::Scene::AddLight(const CSphereLight &sphLt)
 {
+  RgResult r;
+
+  FLOAT3D color = sphLt.color * sphLt.intensity;
+
+  RgSphericalLightUploadInfo info = {};
+  info.color = { color(1), color(2), color(3) };
+  info.position = { sphLt.absPosition(1), sphLt.absPosition(2), sphLt.absPosition(3) };
+  info.radius = sphLt.sphereRadius;
+
+  r = rgUploadSphericalLight(instance, &info);
+
   sphLights.push_back(sphLt);
 }
 
 void SSRT::Scene::AddLight(const CDirectionalLight &dirLt)
 {
+  RgResult r;
+
+  FLOAT3D color = dirLt.color * srt_fLightDirectionalColorMultiplier;
+
+  RgDirectionalLightUploadInfo info = {};
+  info.color = { color(1), color(2), color(3) };
+  info.direction = { dirLt.direction(1), dirLt.direction(2), dirLt.direction(3) };
+  info.angularDiameterDegrees = srt_fLightDirectionalAngularDiameter;
+
+  r = rgUploadDirectionalLight(instance, &info);
+
   dirLights.push_back(dirLt);
 }
 
@@ -356,9 +416,14 @@ void SSRT::Scene::ProcessDynamicGeometry()
     if (iten->en_ulID == viewerEntityID)
     {
       viewer = (CEntity *)iten;
+
+      if (!srt_bEnableViewerShadows)
+      {
+        continue;
+      }
     }
 
-    if (iten->en_RenderType == CEntity::RT_MODEL)
+    if (iten->en_RenderType == CEntity::RT_MODEL || iten->en_RenderType == CEntity::RT_EDITORMODEL)
     {
       // add it as a model and scan for light sources
       RT_AddModelEntity(&iten.Current(), this);

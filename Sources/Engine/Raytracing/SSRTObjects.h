@@ -96,22 +96,18 @@ struct CParticlesGeometry : public CAbstractGeometry
 struct CDirectionalLight
 {
   ULONG           entityID;
-  bool            isEnabled;
 
   FLOAT3D         direction;
-  COLOR           color;
-  // directional light angular size on a sky in degrees
-  float           angularSize;
+  FLOAT3D         color;
 };
 
 
 struct CSphereLight
 {
   ULONG           entityID;
-  bool            isEnabled;
 
   FLOAT3D         absPosition;
-  COLOR           color;
+  FLOAT3D         color;
   float           intensity;
   float           sphereRadius;
 };

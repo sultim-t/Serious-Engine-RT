@@ -21,6 +21,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Models/ModelObject.h>
 #include <Engine/Models/ModelData.h>
 #include <Engine/Light/LightSource.h>
+#include <Engine/World/World.h>
 
 #include <Engine/Base/ListIterator.inl>
 
@@ -32,6 +33,62 @@ extern INDEX gfx_bRenderPredicted;
 
 extern FLOAT mdl_fLODMul;
 extern FLOAT mdl_fLODAdd;
+
+extern INDEX srt_iLightSphericalHSVThresholdHLower;
+extern INDEX srt_iLightSphericalHSVThresholdHUpper;
+extern INDEX srt_iLightSphericalHSVThresholdVLower;
+extern INDEX srt_iLightSphericalHSVThresholdVUpper;
+
+
+struct RT_LightIgnore
+{
+  const char *worldName;
+  const char *entityName;
+};
+
+// Positions of unnecessary brushes (that also have "World Base" names)
+static const RT_LightIgnore RT_DirectionalLightForceIgnore[] =
+{
+  { "06_Oasis", "Temple Roof" },
+};
+
+static bool RT_DirectionalLightIsIgnored(const CLightSource *plsLight)
+{
+  CEntity *pen = plsLight->ls_penEntity;
+
+  if (pen == nullptr || pen->GetWorld() == nullptr)
+  {
+    return false;
+  }
+
+  for (const auto &l : RT_DirectionalLightForceIgnore)
+  {
+    if (pen->GetWorld()->wo_fnmFileName.FileName() == l.worldName 
+        && plsLight->ls_penEntity->GetName() == l.entityName)
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+static bool RT_SphericalLightIsIgnored(const CLightSource *plsLight)
+{
+  UBYTE h, s, v;
+  ColorToHSV(plsLight->GetLightColor(), h, s, v);
+
+  // ignore dim lights
+  if (h < srt_iLightSphericalHSVThresholdHLower ||
+      h > srt_iLightSphericalHSVThresholdHUpper ||
+      v < srt_iLightSphericalHSVThresholdVLower ||
+      v > srt_iLightSphericalHSVThresholdVUpper)
+  {
+    return true;
+  }
+
+  return false;
+}
 
 
 struct RT_VertexData
@@ -202,50 +259,60 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *scene)
 {
   ASSERT(plsLight != NULL);
 
-  // ignore lights that subtract light
-  if (plsLight->ls_ulFlags & LSF_DARKLIGHT)
+  // RT: ignore lights that subtract light or have only lens flare
+  if (plsLight->ls_ulFlags & (LSF_DARKLIGHT | LSF_LENSFLAREONLY))
   {
     return;
   }
 
-  // TODO: RT: test if ignoring these lights is ok
   // ignore not important lights
-  if (!(plsLight->ls_ulFlags & LSF_CASTSHADOWS))
+  /*if (!(plsLight->ls_ulFlags & LSF_CASTSHADOWS))
   {
-    //return;
-  }
+    return;
+  }*/
 
   const CPlacement3D &placement = plsLight->ls_penEntity->GetPlacement();
   const FLOAT3D &position = placement.pl_PositionVector;
 
-  COLOR color = plsLight->GetLightColor();
+  UBYTE r, g, b;
+  ColorToRGB(plsLight->GetLightColor(), r, g, b);
+
+  FLOAT3D color = { r / 255.0f, g / 255.0f, b / 255.0f };
 
   // directional light
   if (plsLight->ls_ulFlags & LSF_DIRECTIONAL)
   {
+    if (RT_DirectionalLightIsIgnored(plsLight))
+    {
+      return;
+    }
+
     FLOAT3D direction;
     AnglesToDirectionVector(placement.pl_OrientationAngle, direction);
 
     SSRT::CDirectionalLight light = {};
+    light.entityID = plsLight->ls_penEntity->en_ulID;
     light.direction = direction;
     light.color = color;
-    // for a reference: sun is 0.5 degrees
-    light.angularSize = 5.0f;
 
     scene->AddLight(light);
   }
   else
   {
+    if (RT_SphericalLightIsIgnored(plsLight))
+    {
+      return;
+    }
+
     // assume that hotspot is a radius of sphere light
     float radius = plsLight->ls_rHotSpot;
     float falloff = plsLight->ls_rFallOff;
 
     SSRT::CSphereLight light = {};
     light.entityID = plsLight->ls_penEntity->en_ulID;
-    light.isEnabled = true;
     light.absPosition = position;
     light.color = color;
-    light.intensity = 1.0f;
+    light.intensity = Sqrt(falloff);
     light.sphereRadius = radius;
 
     scene->AddLight(light);
@@ -928,7 +995,7 @@ static void RT_Post_RenderModels(const CEntity &en,
 void RT_AddModelEntity(const CEntity *penModel, SSRT::Scene *scene)
 {
   // if the entity is currently active or hidden, don't add it again
-  if (penModel->en_ulFlags & (ENF_INRENDERING | ENF_HIDDEN))
+  if (penModel->en_ulFlags & ENF_HIDDEN)
   {
     return;
   }
@@ -944,6 +1011,12 @@ void RT_AddModelEntity(const CEntity *penModel, SSRT::Scene *scene)
   if (pls != NULL)
   {
     RT_AddLight(pls, scene);
+  }
+
+  // RT: ignore editor model's geometry, but not its light source
+  if (penModel->en_RenderType == CEntity::RT_EDITORMODEL)
+  {
+    return;
   }
 
   // get its model object

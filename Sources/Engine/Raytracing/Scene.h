@@ -53,6 +53,7 @@ public:
   CWorld *GetWorld();
 
   static void InitShellVariables();
+  static void NormalizeShellVariables();
 
 private:
   void ProcessBrushes();
