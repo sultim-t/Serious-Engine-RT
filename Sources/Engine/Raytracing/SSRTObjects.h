@@ -41,8 +41,6 @@ struct CAbstractGeometry
   FLOAT3D             absPosition;
   FLOATmatrix3D       absRotation;
 
-  Vector<FLOAT, 4>    color;
-
   // Data that should be set to the renderer,
   // vertices are already animated.
   // This data will become invalid after adding CModelGeometry
@@ -67,14 +65,16 @@ struct CAbstractGeometry
 // Dynamic geometry that changes every frame
 struct CModelGeometry : public CAbstractGeometry
 {
-  bool            isSpecular;
-  bool            isReflective;
+  Vector<FLOAT, 4>    color;
+
+  bool                isSpecular;
+  bool                isReflective;
 
   // path to attachment using attachment position ID,
   // -1 means the end of the list
-  INDEX           attchPath[SSRT_MAX_ATTACHMENT_DEPTH] = {};
+  INDEX               attchPath[SSRT_MAX_ATTACHMENT_DEPTH] = {};
 
-  bool            operator==(const CModelGeometry &other) const;
+  bool                operator==(const CModelGeometry &other) const;
 };
 
 
@@ -82,15 +82,21 @@ struct CModelGeometry : public CAbstractGeometry
 // If it's movable, then transformation can be changed
 struct CBrushGeometry : public CAbstractGeometry
 {
-  bool            isMovable = false;
-  CTextureObject  *textureObjects[3];
+  // one color per material
+  Vector<FLOAT, 4>              layerColors[3];
+  RgGeometryMaterialBlendType   layerBlendings[3];
 
-  bool            operator==(const CBrushGeometry &other) const;
+  bool                isMovable = false;
+  CTextureObject      *textureObjects[3];
+
+  bool                operator==(const CBrushGeometry &other) const;
 };
 
 
 struct CParticlesGeometry : public CAbstractGeometry
-{};
+{
+  Vector<FLOAT, 4>    color;
+};
 
 
 struct CDirectionalLight

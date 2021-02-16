@@ -174,7 +174,9 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
   dnInfo.indexCount = model.indexCount;
   dnInfo.indexData = model.indices;
 
-  dnInfo.color = { model.color(1), model.color(2), model.color(3), model.color(4) };
+  dnInfo.layerColors[0] = { model.color(1), model.color(2), model.color(3), model.color(4) };
+  dnInfo.layerBlendingTypes[0] = RG_GEOMETRY_MATERIAL_BLEND_TYPE_OPAQUE;
+
   dnInfo.geomMaterial =
   {
     textureUploader->GetMaterial(model.textures[0], model.textureFrames[0]),
@@ -211,7 +213,9 @@ void SSRT::Scene::AddParticles(const CParticlesGeometry &info)
   paInfo.indexCount = info.indexCount;
   paInfo.indexData = info.indices;
 
-  paInfo.color = { info.color(1), info.color(2), info.color(3), info.color(4) };
+  paInfo.layerColors[0] = { info.color(1), info.color(2), info.color(3), info.color(4) };
+  paInfo.layerBlendingTypes[0] = RG_GEOMETRY_MATERIAL_BLEND_TYPE_OPAQUE;
+  
   paInfo.geomMaterial =
   {
     textureUploader->GetMaterial(info.textures[0], info.textureFrames[0]),
@@ -243,14 +247,17 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
   stInfo.vertexCount = brush.vertexCount;
   stInfo.vertexData = brush.vertices;
   stInfo.normalData = brush.normals;
-  stInfo.texCoordLayerData[0] = brush.texCoordLayers[0];
-  stInfo.texCoordLayerData[1] = brush.texCoordLayers[1];
-  stInfo.texCoordLayerData[2] = brush.texCoordLayers[2];
   stInfo.defaultRoughness = 1.0f;
   stInfo.indexCount = brush.indexCount;
   stInfo.indexData = brush.indices;
 
-  stInfo.color = { brush.color(1), brush.color(2), brush.color(3), brush.color(4) };
+  for (uint32_t i = 0; i < 3; i++)
+  {
+    stInfo.texCoordLayerData[i] = brush.texCoordLayers[i];
+    stInfo.layerBlendingTypes[i] = brush.layerBlendings[i];
+    stInfo.layerColors[i] = { brush.layerColors[i](1), brush.layerColors[i](2), brush.layerColors[i](3), brush.layerColors[i](4) };
+  }
+
   stInfo.geomMaterial =
   {
     textureUploader->GetMaterial(brush.textures[0], brush.textureFrames[0]),
