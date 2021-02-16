@@ -157,7 +157,11 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
       // texture modulation for second and third textures (RSSetInitialTextureParametersMT)
       if (i > 0)
       {
-        brushInfo.layerColors[i] *= 2;
+        // alpha-blended texture are oversaturated, ignore them
+        if (brushInfo.layerBlendings[i] == RG_GEOMETRY_MATERIAL_BLEND_TYPE_SHADE)
+        {
+          brushInfo.layerColors[i] *= 2;
+        }
       }
     }
   }
