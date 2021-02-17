@@ -51,6 +51,7 @@ public:
   const CTString &GetWorldName() const;
   const CWorld *GetWorld() const;
   CWorld *GetWorld();
+  FLOAT3D GetBackgroundViewerPosition() const;
 
   static void InitShellVariables();
   static void NormalizeShellVariables();

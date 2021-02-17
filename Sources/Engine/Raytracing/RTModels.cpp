@@ -196,6 +196,7 @@ static void FlushModelInfo(ULONG entityID,
                            SurfaceTranslucencyType stt,
                            GFXColor modelColor,
                            bool forceTranslucency,
+                           bool isBackground,
                            SSRT::Scene *pScene)
 {
   // RT: flush all
@@ -249,6 +250,14 @@ static void FlushModelInfo(ULONG entityID,
   else if (entityID == pScene->GetViewerEntityID())
   {
     modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_FIRST_PERSON_VIEWER;
+  }
+  else if (isBackground)
+  {
+    modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_SKYBOX;
+  }
+  else
+  {
+    modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_WORLD;
   }
 
   pScene->AddModel(modelInfo);
@@ -531,7 +540,8 @@ static void RT_RenderOneSide(ULONG entityID,
                              CRenderModel &rm,
                              CTextureObject *to,
                              const RT_VertexData &vd,
-                             BOOL bBackSide,
+                             BOOL bBackSide, 
+                             bool isBackground,
                              const INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH],
                              GFXColor modelColor,
                              bool forceTranslucency,
@@ -556,7 +566,7 @@ static void RT_RenderOneSide(ULONG entityID,
   INDEX ctElements = 0;
   ModelMipInfo &mmi = *rm.rm_pmmiMip;
 
-  auto flushModel = [entityID, &rm, &to, attchPath, &mmi, &vd, scene, &sttLast, modelColor, forceTranslucency] (INDEX firstIndex, INDEX indexCount)
+  auto flushModel = [entityID, &rm, &to, attchPath, &mmi, &vd, scene, &sttLast, modelColor, forceTranslucency, isBackground] (INDEX firstIndex, INDEX indexCount)
   {
     ASSERT(firstIndex >= 0);
     if (indexCount <= 0)
@@ -566,7 +576,7 @@ static void RT_RenderOneSide(ULONG entityID,
 
     FlushModelInfo(entityID, rm, to, attchPath,
                    &mmi.mmpi_aiElements[firstIndex], indexCount,
-                   vd, sttLast, modelColor, forceTranslucency, scene);
+                   vd, sttLast, modelColor, forceTranslucency, isBackground, scene);
   };
 
   {
@@ -625,7 +635,7 @@ static void RT_RenderOneSide(ULONG entityID,
 
 
 
-static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &rm,
+static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &rm, bool isBackground,
                          const INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH], INDEX attchCount, SSRT::Scene *scene)
 //void CModelObject::RenderModel_View(CRenderModel &rm)
 {
@@ -835,7 +845,7 @@ static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &
 
     // RT: everything is set, copy model data to SSRT
     //RT_RenderOneSide(rm, TRUE);
-    RT_RenderOneSide(entityID, rm, &mo.mo_toTexture, vd, FALSE, attchPath, colMdlDiff, forceTranslucency, scene);
+    RT_RenderOneSide(entityID, rm, &mo.mo_toTexture, vd, FALSE, isBackground, attchPath, colMdlDiff, forceTranslucency, scene);
   }
 
   // adjust z-buffer and blending functions
@@ -862,7 +872,7 @@ static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &
 
 
 //void CModelObject::RenderModel(CRenderModel &rm)
-static void RT_RenderModel(ULONG entityID, CModelObject &mo, CRenderModel &rm, INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH], INDEX attchCount, SSRT::Scene *scene)
+static void RT_RenderModel(ULONG entityID, CModelObject &mo, CRenderModel &rm, bool isBackground, INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH], INDEX attchCount, SSRT::Scene *scene)
 {
   // skip invisible models
   if (mo.mo_Stretch == FLOAT3D(0, 0, 0)) return;
@@ -877,7 +887,7 @@ static void RT_RenderModel(ULONG entityID, CModelObject &mo, CRenderModel &rm, I
     //if (rm.rm_ulFlags & (RMF_FOG | RMF_HAZE)) CalculateBoundingBox(this, rm);
     // render complete model
     //rm.SetModelView();
-    RT_RenderModel_View(entityID, mo, rm, attchPath, attchCount, scene);
+    RT_RenderModel_View(entityID, mo, rm, isBackground, attchPath, attchCount, scene);
   }
 
   // if too many attachments on attachments
@@ -900,7 +910,7 @@ static void RT_RenderModel(ULONG entityID, CModelObject &mo, CRenderModel &rm, I
     // we're assuming that each attachment uses its unique amo_iAttachedPosition
     attchPath[attchCount] = pamo->amo_iAttachedPosition;
     
-    RT_RenderModel(entityID, pamo->amo_moModelObject, *pamo->amo_prm, attchPath, attchCount + 1, scene);
+    RT_RenderModel(entityID, pamo->amo_moModelObject, *pamo->amo_prm, isBackground, attchPath, attchCount + 1, scene);
   }
 }
 
@@ -963,7 +973,7 @@ static void RT_RenderOneModel(const CEntity &en,
   }
 
   // RT: process a model with all its attachmnets
-  RT_RenderModel(en.en_ulID, moModel, rm, attchPath, 0, scene);
+  RT_RenderModel(en.en_ulID, moModel, rm, en.en_ulFlags & ENF_BACKGROUND, attchPath, 0, scene);
 
   extern CStaticStackArray<CRenderModel> _armRenderModels;
   _armRenderModels.PopAll();
@@ -976,14 +986,6 @@ static void RT_Post_RenderModels(const CEntity &en,
                                  SSRT::Scene *scene)
 {
   if (!gfx_bRenderModels)
-  {
-    return;
-  }
-
-  BOOL bIsBackground =/* re_bBackgroundEnabled &&*/ (en.en_ulFlags & ENF_BACKGROUND);
-
-  // TODO: RT: ignore background for now
-  if (bIsBackground)
   {
     return;
   }
@@ -1127,7 +1129,7 @@ void RT_AddFirstPersonModel(CModelObject *mo, CRenderModel *rm, ULONG entityId, 
   }
 
   // RT: process a model with all its attachmnets
-  RT_RenderModel(entityId, *mo, *rm, attchPath, 0, scene);
+  RT_RenderModel(entityId, *mo, *rm, false, attchPath, 0, scene);
 
   extern CStaticStackArray<CRenderModel> _armRenderModels;
   _armRenderModels.PopAll();

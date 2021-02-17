@@ -138,6 +138,16 @@ CWorld *SSRT::Scene::GetWorld()
   return pWorld;
 }
 
+FLOAT3D SSRT::Scene::GetBackgroundViewerPosition() const
+{
+  if (pWorld == nullptr || pWorld->GetBackgroundViewer() == nullptr)
+  {
+    return FLOAT3D(0, 0, 0);
+  }
+
+  return pWorld->GetBackgroundViewer()->GetLerpedPlacement().pl_PositionVector;
+}
+
 void SSRT::Scene::AddModel(const CModelGeometry &model)
 {
   if (model.vertices == nullptr || model.vertexCount == 0 || model.indices == nullptr || model.indexCount == 0)

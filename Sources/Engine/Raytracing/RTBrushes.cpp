@@ -169,6 +169,15 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   // get polygon's blending type
   brushInfo.passThroughType = RT_GetPassThroughType(polygonFlags);
 
+  if (penBrush->en_ulFlags & ENF_BACKGROUND)
+  {
+    brushInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_SKYBOX;
+  }
+  else
+  {
+    brushInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_WORLD;
+  }
+
   scene->AddBrush(brushInfo);
 
   RT_BrushClear();

@@ -110,6 +110,9 @@ extern INDEX srt_bTonemappingUseDefault = 0;
 extern FLOAT srt_fTonemappingWhitePoint = 1.5f;
 extern FLOAT srt_fTonemappingMinLogLuminance = -10.0f;
 extern FLOAT srt_fTonemappingMaxLogLuminance = 2.0f;
+extern INDEX srt_iSkyType = 0;
+extern FLOAT srt_fSkyColorMultiplier = 1.0f;
+extern FLOAT3D srt_fSkyColorDefault = { 1, 1, 1 };
 
 void SSRT::SSRTMain::InitShellVariables()
 {
@@ -117,11 +120,20 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingWhitePoint;", &srt_fTonemappingWhitePoint);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMinLogLuminance;", &srt_fTonemappingMinLogLuminance);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMaxLogLuminance;", &srt_fTonemappingMaxLogLuminance);
+  _pShell->DeclareSymbol("persistent user INDEX srt_iSkyType;", &srt_iSkyType);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorDefault[3];", &srt_fSkyColorDefault);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorMultiplier;", &srt_fSkyColorMultiplier);
 }
 
 void SSRT::SSRTMain::NormalizeShellVariables()
 {
   srt_bTonemappingUseDefault = !!srt_bTonemappingUseDefault;
+  srt_iSkyType = Clamp<INDEX>(srt_iSkyType, 0, 2);
+
+  for (uint32_t i = 1; i <= 3; i++)
+  {
+    srt_fSkyColorDefault(i) = ClampDn(srt_fSkyColorDefault(i), 0.0f);
+  }
 }
 
 SSRT::SSRTMain::~SSRTMain()
@@ -281,6 +293,16 @@ void SSRT::SSRTMain::EndFrame()
   frameInfo.luminanceWhitePoint = srt_fTonemappingWhitePoint;
   frameInfo.minLogLuminance = srt_fTonemappingMinLogLuminance;
   frameInfo.maxLogLuminance = srt_fTonemappingMaxLogLuminance;
+  
+  frameInfo.skyType = srt_iSkyType == 0 ? RG_SKY_TYPE_COLOR : 
+                      srt_iSkyType == 1 ? RG_SKY_TYPE_CUBEMAP :
+                                          RG_SKY_TYPE_GEOMETRY;
+
+  FLOAT3D backgroundViewerPos = currentScene == nullptr ? FLOAT3D(0, 0, 0) : currentScene->GetBackgroundViewerPosition();
+
+  frameInfo.skyViewerPosition = { backgroundViewerPos(1), backgroundViewerPos(2), backgroundViewerPos(3) };
+  frameInfo.skyColorDefault = { srt_fSkyColorDefault(1), srt_fSkyColorDefault(2), srt_fSkyColorDefault(3) };
+  frameInfo.skyColorMultiplier = srt_fSkyColorMultiplier;
 
   memcpy(frameInfo.view,        worldRenderInfo.viewMatrix,       16 * sizeof(float));
   memcpy(frameInfo.projection,  worldRenderInfo.projectionMatrix, 16 * sizeof(float));
