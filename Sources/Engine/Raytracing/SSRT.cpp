@@ -220,7 +220,7 @@ void SSRT::SSRTMain::ProcessFirstPersonModel(const CFirstPersonModelInfo &info)
 {
   if (currentScene != nullptr && wasWorldProcessed)
   {
-    currentScene->AddFirstPersonModel(info, SSRT_FIRSTPERSON_ENTITY_START_ID + currentFirstPersonModelCount);
+    currentScene->ProcessFirstPersonModel(info, SSRT_FIRSTPERSON_ENTITY_START_ID + currentFirstPersonModelCount);
     currentFirstPersonModelCount++;
   }
 }

@@ -126,7 +126,7 @@ static RgGeometryPassThroughType GetPassThroughType(SurfaceTranslucencyType stt,
 
 // RT: same as PrepareView(..) from RenderModel.cpp
 //     but view transfomation is not applied
-static bool RT_PrepareRotation(const CRenderModel &rm, const FLOAT3D &viewerPos, const FLOATmatrix3D &viewerRotation, FLOATmatrix3D &m)
+static void RT_PrepareRotation(const CRenderModel &rm, const FLOAT3D &viewerPos, const FLOATmatrix3D &viewerRotation, FLOATmatrix3D &m)
 {
   ULONG flags = rm.rm_pmdModelData->md_Flags;
 
@@ -134,7 +134,7 @@ static bool RT_PrepareRotation(const CRenderModel &rm, const FLOAT3D &viewerPos,
   if ((flags & MF_FACE_FORWARD) == 0 && 
       (flags & MF_HALF_FACE_FORWARD) == 0)
   {
-    return false;
+    m = rm.rm_mObjectRotation;
   }
 
   // if half face forward
@@ -182,8 +182,6 @@ static bool RT_PrepareRotation(const CRenderModel &rm, const FLOAT3D &viewerPos,
 
     m = viewerRotation * m;
   }
-
-  return true;
 }
 
 
@@ -202,24 +200,53 @@ static void FlushModelInfo(ULONG entityID,
   // RT: flush all
   ASSERT(indexCount > 0);
 
+  bool isFirstPersonWeapon = entityID >= SSRT_FIRSTPERSON_ENTITY_START_ID;
+
   // RT: update rotation if MF_FACE_FORWARD or MF_HALF_FACE_FORWARD
-  FLOATmatrix3D m;
-  bool tr = RT_PrepareRotation(rm, pScene->GetViewerPosition(), pScene->GetViewerRotation(), m);
+  FLOATmatrix3D rotation;
+  RT_PrepareRotation(rm, pScene->GetViewerPosition(), pScene->GetViewerRotation(), rotation);
 
 
   SSRT::CModelGeometry modelInfo = {};
   modelInfo.entityID = entityID;
+  modelInfo.passThroughType = GetPassThroughType(stt, forceTranslucency);
+
+  if (isFirstPersonWeapon)
+  {
+    modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_FIRST_PERSON;
+  }
+  else if (entityID == pScene->GetViewerEntityID())
+  {
+    modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_FIRST_PERSON_VIEWER;
+  }
+  else if (isBackground)
+  {
+    FLOATmatrix3D bv;
+    MakeInverseRotationMatrix(bv, pScene->GetBackgroundViewerOrientationAngle());
+
+    rotation = bv * rotation;
+
+    modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_SKYBOX;
+  }
+  else
+  {
+    modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_WORLD;
+  }
+
   modelInfo.absPosition = rm.rm_vObjectPosition;
-  modelInfo.absRotation = tr ? m : rm.rm_mObjectRotation;
-  modelInfo.color = { modelColor.r / 255.0f, modelColor.g / 255.0f, modelColor.b / 255.0f, modelColor.a / 255.0f };
-  modelInfo.isReflective = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_REFLECTIONS;
-  modelInfo.isSpecular = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_SPECULAR;
+  modelInfo.absRotation = rotation;
+ 
   modelInfo.vertexCount = vd.vertexCount;
   modelInfo.vertices = vd.vertices;
   modelInfo.normals = vd.normals;
   modelInfo.texCoordLayers[0] = vd.texCoords;
+ 
   modelInfo.indexCount = indexCount;
   modelInfo.indices = pIndices;
+
+  modelInfo.color = { modelColor.r / 255.0f, modelColor.g / 255.0f, modelColor.b / 255.0f, modelColor.a / 255.0f };
+  modelInfo.isReflective = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_REFLECTIONS;
+  modelInfo.isSpecular = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_SPECULAR;
 
   CTextureData *td = to != nullptr ? (CTextureData *)to->GetData() : nullptr;
 
@@ -237,27 +264,6 @@ static void FlushModelInfo(ULONG entityID,
   for (INDEX i = 0; i < SSRT_MAX_ATTACHMENT_DEPTH; i++)
   {
     modelInfo.attchPath[i] = attchPath[i];
-  }
-
-  modelInfo.passThroughType = GetPassThroughType(stt, forceTranslucency);
-
-  bool isFirstPersonWeapon = entityID >= SSRT_FIRSTPERSON_ENTITY_START_ID;
-
-  if (isFirstPersonWeapon)
-  {
-    modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_FIRST_PERSON;
-  }
-  else if (entityID == pScene->GetViewerEntityID())
-  {
-    modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_FIRST_PERSON_VIEWER;
-  }
-  else if (isBackground)
-  {
-    modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_SKYBOX;
-  }
-  else
-  {
-    modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_WORLD;
   }
 
   pScene->AddModel(modelInfo);

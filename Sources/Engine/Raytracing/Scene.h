@@ -41,17 +41,19 @@ public:
   void AddBrush(const CBrushGeometry &brush);
   void AddLight(const CSphereLight &sphLt);
   void AddLight(const CDirectionalLight &dirLt);
+  void UpdateBrushNonStaticTexture(CTextureData *pTexture, uint32_t textureFrameIndex);
   ULONG GetViewerEntityID() const;
   const FLOAT3D &GetViewerPosition() const;
   const FLOATmatrix3D &GetViewerRotation() const;
 
-  void AddFirstPersonModel(const CFirstPersonModelInfo &info, ULONG entityId);
+  void ProcessFirstPersonModel(const CFirstPersonModelInfo &info, ULONG entityId);
   void Update(const FLOAT3D &viewerPosition, const FLOATmatrix3D &viewerRotation, ULONG viewerEntityID);
 
   const CTString &GetWorldName() const;
   const CWorld *GetWorld() const;
   CWorld *GetWorld();
   FLOAT3D GetBackgroundViewerPosition() const;
+  ANGLE3D GetBackgroundViewerOrientationAngle() const;
 
   static void InitShellVariables();
   static void NormalizeShellVariables();
@@ -59,7 +61,6 @@ public:
 private:
   void ProcessBrushes();
   void ProcessDynamicGeometry();
-  void ProcessNonStaticTextures();
   void UpdateMovableBrush(ULONG entityId, const CPlacement3D &placement);
   void HideMovableBrush(ULONG entityId);
 
@@ -82,9 +83,9 @@ private:
   // Get movable brush geometry index by entity ID
   std::map<ULONG, std::vector<RgGeometry>> entityToMovableBrush;
 
-  // List of brush textures that must be updated each frame,
-  // as brushes are not processed every frame.
-  std::set<CTextureObject*>       brushNonStaticTextures;
+  // True, if entity with that ID (key) has effect texture.
+  // Used for updating it every frame, as brushes are processed only once.
+  std::map<ULONG, bool>           entityHasNonStaticTexture;
 
   // Scene light sources, cleaned up by the end of a frame
   std::vector<CSphereLight>       sphLights;

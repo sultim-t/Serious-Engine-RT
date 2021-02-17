@@ -86,6 +86,7 @@ SSRT::Scene::Scene(RgInstance _instance, CWorld *_pWorld, TextureUploader *_text
   textureUploader(_textureUploader),
   worldName(_pWorld->GetName())
 {
+  ASSERT(pWorld != nullptr);
   CPrintF("SSRT scene was created.\n");
 
   // upload static geometry (brushes)
@@ -118,9 +119,6 @@ void SSRT::Scene::Update(const FLOAT3D &_viewerPosition, const FLOATmatrix3D &_v
   // upload dynamic geometry (models)
   // and scan for movable geometry
   ProcessDynamicGeometry();
-
-  // update textures for brushes
-  ProcessNonStaticTextures();
 }
 
 const CTString &SSRT::Scene::GetWorldName() const
@@ -140,12 +138,22 @@ CWorld *SSRT::Scene::GetWorld()
 
 FLOAT3D SSRT::Scene::GetBackgroundViewerPosition() const
 {
-  if (pWorld == nullptr || pWorld->GetBackgroundViewer() == nullptr)
+  if (pWorld->GetBackgroundViewer() == nullptr)
   {
     return FLOAT3D(0, 0, 0);
   }
 
   return pWorld->GetBackgroundViewer()->GetLerpedPlacement().pl_PositionVector;
+}
+
+ANGLE3D SSRT::Scene::GetBackgroundViewerOrientationAngle() const
+{
+  if (pWorld->GetBackgroundViewer() == nullptr)
+  {
+    return ANGLE3D(0, 0, 0);
+  }
+
+  return pWorld->GetBackgroundViewer()->GetLerpedPlacement().pl_OrientationAngle;
 }
 
 void SSRT::Scene::AddModel(const CModelGeometry &model)
@@ -300,10 +308,9 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
     CTextureData *td = brush.textures[i];
 
     // if effect or animated
-    if (to && td && (td->td_ptegEffect != nullptr || td->td_ctFrames > 1))
-    {
-      brushNonStaticTextures.insert(brush.textureObjects[i]);
-    }
+    bool hasNonStaticTexture = to && td && (td->td_ptegEffect != nullptr || td->td_ctFrames > 1);
+
+    entityHasNonStaticTexture[brush.entityID] = hasNonStaticTexture;
   }
 
   GeometryExporter::ExportGeometry(brush);
@@ -390,7 +397,12 @@ void SSRT::Scene::AddLight(const CDirectionalLight &dirLt)
   dirLights.push_back(dirLt);
 }
 
-void SSRT::Scene::AddFirstPersonModel(const CFirstPersonModelInfo &info, ULONG entityId)
+void SSRT::Scene::UpdateBrushNonStaticTexture(CTextureData *pTexture, uint32_t textureFrameIndex)
+{
+  textureUploader->GetMaterial(pTexture, textureFrameIndex);
+}
+
+void SSRT::Scene::ProcessFirstPersonModel(const CFirstPersonModelInfo &info, ULONG entityId)
 {
   RT_AddFirstPersonModel(info.modelObject, info.renderModel, entityId, this);
 }
@@ -427,9 +439,15 @@ void SSRT::Scene::ProcessDynamicGeometry()
 {
   CEntity *viewer = nullptr;
 
-  // check all movable brushes, models and light sources
+  // check all movable brushes, models, light sources
+  // and brushes that have non-static textures
   FOREACHINDYNAMICCONTAINER(pWorld->wo_cenEntities, CEntity, iten)
   {
+    if (entityHasNonStaticTexture[iten->en_ulID])
+    {
+      RT_UpdateBrushNonStaticTexture(iten, this);
+    }
+
     if (iten->en_ulID == viewerEntityID)
     {
       viewer = (CEntity *)iten;
@@ -463,17 +481,6 @@ void SSRT::Scene::ProcessDynamicGeometry()
   if (viewer != nullptr)
   {
     RT_AddAllParticles(pWorld, viewer, this);
-  }
-}
-
-void SSRT::Scene::ProcessNonStaticTextures()
-{
-  for (CTextureObject *to : brushNonStaticTextures)
-  {
-    CTextureData *td = (CTextureData*)to->GetData();
-    uint32_t tdFrame = to->GetFrame();
-
-    textureUploader->GetMaterial(td, tdFrame);
   }
 }
 

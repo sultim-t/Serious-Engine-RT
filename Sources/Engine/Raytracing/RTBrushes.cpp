@@ -95,7 +95,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
                               CBrushPolygonTexture *textures[MAX_BRUSH_TEXTURE_COUNT], 
                               uint32_t polygonFlags,
                               const RT_TextureLayerBlending &blending,
-                              SSRT::Scene *scene)
+                              SSRT::Scene *pScene)
 {
   if (RT_AllSectorVertices.Count() == 0 || RT_AllSectorIndices.Count() == 0)
   {
@@ -115,6 +115,21 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   SSRT::CBrushGeometry brushInfo = {};
   brushInfo.entityID = penBrush->en_ulID;
   brushInfo.isMovable = isMovable;
+  brushInfo.passThroughType = RT_GetPassThroughType(polygonFlags);
+
+  if (penBrush->en_ulFlags & ENF_BACKGROUND)
+  {
+    brushInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_SKYBOX;
+
+    FLOATmatrix3D bv;
+    MakeInverseRotationMatrix(bv, pScene->GetBackgroundViewerOrientationAngle());
+
+    rotation = bv * rotation;
+  }
+  else
+  {
+    brushInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_WORLD;
+  }
 
   brushInfo.absPosition = position;
   brushInfo.absRotation = rotation;
@@ -166,19 +181,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
     }
   }
 
-  // get polygon's blending type
-  brushInfo.passThroughType = RT_GetPassThroughType(polygonFlags);
-
-  if (penBrush->en_ulFlags & ENF_BACKGROUND)
-  {
-    brushInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_SKYBOX;
-  }
-  else
-  {
-    brushInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_WORLD;
-  }
-
-  scene->AddBrush(brushInfo);
+  pScene->AddBrush(brushInfo);
 
   RT_BrushClear();
 }
@@ -198,7 +201,7 @@ static bool RT_AreTexturesSame(CBrushPolygonTexture *pPrevTextures[MAX_BRUSH_TEX
 
   for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
   {
-    if ((cur[i] == nullptr && last[i] != nullptr) || 
+    if ((cur[i] == nullptr && last[i] != nullptr) ||
         (cur[i] != nullptr && last[i] == nullptr))
     {
       return false;
@@ -209,6 +212,16 @@ static bool RT_AreTexturesSame(CBrushPolygonTexture *pPrevTextures[MAX_BRUSH_TEX
       if (cur[i]->td_ulObject != last[i]->td_ulObject)
       {
         return false;
+      }
+
+      // if same material handles, and but still they're not registered
+      if (cur[i]->td_ulObject == 0)
+      {
+        // check pointers
+        if (cur[i] != last[i])
+        {
+          return false;
+        }
       }
     }
   }
@@ -585,6 +598,66 @@ void RT_AddBrushEntity(CEntity *penBrush, SSRT::Scene *scene)
       {
         // add that sector to active sectors
         RT_AddActiveSector(itbsc.Current(), penBrush, scene);
+      }
+    }
+  }
+}
+
+void RT_UpdateBrushNonStaticTexture(CEntity *penBrush, SSRT::Scene *scene)
+{
+  ASSERT(penBrush != NULL);
+  // get its brush
+  CBrush3D &brBrush = *penBrush->en_pbrBrush;
+
+  // if hidden
+  if (penBrush->en_ulFlags & ENF_HIDDEN || penBrush->en_ulFlags & ENF_INVISIBLE)
+  {
+    // skip it
+    return;
+  }
+
+  if (RT_IsBrushIgnored(penBrush))
+  {
+    return;
+  }
+
+
+  // RT: get highest mip
+  CBrushMip *pbm = brBrush.GetFirstMip();
+
+  // if brush mip exists for that mip factor
+  if (pbm != NULL)
+  {
+    FOREACHINDYNAMICARRAY(pbm->bm_abscSectors, CBrushSector, itbsc)
+    {
+      // if the sector is not hidden
+      if (!(itbsc->bsc_ulFlags & BSCF_HIDDEN))
+      {
+        CBrushSector &bscSector = *itbsc;
+
+        CBrush3D *brush = bscSector.bsc_pbmBrushMip->bm_pbrBrush;
+        if (brush->br_pfsFieldSettings != NULL)
+        {
+          continue;
+        }
+
+        FOREACHINSTATICARRAY(bscSector.bsc_abpoPolygons, CBrushPolygon, itpo)
+        {
+          CBrushPolygon &polygon = *itpo;
+
+          for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
+          {
+            auto &to = polygon.bpo_abptTextures[i].bpt_toTexture;
+
+            auto *td = (CTextureData *)to.GetData();
+            uint32_t tdFrame = to.GetFrame();
+
+            if (td != nullptr)
+            {
+              scene->UpdateBrushNonStaticTexture(td, tdFrame);
+            }
+          }
+        }
       }
     }
   }
