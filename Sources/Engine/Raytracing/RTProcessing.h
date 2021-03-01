@@ -27,6 +27,7 @@ class CRenderModel;
 
 void RT_AddBrushEntity(CEntity *penBrush, SSRT::Scene *scene);
 void RT_UpdateBrushNonStaticTexture(CEntity *penBrush, SSRT::Scene *scene);
+void RT_UpdateBrushTexCoords(CEntity *penBrush, SSRT::Scene *scene);
 void RT_BrushClear();
 
 void RT_AddModelEntity(const CEntity *penModel, SSRT::Scene *ssrt);

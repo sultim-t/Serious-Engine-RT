@@ -89,7 +89,19 @@ struct CBrushGeometry : public CAbstractGeometry
   bool                isMovable = false;
   CTextureObject      *textureObjects[3];
 
+  uint32_t            brushPartIndex;
+  bool                hasScrollingTextures;
+
   bool                operator==(const CBrushGeometry &other) const;
+};
+
+
+struct CUpdateTexCoordsInfo
+{
+  ULONG               brushEntityID;
+  uint32_t            brushPartIndex;
+  INDEX               vertexCount;
+  GFXTexCoord         *texCoordLayers[3];
 };
 
 

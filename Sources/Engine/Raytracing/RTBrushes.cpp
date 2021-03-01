@@ -33,6 +33,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 
 
+static uint32_t RT_BrushPartIndex = 0;
 static CStaticStackArray<GFXVertex> RT_AllSectorVertices;
 static CStaticStackArray<GFXNormal> RT_AllSectorNormals;
 static CStaticStackArray<INDEX> RT_AllSectorIndices;
@@ -92,9 +93,11 @@ static RgGeometryMaterialBlendType RT_GetMaterialBlendType(UBYTE layerBlendingTy
 
 
 static void RT_FlushBrushInfo(CEntity *penBrush, 
-                              CBrushPolygonTexture *textures[MAX_BRUSH_TEXTURE_COUNT], 
+                              uint32_t brushPartIndex,
+                              CBrushPolygonTexture *const textures[MAX_BRUSH_TEXTURE_COUNT], 
                               uint32_t polygonFlags,
                               const RT_TextureLayerBlending &blending,
+                              bool hasScrollingTextures,
                               SSRT::Scene *pScene)
 {
   if (RT_AllSectorVertices.Count() == 0 || RT_AllSectorIndices.Count() == 0)
@@ -136,9 +139,6 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
 
   brushInfo.vertexCount = RT_AllSectorVertices.Count();
   brushInfo.vertices = &RT_AllSectorVertices[0];
-  brushInfo.texCoordLayers[0] = &RT_AllSectorTexCoords[0][0];
-  brushInfo.texCoordLayers[1] = &RT_AllSectorTexCoords[1][0];
-  brushInfo.texCoordLayers[2] = &RT_AllSectorTexCoords[2][0];
   brushInfo.normals = &RT_AllSectorNormals[0];
 
   brushInfo.indexCount = RT_AllSectorIndices.Count();
@@ -146,6 +146,10 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
 
   for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
   {
+    ASSERT(RT_AllSectorTexCoords[i].Count() == RT_AllSectorVertices.Count());
+
+    brushInfo.texCoordLayers[i] = &RT_AllSectorTexCoords[i][0];
+
     if (textures[i] == nullptr)
     {
       continue;
@@ -181,13 +185,41 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
     }
   }
 
+  brushInfo.brushPartIndex = brushPartIndex;
+  brushInfo.hasScrollingTextures = hasScrollingTextures;
+
   pScene->AddBrush(brushInfo);
 
   RT_BrushClear();
 }
 
 
-static bool RT_AreTexturesSame(CBrushPolygonTexture *pPrevTextures[MAX_BRUSH_TEXTURE_COUNT],
+static void RT_UpdateBrushTexCoords(CEntity *penBrush, uint32_t brushPartIndex, SSRT::Scene *pScene)
+{
+  if (RT_AllSectorVertices.Count() == 0 || RT_AllSectorIndices.Count() == 0)
+  {
+    return;
+  }
+
+  SSRT::CUpdateTexCoordsInfo info = {};
+  info.brushEntityID = penBrush->en_ulID;
+  info.brushPartIndex = brushPartIndex;
+  info.vertexCount = RT_AllSectorVertices.Count();
+
+  for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
+  {
+    ASSERT(RT_AllSectorTexCoords[i].Count() == RT_AllSectorVertices.Count());
+
+    info.texCoordLayers[i] = &RT_AllSectorTexCoords[i][0];
+  }
+
+  pScene->UpdateBrushTexCoords(info);
+
+  RT_BrushClear();
+}
+
+
+static bool RT_AreTexturesSame(CBrushPolygonTexture *const pPrevTextures[MAX_BRUSH_TEXTURE_COUNT],
                                CBrushPolygonTexture curTextures[MAX_BRUSH_TEXTURE_COUNT])
 {
   CTextureData *cur[MAX_BRUSH_TEXTURE_COUNT];
@@ -245,9 +277,166 @@ static bool RT_AreBlendingsSame(const RT_TextureLayerBlending &a, const RT_Textu
 }
 
 
-static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT::Scene *scene)
+static void RT_ProcessPositions(CBrushPolygon &polygon, GFXVertex *vertices, uint32_t vertCount)
+{
+  for (INDEX i = 0; i < vertCount; i++)
+  {
+    CBrushVertex *brushVert = polygon.bpo_apbvxTriangleVertices[i];
+    vertices[i].x = brushVert->bvx_vRelative(1);
+    vertices[i].y = brushVert->bvx_vRelative(2);
+    vertices[i].z = brushVert->bvx_vRelative(3);
+    vertices[i].shade = 0;
+  }
+}
+
+
+static void RT_ProcessNormals(CBrushPolygon &polygon, uint32_t vertCount)
+{
+  GFXNormal *normals = RT_AllSectorNormals.Push(vertCount);
+
+  for (INDEX i = 0; i < vertCount; i++)
+  {
+    float *planeNormal = polygon.bpo_pbplPlane->bpl_plRelative.vector;
+    normals[i].nx = planeNormal[0];
+    normals[i].ny = planeNormal[1];
+    normals[i].nz = planeNormal[2];
+    normals[i].ul = 0;
+  }
+}
+
+
+static bool RT_HasScrollingTextures(CBrushPolygon &polygon)
+{
+  for (uint32_t iLayer = 0; iLayer < MAX_BRUSH_TEXTURE_COUNT; iLayer++)
+  {
+    CBrushPolygonTexture &layerTexture = polygon.bpo_abptTextures[iLayer];
+
+    CTextureData *ptd = (CTextureData *)layerTexture.bpt_toTexture.GetData();
+    if (ptd != nullptr)
+    {
+      INDEX iTransformation = layerTexture.s.bpt_ubScroll;
+
+      if (iTransformation != 0)
+      {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+
+static void RT_ProcessTexCoords(CBrushPolygon &polygon, const GFXVertex *vertices, uint32_t vertCount, SSRT::Scene *scene)
+{
+  for (uint32_t iLayer = 0; iLayer < MAX_BRUSH_TEXTURE_COUNT; iLayer++)
+  {
+    // tex coord data: from RSSetTextureCoords(..)
+    GFXTexCoord *texCoords = RT_AllSectorTexCoords[iLayer].Push(vertCount);
+
+
+    CBrushPolygonTexture &layerTexture = polygon.bpo_abptTextures[iLayer];
+
+    CTextureData *ptd = (CTextureData *)layerTexture.bpt_toTexture.GetData();
+    if (ptd != nullptr)
+    {
+      const FLOAT mulU = 1024.0f / (float)ptd->GetWidth();
+      const FLOAT mulV = 1024.0f / (float)ptd->GetHeight();
+
+      FLOATplane3D &plane = polygon.bpo_pbplPlane->bpl_plRelative;
+
+      CMappingVectors mvBrushSpace;
+      mvBrushSpace.FromPlane(plane);
+
+      CMappingVectors amvMapping;
+
+      // if texture should be not transformed
+      INDEX iTransformation = layerTexture.s.bpt_ubScroll;
+      if (iTransformation == 0)
+      {
+        if ((polygon.bpo_abptTextures[iLayer].s.bpt_ubFlags & (BPTF_CLAMPU | BPTF_CLAMPV)) == 0)
+        {
+          // make a mapping adjusted for texture wrapping
+          const MEX mexMaskU = ptd->GetWidth() - 1;
+          const MEX mexMaskV = ptd->GetHeight() - 1;
+
+          CMappingDefinition mdTmp = polygon.bpo_abptTextures[iLayer].bpt_mdMapping;
+          mdTmp.md_fUOffset = (FloatToInt(mdTmp.md_fUOffset * 1024.0f) & mexMaskU) / 1024.0f;
+          mdTmp.md_fVOffset = (FloatToInt(mdTmp.md_fVOffset * 1024.0f) & mexMaskV) / 1024.0f;
+
+          const FLOAT3D vOffset = plane.ReferencePoint() - mvBrushSpace.mv_vO;
+
+          const FLOAT fS = vOffset % mvBrushSpace.mv_vU;
+          const FLOAT fT = vOffset % mvBrushSpace.mv_vV;
+          const FLOAT fU = fS * mdTmp.md_fUoS + fT * mdTmp.md_fUoT + mdTmp.md_fUOffset;
+          const FLOAT fV = fS * mdTmp.md_fVoS + fT * mdTmp.md_fVoT + mdTmp.md_fVOffset;
+
+          mdTmp.md_fUOffset += (FloatToInt(fU * 1024.0f) & ~mexMaskU) / 1024.0f;
+          mdTmp.md_fVOffset += (FloatToInt(fV * 1024.0f) & ~mexMaskV) / 1024.0f;
+
+          // make texture mapping vectors from default vectors of the plane
+          mdTmp.MakeMappingVectors(mvBrushSpace, amvMapping);
+        }
+        else
+        {
+          polygon.bpo_abptTextures[iLayer].bpt_mdMapping.MakeMappingVectors(mvBrushSpace, amvMapping);
+        }
+      }
+      // if texture should be transformed
+      else
+      {
+        // make mapping vectors as normal and then transform them
+        CMappingDefinition &mdBase = polygon.bpo_abptTextures[iLayer].bpt_mdMapping;
+        CMappingDefinition &mdScroll = scene->GetWorld()->wo_attTextureTransformations[iTransformation].tt_mdTransformation;
+
+        CMappingVectors mvTmp;
+        mdBase.MakeMappingVectors(mvBrushSpace, mvTmp);
+
+        mdScroll.TransformMappingVectors(mvTmp, amvMapping);
+      }
+
+      // adjust MEX
+      amvMapping.mv_vU *= mulU;
+      amvMapping.mv_vV *= mulV;
+
+      const FLOAT3D &vO = amvMapping.mv_vO;
+      const FLOAT3D &vU = amvMapping.mv_vU;
+      const FLOAT3D &vV = amvMapping.mv_vV;
+
+      for (INDEX i = 0; i < vertCount; i++)
+      {
+        const FLOAT fDX = vertices[i].x - vO(1);
+        const FLOAT fDY = vertices[i].y - vO(2);
+        const FLOAT fDZ = vertices[i].z - vO(3);
+
+        texCoords[i].s = vU(1) * fDX + vU(2) * fDY + vU(3) * fDZ;
+        texCoords[i].t = vV(1) * fDX + vV(2) * fDY + vV(3) * fDZ;
+      }
+    }
+  }
+}
+
+
+static void RT_ProcessIndices(CBrushPolygon &polygon, uint32_t firstVertexId)
+{
+  // index data
+  INDEX indexCount = polygon.bpo_aiTriangleElements.Count();
+  INDEX *origIndices = &polygon.bpo_aiTriangleElements[0];
+
+  INDEX *indices = RT_AllSectorIndices.Push(indexCount);
+
+  // set new indices relative to the shift in RT_AllSectorVertices
+  for (INDEX i = 0; i < indexCount; i++)
+  {
+    indices[i] = origIndices[i] + firstVertexId;
+  }
+}
+
+
+static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool onlyTexCoords, SSRT::Scene *scene)
 {
   ASSERT(RT_AllSectorVertices.Count() == 0 || RT_AllSectorIndices.Count() == 0);
+
 
   CBrush3D *brush = bscSector.bsc_pbmBrushMip->bm_pbrBrush;
   if (brush->br_pfsFieldSettings != NULL)
@@ -255,16 +444,42 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
     return;
   }
 
+
   // keep last rendered info, to batch geometry
   CBrushPolygonTexture *pLastTextures[MAX_BRUSH_TEXTURE_COUNT] = {};
   COLOR lastColor = C_WHITE | CT_OPAQUE;
   uint32_t lastFlags = UINT32_MAX;
+  bool lastHasSrollingTextures = false;
   RT_TextureLayerBlending lastBlending = {};
   for (INDEX i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
   {
     lastBlending.layerColor[i] = C_WHITE | CT_OPAQUE;
     lastBlending.layerBlendingType[i] = STXF_BLEND_OPAQUE;
   }
+
+
+  auto flushLastSavedInfo = [onlyTexCoords, penBrush, &pLastTextures, &lastFlags, &lastBlending, &lastHasSrollingTextures, scene] ()
+  {
+    if (!onlyTexCoords)
+    {
+      RT_FlushBrushInfo(penBrush, RT_BrushPartIndex, pLastTextures, lastFlags, lastBlending, lastHasSrollingTextures, scene);
+    }
+    else
+    {
+      // update tex coords only for scrolling textures
+      if (lastHasSrollingTextures)
+      {
+        RT_UpdateBrushTexCoords(penBrush, RT_BrushPartIndex, scene);
+      }
+      else
+      {
+        RT_BrushClear();
+      }
+    }
+
+    RT_BrushPartIndex++;
+  };
+
 
   FOREACHINSTATICARRAY(bscSector.bsc_abpoPolygons, CBrushPolygon, itpo)
   {
@@ -281,6 +496,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
     {
       continue;
     }
+
 
     // for texture cordinates and transparency/translucency processing
   #pragma region MakeScreenPolygon
@@ -355,156 +571,41 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
       }
     }
 
+    bool hasScrollingTextures = RT_HasScrollingTextures(polygon);
   #pragma endregion
 
-  #pragma region Flush if different data
+
     // if settings are different
-    if (!RT_AreTexturesSame(pLastTextures, polygon.bpo_abptTextures) ||
-        !RT_AreBlendingsSame(lastBlending, curBlending) ||
-        lastFlags != polygonFlags)
+    bool mustBeFlushed =
+      !RT_AreTexturesSame(pLastTextures, polygon.bpo_abptTextures) ||
+      !RT_AreBlendingsSame(lastBlending, curBlending) ||
+      lastFlags != polygonFlags ||
+      lastHasSrollingTextures != hasScrollingTextures;
+
+    if (mustBeFlushed)
     {
       // flush last saved info, and start new recordings
-      RT_FlushBrushInfo(penBrush, pLastTextures, lastFlags, lastBlending, scene);
+      flushLastSavedInfo();
     }
-  #pragma endregion
 
-  #pragma region Positions
+
     INDEX firstVertexId = RT_AllSectorVertices.Count();
     INDEX vertCount = polygon.bpo_apbvxTriangleVertices.Count();
 
-
     // position data
     GFXVertex *vertices = RT_AllSectorVertices.Push(vertCount);
+    RT_ProcessPositions(polygon, vertices, vertCount);
 
-    for (INDEX i = 0; i < vertCount; i++)
-    {
-      CBrushVertex *brushVert = polygon.bpo_apbvxTriangleVertices[i];
-      vertices[i].x = brushVert->bvx_vRelative(1);
-      vertices[i].y = brushVert->bvx_vRelative(2);
-      vertices[i].z = brushVert->bvx_vRelative(3);
-      vertices[i].shade = 0;
-    }
-  #pragma endregion
+    RT_ProcessNormals(polygon, vertCount);
 
-  #pragma region Normals
-    GFXNormal *normals = RT_AllSectorNormals.Push(vertCount);
+    RT_ProcessTexCoords(polygon, vertices, vertCount, scene);
 
-    for (INDEX i = 0; i < vertCount; i++)
-    {
-      float *planeNormal = polygon.bpo_pbplPlane->bpl_plRelative.vector;
-      normals[i].nx = planeNormal[0];
-      normals[i].ny = planeNormal[1];
-      normals[i].nz = planeNormal[2];
-      normals[i].ul = 0;
-    }
-
-  #pragma endregion
-
-  #pragma region Texture coordinates
-    for (uint32_t iLayer = 0; iLayer < MAX_BRUSH_TEXTURE_COUNT; iLayer++)
-    {  
-      // tex coord data: from RSSetTextureCoords(..)
-      GFXTexCoord *texCoords = RT_AllSectorTexCoords[iLayer].Push(vertCount);
-
-
-      CBrushPolygonTexture &layerTexture = polygon.bpo_abptTextures[iLayer];
-
-      CTextureData *ptd = (CTextureData *)layerTexture.bpt_toTexture.GetData();
-      if (ptd != nullptr)
-      {
-        const FLOAT mulU = 1024.0f / (float)ptd->GetWidth();
-        const FLOAT mulV = 1024.0f / (float)ptd->GetHeight();
-
-        FLOATplane3D &plane = polygon.bpo_pbplPlane->bpl_plRelative;
-
-        CMappingVectors mvBrushSpace;
-        mvBrushSpace.FromPlane(plane);
-
-        CMappingVectors amvMapping;
-
-        // if texture should be not transformed
-        INDEX iTransformation = layerTexture.s.bpt_ubScroll;
-        if (iTransformation == 0)
-        {
-          if ((polygon.bpo_abptTextures[iLayer].s.bpt_ubFlags & (BPTF_CLAMPU | BPTF_CLAMPV)) == 0)
-          {
-            // make a mapping adjusted for texture wrapping
-            const MEX mexMaskU = ptd->GetWidth() - 1;
-            const MEX mexMaskV = ptd->GetHeight() - 1;
-
-            CMappingDefinition mdTmp = polygon.bpo_abptTextures[iLayer].bpt_mdMapping;
-            mdTmp.md_fUOffset = (FloatToInt(mdTmp.md_fUOffset * 1024.0f) & mexMaskU) / 1024.0f;
-            mdTmp.md_fVOffset = (FloatToInt(mdTmp.md_fVOffset * 1024.0f) & mexMaskV) / 1024.0f;
-
-            const FLOAT3D vOffset = plane.ReferencePoint() - mvBrushSpace.mv_vO;
-
-            const FLOAT fS = vOffset % mvBrushSpace.mv_vU;
-            const FLOAT fT = vOffset % mvBrushSpace.mv_vV;
-            const FLOAT fU = fS * mdTmp.md_fUoS + fT * mdTmp.md_fUoT + mdTmp.md_fUOffset;
-            const FLOAT fV = fS * mdTmp.md_fVoS + fT * mdTmp.md_fVoT + mdTmp.md_fVOffset;
-
-            mdTmp.md_fUOffset += (FloatToInt(fU * 1024.0f) & ~mexMaskU) / 1024.0f;
-            mdTmp.md_fVOffset += (FloatToInt(fV * 1024.0f) & ~mexMaskV) / 1024.0f;
-
-            // make texture mapping vectors from default vectors of the plane
-            mdTmp.MakeMappingVectors(mvBrushSpace, amvMapping);
-          }
-          else
-          {
-            polygon.bpo_abptTextures[iLayer].bpt_mdMapping.MakeMappingVectors(mvBrushSpace, amvMapping);
-          }
-        }
-        // if texture should be transformed
-        else
-        {
-          // make mapping vectors as normal and then transform them
-          CMappingDefinition &mdBase = polygon.bpo_abptTextures[iLayer].bpt_mdMapping;
-          CMappingDefinition &mdScroll = scene->GetWorld()->wo_attTextureTransformations[iTransformation].tt_mdTransformation;
-
-          CMappingVectors mvTmp;
-          mdBase.MakeMappingVectors(mvBrushSpace, mvTmp);
-
-          mdScroll.TransformMappingVectors(mvTmp, amvMapping);
-        }
-
-        // adjust MEX
-        amvMapping.mv_vU *= mulU;
-        amvMapping.mv_vV *= mulV;
-
-        const FLOAT3D &vO = amvMapping.mv_vO;
-        const FLOAT3D &vU = amvMapping.mv_vU;
-        const FLOAT3D &vV = amvMapping.mv_vV;
-
-        for (INDEX i = 0; i < vertCount; i++)
-        {
-          const FLOAT fDX = vertices[i].x - vO(1);
-          const FLOAT fDY = vertices[i].y - vO(2);
-          const FLOAT fDZ = vertices[i].z - vO(3);
-
-          texCoords[i].s = vU(1) * fDX + vU(2) * fDY + vU(3) * fDZ;
-          texCoords[i].t = vV(1) * fDX + vV(2) * fDY + vV(3) * fDZ;
-        }
-      }
-    }
-  #pragma endregion
-  
-  #pragma region Indices
-    // index data
-    INDEX indexCount = polygon.bpo_aiTriangleElements.Count();
-    INDEX *origIndices = &polygon.bpo_aiTriangleElements[0];
-
-    INDEX *indices = RT_AllSectorIndices.Push(indexCount);
-
-    // set new indices relative to the shift in RT_AllSectorVertices
-    for (INDEX i = 0; i < indexCount; i++)
-    {
-      indices[i] = origIndices[i] + firstVertexId;
-    }
-  #pragma endregion
+    RT_ProcessIndices(polygon, firstVertexId);
 
     // rewrite last info
     lastFlags = polygonFlags;
     lastBlending = curBlending;
+    lastHasSrollingTextures = hasScrollingTextures;
     for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
     {
       pLastTextures[i] = &polygon.bpo_abptTextures[i];
@@ -521,7 +622,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, SSRT:
   }
 
   // flush what's left
-  RT_FlushBrushInfo(penBrush, pLastTextures, lastFlags, lastBlending, scene);
+  flushLastSavedInfo();
 }
 
 
@@ -565,8 +666,10 @@ bool RT_IsBrushIgnored(CEntity *penBrush)
 }
 
 
-void RT_AddBrushEntity(CEntity *penBrush, SSRT::Scene *scene)
+void RT_ProcessBrushEntity(CEntity *penBrush, bool onlyTexCoords, SSRT::Scene *scene)
 {
+  RT_BrushPartIndex = 0;
+
   ASSERT(penBrush != NULL);
   // get its brush
   CBrush3D &brBrush = *penBrush->en_pbrBrush;
@@ -597,11 +700,24 @@ void RT_AddBrushEntity(CEntity *penBrush, SSRT::Scene *scene)
       if (!(itbsc->bsc_ulFlags & BSCF_HIDDEN))
       {
         // add that sector to active sectors
-        RT_AddActiveSector(itbsc.Current(), penBrush, scene);
+        RT_AddActiveSector(itbsc.Current(), penBrush, onlyTexCoords, scene);
       }
     }
   }
 }
+
+
+void RT_AddBrushEntity(CEntity *penBrush, SSRT::Scene *scene)
+{
+  RT_ProcessBrushEntity(penBrush, false, scene);
+}
+
+
+void RT_UpdateBrushTexCoords(CEntity *penBrush, SSRT::Scene *scene)
+{
+  RT_ProcessBrushEntity(penBrush, true, scene);
+}
+
 
 void RT_UpdateBrushNonStaticTexture(CEntity *penBrush, SSRT::Scene *scene)
 {
@@ -662,6 +778,7 @@ void RT_UpdateBrushNonStaticTexture(CEntity *penBrush, SSRT::Scene *scene)
     }
   }
 }
+
 
 void RT_BrushClear()
 {

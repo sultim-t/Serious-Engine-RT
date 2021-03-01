@@ -42,6 +42,7 @@ public:
   void AddLight(const CSphereLight &sphLt);
   void AddLight(const CDirectionalLight &dirLt);
   void UpdateBrushNonStaticTexture(CTextureData *pTexture, uint32_t textureFrameIndex);
+  void UpdateBrushTexCoords(const CUpdateTexCoordsInfo &info);
   ULONG GetViewerEntityID() const;
   const FLOAT3D &GetViewerPosition() const;
   const FLOATmatrix3D &GetViewerRotation() const;
@@ -57,6 +58,13 @@ public:
 
   static void InitShellVariables();
   static void NormalizeShellVariables();
+
+private:
+  struct BrushPartGeometryIndex
+  {
+    uint32_t brushPartIndex;
+    RgGeometry geomIndex;
+  };
 
 private:
   void ProcessBrushes();
@@ -81,11 +89,15 @@ private:
   FLOATmatrix3D     viewerRotation;
 
   // Get movable brush geometry index by entity ID
-  std::map<ULONG, std::vector<RgGeometry>> entityToMovableBrush;
+  std::map<ULONG, std::vector<RgGeometry>>  entityToMovableBrush;
 
   // True, if entity with that ID (key) has effect texture.
   // Used for updating it every frame, as brushes are processed only once.
-  std::map<ULONG, bool>           entityHasNonStaticTexture;
+  std::map<ULONG, bool>                     entityHasNonStaticTexture;
+
+  // Get brush parts' geometry indices by entity ID.
+  // Used for updating dynamic texture coordinates on brushes.
+  std::map<ULONG, std::vector<BrushPartGeometryIndex>> entitiesWithDynamicTexCoords;
 
   // Scene light sources, cleaned up by the end of a frame
   std::vector<CSphereLight>       sphLights;

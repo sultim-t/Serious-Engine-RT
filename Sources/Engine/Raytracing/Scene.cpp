@@ -295,6 +295,7 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
 
     if (it == entityToMovableBrush.end())
     {
+      // create vector if doesn't exist
       entityToMovableBrush[brush.entityID] = {};
     }
 
@@ -311,6 +312,24 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
     bool hasNonStaticTexture = to && td && (td->td_ptegEffect != nullptr || td->td_ctFrames > 1);
 
     entityHasNonStaticTexture[brush.entityID] = hasNonStaticTexture;
+  }
+
+  // save brush part geom index for updating dynamic texture coordinates
+  if (brush.hasScrollingTextures)
+  {
+    auto it = entitiesWithDynamicTexCoords.find(brush.entityID);
+
+    if (it == entitiesWithDynamicTexCoords.end())
+    {
+      // create vector if doesn't exist
+      entitiesWithDynamicTexCoords[brush.entityID] = {};
+    }
+
+    BrushPartGeometryIndex t = {};
+    t.brushPartIndex = brush.brushPartIndex;
+    t.geomIndex = geomIndex;
+
+    entitiesWithDynamicTexCoords[brush.entityID].push_back(t);
   }
 
   GeometryExporter::ExportGeometry(brush);
@@ -402,6 +421,32 @@ void SSRT::Scene::UpdateBrushNonStaticTexture(CTextureData *pTexture, uint32_t t
   textureUploader->GetMaterial(pTexture, textureFrameIndex);
 }
 
+void SSRT::Scene::UpdateBrushTexCoords(const CUpdateTexCoordsInfo &info)
+{
+  auto it = entitiesWithDynamicTexCoords.find(info.brushEntityID);
+  ASSERT(it != entitiesWithDynamicTexCoords.end());
+
+  for (const auto &part : it->second)
+  {
+    if (part.brushPartIndex == part.brushPartIndex)
+    {
+      // if found geomIndex for that part
+      RgUpdateTexCoordsInfo texCoordsInfo = {};
+      texCoordsInfo.staticGeom = part.geomIndex;
+      texCoordsInfo.texCoordLayerData[0] = info.texCoordLayers[0];
+      texCoordsInfo.texCoordLayerData[1] = info.texCoordLayers[1];
+      texCoordsInfo.texCoordLayerData[2] = info.texCoordLayers[2];
+      texCoordsInfo.vertexOffset = 0;
+      texCoordsInfo.vertexCount = info.vertexCount;
+
+      RgResult r = rgUpdateGeometryTexCoords(instance, &texCoordsInfo);
+      RG_CHECKERROR(r);
+
+      return;
+    }
+  }
+}
+
 void SSRT::Scene::ProcessFirstPersonModel(const CFirstPersonModelInfo &info, ULONG entityId)
 {
   RT_AddFirstPersonModel(info.modelObject, info.renderModel, entityId, this);
@@ -463,17 +508,29 @@ void SSRT::Scene::ProcessDynamicGeometry()
       // add it as a model and scan for light sources
       RT_AddModelEntity(&iten.Current(), this);
     }
-    else if (iten->en_RenderType == CEntity::RT_BRUSH && (iten->en_ulPhysicsFlags & EPF_MOVABLE))
+    else if (iten->en_RenderType == CEntity::RT_BRUSH)
     {
-      if (iten->en_ulFlags & ENF_HIDDEN)
+      // if brush has dynamic texture coords
+      if (entitiesWithDynamicTexCoords.find(iten->en_ulID) != entitiesWithDynamicTexCoords.end())
       {
-        // try to hide
-        HideMovableBrush(iten->en_ulID);
+        // this will call UpdateBrushTexCoords(..)
+        RT_UpdateBrushTexCoords(iten, this);
       }
-      else
-      {      
-        // if it's a visible movable brush, update transform
-        UpdateMovableBrush(iten->en_ulID, iten->GetLerpedPlacement());
+
+
+      // process movable
+      if (iten->en_ulPhysicsFlags & EPF_MOVABLE)
+      {
+        if (iten->en_ulFlags & ENF_HIDDEN)
+        {
+          // try to hide
+          HideMovableBrush(iten->en_ulID);
+        }
+        else
+        {
+          // if it's a visible movable brush, update transform
+          UpdateMovableBrush(iten->en_ulID, iten->GetLerpedPlacement());
+        }
       }
     }
   }
