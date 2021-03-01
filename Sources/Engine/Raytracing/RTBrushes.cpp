@@ -29,7 +29,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 
 
-#define MAX_BRUSH_TEXTURE_COUNT 3
+constexpr uint32_t MAX_BRUSH_TEXTURE_COUNT = 3;
 
 
 
@@ -38,6 +38,17 @@ static CStaticStackArray<GFXVertex> RT_AllSectorVertices;
 static CStaticStackArray<GFXNormal> RT_AllSectorNormals;
 static CStaticStackArray<INDEX> RT_AllSectorIndices;
 static CStaticStackArray<GFXTexCoord> RT_AllSectorTexCoords[MAX_BRUSH_TEXTURE_COUNT];
+
+
+constexpr const char *WATER_SURFACE_NAME = "Water";
+
+static const char *RT_WaterFileNames[]
+{
+  "WaterBase",
+  "WaterFX",
+  "WaterFall01",
+  "WaterFall02",
+};
 
 
 struct RT_WorldBaseIgnore
@@ -144,6 +155,11 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   brushInfo.indexCount = RT_AllSectorIndices.Count();
   brushInfo.indices = &RT_AllSectorIndices[0];
 
+  brushInfo.brushPartIndex = brushPartIndex;
+  brushInfo.hasScrollingTextures = hasScrollingTextures;
+
+  bool hasWaterTexture = false;
+
   for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
   {
     ASSERT(RT_AllSectorTexCoords[i].Count() == RT_AllSectorVertices.Count());
@@ -162,11 +178,14 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
 
     if (td != nullptr)
     {
+      // layer texture data
       brushInfo.textures[i] = td;
       brushInfo.textureFrames[i] = to.GetFrame();
       
+      // layer blending
       brushInfo.layerBlendings[i] = RT_GetMaterialBlendType(blending.layerBlendingType[i]);
 
+      // layer color
       GFXColor gcolor = GFXColor(blending.layerColor[i]);
       Vector<FLOAT, 4> fcolor = { (float)gcolor.r, (float)gcolor.g , (float)gcolor.b, (float)gcolor.a };
       fcolor /= 255.0f;
@@ -182,12 +201,25 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
           brushInfo.layerColors[i] *= 2;
         }
       }
+
+      // check if it's a water texture
+      if (!hasWaterTexture)
+      {
+        for (const char *w : RT_WaterFileNames)
+        {
+          if (td->GetName().FileName() == w)
+          {
+            hasWaterTexture = true;
+            break;
+          }
+        }
+      }
     }
   }
 
-  brushInfo.brushPartIndex = brushPartIndex;
-  brushInfo.hasScrollingTextures = hasScrollingTextures;
-
+  bool isWaterReflective = hasWaterTexture && !(polygonFlags & BPOF_TRANSLUCENT);
+  bool isWaterReflectiveRefractive = hasWaterTexture && (polygonFlags & BPOF_TRANSLUCENT);
+  
   pScene->AddBrush(brushInfo);
 
   RT_BrushClear();
@@ -489,14 +521,23 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
     bool isPortal = polygon.bpo_ulFlags & BPOF_PORTAL;
     bool isTranslucent = polygon.bpo_ulFlags & BPOF_TRANSLUCENT;
 
+    bool ignorePolygon = polygon.bpo_ulFlags & BPOF_INVISIBLE;
+    ignorePolygon     |= polygon.bpo_ulFlags & BPOF_OCCLUDER;
+    ignorePolygon     |= isPortal && !isTranslucent;
+
     // if shouldn't be rendered in game
-    if ((isPortal && !isTranslucent) ||
-        (polygon.bpo_ulFlags & BPOF_INVISIBLE) ||
-        (polygon.bpo_ulFlags & BPOF_OCCLUDER))
+    if (ignorePolygon)
     {
       continue;
     }
 
+    // RT: determing if it's a water polygin is done by checking textures' names
+    // as not all polygons have appropriate surface type
+    /*if (!onlyTexCoords)
+    {
+      UBYTE surfaceType = polygon.bpo_bppProperties.bpp_ubSurfaceType;
+      isWaterSurface = scene->GetWorld()->wo_astSurfaceTypes[surfaceType].st_strName == WATER_SURFACE_NAME;
+    }*/
 
     // for texture cordinates and transparency/translucency processing
   #pragma region MakeScreenPolygon
@@ -681,9 +722,14 @@ void RT_ProcessBrushEntity(CEntity *penBrush, bool onlyTexCoords, SSRT::Scene *s
     return;
   }
 
-  if (RT_IsBrushIgnored(penBrush))
+  // RT: if onlyTexCoords=true, then penBrush was already ignored on 
+  // previous RT_ProcessBrushEntity call, when onlyTexCoords was false
+  if (!onlyTexCoords)
   {
-    return;
+    if (RT_IsBrushIgnored(penBrush))
+    {
+      return;
+    }
   }
 
 
@@ -732,11 +778,7 @@ void RT_UpdateBrushNonStaticTexture(CEntity *penBrush, SSRT::Scene *scene)
     return;
   }
 
-  if (RT_IsBrushIgnored(penBrush))
-  {
-    return;
-  }
-
+  // RT: ignored brushes are not passed to this function
 
   // RT: get highest mip
   CBrushMip *pbm = brBrush.GetFirstMip();
@@ -766,10 +808,10 @@ void RT_UpdateBrushNonStaticTexture(CEntity *penBrush, SSRT::Scene *scene)
             auto &to = polygon.bpo_abptTextures[i].bpt_toTexture;
 
             auto *td = (CTextureData *)to.GetData();
-            uint32_t tdFrame = to.GetFrame();
 
             if (td != nullptr)
             {
+              uint32_t tdFrame = to.GetFrame();
               scene->UpdateBrushNonStaticTexture(td, tdFrame);
             }
           }

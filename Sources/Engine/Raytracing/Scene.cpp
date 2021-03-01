@@ -291,11 +291,9 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
   // save movable brush info for updating
   if (brush.isMovable)
   {
-    auto it = entityToMovableBrush.find(brush.entityID);
-
-    if (it == entityToMovableBrush.end())
+    // create vector if doesn't exist
+    if (entityToMovableBrush.find(brush.entityID) == entityToMovableBrush.end())
     {
-      // create vector if doesn't exist
       entityToMovableBrush[brush.entityID] = {};
     }
 
@@ -311,17 +309,20 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
     // if effect or animated
     bool hasNonStaticTexture = to && td && (td->td_ptegEffect != nullptr || td->td_ctFrames > 1);
 
-    entityHasNonStaticTexture[brush.entityID] = hasNonStaticTexture;
+    if (entityHasNonStaticTexture.find(brush.entityID) == entityHasNonStaticTexture.end())
+    {
+      entityHasNonStaticTexture[brush.entityID] = false;
+    }
+
+    entityHasNonStaticTexture[brush.entityID] |= hasNonStaticTexture;
   }
 
   // save brush part geom index for updating dynamic texture coordinates
   if (brush.hasScrollingTextures)
   {
-    auto it = entitiesWithDynamicTexCoords.find(brush.entityID);
-
-    if (it == entitiesWithDynamicTexCoords.end())
+    // create vector if doesn't exist
+    if (entitiesWithDynamicTexCoords.find(brush.entityID) == entitiesWithDynamicTexCoords.end())
     {
-      // create vector if doesn't exist
       entitiesWithDynamicTexCoords[brush.entityID] = {};
     }
 
