@@ -63,6 +63,7 @@ private:
   struct BrushPartGeometryIndex
   {
     uint32_t brushPartIndex;
+    uint32_t vertexCount;
     RgGeometry geomIndex;
   };
 

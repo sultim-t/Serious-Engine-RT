@@ -328,6 +328,7 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
 
     BrushPartGeometryIndex t = {};
     t.brushPartIndex = brush.brushPartIndex;
+    t.vertexCount = brush.vertexCount;
     t.geomIndex = geomIndex;
 
     entitiesWithDynamicTexCoords[brush.entityID].push_back(t);
@@ -429,8 +430,10 @@ void SSRT::Scene::UpdateBrushTexCoords(const CUpdateTexCoordsInfo &info)
 
   for (const auto &part : it->second)
   {
-    if (part.brushPartIndex == part.brushPartIndex)
+    if (part.brushPartIndex == info.brushPartIndex)
     {
+      ASSERT(part.vertexCount == info.vertexCount);
+
       // if found geomIndex for that part
       RgUpdateTexCoordsInfo texCoordsInfo = {};
       texCoordsInfo.staticGeom = part.geomIndex;
