@@ -103,7 +103,7 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
     RgStaticMaterialCreateInfo stInfo = {};
     stInfo.size.width = info.width;
     stInfo.size.height = info.height;
-    stInfo.data = (uint32_t*)info.imageData;
+    stInfo.textureData.albedoAlphaData = (uint32_t*)info.imageData;
     stInfo.useMipmaps = info.generateMipmaps;
     stInfo.filter = info.filter;
     stInfo.addressModeU = info.wrapU;
@@ -124,7 +124,7 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
       RgDynamicMaterialCreateInfo dninfo = {};
       dninfo.size.width = info.width;
       dninfo.size.height = info.height;
-      dninfo.data = (uint32_t *)info.imageData;
+      dninfo.textureData.albedoAlphaData = (uint32_t *)info.imageData;
       dninfo.useMipmaps = info.generateMipmaps;
       dninfo.filter = info.filter;
       dninfo.addressModeU = info.wrapU;
@@ -139,7 +139,7 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
 
       RgDynamicMaterialUpdateInfo updateInfo = {};
       updateInfo.dynamicMaterial = material;
-      updateInfo.data = (uint32_t *)info.imageData;
+      updateInfo.textureData.albedoAlphaData = (uint32_t *)info.imageData;
 
       RgResult r = rgUpdateDynamicMaterial(instance, &updateInfo);
       RG_CHECKERROR(r);
@@ -172,7 +172,7 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedAnimatedTextureInfo &an
 
     f.size.width = animInfo.width;
     f.size.height = animInfo.height;
-    f.data = (uint32_t*)curFrameData;
+    f.textureData.albedoAlphaData = (uint32_t*)curFrameData;
     f.useMipmaps = animInfo.generateMipmaps;
     f.filter = animInfo.filter;
     f.addressModeU = animInfo.wrapU;
