@@ -64,7 +64,6 @@ private:
   {
     uint32_t brushPartIndex;
     uint32_t vertexCount;
-    RgGeometry geomIndex;
   };
 
 private:
@@ -89,8 +88,8 @@ private:
   FLOAT3D           viewerPosition;
   FLOATmatrix3D     viewerRotation;
 
-  // Get movable brush geometry index by entity ID
-  std::map<ULONG, std::vector<RgGeometry>>  entityToMovableBrush;
+  // Movable brush's entity ID to uniqueIDs of that entity's parts
+  std::map<ULONG, std::vector<uint64_t>>    entityToMovableBrush;
 
   // True, if entity with that ID (key) has effect texture.
   // Used for updating it every frame, as brushes are processed only once.

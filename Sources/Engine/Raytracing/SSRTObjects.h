@@ -59,6 +59,10 @@ struct CAbstractGeometry
 
   RgGeometryPassThroughType passThroughType;
   RgGeometryPrimaryVisibilityType visibilityType;
+
+public:
+  virtual ~CAbstractGeometry() = default;
+  virtual uint64_t    GetUniqueID() const = 0;
 };
 
 
@@ -73,8 +77,10 @@ struct CModelGeometry : public CAbstractGeometry
   // path to attachment using attachment position ID,
   // -1 means the end of the list
   INDEX               attchPath[SSRT_MAX_ATTACHMENT_DEPTH] = {};
+  uint32_t            modelPartIndex;
 
-  bool                operator==(const CModelGeometry &other) const;
+public:
+  uint64_t GetUniqueID() const override;
 };
 
 
@@ -92,7 +98,9 @@ struct CBrushGeometry : public CAbstractGeometry
   uint32_t            brushPartIndex;
   bool                hasScrollingTextures;
 
-  bool                operator==(const CBrushGeometry &other) const;
+public:
+  static uint64_t GetBrushUniqueID(ULONG entityID, uint32_t brushPartIndex);
+  uint64_t GetUniqueID() const override;
 };
 
 
@@ -108,6 +116,9 @@ struct CUpdateTexCoordsInfo
 struct CParticlesGeometry : public CAbstractGeometry
 {
   Vector<FLOAT, 4>    color;
+
+public:
+  uint64_t GetUniqueID() const override;
 };
 
 

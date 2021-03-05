@@ -521,8 +521,8 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
     bool isPortal = polygon.bpo_ulFlags & BPOF_PORTAL;
     bool isTranslucent = polygon.bpo_ulFlags & BPOF_TRANSLUCENT;
 
-    bool ignorePolygon = polygon.bpo_ulFlags & BPOF_INVISIBLE;
-    ignorePolygon     |= polygon.bpo_ulFlags & BPOF_OCCLUDER;
+    bool ignorePolygon = (polygon.bpo_ulFlags & BPOF_INVISIBLE) != 0;
+    ignorePolygon     |= (polygon.bpo_ulFlags & BPOF_OCCLUDER) != 0;
     ignorePolygon     |= isPortal && !isTranslucent;
 
     // if shouldn't be rendered in game

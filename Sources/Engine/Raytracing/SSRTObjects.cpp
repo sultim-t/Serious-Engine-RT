@@ -19,37 +19,25 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 namespace SSRT
 {
 
-bool CBrushGeometry::operator==(const CBrushGeometry &other) const
+uint64_t CModelGeometry::GetUniqueID() const
 {
-  if (this->entityID != other.entityID || isMovable != other.isMovable)
-  {
-    return false;
-  }
-
-  return true;
+  return static_cast<uint64_t>(modelPartIndex) << 32 | entityID;
 }
 
-bool CModelGeometry::operator==(const CModelGeometry &other) const
+uint64_t CBrushGeometry::GetBrushUniqueID(ULONG _entityID, uint32_t _brushPartIndex)
 {
-  if (this->entityID != other.entityID)
-  {
-    return false;
-  }
+  return static_cast<uint64_t>(_brushPartIndex) << 32 | _entityID;
+}
 
-  for (INDEX i = 0; i < SSRT_MAX_ATTACHMENT_DEPTH; i++)
-  {
-    if (this->attchPath[i] == -1 && other.attchPath[i] == -1)
-    {
-      break;
-    }
+uint64_t CBrushGeometry::GetUniqueID() const
+{
+  return GetBrushUniqueID(entityID, brushPartIndex);
+}
 
-    if (this->attchPath[i] != other.attchPath[i])
-    {
-      return false;
-    }
-  }
-
-  return true;
+uint64_t CParticlesGeometry::GetUniqueID() const
+{
+  ASSERTALWAYS("Unique IDs for particles not implemented");
+  return 0;
 }
 
 }

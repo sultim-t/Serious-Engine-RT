@@ -191,6 +191,12 @@ void SSRT::SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
     return;
   }
 
+  // don't process more than once
+  if (wasWorldProcessed)
+  {
+    return;
+  }
+
   wasWorldProcessed = true;
 
   // if no world

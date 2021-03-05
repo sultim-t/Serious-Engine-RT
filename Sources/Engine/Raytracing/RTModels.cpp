@@ -40,6 +40,9 @@ extern INDEX srt_iLightSphericalHSVThresholdVLower;
 extern INDEX srt_iLightSphericalHSVThresholdVUpper;
 
 
+static uint32_t RT_ModelPartIndex = 0;
+
+
 struct RT_LightIgnore
 {
   const char *worldName;
@@ -209,6 +212,7 @@ static void FlushModelInfo(ULONG entityID,
 
   SSRT::CModelGeometry modelInfo = {};
   modelInfo.entityID = entityID;
+  modelInfo.modelPartIndex = RT_ModelPartIndex;
   modelInfo.passThroughType = GetPassThroughType(stt, forceTranslucency);
 
   if (isFirstPersonWeapon)
@@ -267,6 +271,8 @@ static void FlushModelInfo(ULONG entityID,
   }
 
   pScene->AddModel(modelInfo);
+
+  RT_ModelPartIndex++;
 }
 
 
@@ -1002,6 +1008,8 @@ static void RT_Post_RenderModels(const CEntity &en,
 
 void RT_AddModelEntity(const CEntity *penModel, SSRT::Scene *scene)
 {
+  RT_ModelPartIndex = 0;
+
   // if the entity is currently active or hidden, don't add it again
   if (penModel->en_ulFlags & ENF_HIDDEN)
   {
@@ -1081,6 +1089,8 @@ void RT_AddModelEntity(const CEntity *penModel, SSRT::Scene *scene)
 
 void RT_AddFirstPersonModel(CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::Scene *scene)
 {
+  RT_ModelPartIndex = 0;
+
   auto &v = rm->rm_vObjectPosition;
   auto &m = rm->rm_mObjectRotation;
 

@@ -178,6 +178,7 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
   }
   
   RgGeometryUploadInfo dnInfo = {};
+  dnInfo.uniqueID = model.GetUniqueID();
   dnInfo.geomType = RG_GEOMETRY_TYPE_DYNAMIC;
   dnInfo.passThroughType = model.passThroughType;
   dnInfo.visibilityType = model.visibilityType;
@@ -204,7 +205,7 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
 
   Utils::CopyTransform(dnInfo.transform, model);
 
-  RgResult r = rgUploadGeometry(instance, &dnInfo, nullptr);
+  RgResult r = rgUploadGeometry(instance, &dnInfo);
   RG_CHECKERROR(r);
 
   GeometryExporter::ExportGeometry(model);
@@ -217,7 +218,11 @@ void SSRT::Scene::AddParticles(const CParticlesGeometry &info)
     return;
   }
 
+  // unique IDs for particles?
+  return;
+
   RgGeometryUploadInfo paInfo = {};
+  paInfo.uniqueID = info.GetUniqueID();
   paInfo.geomType = RG_GEOMETRY_TYPE_DYNAMIC;
   paInfo.passThroughType = info.passThroughType;
   paInfo.visibilityType = info.visibilityType;
@@ -243,7 +248,7 @@ void SSRT::Scene::AddParticles(const CParticlesGeometry &info)
 
   Utils::CopyTransform(paInfo.transform, info);
 
-  RgResult r = rgUploadGeometry(instance, &paInfo, nullptr);
+  RgResult r = rgUploadGeometry(instance, &paInfo);
   RG_CHECKERROR(r);
 }
 
@@ -254,9 +259,8 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
     return;
   }
 
-  RgGeometry geomIndex;
-
   RgGeometryUploadInfo stInfo = {};
+  stInfo.uniqueID = brush.GetUniqueID();
   stInfo.geomType = brush.isMovable ?
     RG_GEOMETRY_TYPE_STATIC_MOVABLE :
     RG_GEOMETRY_TYPE_STATIC;
@@ -285,7 +289,7 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
 
   Utils::CopyTransform(stInfo.transform, brush);
 
-  RgResult r = rgUploadGeometry(instance, &stInfo, &geomIndex);
+  RgResult r = rgUploadGeometry(instance, &stInfo);
   RG_CHECKERROR(r);
 
   // save movable brush info for updating
@@ -297,7 +301,7 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
       entityToMovableBrush[brush.entityID] = {};
     }
 
-    entityToMovableBrush[brush.entityID].push_back(geomIndex);
+    entityToMovableBrush[brush.entityID].push_back(brush.GetUniqueID());
   }
 
   // save effect and animated textures to update them each frame
@@ -329,7 +333,6 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
     BrushPartGeometryIndex t = {};
     t.brushPartIndex = brush.brushPartIndex;
     t.vertexCount = brush.vertexCount;
-    t.geomIndex = geomIndex;
 
     entitiesWithDynamicTexCoords[brush.entityID].push_back(t);
   }
@@ -339,7 +342,7 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
 
 void SSRT::Scene::UpdateMovableBrush(ULONG entityId, const CPlacement3D &placement)
 {
-  auto it = entityToMovableBrush.find(entityId);
+  const auto it = entityToMovableBrush.find(entityId);
 
   if (it == entityToMovableBrush.end())
   {
@@ -352,9 +355,9 @@ void SSRT::Scene::UpdateMovableBrush(ULONG entityId, const CPlacement3D &placeme
   Utils::CopyTransform(updateInfo.transform, placement);
 
   // for each part of this entity
-  for (RgGeometry geomIndex : it->second)
+  for (uint64_t uniqueId : it->second)
   {
-    updateInfo.movableStaticGeom = geomIndex;
+    updateInfo.movableStaticUniqueID = uniqueId;
 
     r = rgUpdateGeometryTransform(instance, &updateInfo);
     RG_CHECKERROR(r);
@@ -363,7 +366,7 @@ void SSRT::Scene::UpdateMovableBrush(ULONG entityId, const CPlacement3D &placeme
 
 void SSRT::Scene::HideMovableBrush(ULONG entityId)
 {
-  auto it = entityToMovableBrush.find(entityId);
+  const auto it = entityToMovableBrush.find(entityId);
 
   // ignore if it wasn't registered
   if (it == entityToMovableBrush.end())
@@ -377,9 +380,9 @@ void SSRT::Scene::HideMovableBrush(ULONG entityId)
   RgUpdateTransformInfo updateInfo = {};
   updateInfo.transform = {};
 
-  for (RgGeometry geomIndex : it->second)
+  for (uint64_t uniqueId : it->second)
   {
-    updateInfo.movableStaticGeom = geomIndex;
+    updateInfo.movableStaticUniqueID = uniqueId;
 
     r = rgUpdateGeometryTransform(instance, &updateInfo);
     RG_CHECKERROR(r);
@@ -436,7 +439,7 @@ void SSRT::Scene::UpdateBrushTexCoords(const CUpdateTexCoordsInfo &info)
 
       // if found geomIndex for that part
       RgUpdateTexCoordsInfo texCoordsInfo = {};
-      texCoordsInfo.staticGeom = part.geomIndex;
+      texCoordsInfo.staticUniqueID = CBrushGeometry::GetBrushUniqueID(info.brushEntityID, info.brushPartIndex);
       texCoordsInfo.texCoordLayerData[0] = info.texCoordLayers[0];
       texCoordsInfo.texCoordLayerData[1] = info.texCoordLayers[1];
       texCoordsInfo.texCoordLayerData[2] = info.texCoordLayers[2];
