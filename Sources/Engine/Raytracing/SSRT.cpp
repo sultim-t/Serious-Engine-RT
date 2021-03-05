@@ -30,12 +30,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
 
-#ifndef NDEBUG
-constexpr const char *OverridenTexturesPath = "../../OverridenTextures/";
-#else
-constexpr const char *OverridenTexturesPath = "../OverridenTextures/";
-#endif
-
 
 SSRT::SSRTMain::SSRTMain() :
   worldRenderInfo({}),
@@ -47,6 +41,9 @@ SSRT::SSRTMain::SSRTMain() :
   curWindowHeight(0),
   instance(RG_NULL_HANDLE)
 {
+  extern CTFileName _fnmApplicationPath;
+  const CTFileName &overridenTexturesPath = _fnmApplicationPath + "OverridenTextures/";
+
   RgInstanceCreateInfo info = {};
   info.name = "Serious Engine RT";
   info.physicalDeviceIndex = 0;
@@ -59,7 +56,7 @@ SSRT::SSRTMain::SSRTMain() :
   info.rasterizedMaxVertexCount = 1 << 16;
   info.rasterizedMaxIndexCount = info.rasterizedMaxVertexCount * 3 / 2;
 
-  info.overridenTexturesFolderPath = OverridenTexturesPath;
+  info.overridenTexturesFolderPath = overridenTexturesPath;
   info.overrideAlbedoAlphaTexturePostfix = "";
   info.overrideNormalMetallicTexturePostfix = "_n";
   info.overrideEmissionRoughnessTexturePostfix = "_e";
