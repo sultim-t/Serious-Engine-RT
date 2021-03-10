@@ -30,6 +30,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
 
+#include "Utils.h"
+
 
 SSRT::SSRTMain::SSRTMain() :
   worldRenderInfo({}),
@@ -110,6 +112,8 @@ extern FLOAT srt_fTonemappingMaxLogLuminance = 2.0f;
 extern INDEX srt_iSkyType = 0;
 extern FLOAT srt_fSkyColorMultiplier = 1.0f;
 extern FLOAT3D srt_fSkyColorDefault = { 1, 1, 1 };
+extern INDEX srt_bShowGradients = 0;
+extern INDEX srt_bShowMotionVectors = 0;
 
 void SSRT::SSRTMain::InitShellVariables()
 {
@@ -120,6 +124,8 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user INDEX srt_iSkyType;", &srt_iSkyType);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorDefault[3];", &srt_fSkyColorDefault);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorMultiplier;", &srt_fSkyColorMultiplier);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bShowGradients;", &srt_bShowGradients);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bShowMotionVectors;", &srt_bShowMotionVectors);
 }
 
 void SSRT::SSRTMain::NormalizeShellVariables()
@@ -275,12 +281,12 @@ void SSRT::SSRTMain::EndFrame()
     return;
   }
 
-  // if world processing wasn't done, then there is no world
-  /*if (!wasWorldProcessed)
+  // check shell variable, if it's null, then the game was stopped
+  if (Utils::GetCurrentWorld() == nullptr && currentScene != nullptr)
   {
     delete currentScene;
     currentScene = nullptr;
-  }*/
+  }
 
   RgDrawFrameInfo frameInfo = {};
   frameInfo.renderWidth = curWindowWidth;
@@ -309,6 +315,9 @@ void SSRT::SSRTMain::EndFrame()
 
   memcpy(frameInfo.view,        worldRenderInfo.viewMatrix,       16 * sizeof(float));
   memcpy(frameInfo.projection,  worldRenderInfo.projectionMatrix, 16 * sizeof(float));
+
+  frameInfo.dbgShowMotionVectors = !!srt_bShowMotionVectors;
+  frameInfo.dbgShowGradients = !!srt_bShowGradients;
 
   RgResult r = rgDrawFrame(instance, &frameInfo);
   RG_CHECKERROR(r);

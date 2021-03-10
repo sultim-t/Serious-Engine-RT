@@ -76,9 +76,26 @@ static bool RT_DirectionalLightIsIgnored(const CLightSource *plsLight)
   return false;
 }
 
+static bool RT_ModelEntityHasVertices(CEntity *pen)
+{
+  if (pen != nullptr && pen->GetRenderType() == CEntity::RT_MODEL)
+  {
+    CModelData *md = pen->GetModelObject()->GetData();
+
+    return md != nullptr && md->md_VerticesCt > 0;
+  }
+
+  return false;
+}
+
 static bool RT_SphericalLightIsIgnored(const CLightSource *plsLight)
 {
-  UBYTE h, s, v;
+  if (plsLight->ls_ulFlags & LSF_LENSFLAREONLY)
+  {
+    return true;
+  }
+
+  /*UBYTE h, s, v;
   ColorToHSV(plsLight->GetLightColor(), h, s, v);
 
   // ignore dim lights
@@ -88,9 +105,31 @@ static bool RT_SphericalLightIsIgnored(const CLightSource *plsLight)
       v > srt_iLightSphericalHSVThresholdVUpper)
   {
     return true;
+  }*/
+
+  CEntity *pen = plsLight->ls_penEntity;
+
+  if (RT_ModelEntityHasVertices(pen))
+  {
+    return false;
   }
 
-  return false;
+  if (RT_ModelEntityHasVertices(pen->GetParent()))
+  {
+    return false;
+  }
+
+  {
+    FOREACHINLIST(CEntity, en_lnInParent, pen->en_lhChildren, itenChild)
+    {
+      if (RT_ModelEntityHasVertices(itenChild))
+      {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 
@@ -292,7 +331,7 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *scene)
     return;
   }*/
 
-  const CPlacement3D &placement = plsLight->ls_penEntity->GetPlacement();
+  const CPlacement3D &placement = plsLight->ls_penEntity->GetLerpedPlacement();
   const FLOAT3D &position = placement.pl_PositionVector;
 
   UBYTE r, g, b;
@@ -325,15 +364,14 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *scene)
       return;
     }
 
-    // assume that hotspot is a radius of sphere light
-    float radius = plsLight->ls_rHotSpot;
-    float falloff = plsLight->ls_rFallOff;
+    float eps = 0.01f;
+    float radius = Max(eps, eps * plsLight->ls_rFallOff);
 
     SSRT::CSphereLight light = {};
     light.entityID = plsLight->ls_penEntity->en_ulID;
     light.absPosition = position;
     light.color = color;
-    light.intensity = Sqrt(falloff);
+    light.intensity = Max(1.0f, Sqrt(plsLight->ls_rHotSpot));
     light.sphereRadius = radius;
 
     scene->AddLight(light);

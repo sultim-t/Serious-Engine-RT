@@ -16,6 +16,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "StdH.h"
 #include "Scene.h"
 
+#include <algorithm>
+
 #include <Engine/Base/Shell.h>
 #include <Engine/World/World.h>
 
@@ -24,6 +26,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "RTProcessing.h"
 #include "Utils.h"
 #define DUMP_GEOMETRY_TO_OBJ 0
+
 #include "GeometryExporter.h"
 
 
@@ -38,10 +41,12 @@ extern INDEX srt_bEnableViewerShadows = 1;
 extern FLOAT srt_fLightDirectionalColorMultiplier = 10.0f;
 extern FLOAT srt_fLightDirectionalAngularDiameter = 0.5f;
 
+extern INDEX srt_iLightSphericalMaxCount = 16;
 extern INDEX srt_iLightSphericalHSVThresholdHLower = 20;
 extern INDEX srt_iLightSphericalHSVThresholdHUpper = 45;
 extern INDEX srt_iLightSphericalHSVThresholdVLower = 80;
 extern INDEX srt_iLightSphericalHSVThresholdVUpper = 255;
+extern FLOAT srt_fLightSphericalMultiplier = 1.0f;
 
 void SSRT::Scene::InitShellVariables()
 {
@@ -55,10 +60,12 @@ void SSRT::Scene::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightDirectionalColorMultiplier;", &srt_fLightDirectionalColorMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightDirectionalAngularDiameter;", &srt_fLightDirectionalAngularDiameter);
 
+  _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalMaxCount;", &srt_iLightSphericalMaxCount);
   _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdHLower;", &srt_iLightSphericalHSVThresholdHLower);
   _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdHUpper;", &srt_iLightSphericalHSVThresholdHUpper);
   _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdVLower;", &srt_iLightSphericalHSVThresholdVLower);
   _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdVUpper;", &srt_iLightSphericalHSVThresholdVUpper);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalColorMultiplier;", &srt_fLightSphericalMultiplier);
 }
 
 void SSRT::Scene::NormalizeShellVariables()
@@ -391,17 +398,6 @@ void SSRT::Scene::HideMovableBrush(ULONG entityId)
 
 void SSRT::Scene::AddLight(const CSphereLight &sphLt)
 {
-  RgResult r;
-
-  FLOAT3D color = sphLt.color * sphLt.intensity;
-
-  RgSphericalLightUploadInfo info = {};
-  info.color = { color(1), color(2), color(3) };
-  info.position = { sphLt.absPosition(1), sphLt.absPosition(2), sphLt.absPosition(3) };
-  info.radius = sphLt.sphereRadius;
-
-  r = rgUploadSphericalLight(instance, &info);
-
   sphLights.push_back(sphLt);
 }
 
@@ -545,6 +541,35 @@ void SSRT::Scene::ProcessDynamicGeometry()
   if (viewer != nullptr)
   {
     RT_AddAllParticles(pWorld, viewer, this);
+  }
+
+
+
+  static FLOAT3D v = {};
+  v = viewerPosition;
+
+  std::sort(sphLights.begin(), sphLights.end(), 
+            [] (const CSphereLight &l1,  CSphereLight &l2)
+            {
+              auto d1 = l1.absPosition - v;
+              auto d2 = l2.absPosition - v;
+
+              return d1 % d1 < d2 % d2;
+            });
+
+  for (int i = 0; i < srt_iLightSphericalMaxCount && i < sphLights.size(); i++)
+  {
+    const CSphereLight &sphLt = sphLights[i];
+
+    FLOAT3D color = sphLt.color * sphLt.intensity * srt_fLightSphericalMultiplier;
+
+    RgSphericalLightUploadInfo info = {};
+    info.color = { color(1), color(2), color(3) };
+    info.position = { sphLt.absPosition(1), sphLt.absPosition(2), sphLt.absPosition(3) };
+    info.radius = sphLt.sphereRadius;
+
+    RgResult r = rgUploadSphericalLight(instance, &info);    
+    RG_CHECKERROR(r);
   }
 }
 
