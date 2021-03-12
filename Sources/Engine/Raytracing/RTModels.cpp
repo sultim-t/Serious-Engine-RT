@@ -34,10 +34,16 @@ extern INDEX gfx_bRenderPredicted;
 extern FLOAT mdl_fLODMul;
 extern FLOAT mdl_fLODAdd;
 
+extern FLOAT srt_fLightDirectionalSaturation;
+extern FLOAT srt_fLightDirectionalIntensityMultiplier;
+
 extern INDEX srt_iLightSphericalHSVThresholdHLower;
 extern INDEX srt_iLightSphericalHSVThresholdHUpper;
 extern INDEX srt_iLightSphericalHSVThresholdVLower;
 extern INDEX srt_iLightSphericalHSVThresholdVUpper;
+
+extern FLOAT srt_fLightSphericalSaturation;
+extern FLOAT srt_fLightSphericalIntensityMultiplier;
 
 
 static uint32_t RT_ModelPartIndex = 0;
@@ -78,7 +84,7 @@ static bool RT_DirectionalLightIsIgnored(const CLightSource *plsLight)
 
 static bool RT_ModelEntityHasVertices(CEntity *pen)
 {
-  if (pen != nullptr && pen->GetRenderType() == CEntity::RT_MODEL)
+  if (pen != nullptr && (pen->GetRenderType() == CEntity::RT_MODEL /*|| pen->en_RenderType == CEntity::RT_EDITORMODEL*/))
   {
     CModelData *md = pen->GetModelObject()->GetData();
 
@@ -90,11 +96,6 @@ static bool RT_ModelEntityHasVertices(CEntity *pen)
 
 static bool RT_SphericalLightIsIgnored(const CLightSource *plsLight)
 {
-  if (plsLight->ls_ulFlags & LSF_LENSFLAREONLY)
-  {
-    return true;
-  }
-
   /*UBYTE h, s, v;
   ColorToHSV(plsLight->GetLightColor(), h, s, v);
 
@@ -315,6 +316,16 @@ static void FlushModelInfo(ULONG entityID,
 }
 
 
+static void RT_AdjustSaturation(FLOAT3D &color, float saturation)
+{
+    const float luminance = color % FLOAT3D(0.2125f, 0.7154f, 0.0721f);
+    
+    color(1) = luminance * (1 - saturation) + color(1) * saturation;
+    color(2) = luminance * (1 - saturation) + color(2) * saturation;
+    color(3) = luminance * (1 - saturation) + color(3) * saturation;
+}
+
+
 static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *scene)
 {
   ASSERT(plsLight != NULL);
@@ -325,14 +336,9 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *scene)
     return;
   }
 
-  // ignore not important lights
-  /*if (!(plsLight->ls_ulFlags & LSF_CASTSHADOWS))
-  {
-    return;
-  }*/
+  const ULONG entityID = plsLight->ls_penEntity->en_ulID;
 
   const CPlacement3D &placement = plsLight->ls_penEntity->GetLerpedPlacement();
-  const FLOAT3D &position = placement.pl_PositionVector;
 
   UBYTE r, g, b;
   ColorToRGB(plsLight->GetLightColor(), r, g, b);
@@ -346,12 +352,15 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *scene)
     {
       return;
     }
+    
+    RT_AdjustSaturation(color, srt_fLightDirectionalSaturation);
+    color *= srt_fLightDirectionalIntensityMultiplier;
 
     FLOAT3D direction;
     AnglesToDirectionVector(placement.pl_OrientationAngle, direction);
 
     SSRT::CDirectionalLight light = {};
-    light.entityID = plsLight->ls_penEntity->en_ulID;
+    light.entityID = entityID;
     light.direction = direction;
     light.color = color;
 
@@ -363,16 +372,25 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *scene)
     {
       return;
     }
+    
+    RT_AdjustSaturation(color, srt_fLightSphericalSaturation);
+    color *= srt_fLightSphericalIntensityMultiplier;
 
-    float eps = 0.01f;
-    float radius = Max(eps, eps * plsLight->ls_rFallOff);
+    FLOAT3D position = placement.pl_PositionVector;
 
     SSRT::CSphereLight light = {};
     light.entityID = plsLight->ls_penEntity->en_ulID;
     light.absPosition = position;
     light.color = color;
-    light.intensity = Max(1.0f, Sqrt(plsLight->ls_rHotSpot));
-    light.sphereRadius = radius;
+    light.hotspotDistance = plsLight->ls_rHotSpot;
+    light.faloffDistance = plsLight->ls_rFallOff;
+    
+    if (entityID == scene->GetViewerEntityID())
+    {
+      // TODO: find muzzle flash
+
+      return;
+    }
 
     scene->AddLight(light);
   }

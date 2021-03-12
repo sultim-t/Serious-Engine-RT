@@ -137,8 +137,8 @@ struct CSphereLight
 
   FLOAT3D         absPosition;
   FLOAT3D         color;
-  float           intensity;
-  float           sphereRadius;
+  float           hotspotDistance;
+  float           faloffDistance;
 };
 
 

@@ -38,7 +38,8 @@ extern FLOAT srt_fDefaultReflectiveRoughness = 0.0f;
 
 extern INDEX srt_bEnableViewerShadows = 1;
 
-extern FLOAT srt_fLightDirectionalColorMultiplier = 10.0f;
+extern FLOAT srt_fLightDirectionalIntensityMultiplier = 10.0f;
+extern FLOAT srt_fLightDirectionalSaturation = 1.0f;
 extern FLOAT srt_fLightDirectionalAngularDiameter = 0.5f;
 
 extern INDEX srt_iLightSphericalMaxCount = 16;
@@ -46,7 +47,9 @@ extern INDEX srt_iLightSphericalHSVThresholdHLower = 20;
 extern INDEX srt_iLightSphericalHSVThresholdHUpper = 45;
 extern INDEX srt_iLightSphericalHSVThresholdVLower = 80;
 extern INDEX srt_iLightSphericalHSVThresholdVUpper = 255;
-extern FLOAT srt_fLightSphericalMultiplier = 1.0f;
+extern FLOAT srt_fLightSphericalIntensityMultiplier = 1.0f;
+extern FLOAT srt_fLightSphericalSaturation = 1.0f;
+extern FLOAT srt_fLightSphericalRadiusMultiplier = 0.5f;
 
 void SSRT::Scene::InitShellVariables()
 {
@@ -57,7 +60,8 @@ void SSRT::Scene::InitShellVariables()
 
   _pShell->DeclareSymbol("persistent user INDEX srt_bEnableViewerShadows;", &srt_bEnableViewerShadows);
 
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightDirectionalColorMultiplier;", &srt_fLightDirectionalColorMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightDirectionalIntensityMultiplier;", &srt_fLightDirectionalIntensityMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightDirectionalSaturation;", &srt_fLightDirectionalSaturation);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightDirectionalAngularDiameter;", &srt_fLightDirectionalAngularDiameter);
 
   _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalMaxCount;", &srt_iLightSphericalMaxCount);
@@ -65,23 +69,31 @@ void SSRT::Scene::InitShellVariables()
   _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdHUpper;", &srt_iLightSphericalHSVThresholdHUpper);
   _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdVLower;", &srt_iLightSphericalHSVThresholdVLower);
   _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdVUpper;", &srt_iLightSphericalHSVThresholdVUpper);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalColorMultiplier;", &srt_fLightSphericalMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalIntensityMultiplier;", &srt_fLightSphericalIntensityMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalSaturation;", &srt_fLightSphericalSaturation);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalRadiusMultiplier;", &srt_fLightSphericalRadiusMultiplier);
 }
 
 void SSRT::Scene::NormalizeShellVariables()
 {
-  srt_fDefaultSpecularMetallic = Clamp(srt_fDefaultSpecularMetallic, 0.0f, 1.0f);
-  srt_fDefaultSpecularRoughness = Clamp(srt_fDefaultSpecularRoughness, 0.0f, 1.0f);
-  srt_fDefaultReflectiveMetallic = Clamp(srt_fDefaultReflectiveMetallic, 0.0f, 1.0f);
+  srt_fDefaultSpecularMetallic    = Clamp(srt_fDefaultSpecularMetallic, 0.0f, 1.0f);
+  srt_fDefaultSpecularRoughness   = Clamp(srt_fDefaultSpecularRoughness, 0.0f, 1.0f);
+  srt_fDefaultReflectiveMetallic  = Clamp(srt_fDefaultReflectiveMetallic, 0.0f, 1.0f);
   srt_fDefaultReflectiveRoughness = Clamp(srt_fDefaultReflectiveRoughness, 0.0f, 1.0f);
-  srt_bEnableViewerShadows = !!srt_bEnableViewerShadows;
-  srt_fLightDirectionalColorMultiplier = Clamp(srt_fLightDirectionalColorMultiplier, 0.0f, 10000.0f);
-  srt_fLightDirectionalAngularDiameter = Clamp(srt_fLightDirectionalAngularDiameter, 0.0f, 10000.0f);
 
-  srt_iLightSphericalHSVThresholdHLower = Clamp<INDEX>(srt_iLightSphericalHSVThresholdHLower, 0, 255);
-  srt_iLightSphericalHSVThresholdHUpper = Clamp<INDEX>(srt_iLightSphericalHSVThresholdHUpper, 0, 255);
-  srt_iLightSphericalHSVThresholdVLower = Clamp<INDEX>(srt_iLightSphericalHSVThresholdVLower, 0, 255);
-  srt_iLightSphericalHSVThresholdVUpper = Clamp<INDEX>(srt_iLightSphericalHSVThresholdVUpper, 0, 255);
+  srt_bEnableViewerShadows = !!srt_bEnableViewerShadows;
+
+  srt_fLightDirectionalIntensityMultiplier  = Max(srt_fLightDirectionalIntensityMultiplier, 0.0f);
+  srt_fLightDirectionalSaturation           = Max(srt_fLightDirectionalSaturation, 0.0f);
+  srt_fLightDirectionalAngularDiameter      = Max(srt_fLightDirectionalAngularDiameter, 0.0f);
+
+  srt_iLightSphericalHSVThresholdHLower     = Clamp<INDEX>(srt_iLightSphericalHSVThresholdHLower, 0, 255);
+  srt_iLightSphericalHSVThresholdHUpper     = Clamp<INDEX>(srt_iLightSphericalHSVThresholdHUpper, 0, 255);
+  srt_iLightSphericalHSVThresholdVLower     = Clamp<INDEX>(srt_iLightSphericalHSVThresholdVLower, 0, 255);
+  srt_iLightSphericalHSVThresholdVUpper     = Clamp<INDEX>(srt_iLightSphericalHSVThresholdVUpper, 0, 255);
+  srt_fLightSphericalIntensityMultiplier    = Max(srt_fLightSphericalIntensityMultiplier, 0.0f);
+  srt_fLightSphericalSaturation             = Max(srt_fLightSphericalSaturation, 0.0f);
+  srt_fLightSphericalRadiusMultiplier       = Max(srt_fLightSphericalRadiusMultiplier, 0.0f);
 }
 
 
@@ -405,10 +417,9 @@ void SSRT::Scene::AddLight(const CDirectionalLight &dirLt)
 {
   RgResult r;
 
-  FLOAT3D color = dirLt.color * srt_fLightDirectionalColorMultiplier;
-
   RgDirectionalLightUploadInfo info = {};
-  info.color = { color(1), color(2), color(3) };
+  info.uniqueID = dirLt.entityID;
+  info.color = { dirLt.color(1), dirLt.color(2), dirLt.color(3) };
   info.direction = { dirLt.direction(1), dirLt.direction(2), dirLt.direction(3) };
   info.angularDiameterDegrees = srt_fLightDirectionalAngularDiameter;
 
@@ -561,12 +572,12 @@ void SSRT::Scene::ProcessDynamicGeometry()
   {
     const CSphereLight &sphLt = sphLights[i];
 
-    FLOAT3D color = sphLt.color * sphLt.intensity * srt_fLightSphericalMultiplier;
-
     RgSphericalLightUploadInfo info = {};
-    info.color = { color(1), color(2), color(3) };
+    info.uniqueID = sphLt.entityID;
+    info.color = { sphLt.color(1), sphLt.color(2), sphLt.color(3) };
     info.position = { sphLt.absPosition(1), sphLt.absPosition(2), sphLt.absPosition(3) };
-    info.radius = sphLt.sphereRadius;
+    info.radius = Sqrt(sphLt.hotspotDistance) * srt_fLightSphericalRadiusMultiplier;
+    info.falloffDistance = sphLt.faloffDistance;
 
     RgResult r = rgUploadSphericalLight(instance, &info);    
     RG_CHECKERROR(r);
