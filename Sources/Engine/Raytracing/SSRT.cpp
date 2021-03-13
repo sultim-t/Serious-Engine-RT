@@ -188,10 +188,9 @@ void SSRT::SSRTMain::StartFrame(CViewPort *pvp)
 
 void SSRT::SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
 {
-  if (!isFrameStarted)
+  if (!isFrameStarted || info.world == nullptr)
   {
-    // ASSERTALWAYS("Frame must be started to process world.");
-    return;
+    return;  
   }
 
   // don't process more than once
@@ -199,18 +198,8 @@ void SSRT::SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
   {
     return;
   }
-
   wasWorldProcessed = true;
-
-  // if no world
-  if (info.world == nullptr)
-  {
-    // delete current scene
-    delete currentScene;
-    currentScene = nullptr;
-
-    return;
-  }
+  worldRenderInfo = info;
 
   // if a new world was requested, recreate the scene
   if (currentScene == nullptr || info.world->GetName() != currentScene->GetWorldName())
@@ -218,8 +207,6 @@ void SSRT::SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
     delete currentScene;
     currentScene = new Scene(instance, info.world, textureUploader);
   }
-
-  worldRenderInfo = info;
 
   // update models and movable brushes in scene
   currentScene->Update(info.viewerPosition, info.viewerRotation, info.viewerEntityID);
@@ -282,7 +269,7 @@ void SSRT::SSRTMain::EndFrame()
   }
 
   // check shell variable, if it's null, then the game was stopped
-  if (Utils::GetCurrentWorld() == nullptr && currentScene != nullptr)
+  if (Utils::GetCurrentWorld() == nullptr)
   {
     delete currentScene;
     currentScene = nullptr;

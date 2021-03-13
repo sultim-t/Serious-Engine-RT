@@ -908,8 +908,8 @@ void CNetworkLibrary::Init(const CTString &strGameID)
   // it seems that this is the only variable that stores address,
   // one 32-bit value is not enough on x64 
 #ifdef _WIN64
-  _pShell->DeclareSymbol("user INDEX pwoCurrentWorld64_0;", &_pwoCurrentWorld64_0);
-  _pShell->DeclareSymbol("user INDEX pwoCurrentWorld64_1;", &_pwoCurrentWorld64_1);
+  _pShell->DeclareSymbol("INDEX pwoCurrentWorld64_0;", &_pwoCurrentWorld64_0);
+  _pShell->DeclareSymbol("INDEX pwoCurrentWorld64_1;", &_pwoCurrentWorld64_1);
   _pShell->DeclareSymbol("INDEX pwoCurrentWorld;", &_pwoCurrentWorldAlwaysNull);
 #else
   _pShell->DeclareSymbol("INDEX pwoCurrentWorld;", &_pwoCurrentWorld);
@@ -1164,6 +1164,15 @@ void CNetworkLibrary::Load_t(const CTFileName &fnmGame) // throw char *
     // start gathering CRCs
     InitCRCGather();
   }
+  
+  // RT: Note: added setting value for pwoCurrentWorld variable, because 
+  // SSRT checks if this value isn't null for determining if a scene should be destroyed.
+  // It seams that the lack of this setting was a bug
+#ifdef _WIN64
+  _pShell->SetUINT64("pwoCurrentWorld64_0","pwoCurrentWorld64_1", (UINT64) &ga_World);
+#else
+  _pShell->SetINDEX("pwoCurrentWorld", &ga_World);
+#endif
 
   // initialize server
   ga_srvServer.Start_t();

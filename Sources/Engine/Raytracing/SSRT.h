@@ -26,8 +26,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 namespace SSRT
 {
-// TODO: RT: if SE1 doesn't provide info about deleted entities
-// then just set isEnabled=false for each object before frame start
 class SSRTMain
 {
 public:
