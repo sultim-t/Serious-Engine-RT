@@ -49,7 +49,8 @@ extern INDEX srt_iLightSphericalHSVThresholdVLower = 80;
 extern INDEX srt_iLightSphericalHSVThresholdVUpper = 255;
 extern FLOAT srt_fLightSphericalIntensityMultiplier = 1.0f;
 extern FLOAT srt_fLightSphericalSaturation = 1.0f;
-extern FLOAT srt_fLightSphericalRadiusMultiplier = 0.5f;
+extern FLOAT srt_fLightSphericalRadiusMultiplier = 0.1f;
+extern FLOAT srt_fLightSphericalFalloffMultiplier = 1.0f;
 
 void SSRT::Scene::InitShellVariables()
 {
@@ -72,6 +73,7 @@ void SSRT::Scene::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalIntensityMultiplier;", &srt_fLightSphericalIntensityMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalSaturation;", &srt_fLightSphericalSaturation);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalRadiusMultiplier;", &srt_fLightSphericalRadiusMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffMultiplier;", &srt_fLightSphericalFalloffMultiplier);
 }
 
 void SSRT::Scene::NormalizeShellVariables()
@@ -94,6 +96,7 @@ void SSRT::Scene::NormalizeShellVariables()
   srt_fLightSphericalIntensityMultiplier    = Max(srt_fLightSphericalIntensityMultiplier, 0.0f);
   srt_fLightSphericalSaturation             = Max(srt_fLightSphericalSaturation, 0.0f);
   srt_fLightSphericalRadiusMultiplier       = Max(srt_fLightSphericalRadiusMultiplier, 0.0f);
+  srt_fLightSphericalFalloffMultiplier      = Max(srt_fLightSphericalFalloffMultiplier, 0.0f);
 }
 
 
@@ -485,7 +488,7 @@ void SSRT::Scene::ProcessBrushes()
     }
   }
 
-  RT_BrushClear();
+  RT_BrushProcessingClear();
 
   // submit
   r = rgSubmitStaticGeometries(instance);
@@ -577,7 +580,7 @@ void SSRT::Scene::ProcessDynamicGeometry()
     info.color = { sphLt.color(1), sphLt.color(2), sphLt.color(3) };
     info.position = { sphLt.absPosition(1), sphLt.absPosition(2), sphLt.absPosition(3) };
     info.radius = Sqrt(sphLt.hotspotDistance) * srt_fLightSphericalRadiusMultiplier;
-    info.falloffDistance = sphLt.faloffDistance;
+    info.falloffDistance = sphLt.faloffDistance * srt_fLightSphericalFalloffMultiplier;
 
     RgResult r = rgUploadSphericalLight(instance, &info);    
     RG_CHECKERROR(r);

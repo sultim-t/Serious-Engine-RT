@@ -39,8 +39,9 @@ static CStaticStackArray<GFXNormal> RT_AllSectorNormals;
 static CStaticStackArray<INDEX> RT_AllSectorIndices;
 static CStaticStackArray<GFXTexCoord> RT_AllSectorTexCoords[MAX_BRUSH_TEXTURE_COUNT];
 
-
-constexpr const char *WATER_SURFACE_NAME = "Water";
+// water surfaces are double sided, ignore vertex duplicates
+constexpr float RT_WaterVerticesEpsilon = 0.1f;
+static CStaticStackArray<const CBrushPolygon *> RT_WaterPolygons;
 
 static const char *RT_WaterFileNames[]
 {
@@ -59,7 +60,7 @@ struct RT_WorldBaseIgnore
 
 
 // Positions of unnecessary brushes (that also have "World Base" names)
-static const FLOAT3D RT_WorldBaseForceInvisibleEpsilon = { 0.5f, 0.5f, 0.5f };
+constexpr float RT_WorldBaseForceInvisibleEpsilon = 0.5f;
 static const RT_WorldBaseIgnore RT_WorldBaseForceInvisible[] =
 {
   { "01_Hatshepsut",        { 0, 1152, 64 }       },
@@ -70,6 +71,27 @@ static const RT_WorldBaseIgnore RT_WorldBaseForceInvisible[] =
   { "05_MoonMountains",     { -64, 80, -64}       },
   { "06_Oasis",             { 128, -16, 0}        },
 };
+
+
+
+void RT_BrushClear()
+{
+  RT_AllSectorNormals.Clear();
+  RT_AllSectorVertices.Clear();
+  RT_AllSectorIndices.Clear();
+
+  for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
+  {
+    RT_AllSectorTexCoords[i].Clear();
+  }
+}
+
+void RT_BrushProcessingClear()
+{
+  RT_BrushClear();
+
+  RT_WaterPolygons.Clear();
+}
 
 
 struct RT_TextureLayerBlending
@@ -109,6 +131,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
                               uint32_t polygonFlags,
                               const RT_TextureLayerBlending &blending,
                               bool hasScrollingTextures,
+                              bool isWater,
                               SSRT::Scene *pScene)
 {
   if (RT_AllSectorVertices.Count() == 0 || RT_AllSectorIndices.Count() == 0)
@@ -158,8 +181,6 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   brushInfo.brushPartIndex = brushPartIndex;
   brushInfo.hasScrollingTextures = hasScrollingTextures;
 
-  bool hasWaterTexture = false;
-
   for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
   {
     ASSERT(RT_AllSectorTexCoords[i].Count() == RT_AllSectorVertices.Count());
@@ -201,24 +222,11 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
           brushInfo.layerColors[i] *= 2;
         }
       }
-
-      // check if it's a water texture
-      if (!hasWaterTexture)
-      {
-        for (const char *w : RT_WaterFileNames)
-        {
-          if (td->GetName().FileName() == w)
-          {
-            hasWaterTexture = true;
-            break;
-          }
-        }
-      }
     }
   }
 
-  bool isWaterReflective = hasWaterTexture && !(polygonFlags & BPOF_TRANSLUCENT);
-  bool isWaterReflectiveRefractive = hasWaterTexture && (polygonFlags & BPOF_TRANSLUCENT);
+  bool isWaterReflective = isWater && !(polygonFlags & BPOF_TRANSLUCENT);
+  bool isWaterReflectiveRefractive = isWater && (polygonFlags & BPOF_TRANSLUCENT);
   
   pScene->AddBrush(brushInfo);
 
@@ -309,11 +317,52 @@ static bool RT_AreBlendingsSame(const RT_TextureLayerBlending &a, const RT_Textu
 }
 
 
-static void RT_ProcessPositions(CBrushPolygon &polygon, GFXVertex *vertices, uint32_t vertCount)
+static bool RT_HasWaterVertexDuplicates(const CBrushPolygon &waterPolygon)
+{
+  const INDEX vertCount = waterPolygon.bpo_apbvxTriangleVertices.Count();
+
+  for (INDEX k = 0; k < RT_WaterPolygons.Count(); k++)
+  {
+    const CBrushPolygon &otherWaterPolygon = *RT_WaterPolygons[k];
+    const INDEX otherVertCount = otherWaterPolygon.bpo_apbvxTriangleVertices.Count();
+
+    /*if (vertCount != otherVertCount)
+    {
+      continue;
+    }*/
+
+    int sameCount = 0;
+
+    for (INDEX i = 0; i < vertCount; i++)
+    {
+      const CBrushVertex *vert = waterPolygon.bpo_apbvxTriangleVertices[i];
+
+      for (INDEX j = 0; j < otherVertCount; j++)
+      {
+        const CBrushVertex *vertOther = otherWaterPolygon.bpo_apbvxTriangleVertices[j];
+
+        if ((vert->bvx_vAbsolute - vertOther->bvx_vAbsolute).ManhattanNorm() < RT_WaterVerticesEpsilon)
+        {
+          sameCount++;
+        }        
+      }
+    }
+
+    if (sameCount >= Min(vertCount, otherVertCount))
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
+static void RT_ProcessPositions(const CBrushPolygon &polygon, GFXVertex *vertices, INDEX vertCount)
 {
   for (INDEX i = 0; i < vertCount; i++)
   {
-    CBrushVertex *brushVert = polygon.bpo_apbvxTriangleVertices[i];
+    const CBrushVertex *brushVert = polygon.bpo_apbvxTriangleVertices[i];
     vertices[i].x = brushVert->bvx_vRelative(1);
     vertices[i].y = brushVert->bvx_vRelative(2);
     vertices[i].z = brushVert->bvx_vRelative(3);
@@ -322,7 +371,7 @@ static void RT_ProcessPositions(CBrushPolygon &polygon, GFXVertex *vertices, uin
 }
 
 
-static void RT_ProcessNormals(CBrushPolygon &polygon, uint32_t vertCount)
+static void RT_ProcessNormals(const CBrushPolygon &polygon, uint32_t vertCount)
 {
   GFXNormal *normals = RT_AllSectorNormals.Push(vertCount);
 
@@ -334,6 +383,35 @@ static void RT_ProcessNormals(CBrushPolygon &polygon, uint32_t vertCount)
     normals[i].nz = planeNormal[2];
     normals[i].ul = 0;
   }
+}
+
+
+static bool RT_HasWaterTextures(CBrushPolygon &polygon, bool isWaterTexture[MAX_BRUSH_TEXTURE_COUNT])
+{
+  bool has = false;
+
+  for (uint32_t iLayer = 0; iLayer < MAX_BRUSH_TEXTURE_COUNT; iLayer++)
+  {
+    isWaterTexture[iLayer] = false;
+
+    CBrushPolygonTexture &layerTexture = polygon.bpo_abptTextures[iLayer];
+
+    CTextureData *ptd = (CTextureData *)layerTexture.bpt_toTexture.GetData();
+    if (ptd != nullptr)
+    {
+      for (const char *w : RT_WaterFileNames)
+      {
+        if (ptd->GetName().FileName() == w)
+        {
+          isWaterTexture[iLayer] = true;
+          has = true;
+          break;
+        }
+      }
+    }
+  }
+
+  return has;
 }
 
 
@@ -482,6 +560,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
   COLOR lastColor = C_WHITE | CT_OPAQUE;
   uint32_t lastFlags = UINT32_MAX;
   bool lastHasSrollingTextures = false;
+  bool lastIsWater = false;
   RT_TextureLayerBlending lastBlending = {};
   for (INDEX i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
   {
@@ -490,11 +569,11 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
   }
 
 
-  auto flushLastSavedInfo = [onlyTexCoords, penBrush, &pLastTextures, &lastFlags, &lastBlending, &lastHasSrollingTextures, scene] ()
+  auto flushLastSavedInfo = [onlyTexCoords, penBrush, &pLastTextures, &lastFlags, &lastBlending, &lastHasSrollingTextures, &lastIsWater, scene] ()
   {
     if (!onlyTexCoords)
     {
-      RT_FlushBrushInfo(penBrush, RT_BrushPartIndex, pLastTextures, lastFlags, lastBlending, lastHasSrollingTextures, scene);
+      RT_FlushBrushInfo(penBrush, RT_BrushPartIndex, pLastTextures, lastFlags, lastBlending, lastHasSrollingTextures, lastIsWater, scene);
     }
     else
     {
@@ -509,6 +588,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
       }
     }
 
+    // TODO: use polygon ID as a base index and flush ID as additional
     RT_BrushPartIndex++;
   };
 
@@ -530,14 +610,6 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
     {
       continue;
     }
-
-    // RT: determing if it's a water polygin is done by checking textures' names
-    // as not all polygons have appropriate surface type
-    /*if (!onlyTexCoords)
-    {
-      UBYTE surfaceType = polygon.bpo_bppProperties.bpp_ubSurfaceType;
-      isWaterSurface = scene->GetWorld()->wo_astSurfaceTypes[surfaceType].st_strName == WATER_SURFACE_NAME;
-    }*/
 
     // for texture cordinates and transparency/translucency processing
   #pragma region MakeScreenPolygon
@@ -613,6 +685,19 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
     }
 
     bool hasScrollingTextures = RT_HasScrollingTextures(polygon);
+
+    if (onlyTexCoords && !hasScrollingTextures)
+    {
+      continue;
+    }
+
+    bool isWaterPolygon = false;
+    bool isWaterTexture[MAX_BRUSH_TEXTURE_COUNT] = {};
+
+    if (!onlyTexCoords)
+    {
+      isWaterPolygon = RT_HasWaterTextures(polygon, isWaterTexture);
+    }
   #pragma endregion
 
 
@@ -630,23 +715,51 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
     }
 
 
+    if (isWaterPolygon)
+    {
+      // don't cull water surfaces that have non-water opaque textures
+      bool hasNonWaterOpaque = false;
+
+      for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
+      {
+        if (!isWaterTexture[i] && (curBlending.layerBlendingType[i] & STXF_BLEND_MASK) == STXF_BLEND_OPAQUE)
+        {
+          hasNonWaterOpaque = true;
+          break;
+        }
+      }
+
+      if (!hasNonWaterOpaque)
+      {
+        if (RT_HasWaterVertexDuplicates(polygon))
+        {
+          continue;
+        }        
+      }
+
+      RT_WaterPolygons.Push() = &polygon;
+    }
+
+
     INDEX firstVertexId = RT_AllSectorVertices.Count();
     INDEX vertCount = polygon.bpo_apbvxTriangleVertices.Count();
 
     // position data
     GFXVertex *vertices = RT_AllSectorVertices.Push(vertCount);
     RT_ProcessPositions(polygon, vertices, vertCount);
-
-    RT_ProcessNormals(polygon, vertCount);
-
     RT_ProcessTexCoords(polygon, vertices, vertCount, scene);
 
-    RT_ProcessIndices(polygon, firstVertexId);
+    if (!onlyTexCoords)
+    {
+      RT_ProcessNormals(polygon, vertCount);
+      RT_ProcessIndices(polygon, firstVertexId);
+    }
 
     // rewrite last info
     lastFlags = polygonFlags;
     lastBlending = curBlending;
     lastHasSrollingTextures = hasScrollingTextures;
+    lastIsWater = isWaterPolygon;
     for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
     {
       pLastTextures[i] = &polygon.bpo_abptTextures[i];
@@ -673,7 +786,7 @@ bool RT_IsBrushIgnored(CEntity *penBrush)
   if (!(penBrush->en_ulFlags & ENF_ZONING) && penBrush->GetName() == "World Base")
   {
     // check if it's exactly those unnecessary polygons
-    for (auto &ignore : RT_WorldBaseForceInvisible)
+    for (const auto &ignore : RT_WorldBaseForceInvisible)
     {
       // if not for the current world
       if (penBrush->GetWorld() == nullptr || penBrush->GetWorld()->wo_fnmFileName.FileName() != ignore.worldName)
@@ -681,20 +794,9 @@ bool RT_IsBrushIgnored(CEntity *penBrush)
         continue;
       }
 
-      FLOAT3D lowerBound = penBrush->GetPlacement().pl_PositionVector - RT_WorldBaseForceInvisibleEpsilon;
-      FLOAT3D upperBound = penBrush->GetPlacement().pl_PositionVector + RT_WorldBaseForceInvisibleEpsilon;
+      const FLOAT3D &p = penBrush->GetPlacement().pl_PositionVector;
 
-      bool isInside = true;
-
-      for (uint32_t i = 1; i <= 3; i++)
-      {
-        // if not inside bounds
-        if (ignore.position(i) > upperBound(i) || ignore.position(i) < lowerBound(i))
-        {
-          isInside = false;
-          break;
-        }
-      }
+      bool isInside = (p - ignore.position).ManhattanNorm() < RT_WorldBaseForceInvisibleEpsilon;
 
       if (isInside)
       {
@@ -818,18 +920,5 @@ void RT_UpdateBrushNonStaticTexture(CEntity *penBrush, SSRT::Scene *scene)
         }
       }
     }
-  }
-}
-
-
-void RT_BrushClear()
-{
-  RT_AllSectorNormals.Clear();
-  RT_AllSectorVertices.Clear();
-  RT_AllSectorIndices.Clear();
-
-  for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
-  {
-    RT_AllSectorTexCoords[i].Clear();
   }
 }

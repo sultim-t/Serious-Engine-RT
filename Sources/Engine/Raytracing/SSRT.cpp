@@ -107,13 +107,14 @@ SSRT::SSRTMain::SSRTMain() :
 
 extern INDEX srt_bTonemappingUseDefault = 0;
 extern FLOAT srt_fTonemappingWhitePoint = 1.5f;
-extern FLOAT srt_fTonemappingMinLogLuminance = -10.0f;
-extern FLOAT srt_fTonemappingMaxLogLuminance = 2.0f;
+extern FLOAT srt_fTonemappingMinLogLuminance = 2.0f;
+extern FLOAT srt_fTonemappingMaxLogLuminance = 10.0f;
 extern INDEX srt_iSkyType = 0;
 extern FLOAT srt_fSkyColorMultiplier = 1.0f;
 extern FLOAT3D srt_fSkyColorDefault = { 1, 1, 1 };
 extern INDEX srt_bShowGradients = 0;
 extern INDEX srt_bShowMotionVectors = 0;
+extern INDEX srt_bReloadShaders = 0;
 
 void SSRT::SSRTMain::InitShellVariables()
 {
@@ -126,11 +127,16 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorMultiplier;", &srt_fSkyColorMultiplier);
   _pShell->DeclareSymbol("persistent user INDEX srt_bShowGradients;", &srt_bShowGradients);
   _pShell->DeclareSymbol("persistent user INDEX srt_bShowMotionVectors;", &srt_bShowMotionVectors);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bReloadShaders;", &srt_bReloadShaders);
 }
 
 void SSRT::SSRTMain::NormalizeShellVariables()
 {
   srt_bTonemappingUseDefault = !!srt_bTonemappingUseDefault;
+  srt_bShowGradients = !!srt_bShowGradients;
+  srt_bShowMotionVectors = !!srt_bShowMotionVectors;
+  srt_bReloadShaders = !!srt_bReloadShaders;
+
   srt_iSkyType = Clamp<INDEX>(srt_iSkyType, 0, 2);
 
   for (uint32_t i = 1; i <= 3; i++)
@@ -174,8 +180,9 @@ void SSRT::SSRTMain::StartFrame(CViewPort *pvp)
     return;
   }
 
-  RgResult r = rgStartFrame(instance, curWindowWidth, curWindowHeight, true);
+  RgResult r = rgStartFrame(instance, curWindowWidth, curWindowHeight, true, srt_bReloadShaders);
   RG_CHECKERROR(r);
+  srt_bReloadShaders = 0;
 
   isFrameStarted = true;
 
