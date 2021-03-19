@@ -55,6 +55,7 @@ private:
 
   std::vector<bool> materialExist;
   std::vector<RgMaterial> materials;
+  std::vector<uint32_t> animatedTextureFrameIndex;
 };
 
 }

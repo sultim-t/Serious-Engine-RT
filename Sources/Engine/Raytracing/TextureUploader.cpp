@@ -40,6 +40,7 @@ SSRT::TextureUploader::TextureUploader(RgInstance _instance) : instance(_instanc
 {
   materials.resize(TEXTURE_COUNT_ALLOC_STEP);
   materialExist.resize(TEXTURE_COUNT_ALLOC_STEP);
+  animatedTextureFrameIndex.resize(TEXTURE_COUNT_ALLOC_STEP, UINT32_MAX);
 }
 
 SSRT::TextureUploader::~TextureUploader()
@@ -76,6 +77,7 @@ uint32_t SSRT::TextureUploader::GenerateTextureID()
 
     materialExist.resize(newSize);
     materials.resize(newSize);
+    animatedTextureFrameIndex.resize(newSize, UINT32_MAX);
 
     textureIndex = oldSize;
   }
@@ -113,6 +115,8 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
 
     RgResult r = rgCreateStaticMaterial(instance, &stInfo, &material);
     RG_CHECKERROR(r);
+
+    AddMaterial(textureIndex, material);
   }
   else
   {
@@ -132,6 +136,9 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
 
       RgResult r = rgCreateDynamicMaterial(instance, &dninfo, &material);
       RG_CHECKERROR(r);
+
+      
+      AddMaterial(textureIndex, material);
     }
     else
     {
@@ -145,11 +152,8 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
       RG_CHECKERROR(r);
 
       // don't add
-      return;
     }
   }
-
-  AddMaterial(textureIndex, material);
 }
 
 void SSRT::TextureUploader::UploadTexture(const CPreparedAnimatedTextureInfo &animInfo)
@@ -209,9 +213,15 @@ RgMaterial SSRT::TextureUploader::GetMaterial(CTextureData *pTexture, uint32_t t
   // if an animated material
   if (pTexture->td_ctFrames > 1)
   {
-    // update frame index
-    RgResult r = rgChangeAnimatedMaterialFrame(instance, mat, textureFrameIndex);
-    RG_CHECKERROR(r);
+    // and it doesn't have relevant texture frame index
+    if (animatedTextureFrameIndex[textureIndex] != textureFrameIndex)
+    {
+      // update frame index
+      RgResult r = rgChangeAnimatedMaterialFrame(instance, mat, textureFrameIndex);
+      RG_CHECKERROR(r);
+
+      animatedTextureFrameIndex[textureIndex] = textureFrameIndex;
+    }
   }
 
   return mat;
@@ -222,6 +232,7 @@ void SSRT::TextureUploader::AddMaterial(uint32_t textureIndex, RgMaterial materi
   // set default values
   materialExist[textureIndex] = true;
   materials[textureIndex] = material;
+  animatedTextureFrameIndex[textureIndex] = UINT32_MAX;
 }
 
 void SSRT::TextureUploader::DestroyMaterial(uint32_t textureIndex)
@@ -233,5 +244,6 @@ void SSRT::TextureUploader::DestroyMaterial(uint32_t textureIndex)
 
   materialExist[textureIndex] = false;
   materials[textureIndex] = RG_NO_MATERIAL;
+  animatedTextureFrameIndex[textureIndex] = UINT32_MAX;
 }
 
