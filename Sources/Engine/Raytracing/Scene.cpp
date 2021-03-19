@@ -198,7 +198,13 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
     roughness = srt_fDefaultReflectiveRoughness;
     metallic = srt_fDefaultReflectiveMetallic;
   }
-  
+
+  if (model.passThroughType == RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_ADDITIVE || 
+      model.passThroughType == RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_UNDER)
+  {
+    return;
+  }
+
   RgGeometryUploadInfo dnInfo = {};
   dnInfo.uniqueID = model.GetUniqueID();
   dnInfo.geomType = RG_GEOMETRY_TYPE_DYNAMIC;

@@ -227,7 +227,12 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
 
   bool isWaterReflective = isWater && !(polygonFlags & BPOF_TRANSLUCENT);
   bool isWaterReflectiveRefractive = isWater && (polygonFlags & BPOF_TRANSLUCENT);
-  
+
+  if (isWater)
+  {
+    brushInfo.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_REFLECT;
+  }
+
   pScene->AddBrush(brushInfo);
 
   RT_BrushClear();
@@ -236,7 +241,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
 
 static void RT_UpdateBrushTexCoords(CEntity *penBrush, uint32_t brushPartIndex, SSRT::Scene *pScene)
 {
-  if (RT_AllSectorVertices.Count() == 0 || RT_AllSectorIndices.Count() == 0)
+  if (RT_AllSectorVertices.Count() == 0)
   {
     return;
   }
