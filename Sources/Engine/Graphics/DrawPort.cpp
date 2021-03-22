@@ -625,8 +625,25 @@ void CDrawPort::DrawLine( PIX pixI0, PIX pixJ0, PIX pixI1, PIX pixJ1, COLOR col,
   // check API
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 
-  if (eAPI == GAT_RT)
+  // only lines that are aligned with axes
+  if (eAPI == GAT_RT || eAPI == GAT_VK)
   {
+    // vertical line
+    if (pixI0 == pixI1)
+    {
+      Fill(pixI0, pixJ0, 
+           1, pixJ1 - pixJ0 + 1,
+           col);
+    }
+
+    // horizontal line
+    if (pixJ0 == pixJ1)
+    {
+      Fill(pixI0, pixJ0, 
+           pixI1 - pixI0 + 1, 1,
+           col);
+    }
+
     return;
   }
 
@@ -692,12 +709,6 @@ void CDrawPort::DrawLine( PIX pixI0, PIX pixJ0, PIX pixI1, PIX pixJ1, COLOR col,
     D3D_CHECKERROR(hr);
   }
 #endif // SE1_D3D
-#ifdef SE1_VULKAN
-  else if (eAPI == GAT_VK)
-  {
-    // TODO: Vulkan: draw line
-  }
-#endif // SE1_VULKAN
   // revert to old filtering
   if( typ!=_FULL_) gfxSetTextureFiltering( iTexFilter, iTexAnisotropy);
 }
@@ -783,8 +794,28 @@ void CDrawPort::DrawBorder( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, COL
   // check API
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 
-  if (eAPI == GAT_RT)
+  if (eAPI == GAT_RT || eAPI == GAT_VK)
   {
+    // top
+    Fill(pixI, pixJ, 
+         pixWidth, 1,
+         col);
+
+    // bottom
+    Fill(pixI, pixJ + pixHeight - 1, 
+         pixWidth, 1, 
+         col);
+
+    // left
+    Fill(pixI, pixJ + 1, 
+         1, pixHeight - 2, 
+         col);
+
+    // right
+    Fill(pixI + pixWidth - 1, pixJ + 1, 
+         1, pixHeight - 2,
+         col); 
+
     return;
   }
 
@@ -857,12 +888,6 @@ void CDrawPort::DrawBorder( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, COL
     D3D_CHECKERROR(hr);
   }
 #endif // SE1_D3D
-#ifdef SE1_VULKAN
-  else if (eAPI == GAT_VK)
-  {
-    // TODO: Vulkan: draw border
-  }
-#endif // SE1_VULKAN
   // revert to old filtering
   if( typ!=_FULL_) gfxSetTextureFiltering( iTexFilter, iTexAnisotropy);
 }
