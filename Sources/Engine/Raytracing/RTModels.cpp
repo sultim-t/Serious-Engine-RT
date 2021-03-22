@@ -44,7 +44,9 @@ extern INDEX srt_iLightSphericalHSVThresholdVUpper;
 
 extern FLOAT srt_fLightSphericalSaturation;
 extern FLOAT srt_fLightSphericalIntensityMultiplier;
+extern INDEX srt_bLightSphericalIgnoreEditorModels;
 
+extern INDEX srt_bModelUseOriginalNormals;
 
 static uint32_t RT_ModelPartIndex = 0;
 
@@ -82,21 +84,34 @@ static bool RT_DirectionalLightIsIgnored(const CLightSource *plsLight)
   return false;
 }
 
-static bool RT_ModelEntityHasVertices(CEntity *pen)
+static bool RT_LightEntityHasVertices(CEntity *pen)
 {
-  if (pen != nullptr && (pen->GetRenderType() == CEntity::RT_MODEL /*|| pen->en_RenderType == CEntity::RT_EDITORMODEL*/))
+  if (pen == nullptr)
   {
-    CModelData *md = pen->GetModelObject()->GetData();
-
-    return md != nullptr && md->md_VerticesCt > 0;
+    return false;
   }
 
-  return false;
+  if (pen->GetRenderType() != CEntity::RT_MODEL)
+  {
+    if (pen->GetRenderType() != CEntity::RT_EDITORMODEL)
+    {
+      return false; 
+    }
+
+    if (srt_bLightSphericalIgnoreEditorModels)
+    {
+      return false;
+    }
+  }
+
+  CModelData *md = pen->GetModelObject()->GetData();
+
+  return md != nullptr && md->md_VerticesCt > 0;
 }
 
 static bool RT_SphericalLightIsIgnored(const CLightSource *plsLight)
 {
-  /*UBYTE h, s, v;
+  UBYTE h, s, v;
   ColorToHSV(plsLight->GetLightColor(), h, s, v);
 
   // ignore dim lights
@@ -106,16 +121,16 @@ static bool RT_SphericalLightIsIgnored(const CLightSource *plsLight)
       v > srt_iLightSphericalHSVThresholdVUpper)
   {
     return true;
-  }*/
+  }
 
   CEntity *pen = plsLight->ls_penEntity;
 
-  if (RT_ModelEntityHasVertices(pen))
+  if (RT_LightEntityHasVertices(pen))
   {
     return false;
   }
 
-  if (RT_ModelEntityHasVertices(pen->GetParent()))
+  if (RT_LightEntityHasVertices(pen->GetParent()))
   {
     return false;
   }
@@ -123,7 +138,7 @@ static bool RT_SphericalLightIsIgnored(const CLightSource *plsLight)
   {
     FOREACHINLIST(CEntity, en_lnInParent, pen->en_lhChildren, itenChild)
     {
-      if (RT_ModelEntityHasVertices(itenChild))
+      if (RT_LightEntityHasVertices(itenChild))
       {
         return false;
       }
@@ -769,7 +784,8 @@ static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &
   pnorMipBase = &_anorMipBase[ 0 ];
 
   // RT: always get normals
-  const BOOL bNeedNormals = TRUE;
+  const BOOL bNeedNormals = srt_bModelUseOriginalNormals;
+
   extern void UnpackFrame(CRenderModel & rm, BOOL bKeepNormals);
   UnpackFrame(rm, bNeedNormals);
 
@@ -908,7 +924,7 @@ static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &
     RT_VertexData vd = {};
     vd.vertices = &_avtxSrfBase[0];
     vd.vertexCount = _ctAllSrfVx;
-    vd.normals = &_anorSrfBase[0];
+    vd.normals = srt_bModelUseOriginalNormals ? &_anorSrfBase[0] : nullptr;
     vd.texCoords = &_atexSrfBase[0];
 
     // RT: everything is set, copy model data to SSRT

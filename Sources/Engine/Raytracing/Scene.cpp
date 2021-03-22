@@ -51,6 +51,9 @@ extern FLOAT srt_fLightSphericalIntensityMultiplier = 1.0f;
 extern FLOAT srt_fLightSphericalSaturation = 1.0f;
 extern FLOAT srt_fLightSphericalRadiusMultiplier = 0.1f;
 extern FLOAT srt_fLightSphericalFalloffMultiplier = 1.0f;
+extern INDEX srt_bLightSphericalIgnoreEditorModels = 0;
+
+extern INDEX srt_bModelUseOriginalNormals = 1;
 
 void SSRT::Scene::InitShellVariables()
 {
@@ -74,6 +77,9 @@ void SSRT::Scene::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalSaturation;", &srt_fLightSphericalSaturation);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalRadiusMultiplier;", &srt_fLightSphericalRadiusMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffMultiplier;", &srt_fLightSphericalFalloffMultiplier);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bLightSphericalIgnoreEditorModels;", &srt_bLightSphericalIgnoreEditorModels);
+
+  _pShell->DeclareSymbol("persistent user INDEX srt_bModelUseOriginalNormals;", &srt_bModelUseOriginalNormals);
 }
 
 void SSRT::Scene::NormalizeShellVariables()
@@ -97,6 +103,9 @@ void SSRT::Scene::NormalizeShellVariables()
   srt_fLightSphericalSaturation             = Max(srt_fLightSphericalSaturation, 0.0f);
   srt_fLightSphericalRadiusMultiplier       = Max(srt_fLightSphericalRadiusMultiplier, 0.0f);
   srt_fLightSphericalFalloffMultiplier      = Max(srt_fLightSphericalFalloffMultiplier, 0.0f);
+
+  srt_bLightSphericalIgnoreEditorModels = !!srt_bLightSphericalIgnoreEditorModels;
+  srt_bModelUseOriginalNormals = !!srt_bModelUseOriginalNormals;
 }
 
 

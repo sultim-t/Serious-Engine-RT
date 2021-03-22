@@ -691,10 +691,11 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
 
     bool hasScrollingTextures = RT_HasScrollingTextures(polygon);
 
-    if (onlyTexCoords && !hasScrollingTextures)
+    // commented to have brushPartIndex consistent with the previous uploads
+    /*if (onlyTexCoords && !hasScrollingTextures)
     {
       continue;
-    }
+    }*/
 
     bool isWaterPolygon = false;
     bool isWaterTexture[MAX_BRUSH_TEXTURE_COUNT] = {};
