@@ -158,27 +158,38 @@ struct RT_VertexData
 };
 
 
-// RT: SetRenderingParameters(..) in RenderModel_View.cpp
-static RgGeometryPassThroughType GetPassThroughType(SurfaceTranslucencyType stt, bool forceTranslucency = false)
+static bool RT_ShouldBeRasterized(SurfaceTranslucencyType stt, bool forceTranslucency = false)
 {
   if (stt == STT_TRANSLUCENT || (forceTranslucency && ((stt == STT_OPAQUE) || (stt == STT_TRANSPARENT))))
   {
-    return RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
+    return true;
   }
   else if (stt == STT_ADD)
   {
-    return RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_ADDITIVE;
-  }
-  else if (stt == STT_TRANSPARENT)
-  {
-    return RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
+    return true;
   }
   else if (stt == STT_MULTIPLY)
   {
-    return RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_UNDER;
+    return true;
   }
+  else
+  {
+    return false;
+  }
+}
 
-  return RG_GEOMETRY_PASS_THROUGH_TYPE_OPAQUE;
+
+// RT: SetRenderingParameters(..) in RenderModel_View.cpp
+static RgGeometryPassThroughType GetPassThroughType(SurfaceTranslucencyType stt, bool forceTranslucency = false)
+{
+  if (stt == STT_TRANSPARENT)
+  {
+    return RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
+  }
+  else
+  {
+    return RG_GEOMETRY_PASS_THROUGH_TYPE_OPAQUE;
+  }
 }
 
 
@@ -324,6 +335,8 @@ static void FlushModelInfo(ULONG entityID,
   {
     modelInfo.attchPath[i] = attchPath[i];
   }
+
+  modelInfo.isRasterized = RT_ShouldBeRasterized(stt, forceTranslucency);
 
   pScene->AddModel(modelInfo);
 
@@ -578,7 +591,7 @@ static void RT_SetupModelRendering(CModelObject &mo,
   rm.rm_fMipFactor = RT_GetMipFactor(rm.rm_vObjectPosition, mo, scene);
 
   // get current mip model using mip factor
-  rm.rm_iMipLevel = mo.GetMipModel(rm.rm_fMipFactor);
+  rm.rm_iMipLevel = 0;
   //mo.mo_iLastRenderMipLevel = rm.rm_iMipLevel;
   // get current vertices mask
   rm.rm_pmmiMip = &rm.rm_pmdModelData->md_MipInfos[ rm.rm_iMipLevel ];

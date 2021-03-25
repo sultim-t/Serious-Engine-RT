@@ -101,13 +101,21 @@ struct RT_TextureLayerBlending
 };
 
 
-static RgGeometryPassThroughType RT_GetPassThroughType(uint32_t flags)
+static bool RT_ShouldBeRasterized(uint32_t bpofFlags)
 {
-  switch (flags)
+  return bpofFlags & BPOF_TRANSLUCENT;
+}
+
+
+static RgGeometryPassThroughType RT_GetPassThroughType(uint32_t bpofFlags)
+{
+  if  (bpofFlags & BPOF_TRANSPARENT)
   {
-    case BPOF_TRANSPARENT:  return RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
-    case BPOF_TRANSLUCENT:  return RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
-    default:                return RG_GEOMETRY_PASS_THROUGH_TYPE_OPAQUE;
+    return RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
+  }
+  else
+  {
+    return RG_GEOMETRY_PASS_THROUGH_TYPE_OPAQUE;
   }
 }
 
@@ -232,6 +240,8 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   {
     brushInfo.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_REFLECT;
   }
+
+  brushInfo.isRasterized = RT_ShouldBeRasterized(polygonFlags);
 
   pScene->AddBrush(brushInfo);
 

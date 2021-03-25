@@ -74,6 +74,8 @@ struct CModelGeometry : public CAbstractGeometry
   bool                isSpecular;
   bool                isReflective;
 
+  bool                isRasterized;
+
   // path to attachment using attachment position ID,
   // -1 means the end of the list
   INDEX               attchPath[SSRT_MAX_ATTACHMENT_DEPTH] = {};
@@ -98,6 +100,8 @@ struct CBrushGeometry : public CAbstractGeometry
   uint32_t            brushPartIndex;
   bool                hasScrollingTextures;
 
+  bool                isRasterized;
+
 public:
   static uint64_t GetBrushUniqueID(ULONG entityID, uint32_t brushPartIndex);
   uint64_t GetUniqueID() const override;
@@ -115,7 +119,7 @@ struct CUpdateTexCoordsInfo
 
 struct CParticlesGeometry : public CAbstractGeometry
 {
-  Vector<FLOAT, 4>    color;
+  GFXColor            *colorData;
 
 public:
   uint64_t GetUniqueID() const override;

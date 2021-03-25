@@ -242,28 +242,32 @@ void SSRT::SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
     hud.textureData->td_tpLocal.tp_eWrapV = hud.textureWrapV;
   }
 
-  RgRasterizedGeometryUploadInfo rasterInfo = {};
-  rasterInfo.vertexCount = hud.vertexCount;
-  rasterInfo.vertexData = (float*)hud.pPositions;
-  rasterInfo.vertexStride = sizeof(GFXVertex4);
-  rasterInfo.texCoordData = (float*)hud.pTexCoords;
-  rasterInfo.texCoordStride = sizeof(GFXTexCoord);
-  rasterInfo.colorData = (uint32_t*)hud.pColors;
-  rasterInfo.colorStride = sizeof(GFXColor);
-  rasterInfo.indexCount = hud.indexCount;
-  rasterInfo.indexData = (uint32_t*)hud.pIndices;
-  rasterInfo.viewport = currentViewport;
-  rasterInfo.textures = 
-  {
-    textureUploader->GetMaterial(hud.textureData),
-    RG_NO_MATERIAL,
-    RG_NO_MATERIAL
-  };
+  RgRasterizedGeometryVertexArrays vertData = {};
+  vertData.vertexData = hud.pPositions;
+  vertData.texCoordData = hud.pTexCoords;
+  vertData.colorData = hud.pColors;
+  vertData.vertexStride = sizeof(GFXVertex4);
+  vertData.texCoordStride = sizeof(GFXTexCoord);
+  vertData.colorStride = sizeof(GFXColor);
 
+  RgRasterizedGeometryUploadInfo hudInfo = {};
+  hudInfo.vertexCount = hud.vertexCount;
+  hudInfo.arrays = &vertData;
+  hudInfo.indexCount = hud.indexCount;
+  hudInfo.indexData = (uint32_t*)hud.pIndices;
+  hudInfo.material = textureUploader->GetMaterial(hud.textureData);
+  hudInfo.blendEnable = RG_TRUE;
+  hudInfo.blendFuncSrc = RG_BLEND_FACTOR_SRC_ALPHA;
+  hudInfo.blendFuncDst = RG_BLEND_FACTOR_INV_SRC_ALPHA;
+  hudInfo.depthTest = RG_FALSE;
+  hudInfo.depthWrite = RG_FALSE;
+  hudInfo.renderToSwapchain = RG_TRUE;
+
+  float hudViewProj[16];
   extern void Svk_MatMultiply(float *result, const float *a, const float *b);
-  Svk_MatMultiply(rasterInfo.viewProjection, viewMatrix, projMatrix);
+  Svk_MatMultiply(hudViewProj, viewMatrix, projMatrix);
 
-  RgResult r = rgUploadRasterizedGeometry(instance, &rasterInfo);
+  RgResult r = rgUploadRasterizedGeometry(instance, &hudInfo, hudViewProj, &currentViewport);
   RG_CHECKERROR(r);
 }
 
@@ -336,6 +340,8 @@ void SSRT::SSRTMain::SetViewport(float leftUpperX, float leftUpperY, float width
   currentViewport.y = leftUpperY;
   currentViewport.width = width;
   currentViewport.height = height;
+  currentViewport.minDepth = 0.0f;
+  currentViewport.maxDepth = 1.0f;
 }
 
 void SSRT::SSRTMain::DeleteTexture(uint32_t textureID)

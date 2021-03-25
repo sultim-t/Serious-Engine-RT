@@ -208,84 +208,102 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
     metallic = srt_fDefaultReflectiveMetallic;
   }
 
-  if (model.passThroughType == RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_ADDITIVE || 
-      model.passThroughType == RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_UNDER)
+  if (!model.isRasterized)
   {
-    return;
+    RgGeometryUploadInfo info = {};
+    info.uniqueID = model.GetUniqueID();
+    info.geomType = RG_GEOMETRY_TYPE_DYNAMIC;
+    info.passThroughType = model.passThroughType;
+    info.visibilityType = model.visibilityType;
+    info.vertexCount = model.vertexCount;
+    info.vertexData = model.vertices;
+    info.normalData = model.normals;
+    info.texCoordLayerData[0] = model.texCoordLayers[0];
+    info.texCoordLayerData[1] = nullptr;
+    info.texCoordLayerData[2] = nullptr;
+    info.defaultMetallicity = metallic;
+    info.defaultRoughness = roughness;
+    info.indexCount = model.indexCount;
+    info.indexData = model.indices;
+
+    info.layerColors[0] = { model.color(1), model.color(2), model.color(3), model.color(4) };
+    info.layerBlendingTypes[0] = RG_GEOMETRY_MATERIAL_BLEND_TYPE_OPAQUE;
+
+    info.geomMaterial =
+    {
+      textureUploader->GetMaterial(model.textures[0], model.textureFrames[0]),
+      RG_NO_MATERIAL,
+      RG_NO_MATERIAL,
+    };
+
+    Utils::CopyTransform(info.transform, model);
+
+    RgResult r = rgUploadGeometry(instance, &info);
+    RG_CHECKERROR(r);
   }
-
-  RgGeometryUploadInfo dnInfo = {};
-  dnInfo.uniqueID = model.GetUniqueID();
-  dnInfo.geomType = RG_GEOMETRY_TYPE_DYNAMIC;
-  dnInfo.passThroughType = model.passThroughType;
-  dnInfo.visibilityType = model.visibilityType;
-  dnInfo.vertexCount = model.vertexCount;
-  dnInfo.vertexData = model.vertices;
-  dnInfo.normalData = model.normals;
-  dnInfo.texCoordLayerData[0] = model.texCoordLayers[0];
-  dnInfo.texCoordLayerData[1] = nullptr;
-  dnInfo.texCoordLayerData[2] = nullptr;
-  dnInfo.defaultMetallicity = metallic;
-  dnInfo.defaultRoughness = roughness;
-  dnInfo.indexCount = model.indexCount;
-  dnInfo.indexData = model.indices;
-
-  dnInfo.layerColors[0] = { model.color(1), model.color(2), model.color(3), model.color(4) };
-  dnInfo.layerBlendingTypes[0] = RG_GEOMETRY_MATERIAL_BLEND_TYPE_OPAQUE;
-
-  dnInfo.geomMaterial =
+  else
   {
-    textureUploader->GetMaterial(model.textures[0], model.textureFrames[0]),
-    RG_NO_MATERIAL,
-    RG_NO_MATERIAL,
-  };
+    RgRasterizedGeometryVertexArrays vertInfo = {};
+    vertInfo.vertexData = model.vertices;
+    vertInfo.texCoordData = model.texCoordLayers[0];
+    vertInfo.colorData = nullptr;
+    vertInfo.vertexStride = sizeof(GFXVertex);
+    vertInfo.texCoordStride = sizeof(GFXTexCoord);
+    vertInfo.colorStride = sizeof(GFXColor);
 
-  Utils::CopyTransform(dnInfo.transform, model);
+    RgRasterizedGeometryUploadInfo info = {};
+    info.vertexCount = model.vertexCount;
+    info.arrays = &vertInfo;
+    info.indexCount = model.indexCount;
+    info.indexData = model.indices;
+    info.color = { model.color(1), model.color(2), model.color(3), model.color(4) };
+    info.material = textureUploader->GetMaterial(model.textures[0], model.textureFrames[0]);
+    info.blendEnable = RG_FALSE;
+    info.blendFuncSrc = RG_BLEND_FACTOR_ONE;
+    info.blendFuncDst = RG_BLEND_FACTOR_ONE;
+    info.depthTest = RG_TRUE;
+    info.renderToSwapchain = RG_FALSE;
 
-  RgResult r = rgUploadGeometry(instance, &dnInfo);
-  RG_CHECKERROR(r);
+    Utils::CopyTransform(info.transform, model);
+
+    RgResult r = rgUploadRasterizedGeometry(instance, &info, nullptr, nullptr);
+    RG_CHECKERROR(r);
+  }
 
   GeometryExporter::ExportGeometry(model);
 }
 
-void SSRT::Scene::AddParticles(const CParticlesGeometry &info)
+void SSRT::Scene::AddParticles(const CParticlesGeometry &particles)
 {
-  if (info.vertices == nullptr || info.vertexCount == 0 || info.indices == nullptr || info.indexCount == 0)
+  if (particles.vertices == nullptr || particles.vertexCount == 0 || particles.indices == nullptr || particles.indexCount == 0)
   {
     return;
   }
 
-  // unique IDs for particles?
-  return;
+  RgRasterizedGeometryVertexArrays vertInfo = {};
+  vertInfo.vertexData = particles.vertices;
+  vertInfo.texCoordData = particles.texCoordLayers[0];
+  vertInfo.colorData = particles.colorData;
+  vertInfo.vertexStride = sizeof(GFXVertex);
+  vertInfo.texCoordStride = sizeof(GFXTexCoord);
+  vertInfo.colorStride = sizeof(GFXColor);
 
-  RgGeometryUploadInfo paInfo = {};
-  paInfo.uniqueID = info.GetUniqueID();
-  paInfo.geomType = RG_GEOMETRY_TYPE_DYNAMIC;
-  paInfo.passThroughType = info.passThroughType;
-  paInfo.visibilityType = info.visibilityType;
-  paInfo.vertexCount = info.vertexCount;
-  paInfo.vertexData = info.vertices;
-  paInfo.normalData = info.normals;
-  paInfo.texCoordLayerData[0] = info.texCoordLayers[0];
-  paInfo.texCoordLayerData[1] = nullptr;
-  paInfo.texCoordLayerData[2] = nullptr;
-  paInfo.defaultRoughness = 1.0f;
-  paInfo.indexCount = info.indexCount;
-  paInfo.indexData = info.indices;
+  RgRasterizedGeometryUploadInfo info = {};
+  info.vertexCount = particles.vertexCount;
+  info.arrays = &vertInfo;
+  info.indexCount = particles.indexCount;
+  info.indexData = particles.indices;
+  info.color = { 1, 1, 1, 1 };
+  info.material = textureUploader->GetMaterial(particles.textures[0], particles.textureFrames[0]);
+  info.blendEnable = RG_FALSE;
+  info.blendFuncSrc = RG_BLEND_FACTOR_ONE;
+  info.blendFuncDst = RG_BLEND_FACTOR_ONE;
+  info.depthTest = RG_TRUE;
+  info.renderToSwapchain = RG_FALSE;
 
-  paInfo.layerColors[0] = { info.color(1), info.color(2), info.color(3), info.color(4) };
-  paInfo.layerBlendingTypes[0] = RG_GEOMETRY_MATERIAL_BLEND_TYPE_OPAQUE;
-  
-  paInfo.geomMaterial =
-  {
-    textureUploader->GetMaterial(info.textures[0], info.textureFrames[0]),
-    RG_NO_MATERIAL,
-    RG_NO_MATERIAL,
-  };
+  Utils::CopyTransform(info.transform, particles);
 
-  Utils::CopyTransform(paInfo.transform, info);
-
-  RgResult r = rgUploadGeometry(instance, &paInfo);
+  RgResult r = rgUploadRasterizedGeometry(instance, &info, nullptr, nullptr);
   RG_CHECKERROR(r);
 }
 

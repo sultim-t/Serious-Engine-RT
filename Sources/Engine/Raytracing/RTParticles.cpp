@@ -39,7 +39,11 @@ static FLOAT          RT_fTextureCorrectionU, RT_fTextureCorrectionV;
 static GFXTexCoord    RT_atex[4];
 static CTextureData   *RT_ptd = NULL;
 static INDEX          RT_iFrame = 0;
-static RgGeometryPassThroughType RT_ePassThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
+
+static bool           RT_bAlphaTest;
+static bool           RT_bBlendEnable;
+static RgBlendFactor  RT_eBlendSrc;
+static RgBlendFactor  RT_eBlendDst;
 
 static SSRT::Scene *RT_sCurrentScene;
 
@@ -117,31 +121,47 @@ static void RT_GenerateQuadIndices(SSRT::CParticlesGeometry *preparedInfo)
 
 void RT_Particle_PrepareTexture(CTextureObject *pto, ParticleBlendType pbt)
 {
+  RT_bAlphaTest = false;
+  RT_bBlendEnable = false;
+  RT_eBlendSrc = RG_BLEND_FACTOR_ZERO;
+  RT_eBlendDst = RG_BLEND_FACTOR_ONE;
+
   // determine blend type
   switch (pbt)
   {
     case PBT_BLEND:
       //  gfxBlendFunc(GFX_SRC_ALPHA, GFX_INV_SRC_ALPHA);
-      RT_ePassThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_UNDER;
+      RT_bBlendEnable = true;
+      RT_eBlendSrc = RG_BLEND_FACTOR_SRC_ALPHA;
+      RT_eBlendDst = RG_BLEND_FACTOR_INV_SRC_ALPHA;
       break;
     case PBT_ADD:
       // gfxBlendFunc(GFX_ONE, GFX_ONE);
-      RT_ePassThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_ADDITIVE;
+      RT_bBlendEnable = true;
+      RT_eBlendSrc = RG_BLEND_FACTOR_ONE;
+      RT_eBlendDst = RG_BLEND_FACTOR_ONE;
       break;
     case PBT_MULTIPLY:
       // gfxBlendFunc(GFX_ZERO, GFX_INV_SRC_COLOR);
-      RT_ePassThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_UNDER;
+      RT_bBlendEnable = true;
+      RT_eBlendSrc = RG_BLEND_FACTOR_ZERO;
+      RT_eBlendDst = RG_BLEND_FACTOR_INV_SRC_COLOR;
       break;
     case PBT_ADDALPHA:
       // gfxBlendFunc(GFX_SRC_ALPHA, GFX_ONE);
-      RT_ePassThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
-      break;
+      RT_bBlendEnable = true;
+      RT_eBlendSrc = RG_BLEND_FACTOR_SRC_ALPHA;
+      RT_eBlendDst = RG_BLEND_FACTOR_ONE;
     case PBT_FLEX:
       // gfxBlendFunc(GFX_ONE, GFX_INV_SRC_ALPHA);
-      RT_ePassThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_BLEND_UNDER;
+      RT_bBlendEnable = true;
+      RT_eBlendSrc = RG_BLEND_FACTOR_ONE;
+      RT_eBlendDst = RG_BLEND_FACTOR_INV_SRC_ALPHA;
       break;
     case PBT_TRANSPARENT:
-      RT_ePassThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
+      // = RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
+      // TODO: upload as ray-traced?
+      RT_bAlphaTest = true;
       break;
   }
 
@@ -364,6 +384,9 @@ void RT_Particle_Flush()
 {
   if (RT_sCurrentScene != nullptr && _avtxCommon.Count() > 0)
   {
+    ASSERT(_atexCommon.Count() == _avtxCommon.Count());
+    ASSERT(_acolCommon.Count() == _avtxCommon.Count());
+
     FLOATmatrix3D identity;
     identity(1, 1) = 1; identity(1, 2) = 0; identity(1, 3) = 0;
     identity(2, 1) = 0; identity(2, 2) = 1; identity(2, 3) = 0;
@@ -373,14 +396,12 @@ void RT_Particle_Flush()
     info.entityID = UINT32_MAX;
     info.absPosition = { 0,0,0 };
     info.absRotation = identity;
-    info.passThroughType = RT_ePassThroughType;
+    info.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_OPAQUE;
     info.vertexCount = _avtxCommon.Count();
     info.vertices = &_avtxCommon[0];
     info.normals = nullptr;
+    info.colorData = &_acolCommon[0];
     info.texCoordLayers[0] = &_atexCommon[0];
-
-    // do we need multiple colors for particle batch?
-    info.color = { _acolCommon[0].r / 256.0f, _acolCommon[0].g / 256.0f, _acolCommon[0].b / 256.0f, _acolCommon[0].a / 256.0f, };
 
     info.textures[0] = RT_ptd;
     info.textureFrames[0] = RT_iFrame;
@@ -389,6 +410,9 @@ void RT_Particle_Flush()
 
     RT_sCurrentScene->AddParticles(info);
   }
+
+  RT_ptd = nullptr;
+  RT_iFrame = 0;
 
   // all done
   gfxResetArrays();
