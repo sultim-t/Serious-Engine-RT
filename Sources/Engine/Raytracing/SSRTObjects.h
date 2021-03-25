@@ -60,6 +60,10 @@ struct CAbstractGeometry
   RgGeometryPassThroughType passThroughType;
   RgGeometryPrimaryVisibilityType visibilityType;
 
+  bool                blendEnable;
+  RgBlendFactor       blendSrc;
+  RgBlendFactor       blendDst;
+
 public:
   virtual ~CAbstractGeometry() = default;
   virtual uint64_t    GetUniqueID() const = 0;

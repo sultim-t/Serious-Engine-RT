@@ -179,6 +179,33 @@ static bool RT_ShouldBeRasterized(SurfaceTranslucencyType stt, bool forceTranslu
 }
 
 
+static void RT_SetBlend(bool &blendEnable, RgBlendFactor &blendSrc, RgBlendFactor &blendDst, SurfaceTranslucencyType stt, bool forceTranslucency = false)
+{
+  if (stt == STT_TRANSLUCENT || (forceTranslucency && ((stt == STT_OPAQUE) || (stt == STT_TRANSPARENT))))
+  {
+    blendEnable = true;
+    blendSrc = RG_BLEND_FACTOR_SRC_ALPHA;
+    blendDst = RG_BLEND_FACTOR_INV_SRC_ALPHA;
+  }
+  else if (stt == STT_ADD)
+  {
+    blendEnable = true;
+    blendSrc = RG_BLEND_FACTOR_SRC_ALPHA;
+    blendDst = RG_BLEND_FACTOR_ONE;
+  }
+  else if (stt == STT_MULTIPLY)
+  {
+    blendEnable = true;
+    blendSrc = RG_BLEND_FACTOR_ZERO;
+    blendDst = RG_BLEND_FACTOR_INV_SRC_COLOR;
+  }
+  else
+  {
+    blendEnable = false;
+  }
+}
+
+
 // RT: SetRenderingParameters(..) in RenderModel_View.cpp
 static RgGeometryPassThroughType GetPassThroughType(SurfaceTranslucencyType stt, bool forceTranslucency = false)
 {
@@ -280,6 +307,7 @@ static void FlushModelInfo(ULONG entityID,
   modelInfo.entityID = entityID;
   modelInfo.modelPartIndex = RT_ModelPartIndex;
   modelInfo.passThroughType = GetPassThroughType(stt, forceTranslucency);
+  modelInfo.isRasterized = RT_ShouldBeRasterized(stt, forceTranslucency);
 
   if (isFirstPersonWeapon)
   {
@@ -291,12 +319,15 @@ static void FlushModelInfo(ULONG entityID,
   }
   else if (isBackground)
   {
-    FLOATmatrix3D bv;
-    MakeInverseRotationMatrix(bv, pScene->GetBackgroundViewerOrientationAngle());
-
-    rotation = bv * rotation;
-
     modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_SKYBOX;
+
+    if (!modelInfo.isRasterized)
+    {
+      FLOATmatrix3D bv;
+      MakeInverseRotationMatrix(bv, pScene->GetBackgroundViewerOrientationAngle());
+
+      rotation = bv * rotation;
+    }
   }
   else
   {
@@ -336,9 +367,13 @@ static void FlushModelInfo(ULONG entityID,
     modelInfo.attchPath[i] = attchPath[i];
   }
 
-  modelInfo.isRasterized = RT_ShouldBeRasterized(stt, forceTranslucency);
+  RT_SetBlend(modelInfo.blendEnable, modelInfo.blendSrc, modelInfo.blendDst, stt, forceTranslucency);
 
-  pScene->AddModel(modelInfo);
+  // don't draw rasterized parts of first person viewer
+  if (!(modelInfo.visibilityType == RG_GEOMETRY_VISIBILITY_TYPE_FIRST_PERSON_VIEWER && modelInfo.isRasterized))
+  {
+    pScene->AddModel(modelInfo);
+  }
 
   RT_ModelPartIndex++;
 }

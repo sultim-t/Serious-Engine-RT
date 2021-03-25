@@ -406,6 +406,10 @@ void RT_Particle_Flush()
     info.textures[0] = RT_ptd;
     info.textureFrames[0] = RT_iFrame;
 
+    info.blendEnable = true;
+    info.blendSrc = RT_eBlendSrc;
+    info.blendDst = RT_eBlendDst;
+
     RT_GenerateQuadIndices(&info);
 
     RT_sCurrentScene->AddParticles(info);

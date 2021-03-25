@@ -216,7 +216,7 @@ void SSRT::SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
   }
 
   // update models and movable brushes in scene
-  currentScene->Update(info.viewerPosition, info.viewerRotation, info.viewerEntityID);
+  currentScene->Update(worldRenderInfo);
 }
 
 void SSRT::SSRTMain::ProcessFirstPersonModel(const CFirstPersonModelInfo &info)
@@ -262,6 +262,11 @@ void SSRT::SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
   hudInfo.depthTest = RG_FALSE;
   hudInfo.depthWrite = RG_FALSE;
   hudInfo.renderToSwapchain = RG_TRUE;
+  hudInfo.transform = {
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0
+  };
 
   float hudViewProj[16];
   extern void Svk_MatMultiply(float *result, const float *a, const float *b);

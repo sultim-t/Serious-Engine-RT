@@ -135,11 +135,43 @@ SSRT::Scene::~Scene()
   RG_CHECKERROR(r);
 }
 
-void SSRT::Scene::Update(const FLOAT3D &_viewerPosition, const FLOATmatrix3D &_viewerRotation, ULONG _viewerEntityID)
+void SSRT::Scene::Update(const CWorldRenderingInfo &info)
 {
-  this->viewerEntityID = _viewerEntityID;
-  this->viewerPosition = _viewerPosition;
-  this->viewerRotation = _viewerRotation;
+  this->viewerEntityID = info.viewerEntityID;
+  this->viewerPosition = info.viewerPosition;
+  this->viewerRotation = info.viewerRotation;
+
+  // background view matrix
+  float backgroundView[16];
+  {
+    const FLOAT3D &v = GetBackgroundViewerPosition();
+
+    FLOATmatrix3D m;
+    MakeInverseRotationMatrix(m, GetBackgroundViewerOrientationAngle());
+
+    // inverse Y axis for Vulkan
+    m(2, 1) = -m(2, 1);
+    m(2, 2) = -m(2, 2);
+    m(2, 3) = -m(2, 3);
+
+    // 4th column of (T*M)^-1 = M^(-1)*T^(-1),
+    FLOAT3D t =
+    {
+      -v % FLOAT3D(m(1, 1), m(1, 2), m(1, 3)),
+      -v % FLOAT3D(m(2, 1), m(2, 2), m(2, 3)),
+      -v % FLOAT3D(m(3, 1), m(3, 2), m(3, 3))
+    };
+
+    float *cm = backgroundView;
+    cm[0] = m(1, 1);  cm[4] = m(1, 2);  cm[8] = m(1, 3);   cm[12] = v(1);
+    cm[1] = m(2, 1);  cm[5] = m(2, 2);  cm[9] = m(2, 3);   cm[13] = v(2);
+    cm[2] = m(3, 1);  cm[6] = m(3, 2);  cm[10] = m(3, 3);  cm[14] = v(3);
+    cm[3] = 0;        cm[7] = 0;        cm[11] = 0;        cm[15] = 1;
+  }
+
+  extern void Svk_MatMultiply(float *result, const float *a, const float *b);
+  Svk_MatMultiply(backgroundViewProj, backgroundView, info.projectionMatrix);
+
 
   NormalizeShellVariables();
 
@@ -258,15 +290,19 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
     info.indexData = model.indices;
     info.color = { model.color(1), model.color(2), model.color(3), model.color(4) };
     info.material = textureUploader->GetMaterial(model.textures[0], model.textureFrames[0]);
-    info.blendEnable = RG_FALSE;
-    info.blendFuncSrc = RG_BLEND_FACTOR_ONE;
-    info.blendFuncDst = RG_BLEND_FACTOR_ONE;
+    info.blendEnable = model.blendEnable;
+    info.blendFuncSrc = model.blendSrc;
+    info.blendFuncDst = model.blendDst;
     info.depthTest = RG_TRUE;
     info.renderToSwapchain = RG_FALSE;
 
     Utils::CopyTransform(info.transform, model);
 
-    RgResult r = rgUploadRasterizedGeometry(instance, &info, nullptr, nullptr);
+    float *viewProj = 
+      model.visibilityType == RG_GEOMETRY_VISIBILITY_TYPE_SKYBOX ?
+      backgroundViewProj : nullptr;
+
+    RgResult r = rgUploadRasterizedGeometry(instance, &info, viewProj, nullptr);
     RG_CHECKERROR(r);
   }
 
@@ -295,9 +331,9 @@ void SSRT::Scene::AddParticles(const CParticlesGeometry &particles)
   info.indexData = particles.indices;
   info.color = { 1, 1, 1, 1 };
   info.material = textureUploader->GetMaterial(particles.textures[0], particles.textureFrames[0]);
-  info.blendEnable = RG_FALSE;
-  info.blendFuncSrc = RG_BLEND_FACTOR_ONE;
-  info.blendFuncDst = RG_BLEND_FACTOR_ONE;
+  info.blendEnable = particles.blendEnable;
+  info.blendFuncSrc = particles.blendSrc;
+  info.blendFuncDst = particles.blendDst;
   info.depthTest = RG_TRUE;
   info.renderToSwapchain = RG_FALSE;
 
@@ -314,82 +350,120 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
     return;
   }
 
-  RgGeometryUploadInfo stInfo = {};
-  stInfo.uniqueID = brush.GetUniqueID();
-  stInfo.geomType = brush.isMovable ?
-    RG_GEOMETRY_TYPE_STATIC_MOVABLE :
-    RG_GEOMETRY_TYPE_STATIC;
-  stInfo.passThroughType = brush.passThroughType;
-  stInfo.visibilityType = brush.visibilityType;
-  stInfo.vertexCount = brush.vertexCount;
-  stInfo.vertexData = brush.vertices;
-  stInfo.normalData = brush.normals;
-  stInfo.defaultRoughness = 1.0f;
-  stInfo.indexCount = brush.indexCount;
-  stInfo.indexData = brush.indices;
-
-  for (uint32_t i = 0; i < 3; i++)
+  if (!brush.isRasterized)
   {
-    stInfo.texCoordLayerData[i] = brush.texCoordLayers[i];
-    stInfo.layerBlendingTypes[i] = brush.layerBlendings[i];
-    stInfo.layerColors[i] = { brush.layerColors[i](1), brush.layerColors[i](2), brush.layerColors[i](3), brush.layerColors[i](4) };
-  }
+    RgGeometryUploadInfo stInfo = {};
+    stInfo.uniqueID = brush.GetUniqueID();
+    stInfo.geomType = brush.isMovable ?
+      RG_GEOMETRY_TYPE_STATIC_MOVABLE :
+      RG_GEOMETRY_TYPE_STATIC;
+    stInfo.passThroughType = brush.passThroughType;
+    stInfo.visibilityType = brush.visibilityType;
+    stInfo.vertexCount = brush.vertexCount;
+    stInfo.vertexData = brush.vertices;
+    stInfo.normalData = brush.normals;
+    stInfo.defaultRoughness = 1.0f;
+    stInfo.indexCount = brush.indexCount;
+    stInfo.indexData = brush.indices;
 
-  stInfo.geomMaterial =
-  {
-    textureUploader->GetMaterial(brush.textures[0], brush.textureFrames[0]),
-    textureUploader->GetMaterial(brush.textures[1], brush.textureFrames[1]),
-    textureUploader->GetMaterial(brush.textures[2], brush.textureFrames[2]),
-  };
-
-  Utils::CopyTransform(stInfo.transform, brush);
-
-  RgResult r = rgUploadGeometry(instance, &stInfo);
-  RG_CHECKERROR(r);
-
-  // save movable brush info for updating
-  if (brush.isMovable)
-  {
-    // create vector if doesn't exist
-    if (entityToMovableBrush.find(brush.entityID) == entityToMovableBrush.end())
+    for (uint32_t i = 0; i < 3; i++)
     {
-      entityToMovableBrush[brush.entityID] = {};
+      stInfo.texCoordLayerData[i] = brush.texCoordLayers[i];
+      stInfo.layerBlendingTypes[i] = brush.layerBlendings[i];
+      stInfo.layerColors[i] = { brush.layerColors[i](1), brush.layerColors[i](2), brush.layerColors[i](3), brush.layerColors[i](4) };
     }
 
-    entityToMovableBrush[brush.entityID].push_back(brush.GetUniqueID());
+    stInfo.geomMaterial =
+    {
+      textureUploader->GetMaterial(brush.textures[0], brush.textureFrames[0]),
+      textureUploader->GetMaterial(brush.textures[1], brush.textureFrames[1]),
+      textureUploader->GetMaterial(brush.textures[2], brush.textureFrames[2]),
+    };
+
+    Utils::CopyTransform(stInfo.transform, brush);
+
+    RgResult r = rgUploadGeometry(instance, &stInfo);
+    RG_CHECKERROR(r);
+  }
+  else
+  {
+    RgRasterizedGeometryVertexArrays vertInfo = {};
+    vertInfo.vertexData = brush.vertices;
+    vertInfo.texCoordData = brush.texCoordLayers[0];
+    vertInfo.colorData = nullptr;
+    vertInfo.vertexStride = sizeof(GFXVertex);
+    vertInfo.texCoordStride = sizeof(GFXTexCoord);
+    vertInfo.colorStride = sizeof(GFXColor);
+
+    RgRasterizedGeometryUploadInfo info = {};
+    info.vertexCount = brush.vertexCount;
+    info.arrays = &vertInfo;
+    info.indexCount = brush.indexCount;
+    info.indexData = brush.indices;
+    info.color = { brush.layerColors[0](1), brush.layerColors[0](2), brush.layerColors[0](3), brush.layerColors[0](4) };
+    info.material = textureUploader->GetMaterial(brush.textures[0], brush.textureFrames[0]);
+    info.blendEnable = brush.blendEnable;
+    info.blendFuncSrc = brush.blendSrc;
+    info.blendFuncDst = brush.blendDst;
+    info.depthTest = RG_TRUE;
+    info.renderToSwapchain = RG_FALSE;
+
+    Utils::CopyTransform(info.transform, brush);
+
+    float *viewProj = 
+      brush.visibilityType == RG_GEOMETRY_VISIBILITY_TYPE_SKYBOX ?
+      backgroundViewProj : nullptr;
+
+    RgResult r = rgUploadRasterizedGeometry(instance, &info, viewProj, nullptr);
+    RG_CHECKERROR(r);
   }
 
-  // save effect and animated textures to update them each frame
-  for (uint32_t i = 0; i < 3; i++)
+  if (!brush.isRasterized)
   {
-    CTextureObject *to = brush.textureObjects[i];
-    CTextureData *td = brush.textures[i];
-
-    // if effect or animated
-    bool hasNonStaticTexture = to && td && (td->td_ptegEffect != nullptr || td->td_ctFrames > 1);
-
-    if (entityHasNonStaticTexture.find(brush.entityID) == entityHasNonStaticTexture.end())
+    // save movable brush info for updating
+    if (brush.isMovable)
     {
-      entityHasNonStaticTexture[brush.entityID] = false;
+      // create vector if doesn't exist
+      if (entityToMovableBrush.find(brush.entityID) == entityToMovableBrush.end())
+      {
+        entityToMovableBrush[brush.entityID] = {};
+      }
+
+      entityToMovableBrush[brush.entityID].push_back(brush.GetUniqueID());
     }
 
-    entityHasNonStaticTexture[brush.entityID] |= hasNonStaticTexture;
-  }
-
-  // save brush part geom index for updating dynamic texture coordinates
-  if (brush.hasScrollingTextures)
-  {
-    // create vector if doesn't exist
-    if (entitiesWithDynamicTexCoords.find(brush.entityID) == entitiesWithDynamicTexCoords.end())
+    // save effect and animated textures to update them each frame
+    for (uint32_t i = 0; i < 3; i++)
     {
-      entitiesWithDynamicTexCoords[brush.entityID] = {};
+      CTextureObject *to = brush.textureObjects[i];
+      CTextureData *td = brush.textures[i];
+
+      // if effect or animated
+      bool hasNonStaticTexture = to && td && (td->td_ptegEffect != nullptr || td->td_ctFrames > 1);
+
+      if (entityHasNonStaticTexture.find(brush.entityID) == entityHasNonStaticTexture.end())
+      {
+        entityHasNonStaticTexture[brush.entityID] = false;
+      }
+
+      entityHasNonStaticTexture[brush.entityID] |= hasNonStaticTexture;
     }
 
-    BrushPartGeometryIndex t = {};
-    t.brushPartIndex = brush.brushPartIndex;
-    t.vertexCount = brush.vertexCount;
+    // save brush part geom index for updating dynamic texture coordinates
+    if (brush.hasScrollingTextures)
+    {
+      // create vector if doesn't exist
+      if (entitiesWithDynamicTexCoords.find(brush.entityID) == entitiesWithDynamicTexCoords.end())
+      {
+        entitiesWithDynamicTexCoords[brush.entityID] = {};
+      }
 
-    entitiesWithDynamicTexCoords[brush.entityID].push_back(t);
+      BrushPartGeometryIndex t = {};
+      t.brushPartIndex = brush.brushPartIndex;
+      t.vertexCount = brush.vertexCount;
+
+      entitiesWithDynamicTexCoords[brush.entityID].push_back(t);
+    }
   }
 
   GeometryExporter::ExportGeometry(brush);

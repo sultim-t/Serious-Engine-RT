@@ -103,13 +103,18 @@ struct RT_TextureLayerBlending
 
 static bool RT_ShouldBeRasterized(uint32_t bpofFlags)
 {
-  return bpofFlags & BPOF_TRANSLUCENT;
+  return false; // bpofFlags & BPOF_TRANSLUCENT;
 }
 
 
 static RgGeometryPassThroughType RT_GetPassThroughType(uint32_t bpofFlags)
 {
   if  (bpofFlags & BPOF_TRANSPARENT)
+  {
+    return RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
+  }
+  // TODO: tranclucent should be rasterized
+  else if  (bpofFlags & BPOF_TRANSLUCENT)
   {
     return RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
   }
@@ -161,15 +166,20 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   brushInfo.entityID = penBrush->en_ulID;
   brushInfo.isMovable = isMovable;
   brushInfo.passThroughType = RT_GetPassThroughType(polygonFlags);
+  
+  brushInfo.isRasterized = !isWater && RT_ShouldBeRasterized(polygonFlags);
 
   if (penBrush->en_ulFlags & ENF_BACKGROUND)
   {
     brushInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_SKYBOX;
 
-    FLOATmatrix3D bv;
-    MakeInverseRotationMatrix(bv, pScene->GetBackgroundViewerOrientationAngle());
+    if (!brushInfo.isRasterized)
+    {
+      FLOATmatrix3D bv;
+      MakeInverseRotationMatrix(bv, pScene->GetBackgroundViewerOrientationAngle());
 
-    rotation = bv * rotation;
+      rotation = bv * rotation;
+    }
   }
   else
   {
@@ -241,7 +251,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
     brushInfo.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_REFLECT;
   }
 
-  brushInfo.isRasterized = RT_ShouldBeRasterized(polygonFlags);
+  brushInfo.blendEnable = false;
 
   pScene->AddBrush(brushInfo);
 

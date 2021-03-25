@@ -48,7 +48,7 @@ public:
   const FLOATmatrix3D &GetViewerRotation() const;
 
   void ProcessFirstPersonModel(const CFirstPersonModelInfo &info, ULONG entityId);
-  void Update(const FLOAT3D &viewerPosition, const FLOATmatrix3D &viewerRotation, ULONG viewerEntityID);
+  void Update(const CWorldRenderingInfo &info);
 
   const CTString &GetWorldName() const;
   const CWorld *GetWorld() const;
@@ -87,6 +87,7 @@ private:
   ULONG             viewerEntityID;
   FLOAT3D           viewerPosition;
   FLOATmatrix3D     viewerRotation;
+  float             backgroundViewProj[16];
 
   // Movable brush's entity ID to uniqueIDs of that entity's parts
   std::map<ULONG, std::vector<uint64_t>>    entityToMovableBrush;
