@@ -601,8 +601,6 @@ static void RT_SetupModelRendering(CModelObject &mo,
     rm.rm_pFrame8_1 = &rm.rm_pmdModelData->md_FrameVertices8[ rm.rm_iFrame1 * ctVertices ];
   }
 
-  rm.rm_colBlend = 0xFFFFFFFF;
-
   // obtain current rendering preferences
   rm.rm_rtRenderType = _mrpModelRenderPrefs.GetRenderType();
   // remember blending color
