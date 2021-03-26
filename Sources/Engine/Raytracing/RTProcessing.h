@@ -30,7 +30,7 @@ void RT_UpdateBrushNonStaticTexture(CEntity *penBrush, SSRT::Scene *scene);
 void RT_UpdateBrushTexCoords(CEntity *penBrush, SSRT::Scene *scene);
 void RT_BrushProcessingClear();
 
-void RT_AddModelEntity(const CEntity *penModel, SSRT::Scene *ssrt);
+void RT_AddModelEntity(CEntity *penModel, SSRT::Scene *ssrt);
 void RT_AddFirstPersonModel(CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::Scene *scene);
 
 // Process particles to be added to the scene.

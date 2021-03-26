@@ -151,10 +151,11 @@ static bool RT_SphericalLightIsIgnored(const CLightSource *plsLight)
 
 struct RT_VertexData
 {
-  GFXVertex   *vertices;
   INDEX       vertexCount;
-  GFXNormal   *normals;
-  GFXTexCoord *texCoords;
+  GFXVertex   *pPositons;
+  GFXNormal   *pNormals;
+  GFXTexCoord *pTexCoords;
+  GFXColor    *pColors;
 };
 
 
@@ -338,9 +339,9 @@ static void FlushModelInfo(ULONG entityID,
   modelInfo.absRotation = rotation;
  
   modelInfo.vertexCount = vd.vertexCount;
-  modelInfo.vertices = vd.vertices;
-  modelInfo.normals = vd.normals;
-  modelInfo.texCoordLayers[0] = vd.texCoords;
+  modelInfo.vertices = vd.pPositons;
+  modelInfo.normals = vd.pNormals;
+  modelInfo.texCoordLayers[0] = vd.pTexCoords;
  
   modelInfo.indexCount = indexCount;
   modelInfo.indices = pIndices;
@@ -674,7 +675,6 @@ static void RT_RenderOneSide(ULONG entityID,
                              BOOL bBackSide, 
                              bool isBackground,
                              const INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH],
-                             GFXColor modelColor,
                              bool forceTranslucency,
                              SSRT::Scene *scene)
 {
@@ -697,13 +697,16 @@ static void RT_RenderOneSide(ULONG entityID,
   INDEX ctElements = 0;
   ModelMipInfo &mmi = *rm.rm_pmmiMip;
 
-  auto flushModel = [entityID, &rm, &to, attchPath, &mmi, &vd, scene, &sttLast, modelColor, forceTranslucency, isBackground] (INDEX firstIndex, INDEX indexCount)
+  auto flushModel = [entityID, &rm, &to, attchPath, &mmi, &vd, scene, &sttLast, forceTranslucency, isBackground] (INDEX firstIndex, INDEX indexCount)
   {
     ASSERT(firstIndex >= 0);
     if (indexCount <= 0)
     {
       return;
     }
+
+    // RT: use surface color, it doesn't differ over mapping surface because of the lack of vertex lighting
+    GFXColor modelColor = vd.pColors[firstIndex];
 
     FlushModelInfo(entityID, rm, to, attchPath,
                    &mmi.mmpi_aiElements[firstIndex], indexCount,
@@ -806,8 +809,7 @@ static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &
   ASSERT(_anorSrfBase.Count() == 0);  _anorSrfBase.Push(_ctAllSrfVx);
 
 
-  // TODO: RT: models: forced translucency? Problems with palms in Alley of Sphinxes 
-  bool forceTranslucency = false; // ((rm.rm_colBlend & CT_AMASK) >> CT_ASHIFT) != CT_OPAQUE;
+  bool forceTranslucency = ((rm.rm_colBlend & CT_AMASK) >> CT_ASHIFT) != CT_OPAQUE;
   ULONG ulColorMask = mo.mo_ColorMask;
 
   // adjust all surfaces' params for eventual forced-translucency case
@@ -970,14 +972,15 @@ static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &
     //gfxSetTexCoordArray(&_atexSrfBase[ 0 ], FALSE);
 
     RT_VertexData vd = {};
-    vd.vertices = &_avtxSrfBase[0];
     vd.vertexCount = _ctAllSrfVx;
-    vd.normals = srt_bModelUseOriginalNormals ? &_anorSrfBase[0] : nullptr;
-    vd.texCoords = &_atexSrfBase[0];
+    vd.pPositons = &_avtxSrfBase[0];
+    vd.pNormals = srt_bModelUseOriginalNormals ? &_anorSrfBase[0] : nullptr;
+    vd.pTexCoords = &_atexSrfBase[0];
+    vd.pColors = &_acolSrfBase[0];
 
     // RT: everything is set, copy model data to SSRT
     //RT_RenderOneSide(rm, TRUE);
-    RT_RenderOneSide(entityID, rm, &mo.mo_toTexture, vd, FALSE, isBackground, attchPath, colMdlDiff, forceTranslucency, scene);
+    RT_RenderOneSide(entityID, rm, &mo.mo_toTexture, vd, FALSE, isBackground, attchPath, forceTranslucency, scene);
   }
 
   // adjust z-buffer and blending functions
@@ -1049,7 +1052,7 @@ static void RT_RenderModel(ULONG entityID, CModelObject &mo, CRenderModel &rm, b
 
 //void CRenderer::RenderOneModel(CEntity &en, CModelObject &moModel, const CPlacement3D &plModel,
 //                               const FLOAT fDistanceFactor, BOOL bRenderShadow, ULONG ulDMFlags)
-static void RT_RenderOneModel(const CEntity &en, 
+static void RT_RenderOneModel(CEntity &en, 
                               CModelObject &moModel, 
                               const CPlacement3D &plModel,
                               const FLOAT fDistanceFactor, 
@@ -1068,6 +1071,12 @@ static void RT_RenderOneModel(const CEntity &en,
   {
     return;
   }
+
+  // RT: just any params; AdjustShadingParameters is used for very different logic, like model fading by time
+  COLOR colLight   = C_GRAY;
+  COLOR colAmbient = C_dGRAY;
+  FLOAT3D vTotalLightDirection( 1.0f, -1.0f, 1.0f);
+  en.AdjustShadingParameters( vTotalLightDirection, colLight, colAmbient);
 
   // prepare render model structure
   CRenderModel rm;
@@ -1113,7 +1122,7 @@ static void RT_RenderOneModel(const CEntity &en,
 
 
 // CRenderer::RenderModels(BOOL bBackground)
-static void RT_Post_RenderModels(const CEntity &en, 
+static void RT_Post_RenderModels(CEntity &en, 
                                  CModelObject &mo, 
                                  SSRT::Scene *scene)
 {
@@ -1126,7 +1135,7 @@ static void RT_Post_RenderModels(const CEntity &en,
 }
 
 
-void RT_AddModelEntity(const CEntity *penModel, SSRT::Scene *scene)
+void RT_AddModelEntity(CEntity *penModel, SSRT::Scene *scene)
 {
   RT_ModelPartIndex = 0;
 
@@ -1172,6 +1181,10 @@ void RT_AddModelEntity(const CEntity *penModel, SSRT::Scene *scene)
 
   // mark the entity as active in rendering
   //penModel->en_ulFlags |= ENF_INRENDERING;
+
+  // RT: set enormous negative value, so we won't have fading on ModelHolders
+  float mipFactor = -10000000.0f;
+  penModel->AdjustMipFactor(mipFactor);
 
   // add it to a container for delayed rendering
   //CDelayedModel dm = {}; // re_admDelayedModels.Push();

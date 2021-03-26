@@ -256,6 +256,7 @@ void SSRT::SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
   hudInfo.indexCount = hud.indexCount;
   hudInfo.indexData = (uint32_t*)hud.pIndices;
   hudInfo.material = textureUploader->GetMaterial(hud.textureData);
+  hudInfo.color = { 1, 1, 1, 1 };
   hudInfo.blendEnable = RG_TRUE;
   hudInfo.blendFuncSrc = RG_BLEND_FACTOR_SRC_ALPHA;
   hudInfo.blendFuncDst = RG_BLEND_FACTOR_INV_SRC_ALPHA;
