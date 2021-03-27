@@ -704,7 +704,7 @@ static void RT_RenderOneSide(ULONG entityID,
     }
 
     // RT: use surface color, it doesn't differ over mapping surface because of the lack of vertex lighting
-    GFXColor modelColor = vd.pColors[firstIndex];
+    GFXColor modelColor = vd.pColors[mmi.mmpi_aiElements[firstIndex]];
 
     FlushModelInfo(entityID, rm, to, attchPath,
                    &mmi.mmpi_aiElements[firstIndex], indexCount,
