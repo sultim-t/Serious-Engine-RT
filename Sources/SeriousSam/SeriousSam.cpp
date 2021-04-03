@@ -607,7 +607,9 @@ BOOL Init( HINSTANCE hInstance, int nCmdShow, CTString strCmdLine)
     }
   // if no relevant starting at command line
   } else {
+  #ifndef SE1_RAYTRACING
     StartNextDemo();
+  #endif
   }
   return TRUE;
 }

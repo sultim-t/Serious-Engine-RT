@@ -711,6 +711,7 @@ extern void UpdateVideoOptionsButtons(INDEX iSelected)
   FillAdaptersList();
 
   // show or hide buttons
+#ifndef SE1_RAYTRACING
   gmCurrent.gm_mgDisplayAPITrigger.mg_bEnabled = bOGLEnabled
 #ifdef SE1_D3D
     && bD3DEnabled
@@ -718,7 +719,11 @@ extern void UpdateVideoOptionsButtons(INDEX iSelected)
 #ifdef SE1_VULKAN
     && bVKEnabled
 #endif // SE1_VULKAN
-    ;
+  ;
+#else
+  gmCurrent.gm_mgDisplayAPITrigger.mg_bEnabled = bVKEnabled && bRTEnabled;
+#endif
+
   gmCurrent.gm_mgDisplayAdaptersTrigger.mg_bEnabled = _ctAdapters>1;
   gmCurrent.gm_mgApply.mg_bEnabled = _bVideoOptionsChanged;
   // determine which should be visible

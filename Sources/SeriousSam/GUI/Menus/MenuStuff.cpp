@@ -135,6 +135,7 @@ extern CTString astrDisplayPrefsRadioTexts[] = {
   RADIOTRANS("Custom"),
 };
 
+#ifndef SE1_RAYTRACING
 extern CTString astrDisplayAPIRadioTexts[] = {
   RADIOTRANS("OpenGL"),
 #ifndef SE1_VULKAN
@@ -143,6 +144,12 @@ extern CTString astrDisplayAPIRadioTexts[] = {
   RADIOTRANS("Vulkan")
 #endif // SE1_VULKAN
 };
+#else
+extern CTString astrDisplayAPIRadioTexts[] = {
+  RADIOTRANS("Vulkan"),
+  RADIOTRANS("Ray Tracing"),
+};
+#endif
 
 extern CTString astrBitsPerPixelRadioTexts[] = {
   RADIOTRANS("Desktop"),
@@ -268,6 +275,7 @@ INDEX APIToSwitch(enum GfxAPIType gat)
 
 enum GfxAPIType SwitchToAPI(INDEX i)
 {
+#ifndef SE1_RAYTRACING
   switch (i) {
   case 0: return GAT_OGL;
 #ifdef SE1_D3D
@@ -279,6 +287,13 @@ enum GfxAPIType SwitchToAPI(INDEX i)
 #endif // SE1_VULKAN
   default: ASSERT(FALSE); return GAT_OGL;
   }
+#else
+  switch (i) {
+  case 0: return GAT_VK;
+  case 1: return GAT_RT;
+  default: ASSERT(FALSE);
+  }
+#endif
 }
 
 INDEX DepthToSwitch(enum DisplayDepth dd)
