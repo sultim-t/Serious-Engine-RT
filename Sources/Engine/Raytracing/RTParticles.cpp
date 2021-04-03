@@ -25,6 +25,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Templates/DynamicContainer.cpp>
 
 
+extern INDEX gfx_bRenderParticles;
+
 extern CEntity *_Particle_penCurrentViewer;
 extern FLOAT _Particle_fCurrentMip;
 extern BOOL  _Particle_bHasFog;
@@ -50,6 +52,11 @@ static SSRT::Scene *RT_sCurrentScene;
 
 void RT_AddAllParticles(CWorld *pWorld, CEntity *penViewer, SSRT::Scene *scene)
 {
+  if (!gfx_bRenderParticles)
+  {
+    return;
+  }
+
   const bool bBackground = false;
   CAnyProjection3D emptyProjection = {};
 

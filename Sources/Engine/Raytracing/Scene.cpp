@@ -518,6 +518,23 @@ void SSRT::Scene::HideMovableBrush(ULONG entityId)
   }
 }
 
+bool SSRT::Scene::ArePlacementsSame(const CPlacement3D &a, const CPlacement3D &b)
+{
+  float posDiff = 0.0f;
+  float angDiff = 0.0f;
+
+  for (int i = 0; i < 3; i++)
+  {
+    posDiff += Abs(a.pl_PositionVector.vector[i] - b.pl_PositionVector.vector[i]);
+    angDiff += Abs(a.pl_OrientationAngle.vector[i] - b.pl_OrientationAngle.vector[i]);
+  }
+  
+  const float posEps = 0.005f;
+  const float angEps = 0.005f;
+
+  return posDiff < posEps && angDiff < angEps;
+}
+
 void SSRT::Scene::AddLight(const CSphereLight &sphLt)
 {
   sphLights.push_back(sphLt);
@@ -578,6 +595,11 @@ void SSRT::Scene::ProcessFirstPersonModel(const CFirstPersonModelInfo &info, ULO
 
 void SSRT::Scene::ProcessBrushes()
 {
+  entityToMovableBrush.clear();
+  entityToMovableBrushPlacement.clear();
+  entityHasNonStaticTexture.clear();
+  entitiesWithDynamicTexCoords.clear();
+
   RgResult r = rgStartNewScene(instance);
   RG_CHECKERROR(r);
 
@@ -645,15 +667,61 @@ void SSRT::Scene::ProcessDynamicGeometry()
       // process movable
       if (iten->en_ulPhysicsFlags & EPF_MOVABLE)
       {
-        if (iten->en_ulFlags & ENF_HIDDEN)
+        const bool isHidden = iten->en_ulFlags & ENF_HIDDEN;
+        const auto &pl = iten->GetLerpedPlacement();
+
+        const auto f = entityToMovableBrushPlacement.find(iten->en_ulID);
+        MovableState *movableState = nullptr;
+
+        if (f != entityToMovableBrushPlacement.end())
         {
-          // try to hide
-          HideMovableBrush(iten->en_ulID);
+          movableState = &f->second;
+
+          // if should be and was hidden
+          if (isHidden && movableState->isHidden)
+          {
+            continue;
+          }
+
+          // if shouldn't be and wasn't hidden, check the placements
+          if (!isHidden && !movableState->isHidden)
+          {
+            if (ArePlacementsSame(movableState->placement, pl))
+            {
+              // if it wasn't moving in prev frame, skip it
+              if (!movableState->wasMoving)
+              {
+                continue;
+              }
+
+              // if it was, then mark it
+              movableState->wasMoving = false;
+            }
+            else
+            {
+              movableState->wasMoving = true;
+            }
+          }
         }
         else
         {
+          // create and get pointer
+          movableState = &entityToMovableBrushPlacement[iten->en_ulID];
+        }
+
+        if (!isHidden)
+        {
           // if it's a visible movable brush, update transform
-          UpdateMovableBrush(iten->en_ulID, iten->GetLerpedPlacement());
+          UpdateMovableBrush(iten->en_ulID, pl);
+
+          movableState->isHidden = false;
+          movableState->placement = pl;
+        }
+        else
+        {
+          HideMovableBrush(iten->en_ulID);
+
+          movableState->isHidden = true;
         }
       }
     }

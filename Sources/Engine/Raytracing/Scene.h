@@ -71,6 +71,18 @@ private:
   void ProcessDynamicGeometry();
   void UpdateMovableBrush(ULONG entityId, const CPlacement3D &placement);
   void HideMovableBrush(ULONG entityId);
+  static bool ArePlacementsSame(const CPlacement3D &a, const CPlacement3D &b);
+
+private:
+  struct MovableState
+  {
+    bool isHidden = false;
+    // True, if was moving in previous frame.
+    // Need for updating transform in next frame
+    // (otherwise motion vectors are incorrect)
+    bool wasMoving = true;
+    CPlacement3D placement;
+  };
 
 private:
   RgInstance        instance;
@@ -90,11 +102,13 @@ private:
   float             backgroundViewProj[16];
 
   // Movable brush's entity ID to uniqueIDs of that entity's parts
-  std::map<ULONG, std::vector<uint64_t>>    entityToMovableBrush;
+  std::map<ULONG, std::vector<uint64_t>>  entityToMovableBrush;
+  // Used to check if movable brush actually moved
+  std::map<ULONG, MovableState>           entityToMovableBrushPlacement;
 
   // True, if entity with that ID (key) has effect texture.
   // Used for updating it every frame, as brushes are processed only once.
-  std::map<ULONG, bool>                     entityHasNonStaticTexture;
+  std::map<ULONG, bool>                   entityHasNonStaticTexture;
 
   // Get brush parts' geometry indices by entity ID.
   // Used for updating dynamic texture coordinates on brushes.
