@@ -235,7 +235,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
       if (i > 0)
       {
         // alpha-blended texture are oversaturated, ignore them
-        if (brushInfo.layerBlendings[i] == RG_GEOMETRY_MATERIAL_BLEND_TYPE_SHADE)
+        if (brushInfo.layerBlendings[i] != RG_GEOMETRY_MATERIAL_BLEND_TYPE_ALPHA)
         {
           brushInfo.layerColors[i] *= 2;
         }

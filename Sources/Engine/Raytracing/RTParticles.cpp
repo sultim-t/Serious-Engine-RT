@@ -159,6 +159,7 @@ void RT_Particle_PrepareTexture(CTextureObject *pto, ParticleBlendType pbt)
       RT_bBlendEnable = true;
       RT_eBlendSrc = RG_BLEND_FACTOR_SRC_ALPHA;
       RT_eBlendDst = RG_BLEND_FACTOR_ONE;
+      break;
     case PBT_FLEX:
       // gfxBlendFunc(GFX_ONE, GFX_INV_SRC_ALPHA);
       RT_bBlendEnable = true;
