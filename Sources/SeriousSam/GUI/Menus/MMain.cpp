@@ -29,6 +29,12 @@ void CMainMenu::Initialize_t(void)
   gm_lhGadgets.AddTail( gm_mgTitle.mg_lnNode);
   */
 
+  bool bSkipSplitScreen = false;
+
+#ifdef SE1_RAYTRACING
+  bSkipSplitScreen = true;
+#endif
+
   extern CTString sam_strVersion;
   gm_mgVersionLabel.mg_strText = sam_strVersion;
   gm_mgVersionLabel.mg_boxOnScreen = BoxVersion();
@@ -47,9 +53,11 @@ void CMainMenu::Initialize_t(void)
   gm_mgModLabel.mg_bLabel = TRUE;
   gm_lhGadgets.AddTail(gm_mgModLabel.mg_lnNode);
 
+  float iRow = 0.0f;
+
   gm_mgSingle.mg_strText = TRANS("SINGLE PLAYER");
   gm_mgSingle.mg_bfsFontSize = BFS_LARGE;
-  gm_mgSingle.mg_boxOnScreen = BoxBigRow(0.0f);
+  gm_mgSingle.mg_boxOnScreen = BoxBigRow(iRow++);
   gm_mgSingle.mg_strTip = TRANS("single player game menus");
   gm_lhGadgets.AddTail(gm_mgSingle.mg_lnNode);
   gm_mgSingle.mg_pmgUp = &gm_mgQuit;
@@ -58,34 +66,41 @@ void CMainMenu::Initialize_t(void)
 
   gm_mgNetwork.mg_strText = TRANS("NETWORK");
   gm_mgNetwork.mg_bfsFontSize = BFS_LARGE;
-  gm_mgNetwork.mg_boxOnScreen = BoxBigRow(1.0f);
+  gm_mgNetwork.mg_boxOnScreen = BoxBigRow(iRow++);
   gm_mgNetwork.mg_strTip = TRANS("LAN/iNet multiplayer menus");
   gm_lhGadgets.AddTail(gm_mgNetwork.mg_lnNode);
   gm_mgNetwork.mg_pmgUp = &gm_mgSingle;
-  gm_mgNetwork.mg_pmgDown = &gm_mgSplitScreen;
+  // skip split screen 
+  gm_mgNetwork.mg_pmgDown = bSkipSplitScreen ? &gm_mgDemo : &gm_mgSplitScreen;
   gm_mgNetwork.mg_pActivatedFunction = NULL;
 
+  // disable split screen menu if using ray tracing
   gm_mgSplitScreen.mg_strText = TRANS("SPLIT SCREEN");
   gm_mgSplitScreen.mg_bfsFontSize = BFS_LARGE;
-  gm_mgSplitScreen.mg_boxOnScreen = BoxBigRow(2.0f);
+  gm_mgSplitScreen.mg_boxOnScreen = BoxBigRow(iRow);
   gm_mgSplitScreen.mg_strTip = TRANS("play with multiple players on one computer");
-  gm_lhGadgets.AddTail(gm_mgSplitScreen.mg_lnNode);
+  // don't add list, if should be disabled
+  if (!bSkipSplitScreen)
+  {
+    iRow++;
+    gm_lhGadgets.AddTail(gm_mgSplitScreen.mg_lnNode);
+  }
   gm_mgSplitScreen.mg_pmgUp = &gm_mgNetwork;
   gm_mgSplitScreen.mg_pmgDown = &gm_mgDemo;
   gm_mgSplitScreen.mg_pActivatedFunction = NULL;
 
   gm_mgDemo.mg_strText = TRANS("DEMO");
   gm_mgDemo.mg_bfsFontSize = BFS_LARGE;
-  gm_mgDemo.mg_boxOnScreen = BoxBigRow(3.0f);
+  gm_mgDemo.mg_boxOnScreen = BoxBigRow(iRow++);
   gm_mgDemo.mg_strTip = TRANS("play a game demo");
   gm_lhGadgets.AddTail(gm_mgDemo.mg_lnNode);
-  gm_mgDemo.mg_pmgUp = &gm_mgSplitScreen;
+  gm_mgDemo.mg_pmgUp = bSkipSplitScreen ?  &gm_mgNetwork : &gm_mgSplitScreen;
   gm_mgDemo.mg_pmgDown = &gm_mgMods;
   gm_mgDemo.mg_pActivatedFunction = NULL;
 
   gm_mgMods.mg_strText = TRANS("MODS");
   gm_mgMods.mg_bfsFontSize = BFS_LARGE;
-  gm_mgMods.mg_boxOnScreen = BoxBigRow(4.0f);
+  gm_mgMods.mg_boxOnScreen = BoxBigRow(iRow++);
   gm_mgMods.mg_strTip = TRANS("run one of installed game modifications");
   gm_lhGadgets.AddTail(gm_mgMods.mg_lnNode);
   gm_mgMods.mg_pmgUp = &gm_mgDemo;
@@ -94,7 +109,7 @@ void CMainMenu::Initialize_t(void)
 
   gm_mgHighScore.mg_strText = TRANS("HIGH SCORES");
   gm_mgHighScore.mg_bfsFontSize = BFS_LARGE;
-  gm_mgHighScore.mg_boxOnScreen = BoxBigRow(5.0f);
+  gm_mgHighScore.mg_boxOnScreen = BoxBigRow(iRow++);
   gm_mgHighScore.mg_strTip = TRANS("view list of top ten best scores");
   gm_lhGadgets.AddTail(gm_mgHighScore.mg_lnNode);
   gm_mgHighScore.mg_pmgUp = &gm_mgMods;
@@ -103,7 +118,7 @@ void CMainMenu::Initialize_t(void)
 
   gm_mgOptions.mg_strText = TRANS("OPTIONS");
   gm_mgOptions.mg_bfsFontSize = BFS_LARGE;
-  gm_mgOptions.mg_boxOnScreen = BoxBigRow(6.0f);
+  gm_mgOptions.mg_boxOnScreen = BoxBigRow(iRow++);
   gm_mgOptions.mg_strTip = TRANS("adjust video, audio and input options");
   gm_lhGadgets.AddTail(gm_mgOptions.mg_lnNode);
   gm_mgOptions.mg_pmgUp = &gm_mgHighScore;
@@ -112,7 +127,7 @@ void CMainMenu::Initialize_t(void)
 
   gm_mgQuit.mg_strText = TRANS("QUIT");
   gm_mgQuit.mg_bfsFontSize = BFS_LARGE;
-  gm_mgQuit.mg_boxOnScreen = BoxBigRow(7.0f);
+  gm_mgQuit.mg_boxOnScreen = BoxBigRow(iRow++);
   gm_mgQuit.mg_strTip = TRANS("exit game immediately");
   gm_lhGadgets.AddTail(gm_mgQuit.mg_lnNode);
   gm_mgQuit.mg_pmgUp = &gm_mgOptions;

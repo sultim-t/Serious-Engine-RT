@@ -260,6 +260,7 @@ int qsort_CompareFileInfos_FileDn(const void *elem1, const void *elem2)
 
 INDEX APIToSwitch(enum GfxAPIType gat)
 {
+  #ifndef SE1_RAYTRACING
   switch (gat) {
   case GAT_OGL: return 0;
 #ifdef SE1_D3D
@@ -271,6 +272,13 @@ INDEX APIToSwitch(enum GfxAPIType gat)
 #endif // SE1_VULKAN
   default: ASSERT(FALSE); return 0;
   }
+#else
+  switch (gat) {
+  case GAT_VK: return 0;
+  case GAT_RT: return 1;
+  default: ASSERT(FALSE); return 0;
+  }
+#endif
 }
 
 enum GfxAPIType SwitchToAPI(INDEX i)
@@ -291,7 +299,7 @@ enum GfxAPIType SwitchToAPI(INDEX i)
   switch (i) {
   case 0: return GAT_VK;
   case 1: return GAT_RT;
-  default: ASSERT(FALSE);
+  default: ASSERT(FALSE); return GAT_VK;
   }
 #endif
 }
