@@ -21,6 +21,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Graphics/Texture.h>
 #include <Engine/Raytracing/RTProcessing.h>
 
+
+extern INDEX srt_bTexturesOriginalSRGB;
+
+
 #define TEXTURE_INDEX_OFFSET              1
 #define TEXTURE_COUNT_ALLOC_STEP          512
 #define OVERRIDEN_TEXTURE_FILE_EXTENSION  ".png"
@@ -105,7 +109,8 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
     RgStaticMaterialCreateInfo stInfo = {};
     stInfo.size.width = info.width;
     stInfo.size.height = info.height;
-    stInfo.textureData.albedoAlphaData = (uint32_t*)info.imageData;
+    stInfo.textures.albedoAlpha.pData = info.imageData;
+    stInfo.textures.albedoAlpha.isSRGB = srt_bTexturesOriginalSRGB;
     stInfo.useMipmaps = info.generateMipmaps;
     stInfo.filter = info.filter;
     stInfo.addressModeU = info.wrapU;
@@ -128,7 +133,8 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
       RgDynamicMaterialCreateInfo dninfo = {};
       dninfo.size.width = info.width;
       dninfo.size.height = info.height;
-      dninfo.textureData.albedoAlphaData = (uint32_t *)info.imageData;
+      dninfo.textures.albedoAlpha.pData = info.imageData;
+      dninfo.textures.albedoAlpha.isSRGB = srt_bTexturesOriginalSRGB;
       dninfo.useMipmaps = info.generateMipmaps;
       dninfo.filter = info.filter;
       dninfo.addressModeU = info.wrapU;
@@ -146,7 +152,8 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
 
       RgDynamicMaterialUpdateInfo updateInfo = {};
       updateInfo.dynamicMaterial = material;
-      updateInfo.textureData.albedoAlphaData = (uint32_t *)info.imageData;
+      updateInfo.textures.albedoAlpha.pData = info.imageData;
+      updateInfo.textures.albedoAlpha.isSRGB = srt_bTexturesOriginalSRGB;
 
       RgResult r = rgUpdateDynamicMaterial(instance, &updateInfo);
       RG_CHECKERROR(r);
@@ -176,7 +183,8 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedAnimatedTextureInfo &an
 
     f.size.width = animInfo.width;
     f.size.height = animInfo.height;
-    f.textureData.albedoAlphaData = (uint32_t*)curFrameData;
+    f.textures.albedoAlpha.pData = curFrameData;
+    f.textures.albedoAlpha.isSRGB = srt_bTexturesOriginalSRGB;
     f.useMipmaps = animInfo.generateMipmaps;
     f.filter = animInfo.filter;
     f.addressModeU = animInfo.wrapU;

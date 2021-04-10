@@ -33,6 +33,56 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "Utils.h"
 
 
+extern INDEX srt_bTonemappingUseDefault = 0;
+extern FLOAT srt_fTonemappingWhitePoint = 1.5f;
+extern FLOAT srt_fTonemappingMinLogLuminance = 2.0f;
+extern FLOAT srt_fTonemappingMaxLogLuminance = 10.0f;
+extern INDEX srt_iSkyType = 0;
+extern FLOAT srt_fSkyColorMultiplier = 1.0f;
+extern FLOAT3D srt_fSkyColorDefault = { 1, 1, 1 };
+extern INDEX srt_bShowGradients = 0;
+extern INDEX srt_bShowMotionVectors = 0;
+extern INDEX srt_bReloadShaders = 0;
+extern INDEX srt_bTexturesOriginalSRGB = 1;
+extern INDEX srt_bTexturesOverridenAlbedoAlphaSRGB = 1;
+extern INDEX srt_bTexturesOverridenNormalMetallicSRGB = 0;
+extern INDEX srt_bTexturesOverridenEmissionRoughnessSRGB = 0;
+
+void SSRT::SSRTMain::InitShellVariables()
+{
+  _pShell->DeclareSymbol("persistent user INDEX srt_bTonemappingUseDefault;", &srt_bTonemappingUseDefault);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingWhitePoint;", &srt_fTonemappingWhitePoint);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMinLogLuminance;", &srt_fTonemappingMinLogLuminance);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMaxLogLuminance;", &srt_fTonemappingMaxLogLuminance);
+  _pShell->DeclareSymbol("persistent user INDEX srt_iSkyType;", &srt_iSkyType);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorDefault[3];", &srt_fSkyColorDefault);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorMultiplier;", &srt_fSkyColorMultiplier);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bShowGradients;", &srt_bShowGradients);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bShowMotionVectors;", &srt_bShowMotionVectors);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bReloadShaders;", &srt_bReloadShaders);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bTexturesOriginalSRGB;", &srt_bTexturesOriginalSRGB);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bTexturesOverridenAlbedoAlphaSRGB;", &srt_bTexturesOverridenAlbedoAlphaSRGB);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bTexturesOverridenNormalMetallicSRGB;", &srt_bTexturesOverridenNormalMetallicSRGB);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bTexturesOverridenEmissionRoughnessSRGB;", &srt_bTexturesOverridenEmissionRoughnessSRGB);
+}
+
+void SSRT::SSRTMain::NormalizeShellVariables()
+{
+  srt_bTonemappingUseDefault = !!srt_bTonemappingUseDefault;
+  srt_bShowGradients = !!srt_bShowGradients;
+  srt_bShowMotionVectors = !!srt_bShowMotionVectors;
+  srt_bReloadShaders = !!srt_bReloadShaders;
+  srt_bTexturesOriginalSRGB = !!srt_bTexturesOriginalSRGB;
+
+  srt_iSkyType = Clamp<INDEX>(srt_iSkyType, 0, 2);
+
+  for (uint32_t i = 1; i <= 3; i++)
+  {
+    srt_fSkyColorDefault(i) = ClampDn(srt_fSkyColorDefault(i), 0.0f);
+  }
+}
+
+
 SSRT::SSRTMain::SSRTMain() :
   worldRenderInfo({}),
   currentScene(nullptr),
@@ -62,6 +112,10 @@ SSRT::SSRTMain::SSRTMain() :
   info.overrideAlbedoAlphaTexturePostfix = "";
   info.overrideNormalMetallicTexturePostfix = "_n";
   info.overrideEmissionRoughnessTexturePostfix = "_e";
+
+  info.overrideAlbedoAlphaTextureIsSRGB = srt_bTexturesOverridenAlbedoAlphaSRGB;
+  info.overrideNormalMetallicTextureIsSRGB = srt_bTexturesOverridenNormalMetallicSRGB;
+  info.overrideEmissionRoughnessTextureIsSRGB = srt_bTexturesOverridenEmissionRoughnessSRGB;
 
   const char *pWindowExtensions[] = {
     VK_KHR_SURFACE_EXTENSION_NAME,
@@ -104,47 +158,6 @@ SSRT::SSRTMain::SSRTMain() :
   SSRTMain::InitShellVariables();
   Scene::InitShellVariables();
 }
-
-extern INDEX srt_bTonemappingUseDefault = 0;
-extern FLOAT srt_fTonemappingWhitePoint = 1.5f;
-extern FLOAT srt_fTonemappingMinLogLuminance = 2.0f;
-extern FLOAT srt_fTonemappingMaxLogLuminance = 10.0f;
-extern INDEX srt_iSkyType = 0;
-extern FLOAT srt_fSkyColorMultiplier = 1.0f;
-extern FLOAT3D srt_fSkyColorDefault = { 1, 1, 1 };
-extern INDEX srt_bShowGradients = 0;
-extern INDEX srt_bShowMotionVectors = 0;
-extern INDEX srt_bReloadShaders = 0;
-
-void SSRT::SSRTMain::InitShellVariables()
-{
-  _pShell->DeclareSymbol("persistent user INDEX srt_bTonemappingUseDefault;", &srt_bTonemappingUseDefault);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingWhitePoint;", &srt_fTonemappingWhitePoint);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMinLogLuminance;", &srt_fTonemappingMinLogLuminance);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMaxLogLuminance;", &srt_fTonemappingMaxLogLuminance);
-  _pShell->DeclareSymbol("persistent user INDEX srt_iSkyType;", &srt_iSkyType);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorDefault[3];", &srt_fSkyColorDefault);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorMultiplier;", &srt_fSkyColorMultiplier);
-  _pShell->DeclareSymbol("persistent user INDEX srt_bShowGradients;", &srt_bShowGradients);
-  _pShell->DeclareSymbol("persistent user INDEX srt_bShowMotionVectors;", &srt_bShowMotionVectors);
-  _pShell->DeclareSymbol("persistent user INDEX srt_bReloadShaders;", &srt_bReloadShaders);
-}
-
-void SSRT::SSRTMain::NormalizeShellVariables()
-{
-  srt_bTonemappingUseDefault = !!srt_bTonemappingUseDefault;
-  srt_bShowGradients = !!srt_bShowGradients;
-  srt_bShowMotionVectors = !!srt_bShowMotionVectors;
-  srt_bReloadShaders = !!srt_bReloadShaders;
-
-  srt_iSkyType = Clamp<INDEX>(srt_iSkyType, 0, 2);
-
-  for (uint32_t i = 1; i <= 3; i++)
-  {
-    srt_fSkyColorDefault(i) = ClampDn(srt_fSkyColorDefault(i), 0.0f);
-  }
-}
-
 SSRT::SSRTMain::~SSRTMain()
 {
   if (currentScene != nullptr)
