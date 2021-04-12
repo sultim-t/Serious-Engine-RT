@@ -826,6 +826,9 @@
     <ClCompile Include="Raytracing\RTParticles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Raytracing\SceneBrushes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Base\Anim.h">
@@ -1483,6 +1486,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Raytracing\TextureUploader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Raytracing\SceneBrushes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

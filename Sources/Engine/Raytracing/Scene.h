@@ -15,12 +15,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #pragma once
 
-#include <map>
 #include <vector>
-#include <set>
 
-#include <Engine/Raytracing/SSRTObjects.h>
-#include <Engine/Raytracing/TextureUploader.h>
+#include "SSRTObjects.h"
+#include "TextureUploader.h"
+#include "SceneBrushes.h"
 
 namespace SSRT
 {
@@ -28,7 +27,7 @@ namespace SSRT
 class Scene
 {
 public:
-  Scene(RgInstance instance, CWorld *pWorld, TextureUploader *textureUploader);
+  Scene(RgInstance instance, CWorld *pWorld, TextureUploader *pTextureUploader);
   ~Scene();
 
   Scene(const Scene &other) = delete;
@@ -60,33 +59,13 @@ public:
   static void NormalizeShellVariables();
 
 private:
-  struct BrushPartGeometryIndex
-  {
-    uint32_t brushPartIndex;
-    uint32_t vertexCount;
-  };
-
-private:
   void ProcessBrushes();
   void ProcessDynamicGeometry();
-  void UpdateMovableBrush(ULONG entityId, const CPlacement3D &placement);
-  void HideMovableBrush(ULONG entityId);
-  static bool ArePlacementsSame(const CPlacement3D &a, const CPlacement3D &b);
-
-private:
-  struct MovableState
-  {
-    bool isHidden = false;
-    // True, if was moving in previous frame.
-    // Need for updating transform in next frame
-    // (otherwise motion vectors are incorrect)
-    bool wasMoving = true;
-    CPlacement3D placement;
-  };
 
 private:
   RgInstance        instance;
-  TextureUploader   *textureUploader;
+  TextureUploader   *pTextureUploader;
+  SceneBrushes      *pSceneBrushes;
 
   // - Every entity can be either model or brush
   // - A model can have attachments that are models too
@@ -99,20 +78,6 @@ private:
   ULONG             viewerEntityID;
   FLOAT3D           viewerPosition;
   FLOATmatrix3D     viewerRotation;
-  float             backgroundViewProj[16];
-
-  // Movable brush's entity ID to uniqueIDs of that entity's parts
-  std::map<ULONG, std::vector<uint64_t>>  entityToMovableBrush;
-  // Used to check if movable brush actually moved
-  std::map<ULONG, MovableState>           entityToMovableBrushPlacement;
-
-  // True, if entity with that ID (key) has effect texture.
-  // Used for updating it every frame, as brushes are processed only once.
-  std::map<ULONG, bool>                   entityHasNonStaticTexture;
-
-  // Get brush parts' geometry indices by entity ID.
-  // Used for updating dynamic texture coordinates on brushes.
-  std::map<ULONG, std::vector<BrushPartGeometryIndex>> entitiesWithDynamicTexCoords;
 
   // Scene light sources, cleaned up by the end of a frame
   std::vector<CSphereLight>       sphLights;

@@ -35,6 +35,7 @@ extern FLOAT mdl_fLODMul;
 extern FLOAT mdl_fLODAdd;
 
 extern FLOAT srt_fLightDirectionalSaturation;
+extern FLOAT srt_fLightDirectionalColorPow;
 extern FLOAT srt_fLightDirectionalIntensityMultiplier;
 
 extern INDEX srt_iLightSphericalHSVThresholdHLower;
@@ -43,6 +44,7 @@ extern INDEX srt_iLightSphericalHSVThresholdVLower;
 extern INDEX srt_iLightSphericalHSVThresholdVUpper;
 
 extern FLOAT srt_fLightSphericalSaturation;
+extern FLOAT srt_fLightSphericalColorPow;
 extern FLOAT srt_fLightSphericalIntensityMultiplier;
 extern INDEX srt_bLightSphericalIgnoreEditorModels;
 
@@ -382,11 +384,21 @@ static void FlushModelInfo(ULONG entityID,
 
 static void RT_AdjustSaturation(FLOAT3D &color, float saturation)
 {
-    const float luminance = color % FLOAT3D(0.2125f, 0.7154f, 0.0721f);
-    
-    color(1) = luminance * (1 - saturation) + color(1) * saturation;
-    color(2) = luminance * (1 - saturation) + color(2) * saturation;
-    color(3) = luminance * (1 - saturation) + color(3) * saturation;
+  const float luminance = color % FLOAT3D(0.2125f, 0.7154f, 0.0721f);
+  
+  for (int i = 1; i <= 3; i++)
+  {
+    color(i) = Lerp(luminance, color(i), saturation);
+  }
+}
+
+
+static void RT_AdjustPow(FLOAT3D &color, float power)
+{
+  for (int i = 1; i <= 3; i++)
+  {
+    color(i) = Min(powf(color(i), power), 1.0f);
+  }
 }
 
 
@@ -418,6 +430,7 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *scene)
     }
     
     RT_AdjustSaturation(color, srt_fLightDirectionalSaturation);
+    RT_AdjustPow(color, srt_fLightDirectionalColorPow);
     color *= srt_fLightDirectionalIntensityMultiplier;
 
     FLOAT3D direction;
@@ -438,6 +451,7 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *scene)
     }
     
     RT_AdjustSaturation(color, srt_fLightSphericalSaturation);
+    RT_AdjustPow(color, srt_fLightSphericalColorPow);
     color *= srt_fLightSphericalIntensityMultiplier;
 
     FLOAT3D position = placement.pl_PositionVector;

@@ -58,7 +58,6 @@ struct CAbstractGeometry
   INDEX               textureFrames[3];
 
   RgGeometryPassThroughType passThroughType;
-  RgGeometryPrimaryVisibilityType visibilityType;
 
   bool                blendEnable;
   RgBlendFactor       blendSrc;
@@ -85,6 +84,8 @@ struct CModelGeometry : public CAbstractGeometry
   INDEX               attchPath[SSRT_MAX_ATTACHMENT_DEPTH] = {};
   uint32_t            modelPartIndex;
 
+  RgGeometryPrimaryVisibilityType visibilityType;
+
 public:
   uint64_t GetUniqueID() const override;
 };
@@ -105,6 +106,7 @@ struct CBrushGeometry : public CAbstractGeometry
   bool                hasScrollingTextures;
 
   bool                isRasterized;
+  bool                isSky;
 
 public:
   static uint64_t GetBrushUniqueID(ULONG entityID, uint32_t brushPartIndex);

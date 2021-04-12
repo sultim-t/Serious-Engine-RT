@@ -33,11 +33,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "Utils.h"
 
 
+extern INDEX srt_bVSync = 1;
 extern INDEX srt_bTonemappingUseDefault = 0;
 extern FLOAT srt_fTonemappingWhitePoint = 1.5f;
 extern FLOAT srt_fTonemappingMinLogLuminance = 2.0f;
 extern FLOAT srt_fTonemappingMaxLogLuminance = 10.0f;
-extern INDEX srt_iSkyType = 0;
+extern RgSkyType srt_iSkyType = RG_SKY_TYPE_RASTERIZED_GEOMETRY;
 extern FLOAT srt_fSkyColorMultiplier = 1.0f;
 extern FLOAT3D srt_fSkyColorDefault = { 1, 1, 1 };
 extern INDEX srt_bShowGradients = 0;
@@ -50,6 +51,7 @@ extern INDEX srt_bTexturesOverridenEmissionRoughnessSRGB = 0;
 
 void SSRT::SSRTMain::InitShellVariables()
 {
+  _pShell->DeclareSymbol("persistent user INDEX srt_bVSync;", &srt_bVSync);
   _pShell->DeclareSymbol("persistent user INDEX srt_bTonemappingUseDefault;", &srt_bTonemappingUseDefault);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingWhitePoint;", &srt_fTonemappingWhitePoint);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMinLogLuminance;", &srt_fTonemappingMinLogLuminance);
@@ -68,13 +70,23 @@ void SSRT::SSRTMain::InitShellVariables()
 
 void SSRT::SSRTMain::NormalizeShellVariables()
 {
+  srt_bVSync = !!srt_bVSync;
   srt_bTonemappingUseDefault = !!srt_bTonemappingUseDefault;
   srt_bShowGradients = !!srt_bShowGradients;
   srt_bShowMotionVectors = !!srt_bShowMotionVectors;
   srt_bReloadShaders = !!srt_bReloadShaders;
   srt_bTexturesOriginalSRGB = !!srt_bTexturesOriginalSRGB;
 
-  srt_iSkyType = Clamp<INDEX>(srt_iSkyType, 0, 2);
+  switch (srt_iSkyType)
+  {
+  case RG_SKY_TYPE_COLOR:
+  case RG_SKY_TYPE_CUBEMAP: 
+  case RG_SKY_TYPE_RASTERIZED_GEOMETRY: 
+  case RG_SKY_TYPE_RAY_TRACED_GEOMETRY:
+    break;
+  default:  
+    srt_iSkyType = RG_SKY_TYPE_COLOR;
+  }
 
   for (uint32_t i = 1; i <= 3; i++)
   {
@@ -105,8 +117,12 @@ SSRT::SSRTMain::SSRTMain() :
   info.vertexNormalStride = sizeof(GFXNormal);
   info.vertexTexCoordStride = sizeof(GFXTexCoord);
   info.vertexColorStride = sizeof(uint32_t);
+
   info.rasterizedMaxVertexCount = 1 << 16;
   info.rasterizedMaxIndexCount = info.rasterizedMaxVertexCount * 3 / 2;
+  info.rasterizedSkyMaxVertexCount = 4096;
+  info.rasterizedSkyMaxIndexCount = 4096;
+  info.rasterizedSkyCubemapSize = 256;
 
   info.overridenTexturesFolderPath = overridenTexturesPath;
   info.overrideAlbedoAlphaTexturePostfix = "";
@@ -193,7 +209,13 @@ void SSRT::SSRTMain::StartFrame(CViewPort *pvp)
     return;
   }
 
-  RgResult r = rgStartFrame(instance, curWindowWidth, curWindowHeight, true, srt_bReloadShaders);
+  RgStartFrameInfo startInfo = {};
+  startInfo.surfaceSize = { curWindowWidth, curWindowHeight };
+  startInfo.requestShaderReload = srt_bReloadShaders;
+  startInfo.requestVSync = srt_bVSync;
+  startInfo.requestRasterizedSkyGeometryReuse = false;
+
+  RgResult r = rgStartFrame(instance, &startInfo);
   RG_CHECKERROR(r);
   srt_bReloadShaders = 0;
 
@@ -275,7 +297,7 @@ void SSRT::SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
   hudInfo.blendFuncDst = RG_BLEND_FACTOR_INV_SRC_ALPHA;
   hudInfo.depthTest = RG_FALSE;
   hudInfo.depthWrite = RG_FALSE;
-  hudInfo.renderToSwapchain = RG_TRUE;
+  hudInfo.renderType = RG_RASTERIZED_GEOMETRY_RENDER_TYPE_SWAPCHAIN;
   hudInfo.transform = {
     1, 0, 0, 0,
     0, 1, 0, 0,
@@ -306,8 +328,7 @@ void SSRT::SSRTMain::EndFrame()
   }
 
   RgDrawFrameInfo frameInfo = {};
-  frameInfo.renderWidth = curWindowWidth;
-  frameInfo.renderHeight = curWindowHeight;
+  frameInfo.renderSize = { curWindowWidth, curWindowHeight };
 
   frameInfo.currentTime = _pTimer->GetLerpedCurrentTick();
   // realTime = _pTimer->GetHighPrecisionTimer().GetSeconds();
@@ -320,9 +341,10 @@ void SSRT::SSRTMain::EndFrame()
   frameInfo.minLogLuminance = srt_fTonemappingMinLogLuminance;
   frameInfo.maxLogLuminance = srt_fTonemappingMaxLogLuminance;
   
-  frameInfo.skyType = srt_iSkyType == 0 ? RG_SKY_TYPE_COLOR : 
+  frameInfo.skyType = srt_iSkyType == 3 ? RG_SKY_TYPE_RAY_TRACED_GEOMETRY : 
+                      srt_iSkyType == 2 ? RG_SKY_TYPE_RASTERIZED_GEOMETRY :
                       srt_iSkyType == 1 ? RG_SKY_TYPE_CUBEMAP :
-                                          RG_SKY_TYPE_GEOMETRY;
+                                          RG_SKY_TYPE_COLOR;
 
   FLOAT3D backgroundViewerPos = currentScene == nullptr ? FLOAT3D(0, 0, 0) : currentScene->GetBackgroundViewerPosition();
 

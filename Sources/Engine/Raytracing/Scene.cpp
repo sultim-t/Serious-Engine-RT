@@ -40,6 +40,7 @@ extern INDEX srt_bEnableViewerShadows = 1;
 
 extern FLOAT srt_fLightDirectionalIntensityMultiplier = 10.0f;
 extern FLOAT srt_fLightDirectionalSaturation = 1.0f;
+extern FLOAT srt_fLightDirectionalColorPow = 2.2f;
 extern FLOAT srt_fLightDirectionalAngularDiameter = 0.5f;
 
 extern INDEX srt_iLightSphericalMaxCount = 16;
@@ -49,6 +50,7 @@ extern INDEX srt_iLightSphericalHSVThresholdVLower = 80;
 extern INDEX srt_iLightSphericalHSVThresholdVUpper = 255;
 extern FLOAT srt_fLightSphericalIntensityMultiplier = 1.0f;
 extern FLOAT srt_fLightSphericalSaturation = 1.0f;
+extern FLOAT srt_fLightSphericalColorPow = 2.2f;
 extern FLOAT srt_fLightSphericalRadiusMultiplier = 0.1f;
 extern FLOAT srt_fLightSphericalFalloffMultiplier = 1.0f;
 extern INDEX srt_bLightSphericalIgnoreEditorModels = 0;
@@ -66,6 +68,7 @@ void SSRT::Scene::InitShellVariables()
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightDirectionalIntensityMultiplier;", &srt_fLightDirectionalIntensityMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightDirectionalSaturation;", &srt_fLightDirectionalSaturation);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightDirectionalColorPow;", &srt_fLightDirectionalColorPow);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightDirectionalAngularDiameter;", &srt_fLightDirectionalAngularDiameter);
 
   _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalMaxCount;", &srt_iLightSphericalMaxCount);
@@ -75,6 +78,7 @@ void SSRT::Scene::InitShellVariables()
   _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdVUpper;", &srt_iLightSphericalHSVThresholdVUpper);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalIntensityMultiplier;", &srt_fLightSphericalIntensityMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalSaturation;", &srt_fLightSphericalSaturation);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalColorPow;", &srt_fLightSphericalColorPow);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalRadiusMultiplier;", &srt_fLightSphericalRadiusMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffMultiplier;", &srt_fLightSphericalFalloffMultiplier);
   _pShell->DeclareSymbol("persistent user INDEX srt_bLightSphericalIgnoreEditorModels;", &srt_bLightSphericalIgnoreEditorModels);
@@ -93,6 +97,7 @@ void SSRT::Scene::NormalizeShellVariables()
 
   srt_fLightDirectionalIntensityMultiplier  = Max(srt_fLightDirectionalIntensityMultiplier, 0.0f);
   srt_fLightDirectionalSaturation           = Max(srt_fLightDirectionalSaturation, 0.0f);
+  srt_fLightDirectionalColorPow             = Max(srt_fLightDirectionalColorPow, 0.0f);
   srt_fLightDirectionalAngularDiameter      = Max(srt_fLightDirectionalAngularDiameter, 0.0f);
 
   srt_iLightSphericalHSVThresholdHLower     = Clamp<INDEX>(srt_iLightSphericalHSVThresholdHLower, 0, 255);
@@ -101,6 +106,7 @@ void SSRT::Scene::NormalizeShellVariables()
   srt_iLightSphericalHSVThresholdVUpper     = Clamp<INDEX>(srt_iLightSphericalHSVThresholdVUpper, 0, 255);
   srt_fLightSphericalIntensityMultiplier    = Max(srt_fLightSphericalIntensityMultiplier, 0.0f);
   srt_fLightSphericalSaturation             = Max(srt_fLightSphericalSaturation, 0.0f);
+  srt_fLightSphericalColorPow               = Max(srt_fLightSphericalColorPow, 0.0f);
   srt_fLightSphericalRadiusMultiplier       = Max(srt_fLightSphericalRadiusMultiplier, 0.0f);
   srt_fLightSphericalFalloffMultiplier      = Max(srt_fLightSphericalFalloffMultiplier, 0.0f);
 
@@ -109,16 +115,19 @@ void SSRT::Scene::NormalizeShellVariables()
 }
 
 
-SSRT::Scene::Scene(RgInstance _instance, CWorld *_pWorld, TextureUploader *_textureUploader)
+SSRT::Scene::Scene(RgInstance _instance, CWorld *_pWorld, TextureUploader *_pTextureUploader)
 :
   instance(_instance),
+  pSceneBrushes(nullptr),
+  pTextureUploader(_pTextureUploader),
   pWorld(_pWorld),
   viewerEntityID(UINT32_MAX),
-  textureUploader(_textureUploader),
   worldName(_pWorld->GetName())
 {
   ASSERT(pWorld != nullptr);
   CPrintF("SSRT scene was created.\n");
+
+  pSceneBrushes = new SceneBrushes(_instance, _pWorld, _pTextureUploader);
 
   // upload static geometry (brushes)
   ProcessBrushes();
@@ -140,38 +149,6 @@ void SSRT::Scene::Update(const CWorldRenderingInfo &info)
   this->viewerEntityID = info.viewerEntityID;
   this->viewerPosition = info.viewerPosition;
   this->viewerRotation = info.viewerRotation;
-
-  // background view matrix
-  float backgroundView[16];
-  {
-    const FLOAT3D &v = GetBackgroundViewerPosition();
-
-    FLOATmatrix3D m;
-    MakeInverseRotationMatrix(m, GetBackgroundViewerOrientationAngle());
-
-    // inverse Y axis for Vulkan
-    m(2, 1) = -m(2, 1);
-    m(2, 2) = -m(2, 2);
-    m(2, 3) = -m(2, 3);
-
-    // 4th column of (T*M)^-1 = M^(-1)*T^(-1),
-    FLOAT3D t =
-    {
-      -v % FLOAT3D(m(1, 1), m(1, 2), m(1, 3)),
-      -v % FLOAT3D(m(2, 1), m(2, 2), m(2, 3)),
-      -v % FLOAT3D(m(3, 1), m(3, 2), m(3, 3))
-    };
-
-    float *cm = backgroundView;
-    cm[0] = m(1, 1);  cm[4] = m(1, 2);  cm[8] = m(1, 3);   cm[12] = v(1);
-    cm[1] = m(2, 1);  cm[5] = m(2, 2);  cm[9] = m(2, 3);   cm[13] = v(2);
-    cm[2] = m(3, 1);  cm[6] = m(3, 2);  cm[10] = m(3, 3);  cm[14] = v(3);
-    cm[3] = 0;        cm[7] = 0;        cm[11] = 0;        cm[15] = 1;
-  }
-
-  extern void Svk_MatMultiply(float *result, const float *a, const float *b);
-  Svk_MatMultiply(backgroundViewProj, backgroundView, info.projectionMatrix);
-
 
   NormalizeShellVariables();
 
@@ -263,7 +240,7 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
 
     info.geomMaterial =
     {
-      textureUploader->GetMaterial(model.textures[0], model.textureFrames[0]),
+      pTextureUploader->GetMaterial(model.textures[0], model.textureFrames[0]),
       RG_NO_MATERIAL,
       RG_NO_MATERIAL,
     };
@@ -275,6 +252,8 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
   }
   else
   {
+    bool isSky = model.visibilityType == RG_GEOMETRY_VISIBILITY_TYPE_SKYBOX;
+
     RgRasterizedGeometryVertexArrays vertInfo = {};
     vertInfo.vertexData = model.vertices;
     vertInfo.texCoordData = model.texCoordLayers[0];
@@ -289,20 +268,16 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
     info.indexCount = model.indexCount;
     info.indexData = model.indices;
     info.color = { model.color(1), model.color(2), model.color(3), model.color(4) };
-    info.material = textureUploader->GetMaterial(model.textures[0], model.textureFrames[0]);
+    info.material = pTextureUploader->GetMaterial(model.textures[0], model.textureFrames[0]);
     info.blendEnable = model.blendEnable;
     info.blendFuncSrc = model.blendSrc;
     info.blendFuncDst = model.blendDst;
     info.depthTest = RG_TRUE;
-    info.renderToSwapchain = RG_FALSE;
+    info.renderType = isSky ? RG_RASTERIZED_GEOMETRY_RENDER_TYPE_SKY : RG_RASTERIZED_GEOMETRY_RENDER_TYPE_DEFAULT;
 
     Utils::CopyTransform(info.transform, model);
 
-    float *viewProj = 
-      model.visibilityType == RG_GEOMETRY_VISIBILITY_TYPE_SKYBOX ?
-      backgroundViewProj : nullptr;
-
-    RgResult r = rgUploadRasterizedGeometry(instance, &info, viewProj, nullptr);
+    RgResult r = rgUploadRasterizedGeometry(instance, &info, nullptr, nullptr);
     RG_CHECKERROR(r);
   }
 
@@ -330,12 +305,12 @@ void SSRT::Scene::AddParticles(const CParticlesGeometry &particles)
   info.indexCount = particles.indexCount;
   info.indexData = particles.indices;
   info.color = { 1, 1, 1, 1 };
-  info.material = textureUploader->GetMaterial(particles.textures[0], particles.textureFrames[0]);
+  info.material = pTextureUploader->GetMaterial(particles.textures[0], particles.textureFrames[0]);
   info.blendEnable = particles.blendEnable;
   info.blendFuncSrc = particles.blendSrc;
   info.blendFuncDst = particles.blendDst;
   info.depthTest = RG_TRUE;
-  info.renderToSwapchain = RG_FALSE;
+  info.renderType = RG_RASTERIZED_GEOMETRY_RENDER_TYPE_DEFAULT;
 
   Utils::CopyTransform(info.transform, particles);
 
@@ -345,194 +320,9 @@ void SSRT::Scene::AddParticles(const CParticlesGeometry &particles)
 
 void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
 {
-  if (brush.vertices == nullptr || brush.vertexCount == 0 || brush.indices == nullptr || brush.indexCount == 0)
-  {
-    return;
-  }
-
-  if (!brush.isRasterized)
-  {
-    RgGeometryUploadInfo stInfo = {};
-    stInfo.uniqueID = brush.GetUniqueID();
-    stInfo.geomType = brush.isMovable ?
-      RG_GEOMETRY_TYPE_STATIC_MOVABLE :
-      RG_GEOMETRY_TYPE_STATIC;
-    stInfo.passThroughType = brush.passThroughType;
-    stInfo.visibilityType = brush.visibilityType;
-    stInfo.vertexCount = brush.vertexCount;
-    stInfo.vertexData = brush.vertices;
-    stInfo.normalData = brush.normals;
-    stInfo.defaultRoughness = 1.0f;
-    stInfo.indexCount = brush.indexCount;
-    stInfo.indexData = brush.indices;
-
-    for (uint32_t i = 0; i < 3; i++)
-    {
-      stInfo.texCoordLayerData[i] = brush.texCoordLayers[i];
-      stInfo.layerBlendingTypes[i] = brush.layerBlendings[i];
-      stInfo.layerColors[i] = { brush.layerColors[i](1), brush.layerColors[i](2), brush.layerColors[i](3), brush.layerColors[i](4) };
-    }
-
-    stInfo.geomMaterial =
-    {
-      textureUploader->GetMaterial(brush.textures[0], brush.textureFrames[0]),
-      textureUploader->GetMaterial(brush.textures[1], brush.textureFrames[1]),
-      textureUploader->GetMaterial(brush.textures[2], brush.textureFrames[2]),
-    };
-
-    Utils::CopyTransform(stInfo.transform, brush);
-
-    RgResult r = rgUploadGeometry(instance, &stInfo);
-    RG_CHECKERROR(r);
-  }
-  else
-  {
-    RgRasterizedGeometryVertexArrays vertInfo = {};
-    vertInfo.vertexData = brush.vertices;
-    vertInfo.texCoordData = brush.texCoordLayers[0];
-    vertInfo.colorData = nullptr;
-    vertInfo.vertexStride = sizeof(GFXVertex);
-    vertInfo.texCoordStride = sizeof(GFXTexCoord);
-    vertInfo.colorStride = sizeof(GFXColor);
-
-    RgRasterizedGeometryUploadInfo info = {};
-    info.vertexCount = brush.vertexCount;
-    info.arrays = &vertInfo;
-    info.indexCount = brush.indexCount;
-    info.indexData = brush.indices;
-    info.color = { brush.layerColors[0](1), brush.layerColors[0](2), brush.layerColors[0](3), brush.layerColors[0](4) };
-    info.material = textureUploader->GetMaterial(brush.textures[0], brush.textureFrames[0]);
-    info.blendEnable = brush.blendEnable;
-    info.blendFuncSrc = brush.blendSrc;
-    info.blendFuncDst = brush.blendDst;
-    info.depthTest = RG_TRUE;
-    info.renderToSwapchain = RG_FALSE;
-
-    Utils::CopyTransform(info.transform, brush);
-
-    float *viewProj = 
-      brush.visibilityType == RG_GEOMETRY_VISIBILITY_TYPE_SKYBOX ?
-      backgroundViewProj : nullptr;
-
-    RgResult r = rgUploadRasterizedGeometry(instance, &info, viewProj, nullptr);
-    RG_CHECKERROR(r);
-  }
-
-  if (!brush.isRasterized)
-  {
-    // save movable brush info for updating
-    if (brush.isMovable)
-    {
-      // create vector if doesn't exist
-      if (entityToMovableBrush.find(brush.entityID) == entityToMovableBrush.end())
-      {
-        entityToMovableBrush[brush.entityID] = {};
-      }
-
-      entityToMovableBrush[brush.entityID].push_back(brush.GetUniqueID());
-    }
-
-    // save effect and animated textures to update them each frame
-    for (uint32_t i = 0; i < 3; i++)
-    {
-      CTextureObject *to = brush.textureObjects[i];
-      CTextureData *td = brush.textures[i];
-
-      // if effect or animated
-      bool hasNonStaticTexture = to && td && (td->td_ptegEffect != nullptr || td->td_ctFrames > 1);
-
-      if (entityHasNonStaticTexture.find(brush.entityID) == entityHasNonStaticTexture.end())
-      {
-        entityHasNonStaticTexture[brush.entityID] = false;
-      }
-
-      entityHasNonStaticTexture[brush.entityID] |= hasNonStaticTexture;
-    }
-
-    // save brush part geom index for updating dynamic texture coordinates
-    if (brush.hasScrollingTextures)
-    {
-      // create vector if doesn't exist
-      if (entitiesWithDynamicTexCoords.find(brush.entityID) == entitiesWithDynamicTexCoords.end())
-      {
-        entitiesWithDynamicTexCoords[brush.entityID] = {};
-      }
-
-      BrushPartGeometryIndex t = {};
-      t.brushPartIndex = brush.brushPartIndex;
-      t.vertexCount = brush.vertexCount;
-
-      entitiesWithDynamicTexCoords[brush.entityID].push_back(t);
-    }
-  }
+  pSceneBrushes->RegisterBrush(brush);
 
   GeometryExporter::ExportGeometry(brush);
-}
-
-void SSRT::Scene::UpdateMovableBrush(ULONG entityId, const CPlacement3D &placement)
-{
-  const auto it = entityToMovableBrush.find(entityId);
-
-  if (it == entityToMovableBrush.end())
-  {
-    return;
-  }
-
-  RgResult r;
-
-  RgUpdateTransformInfo updateInfo = {};
-  Utils::CopyTransform(updateInfo.transform, placement);
-
-  // for each part of this entity
-  for (uint64_t uniqueId : it->second)
-  {
-    updateInfo.movableStaticUniqueID = uniqueId;
-
-    r = rgUpdateGeometryTransform(instance, &updateInfo);
-    RG_CHECKERROR(r);
-  }
-}
-
-void SSRT::Scene::HideMovableBrush(ULONG entityId)
-{
-  const auto it = entityToMovableBrush.find(entityId);
-
-  // ignore if it wasn't registered
-  if (it == entityToMovableBrush.end())
-  {
-    return;
-  }
-
-  RgResult r;
-
-  // to hide brush, let the trasform be null
-  RgUpdateTransformInfo updateInfo = {};
-  updateInfo.transform = {};
-
-  for (uint64_t uniqueId : it->second)
-  {
-    updateInfo.movableStaticUniqueID = uniqueId;
-
-    r = rgUpdateGeometryTransform(instance, &updateInfo);
-    RG_CHECKERROR(r);
-  }
-}
-
-bool SSRT::Scene::ArePlacementsSame(const CPlacement3D &a, const CPlacement3D &b)
-{
-  float posDiff = 0.0f;
-  float angDiff = 0.0f;
-
-  for (int i = 0; i < 3; i++)
-  {
-    posDiff += Abs(a.pl_PositionVector.vector[i] - b.pl_PositionVector.vector[i]);
-    angDiff += Abs(a.pl_OrientationAngle.vector[i] - b.pl_OrientationAngle.vector[i]);
-  }
-  
-  const float posEps = 0.005f;
-  const float angEps = 0.005f;
-
-  return posDiff < posEps && angDiff < angEps;
 }
 
 void SSRT::Scene::AddLight(const CSphereLight &sphLt)
@@ -557,35 +347,12 @@ void SSRT::Scene::AddLight(const CDirectionalLight &dirLt)
 
 void SSRT::Scene::UpdateBrushNonStaticTexture(CTextureData *pTexture, uint32_t textureFrameIndex)
 {
-  textureUploader->GetMaterial(pTexture, textureFrameIndex);
+  pTextureUploader->GetMaterial(pTexture, textureFrameIndex);
 }
 
 void SSRT::Scene::UpdateBrushTexCoords(const CUpdateTexCoordsInfo &info)
 {
-  auto it = entitiesWithDynamicTexCoords.find(info.brushEntityID);
-  ASSERT(it != entitiesWithDynamicTexCoords.end());
-
-  for (const auto &part : it->second)
-  {
-    if (part.brushPartIndex == info.brushPartIndex)
-    {
-      ASSERT(part.vertexCount == info.vertexCount);
-
-      // if found geomIndex for that part
-      RgUpdateTexCoordsInfo texCoordsInfo = {};
-      texCoordsInfo.staticUniqueID = CBrushGeometry::GetBrushUniqueID(info.brushEntityID, info.brushPartIndex);
-      texCoordsInfo.texCoordLayerData[0] = info.texCoordLayers[0];
-      texCoordsInfo.texCoordLayerData[1] = info.texCoordLayers[1];
-      texCoordsInfo.texCoordLayerData[2] = info.texCoordLayers[2];
-      texCoordsInfo.vertexOffset = 0;
-      texCoordsInfo.vertexCount = info.vertexCount;
-
-      RgResult r = rgUpdateGeometryTexCoords(instance, &texCoordsInfo);
-      RG_CHECKERROR(r);
-
-      return;
-    }
-  }
+  pSceneBrushes->UpdateBrushTexCoords(info);
 }
 
 void SSRT::Scene::ProcessFirstPersonModel(const CFirstPersonModelInfo &info, ULONG entityId)
@@ -595,11 +362,6 @@ void SSRT::Scene::ProcessFirstPersonModel(const CFirstPersonModelInfo &info, ULO
 
 void SSRT::Scene::ProcessBrushes()
 {
-  entityToMovableBrush.clear();
-  entityToMovableBrushPlacement.clear();
-  entityHasNonStaticTexture.clear();
-  entitiesWithDynamicTexCoords.clear();
-
   RgResult r = rgStartNewScene(instance);
   RG_CHECKERROR(r);
 
@@ -634,11 +396,6 @@ void SSRT::Scene::ProcessDynamicGeometry()
   // and brushes that have non-static textures
   FOREACHINDYNAMICCONTAINER(pWorld->wo_cenEntities, CEntity, iten)
   {
-    if (entityHasNonStaticTexture[iten->en_ulID])
-    {
-      RT_UpdateBrushNonStaticTexture(iten, this);
-    }
-
     if (iten->en_ulID == viewerEntityID)
     {
       viewer = (CEntity *)iten;
@@ -656,74 +413,7 @@ void SSRT::Scene::ProcessDynamicGeometry()
     }
     else if (iten->en_RenderType == CEntity::RT_BRUSH)
     {
-      // if brush has dynamic texture coords
-      if (entitiesWithDynamicTexCoords.find(iten->en_ulID) != entitiesWithDynamicTexCoords.end())
-      {
-        // this will call UpdateBrushTexCoords(..)
-        RT_UpdateBrushTexCoords(iten, this);
-      }
-
-
-      // process movable
-      if (iten->en_ulPhysicsFlags & EPF_MOVABLE)
-      {
-        const bool isHidden = iten->en_ulFlags & ENF_HIDDEN;
-        const auto &pl = iten->GetLerpedPlacement();
-
-        const auto f = entityToMovableBrushPlacement.find(iten->en_ulID);
-        MovableState *movableState = nullptr;
-
-        if (f != entityToMovableBrushPlacement.end())
-        {
-          movableState = &f->second;
-
-          // if should be and was hidden
-          if (isHidden && movableState->isHidden)
-          {
-            continue;
-          }
-
-          // if shouldn't be and wasn't hidden, check the placements
-          if (!isHidden && !movableState->isHidden)
-          {
-            if (ArePlacementsSame(movableState->placement, pl))
-            {
-              // if it wasn't moving in prev frame, skip it
-              if (!movableState->wasMoving)
-              {
-                continue;
-              }
-
-              // if it was, then mark it
-              movableState->wasMoving = false;
-            }
-            else
-            {
-              movableState->wasMoving = true;
-            }
-          }
-        }
-        else
-        {
-          // create and get pointer
-          movableState = &entityToMovableBrushPlacement[iten->en_ulID];
-        }
-
-        if (!isHidden)
-        {
-          // if it's a visible movable brush, update transform
-          UpdateMovableBrush(iten->en_ulID, pl);
-
-          movableState->isHidden = false;
-          movableState->placement = pl;
-        }
-        else
-        {
-          HideMovableBrush(iten->en_ulID);
-
-          movableState->isHidden = true;
-        }
-      }
+      pSceneBrushes->Update(iten, this);
     }
   }
 

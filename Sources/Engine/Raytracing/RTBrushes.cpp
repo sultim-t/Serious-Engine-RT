@@ -33,11 +33,17 @@ constexpr uint32_t MAX_BRUSH_TEXTURE_COUNT = 3;
 
 
 
+extern RgSkyType srt_iSkyType;
+
+
+
 static uint32_t RT_BrushPartIndex = 0;
 static CStaticStackArray<GFXVertex> RT_AllSectorVertices;
 static CStaticStackArray<GFXNormal> RT_AllSectorNormals;
 static CStaticStackArray<INDEX> RT_AllSectorIndices;
 static CStaticStackArray<GFXTexCoord> RT_AllSectorTexCoords[MAX_BRUSH_TEXTURE_COUNT];
+
+
 
 // water surfaces are double sided, ignore vertex duplicates
 constexpr float RT_WaterVerticesEpsilon = 0.1f;
@@ -103,6 +109,7 @@ struct RT_TextureLayerBlending
 
 static bool RT_ShouldBeRasterized(uint32_t bpofFlags)
 {
+  // check comments in RT_GetPassThroughType
   return false; // bpofFlags & BPOF_TRANSLUCENT;
 }
 
@@ -113,8 +120,10 @@ static RgGeometryPassThroughType RT_GetPassThroughType(uint32_t bpofFlags)
   {
     return RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
   }
-  // TODO: tranclucent should be rasterized
-  else if  (bpofFlags & BPOF_TRANSLUCENT)
+  // it seems that tranclucent brushes should not be rasterized,
+  // as (GFX_SRC_ALPHA, GFX_INV_SRC_ALPHA) blending is used,
+  // example: sand canyon, lattice inside
+  else if (bpofFlags & BPOF_TRANSLUCENT)
   {
     return RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
   }
@@ -152,7 +161,8 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
     return;
   }
 
-  bool isMovable = penBrush->en_ulPhysicsFlags & EPF_MOVABLE;
+  const bool isMovable = penBrush->en_ulPhysicsFlags & EPF_MOVABLE;
+  const bool isSky = penBrush->en_ulFlags & ENF_BACKGROUND;
 
   const CPlacement3D &placement = isMovable ?
     penBrush->GetLerpedPlacement() :
@@ -166,24 +176,19 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   brushInfo.entityID = penBrush->en_ulID;
   brushInfo.isMovable = isMovable;
   brushInfo.passThroughType = RT_GetPassThroughType(polygonFlags);
+  brushInfo.isSky = isSky;
   
-  brushInfo.isRasterized = !isWater && RT_ShouldBeRasterized(polygonFlags);
+  brushInfo.isRasterized = 
+    (!isWater && RT_ShouldBeRasterized(polygonFlags)) ||
+    (isSky && srt_iSkyType == RG_SKY_TYPE_RASTERIZED_GEOMETRY);
 
-  if (penBrush->en_ulFlags & ENF_BACKGROUND)
+  // if ray traced, convert transfrom from background viewer space to world space 
+  if (isSky && !brushInfo.isRasterized)
   {
-    brushInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_SKYBOX;
+    FLOATmatrix3D bv;
+    MakeInverseRotationMatrix(bv, pScene->GetBackgroundViewerOrientationAngle());
 
-    if (!brushInfo.isRasterized)
-    {
-      FLOATmatrix3D bv;
-      MakeInverseRotationMatrix(bv, pScene->GetBackgroundViewerOrientationAngle());
-
-      rotation = bv * rotation;
-    }
-  }
-  else
-  {
-    brushInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_WORLD;
+    rotation = bv * rotation;
   }
 
   brushInfo.absPosition = position;
