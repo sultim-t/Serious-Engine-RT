@@ -25,13 +25,26 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "Utils.h"
 
 SSRT::SceneBrushes::SceneBrushes(RgInstance _instance, CWorld *_pWorld, TextureUploader *_pTextureUploader)
-  : instance(_instance), pWorld(_pWorld), pTextureUploader(_pTextureUploader)
+  : instance(_instance), pTextureUploader(_pTextureUploader)
 {
 }
 
 SSRT::SceneBrushes::~SceneBrushes()
 {
 
+}
+
+static void GetBlendingFromMaterialBlending(
+  RgGeometryMaterialBlendType materialBlend, 
+  RgBool32 *blendEnable, RgBlendFactor *blendSrc, RgBlendFactor *blendDst)
+{
+  switch (materialBlend)
+  {
+  case RG_GEOMETRY_MATERIAL_BLEND_TYPE_ALPHA: *blendEnable = RG_TRUE; *blendSrc = RG_BLEND_FACTOR_SRC_ALPHA; *blendDst = RG_BLEND_FACTOR_INV_SRC_ALPHA; break;
+  case RG_GEOMETRY_MATERIAL_BLEND_TYPE_ADD:   *blendEnable = RG_TRUE; *blendSrc = RG_BLEND_FACTOR_ONE;       *blendDst = RG_BLEND_FACTOR_ONE; break;
+  case RG_GEOMETRY_MATERIAL_BLEND_TYPE_SHADE: *blendEnable = RG_TRUE; *blendSrc = RG_BLEND_FACTOR_DST_COLOR; *blendDst = RG_BLEND_FACTOR_SRC_COLOR; break;
+  default: *blendEnable = RG_FALSE;
+  }
 }
 
 void SSRT::SceneBrushes::RegisterBrush(const CBrushGeometry &brush)
@@ -78,9 +91,12 @@ void SSRT::SceneBrushes::RegisterBrush(const CBrushGeometry &brush)
   }
   else
   {
+    // for now, no other brushes except background should be drawn with rasterization;
+    // SceneBrushes::Update uses this assumption
+    ASSERT(brush.isSky);
+
     RgRasterizedGeometryVertexArrays vertInfo = {};
     vertInfo.vertexData = brush.vertices;
-    vertInfo.texCoordData = brush.texCoordLayers[0];
     vertInfo.colorData = nullptr;
     vertInfo.vertexStride = sizeof(GFXVertex);
     vertInfo.texCoordStride = sizeof(GFXTexCoord);
@@ -92,22 +108,34 @@ void SSRT::SceneBrushes::RegisterBrush(const CBrushGeometry &brush)
     info.arrays = &vertInfo;
     info.indexCount = brush.indexCount;
     info.indexData = brush.indices;
-    info.color = { brush.layerColors[0](1), brush.layerColors[0](2), brush.layerColors[0](3), brush.layerColors[0](4) };
-    info.material = pTextureUploader->GetMaterial(brush.textures[0], brush.textureFrames[0]);
-    info.blendEnable = brush.blendEnable;
-    info.blendFuncSrc = brush.blendSrc;
-    info.blendFuncDst = brush.blendDst;
-    info.depthTest = RG_TRUE;
 
     Utils::CopyTransform(info.transform, brush);
 
-    RgResult r = rgUploadRasterizedGeometry(instance, &info, nullptr, nullptr);
-    RG_CHECKERROR(r);
+    // draw each material layer separately (like in the original renderer)
+    for (uint32_t i = 0; i < sizeof(brush.textures) / sizeof(brush.textures[0]); i++)
+    {
+      if (brush.textures[i] == nullptr)
+      {
+        continue;
+      }
+    
+      vertInfo.texCoordData = brush.texCoordLayers[i];
+
+      info.color = { brush.layerColors[i](1), brush.layerColors[i](2), brush.layerColors[i](3), brush.layerColors[i](4) };
+      info.material = pTextureUploader->GetMaterial(brush.textures[i], brush.textureFrames[i]);
+
+      GetBlendingFromMaterialBlending(brush.layerBlendings[i], &info.blendEnable, &info.blendFuncSrc , &info.blendFuncDst);
+      info.depthTest = RG_TRUE;
+      info.depthWrite = RG_TRUE;
+
+      RgResult r = rgUploadRasterizedGeometry(instance, &info, nullptr, nullptr);
+      RG_CHECKERROR(r);
+    }
   }
 
   if (!brush.isRasterized)
   {
-    // save movable brush info for updating
+    // save ray-traced movable brush info for updating
     if (brush.isMovable)
     {
       // create vector if doesn't exist
@@ -118,14 +146,11 @@ void SSRT::SceneBrushes::RegisterBrush(const CBrushGeometry &brush)
 
       entityToMovableBrush[brush.entityID].push_back(brush.GetUniqueID());
     }
-
   }
-
-  if (brush.isSky)
-  {
-    
+  else
+  { 
+    entityIsRasterizedBrush[brush.entityID] = true;
   }
-
 }
 
 void SSRT::SceneBrushes::RegisterBrushTextures(const CBrushGeometry &brush)
@@ -322,12 +347,39 @@ void SSRT::SceneBrushes::UpdateMovableBrush(CEntity *pBrushEntity)
 
 void SSRT::SceneBrushes::Update(CEntity *pBrushEntity, Scene *pScene)
 {
+  ASSERT(pBrushEntity->GetRenderType() == CEntity::RT_BRUSH);
+
   ULONG entityId = pBrushEntity->en_ulID;
 
 
-  if (entityHasNonStaticTexture[entityId])
   {
-    RT_UpdateBrushNonStaticTexture(pBrushEntity, pScene);
+    auto f = entityIsRasterizedBrush.find(entityId);
+
+    // if found and it's really rasterized
+    if (f != entityIsRasterizedBrush.end() && f->second)
+    {
+      // assume that only sky brushes are rasterized
+      if (!(pBrushEntity->GetFlags() & ENF_BACKGROUND))
+      {
+        return;
+      }
+
+      RT_AddRasterizedBrushEntity(pBrushEntity, pScene);
+
+      // further processing is for ray traced geometry, so ignore them
+      return;
+    }
+  }
+
+
+  {
+    auto f = entityHasNonStaticTexture.find(entityId);
+
+    // if found and it really has static texture
+    if (f != entityHasNonStaticTexture.end() && f->second)
+    {
+      RT_UpdateBrushNonStaticTexture(pBrushEntity, pScene);
+    }
   }
 
 

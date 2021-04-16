@@ -154,6 +154,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
                               const RT_TextureLayerBlending &blending,
                               bool hasScrollingTextures,
                               bool isWater,
+                              bool onlyRasterized,
                               SSRT::Scene *pScene)
 {
   if (RT_AllSectorVertices.Count() == 0 || RT_AllSectorIndices.Count() == 0)
@@ -163,6 +164,15 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
 
   const bool isMovable = penBrush->en_ulPhysicsFlags & EPF_MOVABLE;
   const bool isSky = penBrush->en_ulFlags & ENF_BACKGROUND;
+
+  const bool isRasterized = 
+    (!isWater && RT_ShouldBeRasterized(polygonFlags)) ||
+    (isSky && srt_iSkyType == RG_SKY_TYPE_RASTERIZED_GEOMETRY);
+
+  if (onlyRasterized && !isRasterized)
+  {
+    return;
+  }
 
   const CPlacement3D &placement = isMovable ?
     penBrush->GetLerpedPlacement() :
@@ -178,13 +188,12 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   brushInfo.passThroughType = RT_GetPassThroughType(polygonFlags);
   brushInfo.isSky = isSky;
   
-  brushInfo.isRasterized = 
-    (!isWater && RT_ShouldBeRasterized(polygonFlags)) ||
-    (isSky && srt_iSkyType == RG_SKY_TYPE_RASTERIZED_GEOMETRY);
+  brushInfo.isRasterized = isRasterized;
 
-  // if ray traced, convert transfrom from background viewer space to world space 
-  if (isSky && !brushInfo.isRasterized)
+  if (isSky)
   {
+    // convert rotation from background viewer space to world space,
+    // as RTGL1 accepts viewer position
     FLOATmatrix3D bv;
     MakeInverseRotationMatrix(bv, pScene->GetBackgroundViewerOrientationAngle());
 
@@ -256,7 +265,9 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
     brushInfo.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_REFLECT;
   }
 
+  // will be overriden
   brushInfo.blendEnable = false;
+  brushInfo.blendSrc = brushInfo.blendDst = RG_BLEND_FACTOR_ONE;
 
   pScene->AddBrush(brushInfo);
 
@@ -573,7 +584,7 @@ static void RT_ProcessIndices(CBrushPolygon &polygon, uint32_t firstVertexId)
 }
 
 
-static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool onlyTexCoords, SSRT::Scene *scene)
+static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool onlyTexCoords, bool onlyRasterized, SSRT::Scene *scene)
 {
   ASSERT(RT_AllSectorVertices.Count() == 0 || RT_AllSectorIndices.Count() == 0);
 
@@ -599,11 +610,11 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
   }
 
 
-  auto flushLastSavedInfo = [onlyTexCoords, penBrush, &pLastTextures, &lastFlags, &lastBlending, &lastHasSrollingTextures, &lastIsWater, scene] ()
+  auto flushLastSavedInfo = [onlyTexCoords, onlyRasterized, penBrush, &pLastTextures, &lastFlags, &lastBlending, &lastHasSrollingTextures, &lastIsWater, scene] ()
   {
     if (!onlyTexCoords)
     {
-      RT_FlushBrushInfo(penBrush, RT_BrushPartIndex, pLastTextures, lastFlags, lastBlending, lastHasSrollingTextures, lastIsWater, scene);
+      RT_FlushBrushInfo(penBrush, RT_BrushPartIndex, pLastTextures, lastFlags, lastBlending, lastHasSrollingTextures, lastIsWater, onlyRasterized, scene);
     }
     else
     {
@@ -725,7 +736,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
     bool isWaterPolygon = false;
     bool isWaterTexture[MAX_BRUSH_TEXTURE_COUNT] = {};
 
-    if (!onlyTexCoords)
+    if (!onlyTexCoords && !onlyRasterized)
     {
       isWaterPolygon = RT_HasWaterTextures(polygon, isWaterTexture);
     }
@@ -840,7 +851,7 @@ bool RT_IsBrushIgnored(CEntity *penBrush)
 }
 
 
-void RT_ProcessBrushEntity(CEntity *penBrush, bool onlyTexCoords, SSRT::Scene *scene)
+void RT_ProcessBrushEntity(CEntity *penBrush, bool onlyTexCoords, bool onlyRasterized, SSRT::Scene *scene)
 {
   RT_BrushPartIndex = 0;
 
@@ -856,8 +867,9 @@ void RT_ProcessBrushEntity(CEntity *penBrush, bool onlyTexCoords, SSRT::Scene *s
   }
 
   // RT: if onlyTexCoords=true, then penBrush was already ignored on 
-  // previous RT_ProcessBrushEntity call, when onlyTexCoords was false
-  if (!onlyTexCoords)
+  // previous RT_ProcessBrushEntity call, when onlyTexCoords was false.
+  // Same with onlyRasterized
+  if (!onlyTexCoords && !onlyRasterized)
   {
     if (RT_IsBrushIgnored(penBrush))
     {
@@ -879,7 +891,7 @@ void RT_ProcessBrushEntity(CEntity *penBrush, bool onlyTexCoords, SSRT::Scene *s
       if (!(itbsc->bsc_ulFlags & BSCF_HIDDEN))
       {
         // add that sector to active sectors
-        RT_AddActiveSector(itbsc.Current(), penBrush, onlyTexCoords, scene);
+        RT_AddActiveSector(itbsc.Current(), penBrush, onlyTexCoords, onlyRasterized, scene);
       }
     }
   }
@@ -888,13 +900,19 @@ void RT_ProcessBrushEntity(CEntity *penBrush, bool onlyTexCoords, SSRT::Scene *s
 
 void RT_AddBrushEntity(CEntity *penBrush, SSRT::Scene *scene)
 {
-  RT_ProcessBrushEntity(penBrush, false, scene);
+  RT_ProcessBrushEntity(penBrush, false, false, scene);
 }
 
 
 void RT_UpdateBrushTexCoords(CEntity *penBrush, SSRT::Scene *scene)
 {
-  RT_ProcessBrushEntity(penBrush, true, scene);
+  RT_ProcessBrushEntity(penBrush, true, false, scene);
+}
+
+
+void RT_AddRasterizedBrushEntity(CEntity *penBrush, SSRT::Scene *scene)
+{
+  RT_ProcessBrushEntity(penBrush, false, true, scene);
 }
 
 

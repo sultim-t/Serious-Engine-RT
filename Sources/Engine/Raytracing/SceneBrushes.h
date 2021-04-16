@@ -71,7 +71,6 @@ private:
 
 private:
   RgInstance instance;
-  CWorld *pWorld;
   TextureUploader *pTextureUploader;
 
   // Movable brush's entity ID to uniqueIDs of that entity's parts
@@ -87,7 +86,8 @@ private:
   // Used for updating dynamic texture coordinates on brushes.
   std::map<ULONG, std::vector<BrushPartGeometryIndex>> entitiesWithDynamicTexCoords;
 
-
+  // Rasterized brushes should be sent to rendering each frame
+  std::map<ULONG, bool>                   entityIsRasterizedBrush;
 };
 
 }

@@ -137,6 +137,8 @@ SSRT::Scene::~Scene()
 {
   CPrintF("SSRT scene was deleted.\n");
 
+  delete pSceneBrushes;
+
   // submit empty scene to destroy current
   RgResult r = rgStartNewScene(instance);
   RG_CHECKERROR(r);

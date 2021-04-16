@@ -324,13 +324,12 @@ static void FlushModelInfo(ULONG entityID,
   {
     modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_SKYBOX;
 
-    if (!modelInfo.isRasterized)
-    {
-      FLOATmatrix3D bv;
-      MakeInverseRotationMatrix(bv, pScene->GetBackgroundViewerOrientationAngle());
+    // convert rotation from background viewer space to world space,
+    // as RTGL1 accepts viewer position
+    FLOATmatrix3D bv;
+    MakeInverseRotationMatrix(bv, pScene->GetBackgroundViewerOrientationAngle());
 
-      rotation = bv * rotation;
-    }
+    rotation = bv * rotation;
   }
   else
   {
