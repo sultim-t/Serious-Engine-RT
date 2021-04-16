@@ -50,6 +50,11 @@ void Utils::CopyTransform(RgTransform &dst, const CPlacement3D &placement)
   FLOATmatrix3D rotation;
   MakeRotationMatrix(rotation, placement.pl_OrientationAngle);
 
+  CopyTransform(dst, position, rotation);
+}
+
+void Utils::CopyTransform(RgTransform &dst, const FLOAT3D &position, const FLOATmatrix3D &rotation)
+{
   for (uint32_t i = 0; i < 3; i++)
   {
     for (uint32_t j = 0; j < 3; j++)

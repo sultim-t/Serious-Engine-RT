@@ -188,7 +188,7 @@ static void RT_SetBlend(bool &blendEnable, RgBlendFactor &blendSrc, RgBlendFacto
   {
     blendEnable = true;
     blendSrc = RG_BLEND_FACTOR_SRC_ALPHA;
-    blendDst = RG_BLEND_FACTOR_INV_SRC_ALPHA;
+    blendDst = RG_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
   }
   else if (stt == STT_ADD)
   {
@@ -200,7 +200,7 @@ static void RT_SetBlend(bool &blendEnable, RgBlendFactor &blendSrc, RgBlendFacto
   {
     blendEnable = true;
     blendSrc = RG_BLEND_FACTOR_ZERO;
-    blendDst = RG_BLEND_FACTOR_INV_SRC_COLOR;
+    blendDst = RG_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
   }
   else
   {

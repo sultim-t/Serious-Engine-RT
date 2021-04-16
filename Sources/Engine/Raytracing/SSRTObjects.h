@@ -123,12 +123,25 @@ struct CUpdateTexCoordsInfo
 };
 
 
-struct CParticlesGeometry : public CAbstractGeometry
+struct CParticlesGeometry
 {
-  GFXColor            *colorData;
+  // absolute position and rotation
+  FLOAT3D             absPosition;
+  FLOATmatrix3D       absRotation;
 
-public:
-  uint64_t GetUniqueID() const override;
+  INDEX vertexCount;
+  const RgRasterizedGeometryVertexStruct *pVertexData;
+
+  // each 3 indices make a triangle
+  INDEX               indexCount;
+  const INDEX         *pIndexData;
+
+  CTextureData        *pTexture;
+  INDEX               textureFrame;
+
+  bool                blendEnable;
+  RgBlendFactor       blendSrc;
+  RgBlendFactor       blendDst;
 };
 
 

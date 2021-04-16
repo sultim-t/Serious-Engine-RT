@@ -34,10 +34,4 @@ uint64_t CBrushGeometry::GetUniqueID() const
   return GetBrushUniqueID(entityID, brushPartIndex);
 }
 
-uint64_t CParticlesGeometry::GetUniqueID() const
-{
-  ASSERTALWAYS("Unique IDs for particles not implemented");
-  return 0;
-}
-
 }

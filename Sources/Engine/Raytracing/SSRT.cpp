@@ -294,7 +294,7 @@ void SSRT::SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
   hudInfo.color = { 1, 1, 1, 1 };
   hudInfo.blendEnable = RG_TRUE;
   hudInfo.blendFuncSrc = RG_BLEND_FACTOR_SRC_ALPHA;
-  hudInfo.blendFuncDst = RG_BLEND_FACTOR_INV_SRC_ALPHA;
+  hudInfo.blendFuncDst = RG_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
   hudInfo.depthTest = RG_FALSE;
   hudInfo.depthWrite = RG_FALSE;
   hudInfo.renderType = RG_RASTERIZED_GEOMETRY_RENDER_TYPE_SWAPCHAIN;

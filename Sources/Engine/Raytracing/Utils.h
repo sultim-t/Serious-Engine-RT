@@ -23,4 +23,5 @@ public:
   static CWorld *GetCurrentWorld();
   static void CopyTransform(RgTransform &dst, const SSRT::CAbstractGeometry &src);
   static void CopyTransform(RgTransform &dst, const CPlacement3D &placement);
+  static void CopyTransform(RgTransform &dst, const FLOAT3D &position, const FLOATmatrix3D &rotation);
 };

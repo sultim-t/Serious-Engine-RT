@@ -40,7 +40,7 @@ static void GetBlendingFromMaterialBlending(
 {
   switch (materialBlend)
   {
-  case RG_GEOMETRY_MATERIAL_BLEND_TYPE_ALPHA: *blendEnable = RG_TRUE; *blendSrc = RG_BLEND_FACTOR_SRC_ALPHA; *blendDst = RG_BLEND_FACTOR_INV_SRC_ALPHA; break;
+  case RG_GEOMETRY_MATERIAL_BLEND_TYPE_ALPHA: *blendEnable = RG_TRUE; *blendSrc = RG_BLEND_FACTOR_SRC_ALPHA; *blendDst = RG_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA; break;
   case RG_GEOMETRY_MATERIAL_BLEND_TYPE_ADD:   *blendEnable = RG_TRUE; *blendSrc = RG_BLEND_FACTOR_ONE;       *blendDst = RG_BLEND_FACTOR_ONE; break;
   case RG_GEOMETRY_MATERIAL_BLEND_TYPE_SHADE: *blendEnable = RG_TRUE; *blendSrc = RG_BLEND_FACTOR_DST_COLOR; *blendDst = RG_BLEND_FACTOR_SRC_COLOR; break;
   default: *blendEnable = RG_FALSE;

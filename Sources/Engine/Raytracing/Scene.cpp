@@ -288,33 +288,26 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
 
 void SSRT::Scene::AddParticles(const CParticlesGeometry &particles)
 {
-  if (particles.vertices == nullptr || particles.vertexCount == 0 || particles.indices == nullptr || particles.indexCount == 0)
+  if (particles.pVertexData == nullptr || particles.vertexCount == 0 || particles.pIndexData == nullptr || particles.indexCount == 0)
   {
     return;
   }
 
-  RgRasterizedGeometryVertexArrays vertInfo = {};
-  vertInfo.vertexData = particles.vertices;
-  vertInfo.texCoordData = particles.texCoordLayers[0];
-  vertInfo.colorData = particles.colorData;
-  vertInfo.vertexStride = sizeof(GFXVertex);
-  vertInfo.texCoordStride = sizeof(GFXTexCoord);
-  vertInfo.colorStride = sizeof(GFXColor);
-
   RgRasterizedGeometryUploadInfo info = {};
   info.vertexCount = particles.vertexCount;
-  info.arrays = &vertInfo;
+  info.structs = particles.pVertexData;
+  info.arrays = nullptr;
   info.indexCount = particles.indexCount;
-  info.indexData = particles.indices;
+  info.indexData = particles.pIndexData;
   info.color = { 1, 1, 1, 1 };
-  info.material = pTextureUploader->GetMaterial(particles.textures[0], particles.textureFrames[0]);
+  info.material = pTextureUploader->GetMaterial(particles.pTexture, particles.textureFrame);
   info.blendEnable = particles.blendEnable;
   info.blendFuncSrc = particles.blendSrc;
   info.blendFuncDst = particles.blendDst;
   info.depthTest = RG_TRUE;
   info.renderType = RG_RASTERIZED_GEOMETRY_RENDER_TYPE_DEFAULT;
 
-  Utils::CopyTransform(info.transform, particles);
+  Utils::CopyTransform(info.transform, particles.absPosition, particles.absRotation);
 
   RgResult r = rgUploadRasterizedGeometry(instance, &info, nullptr, nullptr);
   RG_CHECKERROR(r);

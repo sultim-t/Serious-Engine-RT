@@ -37,6 +37,7 @@ extern const FLOAT *pfCosTable;
 
 
 // variables used for rendering particles
+static CStaticStackArray<RgRasterizedGeometryVertexStruct> RT_Vertices;
 static FLOAT          RT_fTextureCorrectionU, RT_fTextureCorrectionV;
 static GFXTexCoord    RT_atex[4];
 static CTextureData   *RT_ptd = NULL;
@@ -121,7 +122,7 @@ static void RT_GenerateQuadIndices(SSRT::CParticlesGeometry *preparedInfo)
     }
   }
 
-  preparedInfo->indices = &_aiCommonQuads[0];
+  preparedInfo->pIndexData = &_aiCommonQuads[0];
   preparedInfo->indexCount = ctElements;
 }
 
@@ -140,7 +141,7 @@ void RT_Particle_PrepareTexture(CTextureObject *pto, ParticleBlendType pbt)
       //  gfxBlendFunc(GFX_SRC_ALPHA, GFX_INV_SRC_ALPHA);
       RT_bBlendEnable = true;
       RT_eBlendSrc = RG_BLEND_FACTOR_SRC_ALPHA;
-      RT_eBlendDst = RG_BLEND_FACTOR_INV_SRC_ALPHA;
+      RT_eBlendDst = RG_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
       break;
     case PBT_ADD:
       // gfxBlendFunc(GFX_ONE, GFX_ONE);
@@ -152,7 +153,7 @@ void RT_Particle_PrepareTexture(CTextureObject *pto, ParticleBlendType pbt)
       // gfxBlendFunc(GFX_ZERO, GFX_INV_SRC_COLOR);
       RT_bBlendEnable = true;
       RT_eBlendSrc = RG_BLEND_FACTOR_ZERO;
-      RT_eBlendDst = RG_BLEND_FACTOR_INV_SRC_COLOR;
+      RT_eBlendDst = RG_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
       break;
     case PBT_ADDALPHA:
       // gfxBlendFunc(GFX_SRC_ALPHA, GFX_ONE);
@@ -164,7 +165,7 @@ void RT_Particle_PrepareTexture(CTextureObject *pto, ParticleBlendType pbt)
       // gfxBlendFunc(GFX_ONE, GFX_INV_SRC_ALPHA);
       RT_bBlendEnable = true;
       RT_eBlendSrc = RG_BLEND_FACTOR_ONE;
-      RT_eBlendDst = RG_BLEND_FACTOR_INV_SRC_ALPHA;
+      RT_eBlendDst = RG_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
       break;
     case PBT_TRANSPARENT:
       // = RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
@@ -268,33 +269,29 @@ void RT_Particle_RenderSquare(const FLOAT3D &vPos, FLOAT fSize, ANGLE aRotation,
   dx *= fRX;
   dy *= fRY;
 
-  // add to vertex arrays
-  GFXVertex4 *pvtx = _avtxCommon.Push(4);
-  GFXTexCoord *ptex = _atexCommon.Push(4);
-  GFXColor *pcol = _acolCommon.Push(4);
-
   FLOAT3D v0 = vPos - dx + dy;
   FLOAT3D v1 = vPos - dx - dy;
   FLOAT3D v2 = vPos + dx - dy;
   FLOAT3D v3 = vPos + dx + dy;
 
-  pvtx[0].x = v0(1);  pvtx[0].y = v0(2);  pvtx[0].z = v0(3);
-  pvtx[1].x = v1(1);  pvtx[1].y = v1(2);  pvtx[1].z = v1(3);
-  pvtx[2].x = v2(1);  pvtx[2].y = v2(2);  pvtx[2].z = v2(3);
-  pvtx[3].x = v3(1);  pvtx[3].y = v3(2);  pvtx[3].z = v3(3);
+  // add to vertex arrays
+  RgRasterizedGeometryVertexStruct *pVerts = RT_Vertices.Push(4);
 
-  // prepare texture coords 
-  ptex[0] = RT_atex[1];
-  ptex[1] = RT_atex[0];
-  ptex[2] = RT_atex[3];
-  ptex[3] = RT_atex[2];
+  memcpy(pVerts[0].position, v0.vector, sizeof(float) * 3);
+  memcpy(pVerts[1].position, v1.vector, sizeof(float) * 3);
+  memcpy(pVerts[2].position, v2.vector, sizeof(float) * 3);
+  memcpy(pVerts[3].position, v3.vector, sizeof(float) * 3);
 
-  // prepare colors
+  memcpy(pVerts[0].texCoord, &RT_atex[0], sizeof(float) * 2);
+  memcpy(pVerts[1].texCoord, &RT_atex[1], sizeof(float) * 2);
+  memcpy(pVerts[2].texCoord, &RT_atex[2], sizeof(float) * 2);
+  memcpy(pVerts[3].texCoord, &RT_atex[3], sizeof(float) * 2);
+
   const GFXColor glcol(col);
-  pcol[0] = glcol;
-  pcol[1] = glcol;
-  pcol[2] = glcol;
-  pcol[3] = glcol;
+  pVerts[0].packedColor = glcol.abgr;
+  pVerts[1].packedColor = glcol.abgr;
+  pVerts[2].packedColor = glcol.abgr;
+  pVerts[3].packedColor = glcol.abgr;
 }
 
 
@@ -324,95 +321,81 @@ void RT_Particle_RenderLine(const FLOAT3D &a, const FLOAT3D &b, FLOAT width, COL
   FLOAT3D b1 = b - cross;
 
   // add to vertex arrays
-  GFXVertex *pvtx = _avtxCommon.Push(4);
-  GFXTexCoord *ptex = _atexCommon.Push(4);
-  GFXColor *pcol = _acolCommon.Push(4);
+  RgRasterizedGeometryVertexStruct *pVerts = RT_Vertices.Push(4);
 
-  // prepare vertices
-  pvtx[0].x = a0(1);  pvtx[0].y = a0(2);  pvtx[0].z = a0(3);
-  pvtx[1].x = b0(1);  pvtx[1].y = b0(2);  pvtx[1].z = b0(3);
-  pvtx[2].x = b1(1);  pvtx[2].y = b1(2);  pvtx[2].z = b1(3);
-  pvtx[3].x = a1(1);  pvtx[3].y = a1(2);  pvtx[3].z = a1(3);
+  memcpy(pVerts[0].position, a0.vector, sizeof(float) * 3);
+  memcpy(pVerts[1].position, b0.vector, sizeof(float) * 3);
+  memcpy(pVerts[2].position, b1.vector, sizeof(float) * 3);
+  memcpy(pVerts[3].position, a1.vector, sizeof(float) * 3);
 
-  // prepare texture coords 
-  ptex[0] = RT_atex[0];
-  ptex[1] = RT_atex[1];
-  ptex[2] = RT_atex[2];
-  ptex[3] = RT_atex[3];
+  memcpy(pVerts[0].texCoord, &RT_atex[0], sizeof(float) * 2);
+  memcpy(pVerts[1].texCoord, &RT_atex[1], sizeof(float) * 2);
+  memcpy(pVerts[2].texCoord, &RT_atex[2], sizeof(float) * 2);
+  memcpy(pVerts[3].texCoord, &RT_atex[3], sizeof(float) * 2);
 
-  // prepare colors
   const GFXColor glcol0(col0);
   const GFXColor glcol1(col1);
-  pcol[0] = glcol0;
-  pcol[1] = glcol1;
-  pcol[2] = glcol1;
-  pcol[3] = glcol0;
+  pVerts[0].packedColor = glcol0.abgr;
+  pVerts[1].packedColor = glcol1.abgr;
+  pVerts[2].packedColor = glcol1.abgr;
+  pVerts[3].packedColor = glcol0.abgr;
 }
 
 
 void RT_Particle_RenderQuad3D(const FLOAT3D &vPos0, const FLOAT3D &vPos1, const FLOAT3D &vPos2, const FLOAT3D &vPos3, COLOR col)
 { 
   // trivial rejection
-  if (((col & CT_AMASK) >> CT_ASHIFT) < 2) return;
+  if (((col & CT_AMASK) >> CT_ASHIFT) < 2)
+  {
+    return;
+  }
 
   // separate colors (for the sake of fog/haze)
   COLOR col0, col1, col2, col3;
   col0 = col1 = col2 = col3 = col;
 
   // add to vertex arrays
-  GFXVertex *pvtx = _avtxCommon.Push(4);
-  GFXTexCoord *ptex = _atexCommon.Push(4);
-  GFXColor *pcol = _acolCommon.Push(4);
+  RgRasterizedGeometryVertexStruct *pVerts = RT_Vertices.Push(4);
 
   // RT: use global space, so don't project
-  pvtx[0].x = vPos0(1);  pvtx[0].y = vPos0(2);  pvtx[0].z = vPos0(3);
-  pvtx[1].x = vPos1(1);  pvtx[1].y = vPos1(2);  pvtx[1].z = vPos1(3);
-  pvtx[2].x = vPos2(1);  pvtx[2].y = vPos2(2);  pvtx[2].z = vPos2(3);
-  pvtx[3].x = vPos3(1);  pvtx[3].y = vPos3(2);  pvtx[3].z = vPos3(3);
+  memcpy(pVerts[0].position, vPos0.vector, sizeof(float) * 3);
+  memcpy(pVerts[1].position, vPos1.vector, sizeof(float) * 3);
+  memcpy(pVerts[2].position, vPos2.vector, sizeof(float) * 3);
+  memcpy(pVerts[3].position, vPos3.vector, sizeof(float) * 3);
 
-  // prepare texture coords 
-  ptex[0] = RT_atex[0];
-  ptex[1] = RT_atex[1];
-  ptex[2] = RT_atex[2];
-  ptex[3] = RT_atex[3];
+  memcpy(pVerts[0].texCoord, &RT_atex[0], sizeof(float) * 2);
+  memcpy(pVerts[1].texCoord, &RT_atex[1], sizeof(float) * 2);
+  memcpy(pVerts[2].texCoord, &RT_atex[2], sizeof(float) * 2);
+  memcpy(pVerts[3].texCoord, &RT_atex[3], sizeof(float) * 2);
 
-  // prepare colors
   const GFXColor glcol0(col0);
   const GFXColor glcol1(col1);
   const GFXColor glcol2(col2);
   const GFXColor glcol3(col3);
-  pcol[0] = glcol0;
-  pcol[1] = glcol1;
-  pcol[2] = glcol2;
-  pcol[3] = glcol3;
+  pVerts[0].packedColor = glcol0.abgr;
+  pVerts[1].packedColor = glcol1.abgr;
+  pVerts[2].packedColor = glcol2.abgr;
+  pVerts[3].packedColor = glcol3.abgr;
 }
 
 
 void RT_Particle_Flush()
 {
-  if (RT_sCurrentScene != nullptr && _avtxCommon.Count() > 0)
+  if (RT_sCurrentScene != nullptr && RT_Vertices.Count() > 0)
   {
-    ASSERT(_atexCommon.Count() == _avtxCommon.Count());
-    ASSERT(_acolCommon.Count() == _avtxCommon.Count());
-
     FLOATmatrix3D identity;
     identity(1, 1) = 1; identity(1, 2) = 0; identity(1, 3) = 0;
     identity(2, 1) = 0; identity(2, 2) = 1; identity(2, 3) = 0;
     identity(3, 1) = 0; identity(3, 2) = 0; identity(3, 3) = 1;
 
     SSRT::CParticlesGeometry info = {};
-    info.entityID = UINT32_MAX;
     info.absPosition = { 0,0,0 };
     info.absRotation = identity;
-    info.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_OPAQUE;
-    info.vertexCount = _avtxCommon.Count();
-    info.vertices = &_avtxCommon[0];
-    info.normals = nullptr;
-    info.colorData = &_acolCommon[0];
-    info.texCoordLayers[0] = &_atexCommon[0];
+    info.vertexCount = RT_Vertices.Count();
+    info.pVertexData = &RT_Vertices[0];
 
-    info.textures[0] = RT_ptd;
-    info.textureFrames[0] = RT_iFrame;
+    info.pTexture = RT_ptd;
+    info.textureFrame = RT_iFrame;
 
     info.blendEnable = true;
     info.blendSrc = RT_eBlendSrc;
@@ -425,6 +408,8 @@ void RT_Particle_Flush()
 
   RT_ptd = nullptr;
   RT_iFrame = 0;
+
+  RT_Vertices.Clear();
 
   // all done
   gfxResetArrays();
