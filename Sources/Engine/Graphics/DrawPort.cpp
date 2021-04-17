@@ -900,7 +900,7 @@ void CDrawPort::Fill( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, COLOR col
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
 
   // draw only using polygons
-  if (eAPI == GAT_RT)
+  if (eAPI == GAT_RT || eAPI == GAT_VK)
   {
     Fill(pixI, pixJ, pixWidth, pixHeight, col, col, col, col);
     return;
@@ -963,19 +963,6 @@ void CDrawPort::Fill( PIX pixI, PIX pixJ, PIX pixWidth, PIX pixHeight, COLOR col
     D3D_CHECKERROR(hr);
   }
 #endif // SE1_D3D
-#ifdef SE1_VULKAN
-  else if (eAPI == GAT_VK)
-  {
-    UBYTE ubR, ubG, ubB;
-    ColorToRGB(col, ubR, ubG, ubB);
-    float rgba[] = { ubR / 255.0f, ubG / 255.0f, ubB / 255.0f, 1.0f };
-
-    pixI += dp_MinI;
-    pixJ += dp_MinJ;
-
-    _pGfx->gl_SvkMain->ClearColor(pixI, pixJ, pixWidth, pixHeight, rgba);
-  }
-#endif // SE1_VULKAN
 }
 
 

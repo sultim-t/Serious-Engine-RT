@@ -837,7 +837,10 @@ functions:
       BeginModelRenderingView(apr, pdp);
 
       WeaponMovingOffset(plWeaponMirror.pl_PositionVector);
-      //plWeaponMirror.RelativeToAbsoluteSmooth(plView);
+      if (_pGfx->gl_eCurrentAPI != GAT_RT) 
+      {
+        plWeaponMirror.RelativeToAbsoluteSmooth(plView);
+      }
       rmMain.SetObjectPlacement(plWeaponMirror);
 
       rmMain.rm_colLight   = colLight;
@@ -866,7 +869,10 @@ functions:
     BeginModelRenderingView(apr, pdp);
 
     WeaponMovingOffset(plWeapon.pl_PositionVector);
-    //plWeapon.RelativeToAbsoluteSmooth(plView);
+    if (_pGfx->gl_eCurrentAPI != GAT_RT) 
+    { 
+      plWeapon.RelativeToAbsoluteSmooth(plView);
+    }
     rmMain.SetObjectPlacement(plWeapon);
 
     rmMain.rm_colLight   = colLight;  
