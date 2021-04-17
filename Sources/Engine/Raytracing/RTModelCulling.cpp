@@ -25,11 +25,14 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Raytracing/Scene.h>
 
 #include <Engine/Base/ListIterator.inl>
+#include <Engine/Templates/StaticStackArray.h>
 
 
 
 // list of active sectors
-static CListHead re_lhActiveSectors;     
+static CListHead RT_lhActiveSectors;
+// RT: currently added models, used for clearing ENF_INRENDERING flag at the end of scanning
+static CStaticStackArray<CEntity*> RT_saAddedModels;
 
 
 /* Add to rendering all entities that are inside an zoning brush sector. */
@@ -55,15 +58,24 @@ static void RT_AddEntitiesInSector(CBrushSector *pbscSectorInside, SSRT::Scene *
           continue;
         }
 
+        if (pen->en_ulFlags & ENF_INRENDERING)
+        {
+          continue;
+        }
+        pen->en_ulFlags |= ENF_INRENDERING;
+
+
         // add it as a model and scan for light sources
         RT_AddModelEntity(pen, pScene);
 
         // also, add its particles
         RT_AddParticlesForEntity(pen, pScene);
+        
+        RT_saAddedModels.Push() = pen;
       }
     ENDFOR
   }
-};
+}
 
 
 static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::Scene *pScene)
@@ -76,7 +88,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::Scene *pScene)
   }
 
   // add it to active sectors list
-  re_lhActiveSectors.AddTail(bscSector.bsc_lnInActiveSectors);
+  RT_lhActiveSectors.AddTail(bscSector.bsc_lnInActiveSectors);
 
   CBrush3D &br = *bscSector.bsc_pbmBrushMip->bm_pbrBrush;
 
@@ -156,6 +168,9 @@ static void RT_AddZoningSectorsAroundEntity(CEntity *pen, SSRT::Scene *pScene)
     ENDFOR
   }
 
+  const DOUBLE3D re_vdViewSphere = FLOATtoDOUBLE(pScene->GetCameraPosition());
+  const float re_dViewSphereR = 1.0f;
+
   // for each active sector
   while (!lhToAdd.IsEmpty())
   {
@@ -171,7 +186,30 @@ static void RT_AddZoningSectorsAroundEntity(CEntity *pen, SSRT::Scene *pScene)
       continue;
     }
 
-    // RT: TODO: portals for culling models?
+    // for each portal in the sector
+    FOREACHINSTATICARRAY(pbsc->bsc_abpoPolygons, CBrushPolygon, itbpo)
+    {
+      CBrushPolygon *pbpo = itbpo;
+      if (!(pbpo->bpo_ulFlags & BPOF_PORTAL))
+      {
+        continue;
+      }
+      // for each sector related to the portal
+      {
+        FOREACHDSTOFSRC(pbpo->bpo_rsOtherSideSectors, CBrushSector, bsc_rdOtherSidePortals, pbscRelated)
+          // if the sector is not active
+          if (!pbscRelated->bsc_lnInActiveSectors.IsLinked())
+          {
+            // if the view sphere is in the sector
+            if (pbscRelated->bsc_bspBSPTree.TestSphere(re_vdViewSphere, re_dViewSphereR) >= 0)
+            {
+              // add it to list to add
+              lhToAdd.AddTail(pbscRelated->bsc_lnInActiveSectors);
+            }
+          }
+        ENDFOR
+      }
+    }
   }
 }
 
@@ -179,12 +217,18 @@ static void RT_AddZoningSectorsAroundEntity(CEntity *pen, SSRT::Scene *pScene)
 static void RT_CleanupScanning()
 {
   {
-    FORDELETELIST(CBrushSector, bsc_lnInActiveSectors, re_lhActiveSectors, itbsc)
+    FORDELETELIST(CBrushSector, bsc_lnInActiveSectors, RT_lhActiveSectors, itbsc)
     {
       itbsc->bsc_lnInActiveSectors.Remove();
     }
   }
-  ASSERT(re_lhActiveSectors.IsEmpty());
+
+  for (int i = 0; i < RT_saAddedModels.Count(); i++)
+  {
+    RT_saAddedModels[i]->en_ulFlags &= ~ENF_INRENDERING;
+  }
+
+  RT_saAddedModels.Clear();
 }
 
 
@@ -195,10 +239,12 @@ void RT_AddModelEntitiesAroundViewer(SSRT::Scene *pScene)
     return;
   }
 
-  ASSERT(re_lhActiveSectors.IsEmpty());
+  ASSERT(RT_lhActiveSectors.IsEmpty());
+  ASSERT(RT_saAddedModels.Count() == 0);
 
   RT_AddZoningSectorsAroundEntity(pScene->GetViewerEntity(), pScene);
 
   RT_CleanupScanning();
-  ASSERT(re_lhActiveSectors.IsEmpty());
+  ASSERT(RT_lhActiveSectors.IsEmpty());
+  ASSERT(RT_saAddedModels.Count() == 0);
 }

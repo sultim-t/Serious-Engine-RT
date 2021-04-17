@@ -45,10 +45,10 @@ extern FLOAT srt_fLightDirectionalColorPow = 2.2f;
 extern FLOAT srt_fLightDirectionalAngularDiameter = 0.5f;
 
 extern INDEX srt_iLightSphericalMaxCount = 16;
-extern INDEX srt_iLightSphericalHSVThresholdHLower = 20;
-extern INDEX srt_iLightSphericalHSVThresholdHUpper = 45;
-extern INDEX srt_iLightSphericalHSVThresholdVLower = 80;
-extern INDEX srt_iLightSphericalHSVThresholdVUpper = 255;
+//extern INDEX srt_iLightSphericalHSVThresholdHLower = 20;
+//extern INDEX srt_iLightSphericalHSVThresholdHUpper = 45;
+//extern INDEX srt_iLightSphericalHSVThresholdVLower = 80;
+//extern INDEX srt_iLightSphericalHSVThresholdVUpper = 255;
 extern FLOAT srt_fLightSphericalIntensityMultiplier = 1.0f;
 extern FLOAT srt_fLightSphericalSaturation = 1.0f;
 extern FLOAT srt_fLightSphericalColorPow = 2.2f;
@@ -73,10 +73,10 @@ void SSRT::Scene::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightDirectionalAngularDiameter;", &srt_fLightDirectionalAngularDiameter);
 
   _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalMaxCount;", &srt_iLightSphericalMaxCount);
-  _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdHLower;", &srt_iLightSphericalHSVThresholdHLower);
-  _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdHUpper;", &srt_iLightSphericalHSVThresholdHUpper);
-  _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdVLower;", &srt_iLightSphericalHSVThresholdVLower);
-  _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdVUpper;", &srt_iLightSphericalHSVThresholdVUpper);
+  //_pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdHLower;", &srt_iLightSphericalHSVThresholdHLower);
+  //_pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdHUpper;", &srt_iLightSphericalHSVThresholdHUpper);
+  //_pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdVLower;", &srt_iLightSphericalHSVThresholdVLower);
+  //_pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdVUpper;", &srt_iLightSphericalHSVThresholdVUpper);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalIntensityMultiplier;", &srt_fLightSphericalIntensityMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalSaturation;", &srt_fLightSphericalSaturation);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalColorPow;", &srt_fLightSphericalColorPow);
@@ -101,10 +101,10 @@ void SSRT::Scene::NormalizeShellVariables()
   srt_fLightDirectionalColorPow             = Max(srt_fLightDirectionalColorPow, 0.0f);
   srt_fLightDirectionalAngularDiameter      = Max(srt_fLightDirectionalAngularDiameter, 0.0f);
 
-  srt_iLightSphericalHSVThresholdHLower     = Clamp<INDEX>(srt_iLightSphericalHSVThresholdHLower, 0, 255);
-  srt_iLightSphericalHSVThresholdHUpper     = Clamp<INDEX>(srt_iLightSphericalHSVThresholdHUpper, 0, 255);
-  srt_iLightSphericalHSVThresholdVLower     = Clamp<INDEX>(srt_iLightSphericalHSVThresholdVLower, 0, 255);
-  srt_iLightSphericalHSVThresholdVUpper     = Clamp<INDEX>(srt_iLightSphericalHSVThresholdVUpper, 0, 255);
+  //srt_iLightSphericalHSVThresholdHLower     = Clamp<INDEX>(srt_iLightSphericalHSVThresholdHLower, 0, 255);
+  //srt_iLightSphericalHSVThresholdHUpper     = Clamp<INDEX>(srt_iLightSphericalHSVThresholdHUpper, 0, 255);
+  //srt_iLightSphericalHSVThresholdVLower     = Clamp<INDEX>(srt_iLightSphericalHSVThresholdVLower, 0, 255);
+  //srt_iLightSphericalHSVThresholdVUpper     = Clamp<INDEX>(srt_iLightSphericalHSVThresholdVUpper, 0, 255);
   srt_fLightSphericalIntensityMultiplier    = Max(srt_fLightSphericalIntensityMultiplier, 0.0f);
   srt_fLightSphericalSaturation             = Max(srt_fLightSphericalSaturation, 0.0f);
   srt_fLightSphericalColorPow               = Max(srt_fLightSphericalColorPow, 0.0f);
@@ -323,6 +323,11 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
 
 void SSRT::Scene::AddLight(const CSphereLight &sphLt)
 {
+  if (sphLights.size() >= srt_iLightSphericalMaxCount)
+  {
+    return;
+  }
+
   RgSphericalLightUploadInfo info = {};
   info.uniqueID = sphLt.entityID;
   info.color = { sphLt.color(1), sphLt.color(2), sphLt.color(3) };

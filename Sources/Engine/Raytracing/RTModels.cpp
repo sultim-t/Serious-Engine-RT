@@ -38,10 +38,10 @@ extern FLOAT srt_fLightDirectionalSaturation;
 extern FLOAT srt_fLightDirectionalColorPow;
 extern FLOAT srt_fLightDirectionalIntensityMultiplier;
 
-extern INDEX srt_iLightSphericalHSVThresholdHLower;
-extern INDEX srt_iLightSphericalHSVThresholdHUpper;
-extern INDEX srt_iLightSphericalHSVThresholdVLower;
-extern INDEX srt_iLightSphericalHSVThresholdVUpper;
+//extern INDEX srt_iLightSphericalHSVThresholdHLower;
+//extern INDEX srt_iLightSphericalHSVThresholdHUpper;
+//extern INDEX srt_iLightSphericalHSVThresholdVLower;
+//extern INDEX srt_iLightSphericalHSVThresholdVUpper;
 
 extern FLOAT srt_fLightSphericalSaturation;
 extern FLOAT srt_fLightSphericalColorPow;
@@ -113,17 +113,17 @@ static bool RT_LightEntityHasVertices(CEntity *pen)
 
 static bool RT_SphericalLightIsIgnored(const CLightSource *plsLight)
 {
-  UBYTE h, s, v;
-  ColorToHSV(plsLight->GetLightColor(), h, s, v);
+  //UBYTE h, s, v;
+  //ColorToHSV(plsLight->GetLightColor(), h, s, v);
 
-  // ignore dim lights
-  if (h < srt_iLightSphericalHSVThresholdHLower ||
-      h > srt_iLightSphericalHSVThresholdHUpper ||
-      v < srt_iLightSphericalHSVThresholdVLower ||
-      v > srt_iLightSphericalHSVThresholdVUpper)
-  {
-    return true;
-  }
+  //// ignore dim lights
+  //if (h < srt_iLightSphericalHSVThresholdHLower ||
+  //    h > srt_iLightSphericalHSVThresholdHUpper ||
+  //    v < srt_iLightSphericalHSVThresholdVLower ||
+  //    v > srt_iLightSphericalHSVThresholdVUpper)
+  //{
+  //  return true;
+  //}
 
   CEntity *pen = plsLight->ls_penEntity;
 
