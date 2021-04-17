@@ -20,6 +20,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Base/Shell.h>
 #include <Engine/World/World.h>
+#include <Engine/Light/LightSource.h>
 
 #include <Engine/Templates/DynamicContainer.cpp>
 
@@ -118,11 +119,11 @@ void SSRT::Scene::NormalizeShellVariables()
 SSRT::Scene::Scene(RgInstance _instance, CWorld *_pWorld, TextureUploader *_pTextureUploader)
 :
   instance(_instance),
-  pSceneBrushes(nullptr),
   pTextureUploader(_pTextureUploader),
+  pSceneBrushes(nullptr),
   pWorld(_pWorld),
-  viewerEntityID(UINT32_MAX),
-  worldName(_pWorld->GetName())
+  worldName(_pWorld->GetName()),
+  pViewerEntity(nullptr)
 {
   ASSERT(pWorld != nullptr);
   CPrintF("SSRT scene was created.\n");
@@ -148,9 +149,9 @@ SSRT::Scene::~Scene()
 
 void SSRT::Scene::Update(const CWorldRenderingInfo &info)
 {
-  this->viewerEntityID = info.viewerEntityID;
-  this->viewerPosition = info.viewerPosition;
-  this->viewerRotation = info.viewerRotation;
+  this->pViewerEntity = info.pViewerEntity;
+  this->cameraPosition = info.cameraPosition;
+  this->cameraRotation = info.cameraRotation;
 
   NormalizeShellVariables();
 
@@ -322,20 +323,28 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
 
 void SSRT::Scene::AddLight(const CSphereLight &sphLt)
 {
+  RgSphericalLightUploadInfo info = {};
+  info.uniqueID = sphLt.entityID;
+  info.color = { sphLt.color(1), sphLt.color(2), sphLt.color(3) };
+  info.position = { sphLt.absPosition(1), sphLt.absPosition(2), sphLt.absPosition(3) };
+  info.radius = Sqrt(sphLt.hotspotDistance) * srt_fLightSphericalRadiusMultiplier;
+  info.falloffDistance = sphLt.faloffDistance * srt_fLightSphericalFalloffMultiplier;
+
+  RgResult r = rgUploadSphericalLight(instance, &info);
+  RG_CHECKERROR(r);
+
   sphLights.push_back(sphLt);
 }
 
 void SSRT::Scene::AddLight(const CDirectionalLight &dirLt)
 {
-  RgResult r;
-
   RgDirectionalLightUploadInfo info = {};
   info.uniqueID = dirLt.entityID;
   info.color = { dirLt.color(1), dirLt.color(2), dirLt.color(3) };
   info.direction = { dirLt.direction(1), dirLt.direction(2), dirLt.direction(3) };
   info.angularDiameterDegrees = srt_fLightDirectionalAngularDiameter;
 
-  r = rgUploadDirectionalLight(instance, &info);
+  RgResult r = rgUploadDirectionalLight(instance, &info);
 
   dirLights.push_back(dirLt);
 }
@@ -385,79 +394,52 @@ void SSRT::Scene::ProcessBrushes()
 
 void SSRT::Scene::ProcessDynamicGeometry()
 {
-  CEntity *viewer = nullptr;
+  if (pViewerEntity == nullptr)
+  {
+    return;
+  }
 
-  // check all movable brushes, models, light sources
-  // and brushes that have non-static textures
   FOREACHINDYNAMICCONTAINER(pWorld->wo_cenEntities, CEntity, iten)
   {
-    if (iten->en_ulID == viewerEntityID)
-    {
-      viewer = (CEntity *)iten;
-
-      if (!srt_bEnableViewerShadows)
-      {
-        continue;
-      }
-    }
-
-    if (iten->en_RenderType == CEntity::RT_MODEL || iten->en_RenderType == CEntity::RT_EDITORMODEL)
-    {
-      // add it as a model and scan for light sources
-      RT_AddModelEntity(&iten.Current(), this);
-    }
-    else if (iten->en_RenderType == CEntity::RT_BRUSH)
+    if (iten->en_RenderType == CEntity::RT_BRUSH)
     {
       pSceneBrushes->Update(iten, this);
     }
+
+    // always add directional light source
+    if (iten->GetLightSource() != nullptr)
+    {
+      if (iten->GetLightSource()->ls_ulFlags & LSF_DIRECTIONAL)
+      {
+        RT_AddModelEntity(iten, this);
+      }
+    }
   }
 
-  if (viewer != nullptr)
-  {
-    RT_AddAllParticles(pWorld, viewer, this);
-  }
+  RT_AddModelEntitiesAroundViewer(this);
+}
 
-
-
-  static FLOAT3D v = {};
-  v = viewerPosition;
-
-  std::sort(sphLights.begin(), sphLights.end(), 
-            [] (const CSphereLight &l1,  CSphereLight &l2)
-            {
-              auto d1 = l1.absPosition - v;
-              auto d2 = l2.absPosition - v;
-
-              return d1 % d1 < d2 % d2;
-            });
-
-  for (int i = 0; i < srt_iLightSphericalMaxCount && i < sphLights.size(); i++)
-  {
-    const CSphereLight &sphLt = sphLights[i];
-
-    RgSphericalLightUploadInfo info = {};
-    info.uniqueID = sphLt.entityID;
-    info.color = { sphLt.color(1), sphLt.color(2), sphLt.color(3) };
-    info.position = { sphLt.absPosition(1), sphLt.absPosition(2), sphLt.absPosition(3) };
-    info.radius = Sqrt(sphLt.hotspotDistance) * srt_fLightSphericalRadiusMultiplier;
-    info.falloffDistance = sphLt.faloffDistance * srt_fLightSphericalFalloffMultiplier;
-
-    RgResult r = rgUploadSphericalLight(instance, &info);    
-    RG_CHECKERROR(r);
-  }
+CEntity *SSRT::Scene::GetViewerEntity() const
+{
+  return pViewerEntity;
 }
 
 ULONG SSRT::Scene::GetViewerEntityID() const
 {
-  return viewerEntityID;
+  if (pViewerEntity == nullptr)
+  {
+    return UINT32_MAX;
+  }
+    
+  return pViewerEntity->en_ulID;
 }
 
-const FLOAT3D &SSRT::Scene::GetViewerPosition() const
+const FLOAT3D &SSRT::Scene::GetCameraPosition() const
 {
-  return viewerPosition;
+  return cameraPosition;
 }
 
-const FLOATmatrix3D &SSRT::Scene::GetViewerRotation() const
+const FLOATmatrix3D &SSRT::Scene::GetCameraRotation() const
 {
-  return viewerRotation;
+  return cameraRotation;
 }

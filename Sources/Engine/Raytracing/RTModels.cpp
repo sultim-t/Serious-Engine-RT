@@ -303,7 +303,7 @@ static void FlushModelInfo(ULONG entityID,
 
   // RT: update rotation if MF_FACE_FORWARD or MF_HALF_FACE_FORWARD
   FLOATmatrix3D rotation;
-  RT_PrepareRotation(rm, pScene->GetViewerPosition(), pScene->GetViewerRotation(), rotation);
+  RT_PrepareRotation(rm, pScene->GetCameraPosition(), pScene->GetCameraRotation(), rotation);
 
 
   SSRT::CModelGeometry modelInfo = {};
@@ -476,7 +476,7 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *scene)
 
 static float RT_GetMipFactor(const FLOAT3D &position, const CModelObject &mo, SSRT::Scene *scene)
 {
-  FLOAT distance = (scene->GetViewerPosition() - position).Length();
+  FLOAT distance = (scene->GetCameraPosition() - position).Length();
 
   if (mo.mo_Stretch != FLOAT3D(1, 1, 1))
   {
@@ -1246,8 +1246,8 @@ void RT_AddFirstPersonModel(CModelObject *mo, CRenderModel *rm, ULONG entityId, 
     0,       0,       0,       1
   };
 
-  const auto &cv = scene->GetViewerPosition();
-  const auto &cm = scene->GetViewerRotation();
+  const auto &cv = scene->GetCameraPosition();
+  const auto &cm = scene->GetCameraRotation();
 
   float cameraToGlobal[] =
   {

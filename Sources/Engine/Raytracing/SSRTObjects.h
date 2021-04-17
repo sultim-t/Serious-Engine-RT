@@ -173,11 +173,11 @@ struct CWorldRenderingInfo
   uint32_t        screenWidth;
   uint32_t        screenHeight;
 
-  ULONG           viewerEntityID;
-  CWorld          *world;
+  CEntity         *pViewerEntity;
+  CWorld          *pWorld;
 
-  FLOAT3D         viewerPosition;
-  FLOATmatrix3D   viewerRotation;
+  FLOAT3D         cameraPosition;
+  FLOATmatrix3D   cameraRotation;
 
   // horizontal FOV in degrees
   float           fovH;

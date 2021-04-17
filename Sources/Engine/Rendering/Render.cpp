@@ -960,8 +960,8 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
   if (_pGfx->gl_eCurrentAPI == GAT_RT)
   {
     SSRT::CWorldRenderingInfo renderInfo = {};
-    renderInfo.world = &woWorld;
-    renderInfo.viewerEntityID = enViewer.en_ulID;
+    renderInfo.pWorld = &woWorld;
+    renderInfo.pViewerEntity = &enViewer;
     renderInfo.screenWidth = dpDrawport.GetWidth();
     renderInfo.screenHeight = dpDrawport.GetHeight();
     renderInfo.screenX = dpDrawport.dp_MinI;
@@ -1024,8 +1024,8 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
 
       // view position, rotation
       {
-        renderInfo.viewerPosition = v;
-        MakeRotationMatrix(renderInfo.viewerRotation, r);
+        renderInfo.cameraPosition = v;
+        MakeRotationMatrix(renderInfo.cameraRotation, r);
       }
 
       auto fillColumnMajor = [] (float *glm, const FLOATmatrix3D &m, const FLOAT3D &v)

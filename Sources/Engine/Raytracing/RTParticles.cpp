@@ -48,47 +48,36 @@ static bool           RT_bBlendEnable;
 static RgBlendFactor  RT_eBlendSrc;
 static RgBlendFactor  RT_eBlendDst;
 
+static CAnyProjection3D RT_pEmptyProjection = {};
+
 static SSRT::Scene *RT_sCurrentScene;
 
 
-void RT_AddAllParticles(CWorld *pWorld, CEntity *penViewer, SSRT::Scene *scene)
+void RT_AddParticlesForEntity(CEntity *pTargetEntity, SSRT::Scene *pScene)
 {
-  if (!gfx_bRenderParticles)
+  CEntity *pViewerEntity = pScene->GetViewerEntity();
+
+  if (!gfx_bRenderParticles || pViewerEntity == nullptr)
   {
     return;
   }
 
-  const bool bBackground = false;
-  CAnyProjection3D emptyProjection = {};
+  ASSERT(!RT_pEmptyProjection.IsSimple() && !RT_pEmptyProjection.IsIsometric() && 
+         !RT_pEmptyProjection.IsParallel() && !RT_pEmptyProjection.IsPerspective());
 
-  // if (bBackground) {} else {}
-  Particle_PrepareSystem(nullptr, emptyProjection);
 
-  FOREACHINDYNAMICCONTAINER(pWorld->wo_cenEntities, CEntity, iten)
-  {
-    /*if (iten->en_RenderType != CEntity::RT_MODEL)
-    {
-      continue;
-    }
+  Particle_PrepareSystem(nullptr, RT_pEmptyProjection);
 
-    BOOL bIsBackground = iten->en_ulFlags & ENF_BACKGROUND;
+  RT_sCurrentScene = pScene;
 
-    if ((bBackground && !bIsBackground) || (!bBackground && bIsBackground))
-    {
-      continue;
-    }*/
+  Particle_PrepareEntity(4.0f, 0, 0, pViewerEntity);
+  ASSERT(_Particle_penCurrentViewer == pViewerEntity);
 
-    RT_sCurrentScene = scene;
+  // RT: this will call function in DrawPort_Particles.cpp
+  pTargetEntity->RenderParticles();
 
-    Particle_PrepareEntity(4.0f, 0, 0, penViewer);
-    ASSERT(_Particle_penCurrentViewer == penViewer);
-
-    // RT: this will call function in DrawPort_Particles.cpp
-    iten->RenderParticles();
-
-    RT_sCurrentScene = nullptr;
-    _Particle_penCurrentViewer = NULL;
-  }
+  RT_sCurrentScene = nullptr;
+  _Particle_penCurrentViewer = NULL;
 
   Particle_EndSystem(FALSE);
 }
@@ -210,7 +199,7 @@ static FLOAT3D RT_GetViewDirection()
 {
   if (RT_sCurrentScene != nullptr)
   {
-    const FLOATmatrix3D &m = RT_sCurrentScene->GetViewerRotation();
+    const FLOATmatrix3D &m = RT_sCurrentScene->GetCameraRotation();
 
     return FLOAT3D(m(1, 3), m(2, 3), m(3, 3));
   }
@@ -225,7 +214,7 @@ static void RT_GetViewVectors(FLOAT3D &x, FLOAT3D &y, ANGLE additionalBanking = 
 {
   if (_Particle_penCurrentViewer != nullptr)
   {
-    const FLOATmatrix3D &m = RT_sCurrentScene->GetViewerRotation();
+    const FLOATmatrix3D &m = RT_sCurrentScene->GetCameraRotation();
 
     if (additionalBanking == 0)
     {

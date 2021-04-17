@@ -230,7 +230,7 @@ void SSRT::SSRTMain::StartFrame(CViewPort *pvp)
 
 void SSRT::SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
 {
-  if (!isFrameStarted || info.world == nullptr)
+  if (!isFrameStarted || info.pWorld == nullptr)
   {
     return;  
   }
@@ -244,10 +244,10 @@ void SSRT::SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
   worldRenderInfo = info;
 
   // if a new world was requested, recreate the scene
-  if (currentScene == nullptr || info.world->GetName() != currentScene->GetWorldName())
+  if (currentScene == nullptr || info.pWorld->GetName() != currentScene->GetWorldName())
   {
     delete currentScene;
-    currentScene = new Scene(instance, info.world, textureUploader);
+    currentScene = new Scene(instance, info.pWorld, textureUploader);
   }
 
   // update models and movable brushes in scene

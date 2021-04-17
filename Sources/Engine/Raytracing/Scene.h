@@ -42,9 +42,11 @@ public:
   void AddLight(const CDirectionalLight &dirLt);
   void UpdateBrushNonStaticTexture(CTextureData *pTexture, uint32_t textureFrameIndex);
   void UpdateBrushTexCoords(const CUpdateTexCoordsInfo &info);
+
+  CEntity *GetViewerEntity() const;
   ULONG GetViewerEntityID() const;
-  const FLOAT3D &GetViewerPosition() const;
-  const FLOATmatrix3D &GetViewerRotation() const;
+  const FLOAT3D &GetCameraPosition() const;
+  const FLOATmatrix3D &GetCameraRotation() const;
 
   void ProcessFirstPersonModel(const CFirstPersonModelInfo &info, ULONG entityId);
   void Update(const CWorldRenderingInfo &info);
@@ -75,9 +77,9 @@ private:
   CWorld            *pWorld;
   CTString          worldName;
 
-  ULONG             viewerEntityID;
-  FLOAT3D           viewerPosition;
-  FLOATmatrix3D     viewerRotation;
+  CEntity           *pViewerEntity;
+  FLOAT3D           cameraPosition;
+  FLOATmatrix3D     cameraRotation;
 
   // Scene light sources, cleaned up by the end of a frame
   std::vector<CSphereLight>       sphLights;

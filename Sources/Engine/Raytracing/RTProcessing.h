@@ -25,19 +25,20 @@ class TextureUploader;
 
 class CRenderModel;
 
-void RT_AddBrushEntity(CEntity *penBrush, SSRT::Scene *scene);
-void RT_AddRasterizedBrushEntity(CEntity *penBrush, SSRT::Scene *scene);
-void RT_UpdateBrushNonStaticTexture(CEntity *penBrush, SSRT::Scene *scene);
-void RT_UpdateBrushTexCoords(CEntity *penBrush, SSRT::Scene *scene);
+void RT_AddBrushEntity(CEntity *penBrush, SSRT::Scene *pScene);
+void RT_AddRasterizedBrushEntity(CEntity *penBrush, SSRT::Scene *pScene);
+void RT_UpdateBrushNonStaticTexture(CEntity *penBrush, SSRT::Scene *pScene);
+void RT_UpdateBrushTexCoords(CEntity *penBrush, SSRT::Scene *pScene);
 void RT_BrushProcessingClear();
 
-void RT_AddModelEntity(CEntity *penModel, SSRT::Scene *ssrt);
-void RT_AddFirstPersonModel(CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::Scene *scene);
+void RT_AddModelEntity(CEntity *penModel, SSRT::Scene *pScene);
+void RT_AddFirstPersonModel(CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::Scene *pScene);
+void RT_AddModelEntitiesAroundViewer(SSRT::Scene *pScene);
 
 // Process particles to be added to the scene.
 // It calls CEntity::RenderParticles function for each model entity,
 // which calls RT_Particle_* functions that are defined down below. 
-void RT_AddAllParticles(CWorld *pWorld, CEntity *penViewer, SSRT::Scene *scene);
+void RT_AddParticlesForEntity(CEntity *pTargetEntity, SSRT::Scene *pScene);
 void RT_Particle_PrepareTexture(CTextureObject *pto, enum ParticleBlendType pbt);
 void RT_Particle_SetTexturePart(MEX mexWidth, MEX mexHeight, INDEX iCol, INDEX iRow);
 void RT_Particle_RenderSquare(const FLOAT3D &vPos, FLOAT fSize, ANGLE aRotation, COLOR col, FLOAT fYRatio);
