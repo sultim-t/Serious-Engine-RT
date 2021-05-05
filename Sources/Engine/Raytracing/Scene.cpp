@@ -323,7 +323,7 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
 
 void SSRT::Scene::AddLight(const CSphereLight &sphLt)
 {
-  if (sphLights.size() >= srt_iLightSphericalMaxCount)
+  if (sphLights.size() >= (uint64_t)srt_iLightSphericalMaxCount)
   {
     return;
   }

@@ -27,7 +27,7 @@ extern INDEX srt_bTexturesOriginalSRGB;
 
 #define TEXTURE_INDEX_OFFSET              1
 #define TEXTURE_COUNT_ALLOC_STEP          512
-#define OVERRIDEN_TEXTURE_FILE_EXTENSION  ".png"
+#define OVERRIDEN_TEXTURE_FILE_EXTENSION  ".ktx2"
 
 uint32_t SSRT::TextureUploader::IndexToID(uint32_t index)
 {

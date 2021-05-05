@@ -106,7 +106,7 @@ SSRT::SSRTMain::SSRTMain() :
   instance(RG_NULL_HANDLE)
 {
   extern CTFileName _fnmApplicationPath;
-  const CTFileName &overridenTexturesPath = _fnmApplicationPath + "OverridenTextures/";
+  const CTFileName &overridenTexturesPath = _fnmApplicationPath + "OverridenTextures\\Compressed\\";
 
   RgInstanceCreateInfo info = {};
   info.name = "Serious Engine RT";
@@ -123,15 +123,16 @@ SSRT::SSRTMain::SSRTMain() :
   info.rasterizedSkyMaxVertexCount = 4096;
   info.rasterizedSkyMaxIndexCount = 4096;
   info.rasterizedSkyCubemapSize = 256;
+  info.rasterizedVertexColorGamma = RG_TRUE;
 
   info.overridenTexturesFolderPath = overridenTexturesPath;
-  info.overrideAlbedoAlphaTexturePostfix = "";
-  info.overrideNormalMetallicTexturePostfix = "_n";
-  info.overrideEmissionRoughnessTexturePostfix = "_e";
+  info.overridenAlbedoAlphaTexturePostfix = "";
+  info.overridenNormalMetallicTexturePostfix = "_n";
+  info.overridenEmissionRoughnessTexturePostfix = "_e";
 
-  info.overrideAlbedoAlphaTextureIsSRGB = srt_bTexturesOverridenAlbedoAlphaSRGB;
-  info.overrideNormalMetallicTextureIsSRGB = srt_bTexturesOverridenNormalMetallicSRGB;
-  info.overrideEmissionRoughnessTextureIsSRGB = srt_bTexturesOverridenEmissionRoughnessSRGB;
+  info.overridenAlbedoAlphaTextureIsSRGB = srt_bTexturesOverridenAlbedoAlphaSRGB;
+  info.overridenNormalMetallicTextureIsSRGB = srt_bTexturesOverridenNormalMetallicSRGB;
+  info.overridenEmissionRoughnessTextureIsSRGB = srt_bTexturesOverridenEmissionRoughnessSRGB;
 
   const char *pWindowExtensions[] = {
     VK_KHR_SURFACE_EXTENSION_NAME,

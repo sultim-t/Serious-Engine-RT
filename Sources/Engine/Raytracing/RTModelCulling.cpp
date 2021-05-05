@@ -20,6 +20,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Base/Relations.h>
 #include <Engine/Brushes/Brush.h>
 #include <Engine/Entities/Entity.h>
+#include <Engine/Light/LightSource.h>
 #include <Engine/World/World.h>
 #include <Engine/Templates/BSP.h>
 #include <Engine/Raytracing/Scene.h>
@@ -64,9 +65,13 @@ static void RT_AddEntitiesInSector(CBrushSector *pbscSectorInside, SSRT::Scene *
         }
         pen->en_ulFlags |= ENF_INRENDERING;
 
+        bool isDirLight = pen->GetLightSource() != nullptr && (pen->GetLightSource()->ls_ulFlags & LSF_DIRECTIONAL);
 
         // add it as a model and scan for light sources
-        RT_AddModelEntity(pen, pScene);
+        if (!isDirLight)
+        {
+          RT_AddModelEntity(pen, pScene);
+        }
 
         // also, add its particles
         RT_AddParticlesForEntity(pen, pScene);
@@ -169,7 +174,7 @@ static void RT_AddZoningSectorsAroundEntity(CEntity *pen, SSRT::Scene *pScene)
   }
 
   const DOUBLE3D re_vdViewSphere = FLOATtoDOUBLE(pScene->GetCameraPosition());
-  const float re_dViewSphereR = 1.0f;
+  const double re_dViewSphereR = 30.0;
 
   // for each active sector
   while (!lhToAdd.IsEmpty())
@@ -177,6 +182,7 @@ static void RT_AddZoningSectorsAroundEntity(CEntity *pen, SSRT::Scene *pScene)
     CBrushSector *pbsc = LIST_HEAD(lhToAdd, CBrushSector, bsc_lnInActiveSectors);
     // remove it from list of sectors to add
     pbsc->bsc_lnInActiveSectors.Remove();
+
     // add it to final list
     RT_AddGivenZoningSector(pbsc, pScene);
     // if isn't really added (wrong mip)
