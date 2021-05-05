@@ -146,10 +146,12 @@ void SSRT::SceneBrushes::RegisterBrush(const CBrushGeometry &brush)
 
       entityToMovableBrush[brush.entityID].push_back(brush.GetUniqueID());
     }
+
+    RegisterBrushTextures(brush);
   }
   else
   { 
-    entityIsRasterizedBrush[brush.entityID] = true;
+    entityIsRasterizedBrush.insert(brush.entityID);
   }
 }
 
@@ -164,12 +166,11 @@ void SSRT::SceneBrushes::RegisterBrushTextures(const CBrushGeometry &brush)
     // if effect or animated
     bool hasNonStaticTexture = to && td && (td->td_ptegEffect != nullptr || td->td_ctFrames > 1);
 
-    if (entityHasNonStaticTexture.find(brush.entityID) == entityHasNonStaticTexture.end())
+    if (hasNonStaticTexture)
     {
-      entityHasNonStaticTexture[brush.entityID] = false;
+      entityHasNonStaticTexture.insert(brush.entityID);
+      break;
     }
-
-    entityHasNonStaticTexture[brush.entityID] |= hasNonStaticTexture;
   }
 
   // save brush part geom index for updating dynamic texture coordinates
@@ -353,10 +354,8 @@ void SSRT::SceneBrushes::Update(CEntity *pBrushEntity, Scene *pScene)
 
 
   {
-    auto f = entityIsRasterizedBrush.find(entityId);
-
-    // if found and it's really rasterized
-    if (f != entityIsRasterizedBrush.end() && f->second)
+    // if it's rasterized
+    if (entityIsRasterizedBrush.find(entityId) != entityIsRasterizedBrush.end())
     {
       // assume that only sky brushes are rasterized
       if (!(pBrushEntity->GetFlags() & ENF_BACKGROUND))
@@ -373,10 +372,8 @@ void SSRT::SceneBrushes::Update(CEntity *pBrushEntity, Scene *pScene)
 
 
   {
-    auto f = entityHasNonStaticTexture.find(entityId);
-
-    // if found and it really has static texture
-    if (f != entityHasNonStaticTexture.end() && f->second)
+    // if it has static texture
+    if (entityHasNonStaticTexture.find(entityId) != entityHasNonStaticTexture.end())
     {
       RT_UpdateBrushNonStaticTexture(pBrushEntity, pScene);
     }

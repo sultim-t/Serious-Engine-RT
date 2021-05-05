@@ -16,6 +16,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #pragma once
 
 #include <map>
+#include <set>
 #include <vector>
 
 #include <Engine/Raytracing/SSRTObjects.h>
@@ -41,7 +42,7 @@ public:
   void RegisterBrush(const CBrushGeometry &brush);
   void UpdateBrushTexCoords(const CUpdateTexCoordsInfo &info);
 
-  // Called in each frame
+  // Called each frame
   void Update(CEntity *pBrushEntity, Scene *pScene);
 
 private:
@@ -80,14 +81,14 @@ private:
 
   // True, if entity with that ID (key) has effect texture.
   // Used for updating it every frame, as brushes are processed only once.
-  std::map<ULONG, bool>                   entityHasNonStaticTexture;
+  std::set<ULONG>                         entityHasNonStaticTexture;
 
   // Get brush parts' geometry indices by entity ID.
   // Used for updating dynamic texture coordinates on brushes.
   std::map<ULONG, std::vector<BrushPartGeometryIndex>> entitiesWithDynamicTexCoords;
 
   // Rasterized brushes should be sent to rendering each frame
-  std::map<ULONG, bool>                   entityIsRasterizedBrush;
+  std::set<ULONG>                         entityIsRasterizedBrush;
 };
 
 }
