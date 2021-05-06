@@ -1344,10 +1344,6 @@ BOOL TryToSetDisplayMode(enum GfxAPIType eGfxAPI, INDEX iAdapter, PIX pixSizeI, 
   // try to set new display mode
   BOOL bSuccess;
 
-  // TODO: enable full screen for vulkan
-  #ifdef SE1_VULKAN  
-  {
-  #else // SE1_VULKAN
   if (bFullScreenMode)
   {
   #ifdef SE1_D3D
@@ -1356,6 +1352,12 @@ BOOL TryToSetDisplayMode(enum GfxAPIType eGfxAPI, INDEX iAdapter, PIX pixSizeI, 
       OpenMainWindowFullScreen(pixSizeI, pixSizeJ);
     }
   #endif // SE1_D3D
+  #ifdef SE1_VULKAN
+    if (eGfxAPI == GAT_VK || eGfxAPI == GAT_RT)
+    {
+      OpenMainWindowFullScreen(pixSizeI, pixSizeJ);
+    }
+  #endif // SE1_VULKAN
 
     bSuccess = _pGfx->SetDisplayMode(eGfxAPI, iAdapter, pixSizeI, pixSizeJ, eColorDepth);
     if (bSuccess && eGfxAPI == GAT_OGL)
@@ -1365,9 +1367,6 @@ BOOL TryToSetDisplayMode(enum GfxAPIType eGfxAPI, INDEX iAdapter, PIX pixSizeI, 
   }
   else
   {
-
-  #endif // SE1_VULKAN
-
   #ifdef SE1_D3D
     if (eGfxAPI == GAT_D3D)
     {

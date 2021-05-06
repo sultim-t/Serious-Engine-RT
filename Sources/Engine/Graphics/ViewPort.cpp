@@ -203,7 +203,7 @@ void CViewPort::OpenCanvas(void)
 #endif // SE1_D3D
 
 #ifdef SE1_VULKAN
-  if (_pGfx->gl_eCurrentAPI == GAT_VK && !bFullScreen)
+  if (_pGfx->gl_eCurrentAPI == GAT_VK)
   {
     _pGfx->gl_SvkMain->CreateSwapchain(pixWinSizeI, pixWinSizeJ);
   }
