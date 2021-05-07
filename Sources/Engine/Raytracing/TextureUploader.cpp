@@ -116,7 +116,7 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
     stInfo.addressModeU = info.wrapU;
     stInfo.addressModeV = info.wrapV;
     stInfo.disableOverride = false;
-    stInfo.relativePath = overridenPath;
+    stInfo.pRelativePath = overridenPath;
 
     RgResult r = rgCreateStaticMaterial(instance, &stInfo, &material);
     RG_CHECKERROR(r);
@@ -190,12 +190,12 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedAnimatedTextureInfo &an
     f.addressModeU = animInfo.wrapU;
     f.addressModeV = animInfo.wrapV;
     f.disableOverride = true;
-    f.relativePath = overridenPath;
+    f.pRelativePath = overridenPath;
   }
 
   RgAnimatedMaterialCreateInfo info = {};
   info.frameCount = animInfo.frameCount;
-  info.frames = frames.data();
+  info.pFrames = frames.data();
 
   RgResult r = rgCreateAnimatedMaterial(instance, &info, &material);
   RG_CHECKERROR(r);

@@ -27,9 +27,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Raytracing/SSRTObjects.h>
 
-#define VK_USE_PLATFORM_WIN32_KHR
-#include <vulkan/vulkan.h>
-
 #include "Utils.h"
 
 
@@ -108,9 +105,14 @@ SSRT::SSRTMain::SSRTMain() :
   extern CTFileName _fnmApplicationPath;
   const CTFileName &overridenTexturesPath = _fnmApplicationPath + "OverridenTextures\\Compressed\\";
 
+  extern HWND _hwndMain;
+
+  RgWin32SurfaceCreateInfo win32SurfaceInfo = {};
+  win32SurfaceInfo.hinstance = GetModuleHandle(NULL);
+  win32SurfaceInfo.hwnd = _hwndMain;
+
   RgInstanceCreateInfo info = {};
-  info.name = "Serious Engine RT";
-  info.physicalDeviceIndex = 0;
+  info.pName = "Serious Engine RT";
   info.enableValidationLayer = RG_TRUE;
 
   info.vertexPositionStride = sizeof(GFXVertex);
@@ -125,46 +127,20 @@ SSRT::SSRTMain::SSRTMain() :
   info.rasterizedSkyCubemapSize = 256;
   info.rasterizedVertexColorGamma = RG_TRUE;
 
-  info.overridenTexturesFolderPath = overridenTexturesPath;
-  info.overridenAlbedoAlphaTexturePostfix = "";
-  info.overridenNormalMetallicTexturePostfix = "_n";
-  info.overridenEmissionRoughnessTexturePostfix = "_e";
+  info.pOverridenTexturesFolderPath = overridenTexturesPath;
+  info.pOverridenAlbedoAlphaTexturePostfix = "";
+  info.pOverridenNormalMetallicTexturePostfix = "_n";
+  info.pOverridenEmissionRoughnessTexturePostfix = "_e";
 
   info.overridenAlbedoAlphaTextureIsSRGB = srt_bTexturesOverridenAlbedoAlphaSRGB;
   info.overridenNormalMetallicTextureIsSRGB = srt_bTexturesOverridenNormalMetallicSRGB;
   info.overridenEmissionRoughnessTextureIsSRGB = srt_bTexturesOverridenEmissionRoughnessSRGB;
 
-  const char *pWindowExtensions[] = {
-    VK_KHR_SURFACE_EXTENSION_NAME,
-    VK_KHR_WIN32_SURFACE_EXTENSION_NAME
-  };
+  info.pWin32SurfaceInfo = &win32SurfaceInfo;
 
-  info.ppWindowExtensions = pWindowExtensions;
-  info.windowExtensionCount = sizeof(pWindowExtensions) / sizeof(const char *);
-
-  info.pfnCreateSurface = [] (uint64_t vkInstance, uint64_t *pResultVkSurfaceKHR)
+  info.pfnUserPrint = [] (const char *pMessage, void *pUserData)
   {
-    VkInstance instance = reinterpret_cast<VkInstance>(vkInstance);
-
-    VkSurfaceKHR surface;
-
-    HINSTANCE hInstance = GetModuleHandle(NULL);
-    extern HWND _hwndMain;
-
-    VkWin32SurfaceCreateInfoKHR createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-    createInfo.pNext = nullptr;
-    createInfo.hinstance = hInstance;
-    createInfo.hwnd = _hwndMain;
-    VkResult r = vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface);
-    ASSERT(r == VK_SUCCESS);
-
-    *pResultVkSurfaceKHR = reinterpret_cast<uint64_t>(surface);
-  };
-
-  info.pfnDebugPrint = [] (const char *msg)
-  {
-    CPrintF(msg);
+    CPrintF(pMessage);
   };
 
   RgResult r = rgCreateInstance(&info, &instance);
@@ -279,18 +255,18 @@ void SSRT::SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
   }
 
   RgRasterizedGeometryVertexArrays vertData = {};
-  vertData.vertexData = hud.pPositions;
-  vertData.texCoordData = hud.pTexCoords;
-  vertData.colorData = hud.pColors;
+  vertData.pVertexData = hud.pPositions;
+  vertData.pTexCoordData = hud.pTexCoords;
+  vertData.pColorData = hud.pColors;
   vertData.vertexStride = sizeof(GFXVertex4);
   vertData.texCoordStride = sizeof(GFXTexCoord);
   vertData.colorStride = sizeof(GFXColor);
 
   RgRasterizedGeometryUploadInfo hudInfo = {};
   hudInfo.vertexCount = hud.vertexCount;
-  hudInfo.arrays = &vertData;
+  hudInfo.pArrays = &vertData;
   hudInfo.indexCount = hud.indexCount;
-  hudInfo.indexData = (uint32_t*)hud.pIndices;
+  hudInfo.pIndexData = hud.pIndices;
   hudInfo.material = textureUploader->GetMaterial(hud.textureData);
   hudInfo.color = { 1, 1, 1, 1 };
   hudInfo.blendEnable = RG_TRUE;

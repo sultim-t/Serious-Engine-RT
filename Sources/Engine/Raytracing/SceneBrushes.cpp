@@ -64,15 +64,15 @@ void SSRT::SceneBrushes::RegisterBrush(const CBrushGeometry &brush)
     stInfo.passThroughType = brush.passThroughType;
     stInfo.visibilityType = brush.isSky ? RG_GEOMETRY_VISIBILITY_TYPE_SKYBOX : RG_GEOMETRY_VISIBILITY_TYPE_WORLD;
     stInfo.vertexCount = brush.vertexCount;
-    stInfo.vertexData = brush.vertices;
-    stInfo.normalData = brush.normals;
+    stInfo.pVertexData = brush.vertices;
+    stInfo.pNormalData = brush.normals;
     stInfo.defaultRoughness = 1.0f;
     stInfo.indexCount = brush.indexCount;
-    stInfo.indexData = brush.indices;
+    stInfo.pIndexData = brush.indices;
 
     for (uint32_t i = 0; i < 3; i++)
     {
-      stInfo.texCoordLayerData[i] = brush.texCoordLayers[i];
+      stInfo.pTexCoordLayerData[i] = brush.texCoordLayers[i];
       stInfo.layerBlendingTypes[i] = brush.layerBlendings[i];
       stInfo.layerColors[i] = { brush.layerColors[i](1), brush.layerColors[i](2), brush.layerColors[i](3), brush.layerColors[i](4) };
     }
@@ -96,8 +96,8 @@ void SSRT::SceneBrushes::RegisterBrush(const CBrushGeometry &brush)
     ASSERT(brush.isSky);
 
     RgRasterizedGeometryVertexArrays vertInfo = {};
-    vertInfo.vertexData = brush.vertices;
-    vertInfo.colorData = nullptr;
+    vertInfo.pVertexData = brush.vertices;
+    vertInfo.pColorData = nullptr;
     vertInfo.vertexStride = sizeof(GFXVertex);
     vertInfo.texCoordStride = sizeof(GFXTexCoord);
     vertInfo.colorStride = sizeof(GFXColor);
@@ -105,9 +105,9 @@ void SSRT::SceneBrushes::RegisterBrush(const CBrushGeometry &brush)
     RgRasterizedGeometryUploadInfo info = {};
     info.renderType = brush.isSky ? RG_RASTERIZED_GEOMETRY_RENDER_TYPE_SKY : RG_RASTERIZED_GEOMETRY_RENDER_TYPE_DEFAULT;
     info.vertexCount = brush.vertexCount;
-    info.arrays = &vertInfo;
+    info.pArrays = &vertInfo;
     info.indexCount = brush.indexCount;
-    info.indexData = brush.indices;
+    info.pIndexData = brush.indices;
 
     Utils::CopyTransform(info.transform, brush);
 
@@ -119,7 +119,7 @@ void SSRT::SceneBrushes::RegisterBrush(const CBrushGeometry &brush)
         continue;
       }
     
-      vertInfo.texCoordData = brush.texCoordLayers[i];
+      vertInfo.pTexCoordData = brush.texCoordLayers[i];
 
       info.color = { brush.layerColors[i](1), brush.layerColors[i](2), brush.layerColors[i](3), brush.layerColors[i](4) };
       info.material = pTextureUploader->GetMaterial(brush.textures[i], brush.textureFrames[i]);
@@ -204,9 +204,9 @@ void SSRT::SceneBrushes::UpdateBrushTexCoords(const CUpdateTexCoordsInfo &info)
       // if found geomIndex for that part
       RgUpdateTexCoordsInfo texCoordsInfo = {};
       texCoordsInfo.staticUniqueID = CBrushGeometry::GetBrushUniqueID(info.brushEntityID, info.brushPartIndex);
-      texCoordsInfo.texCoordLayerData[0] = info.texCoordLayers[0];
-      texCoordsInfo.texCoordLayerData[1] = info.texCoordLayers[1];
-      texCoordsInfo.texCoordLayerData[2] = info.texCoordLayers[2];
+      texCoordsInfo.pTexCoordLayerData[0] = info.texCoordLayers[0];
+      texCoordsInfo.pTexCoordLayerData[1] = info.texCoordLayers[1];
+      texCoordsInfo.pTexCoordLayerData[2] = info.texCoordLayers[2];
       texCoordsInfo.vertexOffset = 0;
       texCoordsInfo.vertexCount = info.vertexCount;
 

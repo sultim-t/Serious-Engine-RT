@@ -58,6 +58,8 @@ extern INDEX srt_bLightSphericalIgnoreEditorModels = 0;
 
 extern INDEX srt_bModelUseOriginalNormals = 1;
 
+extern FLOAT srt_fParticlesAlphaMultiplier = 1.0f;
+
 void SSRT::Scene::InitShellVariables()
 {
   _pShell->DeclareSymbol("persistent user FLOAT srt_fDefaultSpecularMetallic;", &srt_fDefaultSpecularMetallic);
@@ -85,6 +87,8 @@ void SSRT::Scene::InitShellVariables()
   _pShell->DeclareSymbol("persistent user INDEX srt_bLightSphericalIgnoreEditorModels;", &srt_bLightSphericalIgnoreEditorModels);
 
   _pShell->DeclareSymbol("persistent user INDEX srt_bModelUseOriginalNormals;", &srt_bModelUseOriginalNormals);
+
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fParticlesAlphaMultiplier;", &srt_fParticlesAlphaMultiplier);
 }
 
 void SSRT::Scene::NormalizeShellVariables()
@@ -111,8 +115,10 @@ void SSRT::Scene::NormalizeShellVariables()
   srt_fLightSphericalRadiusMultiplier       = Max(srt_fLightSphericalRadiusMultiplier, 0.0f);
   srt_fLightSphericalFalloffMultiplier      = Max(srt_fLightSphericalFalloffMultiplier, 0.0f);
 
-  srt_bLightSphericalIgnoreEditorModels = !!srt_bLightSphericalIgnoreEditorModels;
-  srt_bModelUseOriginalNormals = !!srt_bModelUseOriginalNormals;
+  srt_bLightSphericalIgnoreEditorModels     = !!srt_bLightSphericalIgnoreEditorModels;
+  srt_bModelUseOriginalNormals              = !!srt_bModelUseOriginalNormals;
+
+  srt_fParticlesAlphaMultiplier             = Max(srt_fParticlesAlphaMultiplier, 0.0f);
 }
 
 
@@ -228,15 +234,15 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
     info.passThroughType = model.passThroughType;
     info.visibilityType = model.visibilityType;
     info.vertexCount = model.vertexCount;
-    info.vertexData = model.vertices;
-    info.normalData = model.normals;
-    info.texCoordLayerData[0] = model.texCoordLayers[0];
-    info.texCoordLayerData[1] = nullptr;
-    info.texCoordLayerData[2] = nullptr;
+    info.pVertexData = model.vertices;
+    info.pNormalData = model.normals;
+    info.pTexCoordLayerData[0] = model.texCoordLayers[0];
+    info.pTexCoordLayerData[1] = nullptr;
+    info.pTexCoordLayerData[2] = nullptr;
     info.defaultMetallicity = metallic;
     info.defaultRoughness = roughness;
     info.indexCount = model.indexCount;
-    info.indexData = model.indices;
+    info.pIndexData = model.indices;
 
     info.layerColors[0] = { model.color(1), model.color(2), model.color(3), model.color(4) };
     info.layerBlendingTypes[0] = RG_GEOMETRY_MATERIAL_BLEND_TYPE_OPAQUE;
@@ -258,18 +264,18 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
     bool isSky = model.visibilityType == RG_GEOMETRY_VISIBILITY_TYPE_SKYBOX;
 
     RgRasterizedGeometryVertexArrays vertInfo = {};
-    vertInfo.vertexData = model.vertices;
-    vertInfo.texCoordData = model.texCoordLayers[0];
-    vertInfo.colorData = nullptr;
+    vertInfo.pVertexData = model.vertices;
+    vertInfo.pTexCoordData = model.texCoordLayers[0];
+    vertInfo.pColorData = nullptr;
     vertInfo.vertexStride = sizeof(GFXVertex);
     vertInfo.texCoordStride = sizeof(GFXTexCoord);
     vertInfo.colorStride = sizeof(GFXColor);
 
     RgRasterizedGeometryUploadInfo info = {};
     info.vertexCount = model.vertexCount;
-    info.arrays = &vertInfo;
+    info.pArrays = &vertInfo;
     info.indexCount = model.indexCount;
-    info.indexData = model.indices;
+    info.pIndexData = model.indices;
     info.color = { model.color(1), model.color(2), model.color(3), model.color(4) };
     info.material = pTextureUploader->GetMaterial(model.textures[0], model.textureFrames[0]);
     info.blendEnable = model.blendEnable;
@@ -296,11 +302,11 @@ void SSRT::Scene::AddParticles(const CParticlesGeometry &particles)
 
   RgRasterizedGeometryUploadInfo info = {};
   info.vertexCount = particles.vertexCount;
-  info.structs = particles.pVertexData;
-  info.arrays = nullptr;
+  info.pStructs = particles.pVertexData;
+  info.pArrays = nullptr;
   info.indexCount = particles.indexCount;
-  info.indexData = particles.pIndexData;
-  info.color = { 1, 1, 1, 1 };
+  info.pIndexData = particles.pIndexData;
+  info.color = { 1, 1, 1, srt_fParticlesAlphaMultiplier };
   info.material = pTextureUploader->GetMaterial(particles.pTexture, particles.textureFrame);
   info.blendEnable = particles.blendEnable;
   info.blendFuncSrc = particles.blendSrc;
