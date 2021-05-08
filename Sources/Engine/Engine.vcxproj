@@ -761,6 +761,7 @@ if not exist $(SolutionDir)RTGL1\Build\x64-Release\RayTracedGL1.lib echo "ERROR:
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">StdH.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">StdH.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="Models\RTModelNormalsFix.cpp" />
     <ClCompile Include="Raytracing\RTModelCulling.cpp" />
     <ClCompile Include="Raytracing\RTParticles.cpp" />
     <ClCompile Include="Raytracing\RTTextures.cpp" />

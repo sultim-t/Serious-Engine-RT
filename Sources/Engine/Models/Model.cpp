@@ -1689,6 +1689,9 @@ void CModelData::Read_t( CTStream *pFile) // throw char *
   // precalculate rendering data
   extern void PrepareModelForRendering(CModelData &md);
   PrepareModelForRendering(*this);
+
+  extern void RT_FixModelNormals(CModelData *pModelData);
+  RT_FixModelNormals(this);
 }
 
 
