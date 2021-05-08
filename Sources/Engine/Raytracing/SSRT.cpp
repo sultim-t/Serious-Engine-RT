@@ -103,7 +103,8 @@ SSRT::SSRTMain::SSRTMain() :
   instance(RG_NULL_HANDLE)
 {
   extern CTFileName _fnmApplicationPath;
-  const CTFileName &overridenTexturesPath = _fnmApplicationPath + "OverridenTextures\\Compressed\\";
+  const CTFileName overridenTexturesPath = _fnmApplicationPath + "OverridenTextures\\Compressed\\";
+  const CTFileName blueNoiseFilePath = _fnmApplicationPath + "OverridenTextures\\BlueNoise_LDR_RGBA_128.ktx2";
 
   extern HWND _hwndMain;
 
@@ -114,6 +115,8 @@ SSRT::SSRTMain::SSRTMain() :
   RgInstanceCreateInfo info = {};
   info.pName = "Serious Engine RT";
   info.enableValidationLayer = RG_TRUE;
+
+  info.pBlueNoiseFilePath = blueNoiseFilePath;
 
   info.vertexPositionStride = sizeof(GFXVertex);
   info.vertexNormalStride = sizeof(GFXNormal);
