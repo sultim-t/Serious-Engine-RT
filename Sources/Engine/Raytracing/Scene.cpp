@@ -31,8 +31,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "GeometryExporter.h"
 
 
-extern FLOAT srt_fDefaultSpecularMetallic = 0.15f;
-extern FLOAT srt_fDefaultSpecularRoughness = 0.05f;
+extern FLOAT srt_fDefaultSpecularMetallic = 0.7f;
+extern FLOAT srt_fDefaultSpecularRoughness = 0.02f;
 
 extern FLOAT srt_fDefaultReflectiveMetallic = 1.0f;
 extern FLOAT srt_fDefaultReflectiveRoughness = 0.0f;
@@ -40,20 +40,23 @@ extern FLOAT srt_fDefaultReflectiveRoughness = 0.0f;
 extern INDEX srt_bEnableViewerShadows = 1;
 
 extern FLOAT srt_fLightDirectionalIntensityMultiplier = 10.0f;
-extern FLOAT srt_fLightDirectionalSaturation = 1.0f;
+extern FLOAT srt_fLightDirectionalSaturation = 0.5f;
 extern FLOAT srt_fLightDirectionalColorPow = 2.2f;
 extern FLOAT srt_fLightDirectionalAngularDiameter = 0.5f;
 
-extern INDEX srt_iLightSphericalMaxCount = 16;
+extern INDEX srt_iLightSphericalMaxCount = 1024;
 //extern INDEX srt_iLightSphericalHSVThresholdHLower = 20;
 //extern INDEX srt_iLightSphericalHSVThresholdHUpper = 45;
 //extern INDEX srt_iLightSphericalHSVThresholdVLower = 80;
 //extern INDEX srt_iLightSphericalHSVThresholdVUpper = 255;
 extern FLOAT srt_fLightSphericalIntensityMultiplier = 1.0f;
-extern FLOAT srt_fLightSphericalSaturation = 1.0f;
+extern FLOAT srt_fLightSphericalSaturation = 0.75f;
 extern FLOAT srt_fLightSphericalColorPow = 2.2f;
 extern FLOAT srt_fLightSphericalRadiusMultiplier = 0.1f;
+extern FLOAT srt_fLightSphericalRadiusOfDynamic = 0.5f;
 extern FLOAT srt_fLightSphericalFalloffMultiplier = 1.0f;
+extern FLOAT srt_fLightSphericalFalloffOfDynamicMultiplier = 1.0f;
+extern FLOAT srt_fLightSphericalPolygonOffset = 1.0f;
 extern INDEX srt_bLightSphericalIgnoreEditorModels = 0;
 
 extern INDEX srt_bModelUseOriginalNormals = 1;
@@ -83,7 +86,10 @@ void SSRT::Scene::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalSaturation;", &srt_fLightSphericalSaturation);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalColorPow;", &srt_fLightSphericalColorPow);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalRadiusMultiplier;", &srt_fLightSphericalRadiusMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalRadiusOfDynamic;", &srt_fLightSphericalRadiusOfDynamic);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffMultiplier;", &srt_fLightSphericalFalloffMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffOfDynamicMultiplier;", &srt_fLightSphericalFalloffOfDynamicMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalPolygonOffset;", &srt_fLightSphericalPolygonOffset);
   _pShell->DeclareSymbol("persistent user INDEX srt_bLightSphericalIgnoreEditorModels;", &srt_bLightSphericalIgnoreEditorModels);
 
   _pShell->DeclareSymbol("persistent user INDEX srt_bModelUseOriginalNormals;", &srt_bModelUseOriginalNormals);
@@ -113,7 +119,9 @@ void SSRT::Scene::NormalizeShellVariables()
   srt_fLightSphericalSaturation             = Max(srt_fLightSphericalSaturation, 0.0f);
   srt_fLightSphericalColorPow               = Max(srt_fLightSphericalColorPow, 0.0f);
   srt_fLightSphericalRadiusMultiplier       = Max(srt_fLightSphericalRadiusMultiplier, 0.0f);
+  srt_fLightSphericalRadiusOfDynamic        = Max(srt_fLightSphericalRadiusOfDynamic, 0.0f);
   srt_fLightSphericalFalloffMultiplier      = Max(srt_fLightSphericalFalloffMultiplier, 0.0f);
+  srt_fLightSphericalFalloffOfDynamicMultiplier = Max(srt_fLightSphericalFalloffOfDynamicMultiplier, 0.0f);
 
   srt_bLightSphericalIgnoreEditorModels     = !!srt_bLightSphericalIgnoreEditorModels;
   srt_bModelUseOriginalNormals              = !!srt_bModelUseOriginalNormals;
@@ -338,8 +346,18 @@ void SSRT::Scene::AddLight(const CSphereLight &sphLt)
   info.uniqueID = sphLt.entityID;
   info.color = { sphLt.color(1), sphLt.color(2), sphLt.color(3) };
   info.position = { sphLt.absPosition(1), sphLt.absPosition(2), sphLt.absPosition(3) };
-  info.radius = Sqrt(sphLt.hotspotDistance) * srt_fLightSphericalRadiusMultiplier;
-  info.falloffDistance = sphLt.faloffDistance * srt_fLightSphericalFalloffMultiplier;
+  
+  if (sphLt.isDynamic)
+  {
+    info.radius = srt_fLightSphericalRadiusOfDynamic;
+    // info.falloffDistance = (sphLt.hotspotDistance + sphLt.faloffDistance) * srt_fLightSphericalFalloffOfDynamicMultiplier;
+    info.falloffDistance = sphLt.faloffDistance * srt_fLightSphericalFalloffOfDynamicMultiplier;
+  }
+  else
+  {
+    info.radius = sphLt.hotspotDistance * srt_fLightSphericalRadiusMultiplier;
+    info.falloffDistance = (sphLt.hotspotDistance + sphLt.faloffDistance) * srt_fLightSphericalFalloffMultiplier;
+  }
 
   RgResult r = rgUploadSphericalLight(instance, &info);
   RG_CHECKERROR(r);

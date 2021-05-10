@@ -22,6 +22,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Models/ModelData.h>
 #include <Engine/Light/LightSource.h>
 #include <Engine/World/World.h>
+#include <Engine/World/WorldRayCasting.h>
 
 #include <Engine/Base/ListIterator.inl>
 
@@ -46,6 +47,7 @@ extern FLOAT srt_fLightDirectionalIntensityMultiplier;
 extern FLOAT srt_fLightSphericalSaturation;
 extern FLOAT srt_fLightSphericalColorPow;
 extern FLOAT srt_fLightSphericalIntensityMultiplier;
+extern FLOAT srt_fLightSphericalPolygonOffset;
 extern INDEX srt_bLightSphericalIgnoreEditorModels;
 
 extern INDEX srt_bModelUseOriginalNormals;
@@ -411,12 +413,13 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *scene)
     return;
   }
 
-  const ULONG entityID = plsLight->ls_penEntity->en_ulID;
+  CEntity *pEn = plsLight->ls_penEntity;
+  const ULONG entityID = pEn->en_ulID;
 
-  const CPlacement3D &placement = plsLight->ls_penEntity->GetLerpedPlacement();
+  const CPlacement3D &placement = pEn->GetLerpedPlacement();
 
   UBYTE r, g, b;
-  ColorToRGB(plsLight->GetLightColor(), r, g, b);
+  plsLight->GetLightColor(r, g, b);
 
   FLOAT3D color = { r / 255.0f, g / 255.0f, b / 255.0f };
 
@@ -453,14 +456,47 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *scene)
     RT_AdjustPow(color, srt_fLightSphericalColorPow);
     color *= srt_fLightSphericalIntensityMultiplier;
 
+    bool isDynamic = plsLight->ls_ulFlags & LSF_DYNAMIC;
     FLOAT3D position = placement.pl_PositionVector;
 
+    // offset lights from the nearest polygon, otherwise light won't 
+    // be visible on the surface
+    if (isDynamic)
+    {
+      FLOAT3D point;
+      FLOATplane3D plane;
+      FLOAT distanceToEdge;
+      if (pEn->GetNearestPolygon(point, plane, distanceToEdge) != nullptr)
+      {
+        FLOAT3D normal = (FLOAT3D&)plane;
+        FLOAT3D targetPos = position + normal * srt_fLightSphericalPolygonOffset;
+
+        CCastRay crRay(pEn, position, targetPos);
+        crRay.cr_ttHitModels = CCastRay::TT_NONE;     // only brushes block the damage
+        crRay.cr_bHitTranslucentPortals = FALSE;
+        crRay.cr_bPhysical = TRUE;
+        scene->GetWorld()->CastRay(crRay);
+
+        // if found intersection, use middle point
+        if (crRay.cr_penHit != nullptr)
+        {
+          position = (crRay.cr_vHit + position) * 0.5f;
+        }
+        else
+        {
+          // if ray wasn't intersected, use target position
+          position = targetPos;
+        }
+      }
+    }
+
     SSRT::CSphereLight light = {};
-    light.entityID = plsLight->ls_penEntity->en_ulID;
+    light.entityID = pEn->en_ulID;
     light.absPosition = position;
     light.color = color;
     light.hotspotDistance = plsLight->ls_rHotSpot;
     light.faloffDistance = plsLight->ls_rFallOff;
+    light.isDynamic = isDynamic;
     
     if (entityID == scene->GetViewerEntityID())
     {
