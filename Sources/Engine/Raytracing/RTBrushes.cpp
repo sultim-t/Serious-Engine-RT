@@ -46,49 +46,20 @@ static CStaticStackArray<GFXTexCoord> RT_AllSectorTexCoords[MAX_BRUSH_TEXTURE_CO
 
 
 // water surfaces are double sided, ignore vertex duplicates
-constexpr float RT_WaterVerticesEpsilon = 0.1f;
+constexpr float WATER_VERTICES_EPSILON = 0.1f;
 static CStaticStackArray<const CBrushPolygon *> RT_WaterPolygons;
-
-static const char *RT_WaterFileNames[]
-{
-  "WaterBase",
-  "WaterFX",
-  "WaterFall01",
-  "WaterFall02",
-};
-
-
-struct RT_WorldBaseIgnore
-{
-  const char *worldName;
-  FLOAT3D position;
-};
-
-
-// Positions of unnecessary brushes (that also have "World Base" names)
-constexpr float RT_WorldBaseForceInvisibleEpsilon = 0.5f;
-static const RT_WorldBaseIgnore RT_WorldBaseForceInvisible[] =
-{
-  { "01_Hatshepsut",        { 0, 1152, 64 }       },
-  { "02_SandCanyon",        { 224, 128, -312}     },
-  { "02_SandCanyon",        { 224, 128, -120}     },
-  { "02_SandCanyon",        { -98.5f, 113.5f, 18} },
-  { "04_ValleyOfTheKings",  { 0, 96, 0 }          },
-  { "05_MoonMountains",     { -64, 80, -64}       },
-  { "06_Oasis",             { 128, -16, 0}        },
-};
 
 
 
 void RT_BrushClear()
 {
-  RT_AllSectorNormals.Clear();
-  RT_AllSectorVertices.Clear();
-  RT_AllSectorIndices.Clear();
+  RT_AllSectorNormals.PopAll();
+  RT_AllSectorVertices.PopAll();
+  RT_AllSectorIndices.PopAll();
 
   for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
   {
-    RT_AllSectorTexCoords[i].Clear();
+    RT_AllSectorTexCoords[i].PopAll();
   }
 }
 
@@ -96,7 +67,7 @@ void RT_BrushProcessingClear()
 {
   RT_BrushClear();
 
-  RT_WaterPolygons.Clear();
+  RT_WaterPolygons.PopAll();
 }
 
 
@@ -382,7 +353,7 @@ static bool RT_HasWaterVertexDuplicates(const CBrushPolygon &waterPolygon)
       {
         const CBrushVertex *vertOther = otherWaterPolygon.bpo_apbvxTriangleVertices[j];
 
-        if ((vert->bvx_vAbsolute - vertOther->bvx_vAbsolute).ManhattanNorm() < RT_WaterVerticesEpsilon)
+        if ((vert->bvx_vAbsolute - vertOther->bvx_vAbsolute).ManhattanNorm() < WATER_VERTICES_EPSILON)
         {
           sameCount++;
         }        
@@ -407,7 +378,7 @@ static void RT_ProcessPositions(const CBrushPolygon &polygon, GFXVertex *vertice
     vertices[i].x = brushVert->bvx_vRelative(1);
     vertices[i].y = brushVert->bvx_vRelative(2);
     vertices[i].z = brushVert->bvx_vRelative(3);
-    vertices[i].shade = 0;
+    //vertices[i].shade = 0;
   }
 }
 
@@ -427,28 +398,24 @@ static void RT_ProcessNormals(const CBrushPolygon &polygon, uint32_t vertCount)
 }
 
 
-static bool RT_HasWaterTextures(CBrushPolygon &polygon, bool isWaterTexture[MAX_BRUSH_TEXTURE_COUNT])
+static bool RT_HasWaterTextures(CBrushPolygon &polygon, bool isWaterTexture[MAX_BRUSH_TEXTURE_COUNT], SSRT::Scene *pScene)
 {
   bool has = false;
 
   for (uint32_t iLayer = 0; iLayer < MAX_BRUSH_TEXTURE_COUNT; iLayer++)
   {
-    isWaterTexture[iLayer] = false;
-
     CBrushPolygonTexture &layerTexture = polygon.bpo_abptTextures[iLayer];
-
     CTextureData *ptd = (CTextureData *)layerTexture.bpt_toTexture.GetData();
-    if (ptd != nullptr)
+
+    if (pScene->GetCustomInfo()->IsWaterTexture(ptd))
     {
-      for (const char *w : RT_WaterFileNames)
-      {
-        if (ptd->GetName().FileName() == w)
-        {
-          isWaterTexture[iLayer] = true;
-          has = true;
-          break;
-        }
-      }
+      isWaterTexture[iLayer] = true;
+      has = true;
+      break;
+    }
+    else
+    {
+      isWaterTexture[iLayer] = false;
     }
   }
 
@@ -478,7 +445,7 @@ static bool RT_HasScrollingTextures(CBrushPolygon &polygon)
 }
 
 
-static void RT_ProcessTexCoords(CBrushPolygon &polygon, const GFXVertex *vertices, uint32_t vertCount, SSRT::Scene *scene)
+static void RT_ProcessTexCoords(CBrushPolygon &polygon, const GFXVertex *vertices, uint32_t vertCount, SSRT::Scene *pScene)
 {
   for (uint32_t iLayer = 0; iLayer < MAX_BRUSH_TEXTURE_COUNT; iLayer++)
   {
@@ -538,7 +505,7 @@ static void RT_ProcessTexCoords(CBrushPolygon &polygon, const GFXVertex *vertice
       {
         // make mapping vectors as normal and then transform them
         CMappingDefinition &mdBase = polygon.bpo_abptTextures[iLayer].bpt_mdMapping;
-        CMappingDefinition &mdScroll = scene->GetWorld()->wo_attTextureTransformations[iTransformation].tt_mdTransformation;
+        CMappingDefinition &mdScroll = pScene->GetWorld()->wo_attTextureTransformations[iTransformation].tt_mdTransformation;
 
         CMappingVectors mvTmp;
         mdBase.MakeMappingVectors(mvBrushSpace, mvTmp);
@@ -584,7 +551,7 @@ static void RT_ProcessIndices(CBrushPolygon &polygon, uint32_t firstVertexId)
 }
 
 
-static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool onlyTexCoords, bool onlyRasterized, SSRT::Scene *scene)
+static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool onlyTexCoords, bool onlyRasterized, SSRT::Scene *pScene)
 {
   ASSERT(RT_AllSectorVertices.Count() == 0 || RT_AllSectorIndices.Count() == 0);
 
@@ -610,18 +577,18 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
   }
 
 
-  auto flushLastSavedInfo = [onlyTexCoords, onlyRasterized, penBrush, &pLastTextures, &lastFlags, &lastBlending, &lastHasSrollingTextures, &lastIsWater, scene] ()
+  auto flushLastSavedInfo = [onlyTexCoords, onlyRasterized, penBrush, &pLastTextures, &lastFlags, &lastBlending, &lastHasSrollingTextures, &lastIsWater, pScene] ()
   {
     if (!onlyTexCoords)
     {
-      RT_FlushBrushInfo(penBrush, RT_BrushPartIndex, pLastTextures, lastFlags, lastBlending, lastHasSrollingTextures, lastIsWater, onlyRasterized, scene);
+      RT_FlushBrushInfo(penBrush, RT_BrushPartIndex, pLastTextures, lastFlags, lastBlending, lastHasSrollingTextures, lastIsWater, onlyRasterized, pScene);
     }
     else
     {
       // update tex coords only for scrolling textures
       if (lastHasSrollingTextures)
       {
-        RT_UpdateBrushTexCoords(penBrush, RT_BrushPartIndex, scene);
+        RT_UpdateBrushTexCoords(penBrush, RT_BrushPartIndex, pScene);
       }
       else
       {
@@ -686,7 +653,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
       for (INDEX i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
       {
         CBrushPolygonTexture &layerTexture = polygon.bpo_abptTextures[i];
-        CTextureBlending &tb = scene->GetWorld()->wo_atbTextureBlendings[layerTexture.s.bpt_ubBlend];
+        CTextureBlending &tb = pScene->GetWorld()->wo_atbTextureBlendings[layerTexture.s.bpt_ubBlend];
         
         COLOR colorLayer = layerTexture.s.bpt_colColor;
 
@@ -738,7 +705,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
 
     if (!onlyTexCoords && !onlyRasterized)
     {
-      isWaterPolygon = RT_HasWaterTextures(polygon, isWaterTexture);
+      isWaterPolygon = RT_HasWaterTextures(polygon, isWaterTexture, pScene);
     }
   #pragma endregion
 
@@ -789,7 +756,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
     // position data
     GFXVertex *vertices = RT_AllSectorVertices.Push(vertCount);
     RT_ProcessPositions(polygon, vertices, vertCount);
-    RT_ProcessTexCoords(polygon, vertices, vertCount, scene);
+    RT_ProcessTexCoords(polygon, vertices, vertCount, pScene);
 
     if (!onlyTexCoords)
     {
@@ -822,36 +789,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
 }
 
 
-bool RT_IsBrushIgnored(CEntity *penBrush)
-{
-  // ugly way to remove terrain planes above the world
-  if (!(penBrush->en_ulFlags & ENF_ZONING) && penBrush->GetName() == "World Base")
-  {
-    // check if it's exactly those unnecessary polygons
-    for (const auto &ignore : RT_WorldBaseForceInvisible)
-    {
-      // if not for the current world
-      if (penBrush->GetWorld() == nullptr || penBrush->GetWorld()->wo_fnmFileName.FileName() != ignore.worldName)
-      {
-        continue;
-      }
-
-      const FLOAT3D &p = penBrush->GetPlacement().pl_PositionVector;
-
-      bool isInside = (p - ignore.position).ManhattanNorm() < RT_WorldBaseForceInvisibleEpsilon;
-
-      if (isInside)
-      {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
-
-void RT_ProcessBrushEntity(CEntity *penBrush, bool onlyTexCoords, bool onlyRasterized, SSRT::Scene *scene)
+static void RT_ProcessBrushEntity(CEntity *penBrush, bool onlyTexCoords, bool onlyRasterized, SSRT::Scene *pScene)
 {
   RT_BrushPartIndex = 0;
 
@@ -871,7 +809,7 @@ void RT_ProcessBrushEntity(CEntity *penBrush, bool onlyTexCoords, bool onlyRaste
   // Same with onlyRasterized
   if (!onlyTexCoords && !onlyRasterized)
   {
-    if (RT_IsBrushIgnored(penBrush))
+    if (pScene->GetCustomInfo()->IsBrushIgnored(penBrush))
     {
       return;
     }
@@ -891,7 +829,7 @@ void RT_ProcessBrushEntity(CEntity *penBrush, bool onlyTexCoords, bool onlyRaste
       if (!(itbsc->bsc_ulFlags & BSCF_HIDDEN))
       {
         // add that sector to active sectors
-        RT_AddActiveSector(itbsc.Current(), penBrush, onlyTexCoords, onlyRasterized, scene);
+        RT_AddActiveSector(itbsc.Current(), penBrush, onlyTexCoords, onlyRasterized, pScene);
       }
     }
   }
@@ -950,13 +888,13 @@ void RT_UpdateBrushNonStaticTexture(CEntity *penBrush, SSRT::Scene *scene)
           continue;
         }
 
-        FOREACHINSTATICARRAY(bscSector.bsc_abpoPolygons, CBrushPolygon, itpo)
+        for (uint32_t iPoly = 0; iPoly < bscSector.bsc_abpoPolygons.Count(); iPoly++)
         {
-          CBrushPolygon &polygon = *itpo;
+          CBrushPolygon &poly = bscSector.bsc_abpoPolygons[iPoly];
 
           for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
           {
-            auto &to = polygon.bpo_abptTextures[i].bpt_toTexture;
+            auto &to = poly.bpo_abptTextures[i].bpt_toTexture;
 
             auto *td = (CTextureData *)to.GetData();
 

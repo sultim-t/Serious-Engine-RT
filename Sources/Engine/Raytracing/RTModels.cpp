@@ -48,109 +48,17 @@ extern FLOAT srt_fLightSphericalSaturation;
 extern FLOAT srt_fLightSphericalColorPow;
 extern FLOAT srt_fLightSphericalIntensityMultiplier;
 extern FLOAT srt_fLightSphericalPolygonOffset;
-extern INDEX srt_bLightSphericalIgnoreEditorModels;
+
+extern FLOAT srt_fLightMuzzleOffset;
 
 extern INDEX srt_bModelUseOriginalNormals;
 
+
+
 static uint32_t RT_ModelPartIndex = 0;
+static CStaticStackArray<const CLightSource*> RT_IgnoredLights;
+static CStaticStackArray<CEntity*> RT_PotentialLights;
 
-
-struct RT_LightIgnore
-{
-  const char *worldName;
-  const char *entityName;
-};
-
-// Positions of unnecessary brushes (that also have "World Base" names)
-static const RT_LightIgnore RT_DirectionalLightForceIgnore[] =
-{
-  { "06_Oasis", "Temple Roof" },
-};
-
-static bool RT_DirectionalLightIsIgnored(const CLightSource *plsLight)
-{
-  CEntity *pen = plsLight->ls_penEntity;
-
-  if (pen == nullptr || pen->GetWorld() == nullptr)
-  {
-    return false;
-  }
-
-  for (const auto &l : RT_DirectionalLightForceIgnore)
-  {
-    if (pen->GetWorld()->wo_fnmFileName.FileName() == l.worldName 
-        && plsLight->ls_penEntity->GetName() == l.entityName)
-    {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-static bool RT_LightEntityHasVertices(CEntity *pen)
-{
-  if (pen == nullptr)
-  {
-    return false;
-  }
-
-  if (pen->GetRenderType() != CEntity::RT_MODEL)
-  {
-    if (pen->GetRenderType() != CEntity::RT_EDITORMODEL)
-    {
-      return false; 
-    }
-
-    if (srt_bLightSphericalIgnoreEditorModels)
-    {
-      return false;
-    }
-  }
-
-  CModelData *md = pen->GetModelObject()->GetData();
-
-  return md != nullptr && md->md_VerticesCt > 0;
-}
-
-static bool RT_SphericalLightIsIgnored(const CLightSource *plsLight)
-{
-  //UBYTE h, s, v;
-  //ColorToHSV(plsLight->GetLightColor(), h, s, v);
-
-  //// ignore dim lights
-  //if (h < srt_iLightSphericalHSVThresholdHLower ||
-  //    h > srt_iLightSphericalHSVThresholdHUpper ||
-  //    v < srt_iLightSphericalHSVThresholdVLower ||
-  //    v > srt_iLightSphericalHSVThresholdVUpper)
-  //{
-  //  return true;
-  //}
-
-  CEntity *pen = plsLight->ls_penEntity;
-
-  if (RT_LightEntityHasVertices(pen))
-  {
-    return false;
-  }
-
-  if (RT_LightEntityHasVertices(pen->GetParent()))
-  {
-    return false;
-  }
-
-  {
-    FOREACHINLIST(CEntity, en_lnInParent, pen->en_lhChildren, itenChild)
-    {
-      if (RT_LightEntityHasVertices(itenChild))
-      {
-        return false;
-      }
-    }
-  }
-
-  return true;
-}
 
 
 struct RT_VertexData
@@ -403,110 +311,276 @@ static void RT_AdjustPow(FLOAT3D &color, float power)
 }
 
 
-static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *scene)
+static FLOAT3D GetDirectionalLightColor(const CLightSource *plsLight)
 {
-  ASSERT(plsLight != NULL);
-
-  // RT: ignore lights that subtract light or have only lens flare
-  if (plsLight->ls_ulFlags & (LSF_DARKLIGHT | LSF_LENSFLAREONLY))
-  {
-    return;
-  }
-
-  CEntity *pEn = plsLight->ls_penEntity;
-  const ULONG entityID = pEn->en_ulID;
-
-  const CPlacement3D &placement = pEn->GetLerpedPlacement();
-
   UBYTE r, g, b;
   plsLight->GetLightColor(r, g, b);
-
   FLOAT3D color = { r / 255.0f, g / 255.0f, b / 255.0f };
 
-  // directional light
-  if (plsLight->ls_ulFlags & LSF_DIRECTIONAL)
+  RT_AdjustSaturation(color, srt_fLightDirectionalSaturation);
+  RT_AdjustPow(color, srt_fLightDirectionalColorPow);
+  color *= srt_fLightDirectionalIntensityMultiplier;
+
+  return color;
+}
+
+
+static FLOAT3D GetSphericalLightColor(const CLightSource *plsLight)
+{
+  UBYTE r, g, b;
+  plsLight->GetLightColor(r, g, b);
+  FLOAT3D color = { r / 255.0f, g / 255.0f, b / 255.0f };
+
+  RT_AdjustSaturation(color, srt_fLightSphericalSaturation);
+  RT_AdjustPow(color, srt_fLightSphericalColorPow);
+  color *= srt_fLightSphericalIntensityMultiplier;
+
+  return color;
+}
+
+
+// Offset lights from the nearest polygon, otherwise 
+// there will be no light's contribution on that polygon
+static FLOAT3D RT_FixSphericalLightPosition(CEntity *pEn, const FLOAT3D &position, float offset, CWorld *pWorld)
+{
+  if (offset > 0.0f)
   {
-    if (RT_DirectionalLightIsIgnored(plsLight))
+    FLOAT3D point;
+    FLOATplane3D plane;
+    FLOAT distanceToEdge;
+    if (pEn->GetNearestPolygon(point, plane, distanceToEdge) != nullptr)
     {
-      return;
-    }
-    
-    RT_AdjustSaturation(color, srt_fLightDirectionalSaturation);
-    RT_AdjustPow(color, srt_fLightDirectionalColorPow);
-    color *= srt_fLightDirectionalIntensityMultiplier;
+      FLOAT3D d = point - position;
 
-    FLOAT3D direction;
-    AnglesToDirectionVector(placement.pl_OrientationAngle, direction);
-
-    SSRT::CDirectionalLight light = {};
-    light.entityID = entityID;
-    light.direction = direction;
-    light.color = color;
-
-    scene->AddLight(light);
-  }
-  else
-  {
-    if (RT_SphericalLightIsIgnored(plsLight))
-    {
-      return;
-    }
-    
-    RT_AdjustSaturation(color, srt_fLightSphericalSaturation);
-    RT_AdjustPow(color, srt_fLightSphericalColorPow);
-    color *= srt_fLightSphericalIntensityMultiplier;
-
-    bool isDynamic = plsLight->ls_ulFlags & LSF_DYNAMIC;
-    FLOAT3D position = placement.pl_PositionVector;
-
-    // offset lights from the nearest polygon, otherwise light won't 
-    // be visible on the surface
-    if (isDynamic)
-    {
-      FLOAT3D point;
-      FLOATplane3D plane;
-      FLOAT distanceToEdge;
-      if (pEn->GetNearestPolygon(point, plane, distanceToEdge) != nullptr)
+      // if light is too close to the plane, adjust the position
+      if (d % d < offset * offset)
       {
-        FLOAT3D normal = (FLOAT3D&)plane;
-        FLOAT3D targetPos = position + normal * srt_fLightSphericalPolygonOffset;
+        FLOAT3D normal = (FLOAT3D &)plane;
+        FLOAT3D targetPos = position + normal * offset;
 
         CCastRay crRay(pEn, position, targetPos);
         crRay.cr_ttHitModels = CCastRay::TT_NONE;     // only brushes block the damage
         crRay.cr_bHitTranslucentPortals = FALSE;
         crRay.cr_bPhysical = TRUE;
-        scene->GetWorld()->CastRay(crRay);
+        pWorld->CastRay(crRay);
 
-        // if found intersection, use middle point
         if (crRay.cr_penHit != nullptr)
         {
-          position = (crRay.cr_vHit + position) * 0.5f;
+          // if found intersection, use middle point
+          return (crRay.cr_vHit + position) * 0.5f;
         }
         else
         {
           // if ray wasn't intersected, use target position
-          position = targetPos;
+          return targetPos;
         }
       }
     }
+  }
 
-    SSRT::CSphereLight light = {};
-    light.entityID = pEn->en_ulID;
-    light.absPosition = position;
-    light.color = color;
-    light.hotspotDistance = plsLight->ls_rHotSpot;
-    light.faloffDistance = plsLight->ls_rFallOff;
-    light.isDynamic = isDynamic;
-    
-    if (entityID == scene->GetViewerEntityID())
+  return position;
+}
+
+
+static FLOAT3D RT_FindMuzzleFlashPosition(CEntity *pEn, SSRT::Scene *pScene)
+{
+  if (srt_fLightMuzzleOffset < 0.01f)
+  {
+    return pScene->GetCameraPosition();
+  }
+
+
+  // TODO: find muzzle flash from the weapon model, not from camera position
+  float eps = 1.0f;
+  const FLOAT3D &cameraPos = pScene->GetCameraPosition();
+  const FLOATmatrix3D &rot = pScene->GetCameraRotation();
+  FLOAT3D forward = { rot(1, 3), rot(2, 3), rot(3, 3) };
+  FLOAT3D muzzlePos = cameraPos - forward * srt_fLightMuzzleOffset;
+  FLOAT3D rayDstPos = cameraPos - forward * (srt_fLightMuzzleOffset + eps);
+
+
+  CCastRay crRay(pEn, cameraPos, rayDstPos);
+  crRay.cr_ttHitModels = CCastRay::TT_NONE;     // only brushes block the damage
+  crRay.cr_bHitTranslucentPortals = FALSE;
+  crRay.cr_bPhysical = TRUE;
+  pScene->GetWorld()->CastRay(crRay);
+
+  // if found intersection
+  if (crRay.cr_penHit != nullptr && crRay.cr_pbpoBrushPolygon != nullptr)
+  {
+    const FLOAT3D &normal = (const FLOAT3D &)crRay.cr_pbpoBrushPolygon->bpo_pbplPlane->bpl_plAbsolute;
+
+    return crRay.cr_vHit + normal * srt_fLightSphericalPolygonOffset;
+  }
+  else
+  {
+    return muzzlePos;
+  }
+}
+
+
+static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *pScene)
+{
+  ASSERT(plsLight != NULL);
+
+
+  // don't consider lights that subtract light or have only lens flare
+  if (plsLight->ls_ulFlags & (LSF_DARKLIGHT | LSF_LENSFLAREONLY))
+  {
+    return;
+  }
+
+  // and that have no contribution
+  UBYTE ubR, ubG, ubB;
+  plsLight->GetLightColor(ubR, ubG, ubB);
+  if ((uint32_t)ubR + (uint32_t)ubG + (uint32_t)ubB == 0)
+  {
+    return;
+  }
+
+
+  CEntity *pEn = plsLight->ls_penEntity;
+  const ULONG entityID = pEn->en_ulID;
+
+  // directional light
+  if (plsLight->ls_ulFlags & LSF_DIRECTIONAL)
+  {
+    if (pScene->GetCustomInfo()->IsDirectionalLightIgnored(plsLight))
     {
-      // TODO: find muzzle flash
+      return;
+    }
+    
+    FLOAT3D direction;
+    AnglesToDirectionVector(pEn->GetLerpedPlacement().pl_OrientationAngle, direction);
+
+    SSRT::CDirectionalLight light = {};
+    light.entityID = entityID;
+    light.direction = direction;
+    light.color = GetDirectionalLightColor(plsLight);
+
+    pScene->AddLight(light);
+  }
+  else
+  {
+    if (pScene->GetCustomInfo()->IsSphericalLightIgnored(plsLight))
+    {
+      // add it to the list of ignored lights, it will be used
+      // to match light sources from fire textures;
+      // it is done because a good way for determination of
+      // "real" light sources (like torches, rockets) still wasn't found
+      RT_IgnoredLights.Push() = plsLight;
 
       return;
     }
 
-    scene->AddLight(light);
+    bool isDynamic = plsLight->ls_ulFlags & LSF_DYNAMIC;
+
+    FLOAT3D position;
+
+    if (entityID == pScene->GetViewerEntityID())
+    {
+      position = RT_FindMuzzleFlashPosition(pEn, pScene);
+    }
+    /*else if (IsOfClass(pEn, "Player"))
+    {
+      FLOATaabbox3D aabb;
+      pEn->GetBoundingBox(aabb);
+
+      position = aabb.Center();
+    }*/
+    else
+    {
+      position = pEn->GetLerpedPlacement().pl_PositionVector;
+
+      if (isDynamic)
+      {
+        position = RT_FixSphericalLightPosition(pEn, position, srt_fLightSphericalPolygonOffset, pScene->GetWorld());
+      }
+    }
+
+
+    SSRT::CSphereLight light = {};
+    light.entityID = entityID;
+    light.absPosition = position;
+    light.color = GetSphericalLightColor(plsLight);
+    light.hotspotDistance = plsLight->ls_rHotSpot;
+    light.faloffDistance = plsLight->ls_rFallOff;
+    light.isDynamic = isDynamic;
+
+    pScene->AddLight(light);
   }
+}
+
+
+static void RT_TryAddPotentialLight(CEntity *pEn, SSRT::Scene *pScene)
+{
+  const float threshold = 1.0f;
+  FLOAT3D originalPos = pEn->GetLerpedPlacement().pl_PositionVector;
+
+  INDEX closestLtIndex = -1;
+  float closestDist = threshold;
+  FLOAT3D closestPos; 
+  FLOAT3D pos; 
+
+  // scan ignored lights, and try to find 
+  for (INDEX i = 0; i < RT_IgnoredLights.Count(); i++)
+  {
+    ASSERT(RT_IgnoredLights[i] && RT_IgnoredLights[i]->ls_penEntity);
+
+    pos = RT_IgnoredLights[i]->ls_penEntity->GetLerpedPlacement().pl_PositionVector;
+
+    float d = (originalPos - pos).ManhattanNorm();
+
+    if (d < closestDist)
+    {
+      closestLtIndex = i;
+      closestPos = pos;
+      closestDist = d;
+    }
+  }
+
+  SSRT::CSphereLight light = {};
+  light.entityID = pEn->en_ulID;
+
+  // if found
+  if (closestLtIndex != -1)
+  {
+    const CLightSource *plsLight = RT_IgnoredLights[closestLtIndex];
+
+    light.absPosition = closestPos;
+    light.color = GetSphericalLightColor(plsLight);
+    light.hotspotDistance = plsLight->ls_rHotSpot;
+    light.faloffDistance = plsLight->ls_rFallOff;
+  }
+  else
+  {
+    FLOAT3D color = { 1.0f, 0.7f, 0.35f };
+    color *= srt_fLightSphericalIntensityMultiplier;
+
+    float falloff = 1.0f;
+
+    if (pEn->en_pmoModelObject != nullptr)
+    {
+      falloff *= pEn->en_pmoModelObject->mo_Stretch.Length();
+
+      FLOATaabbox3D aabb;
+      pEn->GetBoundingBox(aabb);
+
+      originalPos = aabb.Center();
+    }
+
+    // if there is no nearest light, then just use any params
+    light.absPosition = originalPos;
+    light.color = color;
+    light.hotspotDistance = 1.0f;
+    light.faloffDistance = falloff;
+  }
+  
+  // light.isDynamic = plsLight->ls_ulFlags & LSF_DYNAMIC;
+  // let it use dynamic radius/falloff adjustments to exaggurate light
+  light.isDynamic = true;
+
+  pScene->AddLight(light);
 }
 
 
@@ -1182,7 +1256,7 @@ static void RT_Post_RenderModels(CEntity &en,
 }
 
 
-void RT_AddModelEntity(CEntity *penModel, SSRT::Scene *scene)
+void RT_AddModelEntity(CEntity *penModel, SSRT::Scene *pScene)
 {
   RT_ModelPartIndex = 0;
 
@@ -1197,13 +1271,19 @@ void RT_AddModelEntity(CEntity *penModel, SSRT::Scene *scene)
   {
     return;
   }
-  
+
   // add light source there is one
   const CLightSource *pls = ((CEntity *) penModel)->GetLightSource();
   if (pls != NULL)
   {
-    RT_AddLight(pls, scene);
+    RT_AddLight(pls, pScene);
   }
+  // RT: add light if model has fire texture
+  else if (pScene->GetCustomInfo()->HasModelFireTexture(penModel))
+  {
+    RT_PotentialLights.Push() = penModel;
+  }
+
 
   // RT: ignore editor model's geometry, but not its light source
   if (penModel->en_RenderType == CEntity::RT_EDITORMODEL)
@@ -1216,7 +1296,7 @@ void RT_AddModelEntity(CEntity *penModel, SSRT::Scene *scene)
   if (penModel->en_RenderType != CEntity::RT_BRUSH &&
       penModel->en_RenderType != CEntity::RT_FIELDBRUSH)
   {
-    pmoModelObject = ((CEntity *) penModel)->GetModelForRendering();
+    pmoModelObject = penModel->GetModelForRendering();
   }
   else
   {
@@ -1263,7 +1343,7 @@ void RT_AddModelEntity(CEntity *penModel, SSRT::Scene *scene)
   //dm.dm_ulFlags |= DMF_VISIBLE;
 
   // RT: call it here to bypass re_admDelayedModels list
-  RT_Post_RenderModels(*penModel, *pmoModelObject, scene);
+  RT_Post_RenderModels(*penModel, *pmoModelObject, pScene);
 }
 
 
@@ -1329,4 +1409,16 @@ void RT_AddFirstPersonModel(CModelObject *mo, CRenderModel *rm, ULONG entityId, 
 
   extern CStaticStackArray<CRenderModel> _armRenderModels;
   _armRenderModels.PopAll();
+}
+
+
+void RT_AddPotentialLightSources(SSRT::Scene *pScene)
+{
+  for (INDEX i = 0; i < RT_PotentialLights.Count(); i++)
+  {
+    RT_TryAddPotentialLight(RT_PotentialLights[i], pScene);
+  } 
+
+  RT_IgnoredLights.PopAll();
+  RT_PotentialLights.PopAll();
 }

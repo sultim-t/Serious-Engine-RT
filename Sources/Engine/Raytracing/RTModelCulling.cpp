@@ -49,7 +49,11 @@ static void RT_AddEntitiesInSector(CBrushSector *pbscSectorInside, SSRT::Scene *
   // for all entities in the sector
   {
     FOREACHDSTOFSRC(pbscSectorInside->bsc_rsEntities, CEntity, en_rdSectors, pen)
-      if (pen->en_RenderType == CEntity::RT_MODEL || pen->en_RenderType == CEntity::RT_EDITORMODEL)
+      if (pen->en_RenderType == CEntity::RT_BRUSH)
+      {
+        pScene->UpdateBrush(pen);
+      }
+      else if (pen->en_RenderType == CEntity::RT_MODEL || pen->en_RenderType == CEntity::RT_EDITORMODEL)
       {
         extern INDEX srt_bEnableViewerShadows;
 
@@ -234,7 +238,7 @@ static void RT_CleanupScanning()
     RT_saAddedModels[i]->en_ulFlags &= ~ENF_INRENDERING;
   }
 
-  RT_saAddedModels.Clear();
+  RT_saAddedModels.PopAll();
 }
 
 

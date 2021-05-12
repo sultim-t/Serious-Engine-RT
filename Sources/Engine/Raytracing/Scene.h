@@ -20,6 +20,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "SSRTObjects.h"
 #include "TextureUploader.h"
 #include "SceneBrushes.h"
+#include "CustomInfo.h"
 
 namespace SSRT
 {
@@ -40,6 +41,7 @@ public:
   void AddBrush(const CBrushGeometry &brush);
   void AddLight(const CSphereLight &sphLt);
   void AddLight(const CDirectionalLight &dirLt);
+  void UpdateBrush(CEntity *pEntity);
   void UpdateBrushNonStaticTexture(CTextureData *pTexture, uint32_t textureFrameIndex);
   void UpdateBrushTexCoords(const CUpdateTexCoordsInfo &info);
 
@@ -57,6 +59,8 @@ public:
   FLOAT3D GetBackgroundViewerPosition() const;
   ANGLE3D GetBackgroundViewerOrientationAngle() const;
 
+  const CustomInfo *GetCustomInfo() const;
+
   static void InitShellVariables();
   static void NormalizeShellVariables();
 
@@ -68,6 +72,7 @@ private:
   RgInstance        instance;
   TextureUploader   *pTextureUploader;
   SceneBrushes      *pSceneBrushes;
+  CustomInfo        *pCustomInfo;
 
   // - Every entity can be either model or brush
   // - A model can have attachments that are models too

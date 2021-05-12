@@ -56,8 +56,11 @@ extern FLOAT srt_fLightSphericalRadiusMultiplier = 0.1f;
 extern FLOAT srt_fLightSphericalRadiusOfDynamic = 0.5f;
 extern FLOAT srt_fLightSphericalFalloffMultiplier = 1.0f;
 extern FLOAT srt_fLightSphericalFalloffOfDynamicMultiplier = 1.0f;
+extern FLOAT srt_fLightSphericalFalloffOfDynamicMin = 1.0f;
+extern FLOAT srt_fLightSphericalFalloffOfDynamicMax = 8.0f;
 extern FLOAT srt_fLightSphericalPolygonOffset = 1.0f;
 extern INDEX srt_bLightSphericalIgnoreEditorModels = 0;
+extern FLOAT srt_fLightMuzzleOffset = 2.0f;
 
 extern INDEX srt_bModelUseOriginalNormals = 1;
 
@@ -89,8 +92,12 @@ void SSRT::Scene::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalRadiusOfDynamic;", &srt_fLightSphericalRadiusOfDynamic);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffMultiplier;", &srt_fLightSphericalFalloffMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffOfDynamicMultiplier;", &srt_fLightSphericalFalloffOfDynamicMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffOfDynamicMin;", &srt_fLightSphericalFalloffOfDynamicMin);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffOfDynamicMax;", &srt_fLightSphericalFalloffOfDynamicMax);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalPolygonOffset;", &srt_fLightSphericalPolygonOffset);
   _pShell->DeclareSymbol("persistent user INDEX srt_bLightSphericalIgnoreEditorModels;", &srt_bLightSphericalIgnoreEditorModels);
+
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightMuzzleOffset;", &srt_fLightMuzzleOffset);
 
   _pShell->DeclareSymbol("persistent user INDEX srt_bModelUseOriginalNormals;", &srt_bModelUseOriginalNormals);
 
@@ -119,9 +126,14 @@ void SSRT::Scene::NormalizeShellVariables()
   srt_fLightSphericalSaturation             = Max(srt_fLightSphericalSaturation, 0.0f);
   srt_fLightSphericalColorPow               = Max(srt_fLightSphericalColorPow, 0.0f);
   srt_fLightSphericalRadiusMultiplier       = Max(srt_fLightSphericalRadiusMultiplier, 0.0f);
-  srt_fLightSphericalRadiusOfDynamic        = Max(srt_fLightSphericalRadiusOfDynamic, 0.0f);
   srt_fLightSphericalFalloffMultiplier      = Max(srt_fLightSphericalFalloffMultiplier, 0.0f);
+
+  srt_fLightSphericalRadiusOfDynamic        = Max(srt_fLightSphericalRadiusOfDynamic, 0.0f);
   srt_fLightSphericalFalloffOfDynamicMultiplier = Max(srt_fLightSphericalFalloffOfDynamicMultiplier, 0.0f);
+  srt_fLightSphericalFalloffOfDynamicMin    = Max(srt_fLightSphericalFalloffOfDynamicMin, 0.0f);
+  srt_fLightSphericalFalloffOfDynamicMax    = Max(srt_fLightSphericalFalloffOfDynamicMax, 0.0f);
+
+  srt_fLightMuzzleOffset                    = Max(srt_fLightMuzzleOffset, 0.0f);
 
   srt_bLightSphericalIgnoreEditorModels     = !!srt_bLightSphericalIgnoreEditorModels;
   srt_bModelUseOriginalNormals              = !!srt_bModelUseOriginalNormals;
@@ -134,15 +146,14 @@ SSRT::Scene::Scene(RgInstance _instance, CWorld *_pWorld, TextureUploader *_pTex
 :
   instance(_instance),
   pTextureUploader(_pTextureUploader),
-  pSceneBrushes(nullptr),
+  pSceneBrushes(new SceneBrushes(_instance, _pWorld, _pTextureUploader)),
+  pCustomInfo(new CustomInfo()),
   pWorld(_pWorld),
   worldName(_pWorld->GetName()),
   pViewerEntity(nullptr)
 {
   ASSERT(pWorld != nullptr);
   CPrintF("SSRT scene was created.\n");
-
-  pSceneBrushes = new SceneBrushes(_instance, _pWorld, _pTextureUploader);
 
   // upload static geometry (brushes)
   ProcessBrushes();
@@ -153,6 +164,7 @@ SSRT::Scene::~Scene()
   CPrintF("SSRT scene was deleted.\n");
 
   delete pSceneBrushes;
+  delete pCustomInfo;
 
   // submit empty scene to destroy current
   RgResult r = rgStartNewScene(instance);
@@ -211,6 +223,12 @@ ANGLE3D SSRT::Scene::GetBackgroundViewerOrientationAngle() const
   }
 
   return pWorld->GetBackgroundViewer()->GetLerpedPlacement().pl_OrientationAngle;
+}
+
+const SSRT::CustomInfo *SSRT::Scene::GetCustomInfo() const
+{
+  ASSERT(pCustomInfo != nullptr);
+  return pCustomInfo;
 }
 
 void SSRT::Scene::AddModel(const CModelGeometry &model)
@@ -350,8 +368,11 @@ void SSRT::Scene::AddLight(const CSphereLight &sphLt)
   if (sphLt.isDynamic)
   {
     info.radius = srt_fLightSphericalRadiusOfDynamic;
-    // info.falloffDistance = (sphLt.hotspotDistance + sphLt.faloffDistance) * srt_fLightSphericalFalloffOfDynamicMultiplier;
-    info.falloffDistance = sphLt.faloffDistance * srt_fLightSphericalFalloffOfDynamicMultiplier;
+
+    float f = sphLt.hotspotDistance + sphLt.faloffDistance;
+    f = Clamp(f, srt_fLightSphericalFalloffOfDynamicMin, srt_fLightSphericalFalloffOfDynamicMax);
+
+    info.falloffDistance = f * srt_fLightSphericalFalloffOfDynamicMultiplier;
   }
   else
   {
@@ -374,8 +395,15 @@ void SSRT::Scene::AddLight(const CDirectionalLight &dirLt)
   info.angularDiameterDegrees = srt_fLightDirectionalAngularDiameter;
 
   RgResult r = rgUploadDirectionalLight(instance, &info);
+  RG_CHECKERROR(r);
 
   dirLights.push_back(dirLt);
+}
+
+void SSRT::Scene::UpdateBrush(CEntity *pEntity)
+{
+  ASSERT(pEntity->en_RenderType == CEntity::RT_BRUSH);
+  pSceneBrushes->Update(pEntity, this);
 }
 
 void SSRT::Scene::UpdateBrushNonStaticTexture(CTextureData *pTexture, uint32_t textureFrameIndex)
@@ -430,9 +458,10 @@ void SSRT::Scene::ProcessDynamicGeometry()
 
   FOREACHINDYNAMICCONTAINER(pWorld->wo_cenEntities, CEntity, iten)
   {
-    if (iten->en_RenderType == CEntity::RT_BRUSH)
+    // always update background
+    if (iten->en_RenderType == CEntity::RT_BRUSH && (iten->en_ulFlags & ENF_BACKGROUND))
     {
-      pSceneBrushes->Update(iten, this);
+      UpdateBrush(iten);
     }
 
     // always add directional light source
@@ -446,6 +475,7 @@ void SSRT::Scene::ProcessDynamicGeometry()
   }
 
   RT_AddModelEntitiesAroundViewer(this);
+  RT_AddPotentialLightSources(this);
 }
 
 CEntity *SSRT::Scene::GetViewerEntity() const
