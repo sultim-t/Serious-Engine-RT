@@ -569,6 +569,7 @@ if not exist $(SolutionDir)RTGL1\Build\x64-Release\RayTracedGL1.lib echo "ERROR:
     <ClCompile Include="Base\Translation.cpp" />
     <ClCompile Include="Base\Unzip.cpp" />
     <ClCompile Include="Base\Updateable.cpp" />
+    <ClCompile Include="Raytracing\CustomInfo.cpp" />
     <ClCompile Include="GameAgent\GameAgent.cpp" />
     <ClCompile Include="Graphics\Gfx_RayTracing.cpp" />
     <ClCompile Include="Graphics\Gfx_Vulkan.cpp" />
@@ -1176,6 +1177,7 @@ if not exist $(SolutionDir)RTGL1\Build\x64-Release\RayTracedGL1.lib echo "ERROR:
     <ClInclude Include="Base\Unzip.h" />
     <ClInclude Include="Base\Updateable.h" />
     <ClInclude Include="Base\UpdateableRT.h" />
+    <ClInclude Include="Raytracing\CustomInfo.h" />
     <ClInclude Include="GameAgent\GameAgent.h" />
     <ClInclude Include="GameAgent\MSLegacy.h" />
     <ClInclude Include="Graphics\Vulkan\SvkMain.h" />

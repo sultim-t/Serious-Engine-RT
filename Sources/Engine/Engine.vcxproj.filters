@@ -835,6 +835,9 @@
     <ClCompile Include="Models\RTModelNormalsFix.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Raytracing\CustomInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Base\Anim.h">
@@ -1495,6 +1498,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Raytracing\SceneBrushes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Raytracing\CustomInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
