@@ -105,6 +105,7 @@ SSRT::SSRTMain::SSRTMain() :
   extern CTFileName _fnmApplicationPath;
   const CTFileName overridenTexturesPath = _fnmApplicationPath + "OverridenTextures\\Compressed\\";
   const CTFileName blueNoiseFilePath = _fnmApplicationPath + "OverridenTextures\\BlueNoise_LDR_RGBA_128.ktx2";
+  const CTFileName shadersPath = _fnmApplicationPath + "Sources\\RTGL1\\Build\\";
 
   extern HWND _hwndMain;
 
@@ -115,7 +116,7 @@ SSRT::SSRTMain::SSRTMain() :
   RgInstanceCreateInfo info = {};
   info.pName = "Serious Engine RT";
   info.enableValidationLayer = RG_TRUE;
-
+  info.pShaderFolderPath = shadersPath;
   info.pBlueNoiseFilePath = blueNoiseFilePath;
 
   info.vertexPositionStride = sizeof(GFXVertex);
@@ -141,7 +142,7 @@ SSRT::SSRTMain::SSRTMain() :
 
   info.pWin32SurfaceInfo = &win32SurfaceInfo;
 
-  info.pfnUserPrint = [] (const char *pMessage, void *pUserData)
+  info.pfnPrint = [] (const char *pMessage, void *pUserData)
   {
     CPrintF(pMessage);
   };

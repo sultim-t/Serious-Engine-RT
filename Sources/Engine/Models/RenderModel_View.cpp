@@ -1209,7 +1209,7 @@ vtxNext16:
         const FLOAT fNY = +fSinP0;
         const FLOAT fNZ = -fCosH0*fCosP0;
         // store vertex shade
-        pswMipCol[iMipVx] = FloatToInt(fNX*fLightObjX + fNY*fLightObjY + fNZ*fLightObjZ);
+        pswMipCol[iMipVx] = 0; //FloatToInt(fNX*fLightObjX + fNY*fLightObjY + fNZ*fLightObjZ);
         // store normal (if needed)
         if( bKeepNormals) {
           pnorMipBase[iMipVx].nx = fNX;
@@ -1371,7 +1371,7 @@ vtxNext16L:
         const FLOAT fNY = Lerp( +fSinP0,        +fSinP1,        fLerpRatio);
         const FLOAT fNZ = Lerp( -fCosH0*fCosP0, -fCosH1*fCosP1, fLerpRatio);
         // store vertex shade
-        pswMipCol[iMipVx] = FloatToInt(fNX*fLightObjX + fNY*fLightObjY + fNZ*fLightObjZ);
+        pswMipCol[iMipVx] = 0; // FloatToInt(fNX *fLightObjX + fNY * fLightObjY + fNZ * fLightObjZ);
         // store lerped normal (if needed)
         if( bKeepNormals) {
           pnorMipBase[iMipVx].nx = fNX;

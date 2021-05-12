@@ -21,7 +21,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "Model_internal.h"
 #include "Normals.h"
 
-#include "Templates/StaticStackArray.cpp"
+#include <Engine/Templates/StaticStackArray.cpp>
 
 static void RT_AddTriangleNormal(CModelData *pModelData, std::vector<FLOAT3D> &pNormals, INDEX iFr, 
                                  INDEX i0, INDEX i1, INDEX i2)
@@ -71,6 +71,8 @@ static void RT_AddTriangleNormal(CModelData *pModelData, std::vector<FLOAT3D> &p
 
 void RT_FixModelNormals(CModelData *pModelData)
 {
+  return;
+
   // assume that main mip contains all triangles
   const auto &pMainMip = pModelData->md_MipInfos[0];
   const auto &pMipIndices = pMainMip.mmpi_aiElements;

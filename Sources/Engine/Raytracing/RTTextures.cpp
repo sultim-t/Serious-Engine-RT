@@ -263,7 +263,9 @@ static void SetCurrent(CTextureData &td)
 
   // RT: texture was already uploaded
   //gfxSetTexture(td.td_ulObject, td.td_tpLocal);
-  td.MarkDrawn();
+  // RT: don't mark, as texture probing is not used, 
+  //     but GetHighPrecisionTimer call is expensive
+  //td.MarkDrawn();
 }
 
 
