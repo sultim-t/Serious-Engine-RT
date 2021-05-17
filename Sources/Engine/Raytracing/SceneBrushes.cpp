@@ -372,7 +372,7 @@ void SSRT::SceneBrushes::Update(CEntity *pBrushEntity, Scene *pScene)
 
 
   {
-    // if it has static texture
+    // if it has non static texture
     if (entityHasNonStaticTexture.find(entityId) != entityHasNonStaticTexture.end())
     {
       RT_UpdateBrushNonStaticTexture(pBrushEntity, pScene);

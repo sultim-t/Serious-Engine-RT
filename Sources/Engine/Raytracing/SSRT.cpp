@@ -119,6 +119,11 @@ SSRT::SSRTMain::SSRTMain() :
   info.pShaderFolderPath = shadersPath;
   info.pBlueNoiseFilePath = blueNoiseFilePath;
 
+  // all textre layers
+  info.primaryRaysMaxAlbedoLayers = 3;
+  // without detail textures
+  info.indirectIlluminationMaxAlbedoLayers = 2;
+
   info.vertexPositionStride = sizeof(GFXVertex);
   info.vertexNormalStride = sizeof(GFXNormal);
   info.vertexTexCoordStride = sizeof(GFXTexCoord);

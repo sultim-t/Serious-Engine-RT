@@ -46,6 +46,14 @@ static void RT_AddEntitiesInSector(CBrushSector *pbscSectorInside, SSRT::Scene *
     return;
   }
 
+  // RT: get entity of the sector and update it
+  {
+    ASSERT(pbscSectorInside->bsc_pbmBrushMip && pbscSectorInside->bsc_pbmBrushMip->bm_pbrBrush);
+    CEntity *penSectorEntity = pbscSectorInside->bsc_pbmBrushMip->bm_pbrBrush->br_penEntity;
+
+    pScene->UpdateBrush(penSectorEntity);
+  }
+
   // for all entities in the sector
   {
     FOREACHDSTOFSRC(pbscSectorInside->bsc_rsEntities, CEntity, en_rdSectors, pen)
