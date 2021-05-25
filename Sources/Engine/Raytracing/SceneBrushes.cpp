@@ -20,12 +20,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Templates/DynamicContainer.cpp>
 
+#include "Scene.h"
 #include "TextureUploader.h"
 #include "RTProcessing.h"
 #include "Utils.h"
-
-
-extern INDEX srt_bIgnoreDynamicTexCoords;
 
 
 SSRT::SceneBrushes::SceneBrushes(RgInstance _instance, CWorld *_pWorld, TextureUploader *_pTextureUploader)
@@ -388,8 +386,8 @@ void SSRT::SceneBrushes::Update(CEntity *pBrushEntity, Scene *pScene)
   }
 
 
-  // if brush has dynamic texture coords
-  if (!srt_bIgnoreDynamicTexCoords && entitiesWithDynamicTexCoords.find(entityId) != entitiesWithDynamicTexCoords.end())
+  // if brush has dynamic texture coords and they're not ignored
+  if (!pScene->GetCustomInfo()->AreDynamicTexCoordsIgnored(pBrushEntity) && entitiesWithDynamicTexCoords.find(entityId) != entitiesWithDynamicTexCoords.end())
   {
     // this will call UpdateBrushTexCoords(..)
     RT_UpdateBrushTexCoords(pBrushEntity, pScene);

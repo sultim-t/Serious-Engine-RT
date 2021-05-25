@@ -40,6 +40,7 @@ public:
   bool IsBrushIgnored(CEntity *penBrush) const;
   bool IsDirectionalLightIgnored(const CLightSource *plsLight) const;
   bool IsSphericalLightIgnored(const CLightSource *plsLight) const;
+  bool AreDynamicTexCoordsIgnored(CEntity *penBrush) const;
 
 private:
   static bool IsTextureNameIn(CTextureData *ptd, const std::vector<std::string> &collection);
@@ -63,6 +64,8 @@ private:
   std::vector<std::string> fireTextureNames;
   std::vector<WorldBaseIgnore> worldBaseToIgnore;
   std::vector<LightIgnore> dirLightsToIgnore;
+  // Names of worlds in which dynamic tex coords are ignored
+  std::vector<std::string> dynTexCoordsWldToIgnore;
 
 };
 

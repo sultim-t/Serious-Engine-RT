@@ -28,6 +28,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Base/ListIterator.inl>
 
 
+extern INDEX srt_bIgnoreDynamicTexCoords;
 extern INDEX srt_bLightSphericalIgnoreEditorModels;
 
 
@@ -65,6 +66,11 @@ SSRT::CustomInfo::CustomInfo()
   dirLightsToIgnore =
   {
     { "06_Oasis", "Temple Roof" },
+  };
+
+  dynTexCoordsWldToIgnore =
+  {
+    "12_Karnak"
   };
 
   const char *texToIgnore = "LightBeam.tex";
@@ -224,6 +230,26 @@ bool SSRT::CustomInfo::IsSphericalLightIgnored(const CLightSource *plsLight) con
   }
 
   return true;
+}
+
+bool SSRT::CustomInfo::AreDynamicTexCoordsIgnored(CEntity *penBrush) const
+{
+  if (srt_bIgnoreDynamicTexCoords || penBrush->GetWorld() == nullptr)
+  {
+    return true;
+  }
+
+  const auto &wldName = penBrush->GetWorld()->wo_fnmFileName.FileName();
+
+  for (const auto &ignore : dynTexCoordsWldToIgnore)
+  {
+    if (wldName == ignore.c_str())
+    {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 bool SSRT::CustomInfo::IsTextureNameIn(CTextureData *ptd, const std::vector<std::string> &collection)
