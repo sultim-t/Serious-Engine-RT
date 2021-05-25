@@ -447,9 +447,14 @@ static bool RT_HasScrollingTextures(CBrushPolygon &polygon)
 
 static void RT_ProcessTexCoords(CBrushPolygon &polygon, const GFXVertex *vertices, uint32_t vertCount, SSRT::Scene *pScene)
 {
+  FLOAT3D polygonReferencePoint = polygon.bpo_pbplPlane->bpl_plRelative.ReferencePoint();
+  const CMappingVectors &mvBrushSpace = polygon.bpo_pbplPlane->bpl_pwplWorking->wpl_mvRelative;
+
+
   for (uint32_t iLayer = 0; iLayer < MAX_BRUSH_TEXTURE_COUNT; iLayer++)
   {
     // tex coord data: from RSSetTextureCoords(..)
+    // always push tex coords of vertCount amount, for 1 to 1 mapping of vertex atttributes
     GFXTexCoord *texCoords = RT_AllSectorTexCoords[iLayer].Push(vertCount);
 
 
@@ -460,11 +465,6 @@ static void RT_ProcessTexCoords(CBrushPolygon &polygon, const GFXVertex *vertice
     {
       const FLOAT mulU = 1024.0f / (float)ptd->GetWidth();
       const FLOAT mulV = 1024.0f / (float)ptd->GetHeight();
-
-      FLOATplane3D &plane = polygon.bpo_pbplPlane->bpl_plRelative;
-
-      CMappingVectors mvBrushSpace;
-      mvBrushSpace.FromPlane(plane);
 
       CMappingVectors amvMapping;
 
@@ -482,7 +482,7 @@ static void RT_ProcessTexCoords(CBrushPolygon &polygon, const GFXVertex *vertice
           mdTmp.md_fUOffset = (FloatToInt(mdTmp.md_fUOffset * 1024.0f) & mexMaskU) / 1024.0f;
           mdTmp.md_fVOffset = (FloatToInt(mdTmp.md_fVOffset * 1024.0f) & mexMaskV) / 1024.0f;
 
-          const FLOAT3D vOffset = plane.ReferencePoint() - mvBrushSpace.mv_vO;
+          const FLOAT3D vOffset = polygonReferencePoint - mvBrushSpace.mv_vO;
 
           const FLOAT fS = vOffset % mvBrushSpace.mv_vU;
           const FLOAT fT = vOffset % mvBrushSpace.mv_vV;
@@ -898,7 +898,8 @@ void RT_UpdateBrushNonStaticTexture(CEntity *penBrush, SSRT::Scene *scene)
 
             auto *td = (CTextureData *)to.GetData();
 
-            if (td != nullptr)
+            // if td exist and it's effect or animated texture
+            if (td != nullptr && (td->td_ptegEffect != nullptr || td->td_ctFrames > 1))
             {
               uint32_t tdFrame = to.GetFrame();
               scene->UpdateBrushNonStaticTexture(td, tdFrame);

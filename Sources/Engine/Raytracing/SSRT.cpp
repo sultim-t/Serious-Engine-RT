@@ -42,9 +42,7 @@ extern INDEX srt_bShowGradients = 0;
 extern INDEX srt_bShowMotionVectors = 0;
 extern INDEX srt_bReloadShaders = 0;
 extern INDEX srt_bTexturesOriginalSRGB = 1;
-extern INDEX srt_bTexturesOverridenAlbedoAlphaSRGB = 1;
-extern INDEX srt_bTexturesOverridenNormalMetallicSRGB = 0;
-extern INDEX srt_bTexturesOverridenEmissionRoughnessSRGB = 0;
+extern INDEX srt_bIgnoreDynamicTexCoords = 0;
 
 void SSRT::SSRTMain::InitShellVariables()
 {
@@ -60,9 +58,7 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user INDEX srt_bShowMotionVectors;", &srt_bShowMotionVectors);
   _pShell->DeclareSymbol("persistent user INDEX srt_bReloadShaders;", &srt_bReloadShaders);
   _pShell->DeclareSymbol("persistent user INDEX srt_bTexturesOriginalSRGB;", &srt_bTexturesOriginalSRGB);
-  _pShell->DeclareSymbol("persistent user INDEX srt_bTexturesOverridenAlbedoAlphaSRGB;", &srt_bTexturesOverridenAlbedoAlphaSRGB);
-  _pShell->DeclareSymbol("persistent user INDEX srt_bTexturesOverridenNormalMetallicSRGB;", &srt_bTexturesOverridenNormalMetallicSRGB);
-  _pShell->DeclareSymbol("persistent user INDEX srt_bTexturesOverridenEmissionRoughnessSRGB;", &srt_bTexturesOverridenEmissionRoughnessSRGB);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bIgnoreDynamicTexCoords;", &srt_bIgnoreDynamicTexCoords);
 }
 
 void SSRT::SSRTMain::NormalizeShellVariables()
@@ -73,6 +69,7 @@ void SSRT::SSRTMain::NormalizeShellVariables()
   srt_bShowMotionVectors = !!srt_bShowMotionVectors;
   srt_bReloadShaders = !!srt_bReloadShaders;
   srt_bTexturesOriginalSRGB = !!srt_bTexturesOriginalSRGB;
+  srt_bIgnoreDynamicTexCoords = !!srt_bIgnoreDynamicTexCoords;
 
   switch (srt_iSkyType)
   {
@@ -141,9 +138,9 @@ SSRT::SSRTMain::SSRTMain() :
   info.pOverridenNormalMetallicTexturePostfix = "_n";
   info.pOverridenEmissionRoughnessTexturePostfix = "_e";
 
-  info.overridenAlbedoAlphaTextureIsSRGB = srt_bTexturesOverridenAlbedoAlphaSRGB;
-  info.overridenNormalMetallicTextureIsSRGB = srt_bTexturesOverridenNormalMetallicSRGB;
-  info.overridenEmissionRoughnessTextureIsSRGB = srt_bTexturesOverridenEmissionRoughnessSRGB;
+  info.overridenAlbedoAlphaTextureIsSRGB = RG_TRUE;
+  info.overridenNormalMetallicTextureIsSRGB = RG_FALSE;
+  info.overridenEmissionRoughnessTextureIsSRGB = RG_FALSE;
 
   info.pWin32SurfaceInfo = &win32SurfaceInfo;
 

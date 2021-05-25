@@ -79,7 +79,7 @@ private:
   // Used to check if movable brush actually moved
   std::map<ULONG, MovableState>           entityToMovableBrushPlacement;
 
-  // True, if entity with that ID (key) has effect texture.
+  // True, if entity with that ID (key) has effect or aniamated texture.
   // Used for updating it every frame, as brushes are processed only once.
   std::set<ULONG>                         entityHasNonStaticTexture;
 
