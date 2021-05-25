@@ -203,7 +203,11 @@ void SSRT::SceneBrushes::UpdateBrushTexCoords(const CUpdateTexCoordsInfo &info)
   {
     if (part.brushPartIndex == info.brushPartIndex)
     {
-      ASSERT(part.vertexCount == info.vertexCount);
+      if (part.vertexCount != info.vertexCount)
+      {
+        ASSERT(false);
+        continue;
+      }
 
       // if found geomIndex for that part
       RgUpdateTexCoordsInfo texCoordsInfo = {};

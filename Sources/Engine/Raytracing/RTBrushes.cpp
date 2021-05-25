@@ -241,8 +241,6 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   brushInfo.blendSrc = brushInfo.blendDst = RG_BLEND_FACTOR_ONE;
 
   pScene->AddBrush(brushInfo);
-
-  RT_BrushClear();
 }
 
 
@@ -266,8 +264,6 @@ static void RT_UpdateBrushTexCoords(CEntity *penBrush, uint32_t brushPartIndex, 
   }
 
   pScene->UpdateBrushTexCoords(info);
-
-  RT_BrushClear();
 }
 
 
@@ -583,18 +579,13 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
     {
       RT_FlushBrushInfo(penBrush, RT_BrushPartIndex, pLastTextures, lastFlags, lastBlending, lastHasSrollingTextures, lastIsWater, onlyRasterized, pScene);
     }
-    else
+    // update tex coords only for scrolling textures
+    else if (lastHasSrollingTextures)
     {
-      // update tex coords only for scrolling textures
-      if (lastHasSrollingTextures)
-      {
-        RT_UpdateBrushTexCoords(penBrush, RT_BrushPartIndex, pScene);
-      }
-      else
-      {
-        RT_BrushClear();
-      }
+      RT_UpdateBrushTexCoords(penBrush, RT_BrushPartIndex, pScene);
     }
+
+    RT_BrushClear();
 
     // TODO: use polygon ID as a base index and flush ID as additional
     RT_BrushPartIndex++;
@@ -755,8 +746,12 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
 
     // position data
     GFXVertex *vertices = RT_AllSectorVertices.Push(vertCount);
-    RT_ProcessPositions(polygon, vertices, vertCount);
-    RT_ProcessTexCoords(polygon, vertices, vertCount, pScene);
+
+    if (!onlyTexCoords || hasScrollingTextures)
+    {
+      RT_ProcessPositions(polygon, vertices, vertCount);
+      RT_ProcessTexCoords(polygon, vertices, vertCount, pScene);
+    }
 
     if (!onlyTexCoords)
     {
