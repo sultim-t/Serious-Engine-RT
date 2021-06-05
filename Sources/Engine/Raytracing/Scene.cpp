@@ -62,7 +62,7 @@ extern FLOAT srt_fLightSphericalPolygonOffset = 1.0f;
 extern INDEX srt_bLightSphericalIgnoreEditorModels = 0;
 extern FLOAT srt_fLightMuzzleOffset = 2.0f;
 
-extern INDEX srt_bModelUseOriginalNormals = 1;
+extern INDEX srt_bWeaponUseOriginalNormals = 0;
 
 extern FLOAT srt_fParticlesAlphaMultiplier = 1.0f;
 
@@ -99,7 +99,7 @@ void SSRT::Scene::InitShellVariables()
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightMuzzleOffset;", &srt_fLightMuzzleOffset);
 
-  _pShell->DeclareSymbol("persistent user INDEX srt_bModelUseOriginalNormals;", &srt_bModelUseOriginalNormals);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bWeaponUseOriginalNormals;", &srt_bWeaponUseOriginalNormals);
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_fParticlesAlphaMultiplier;", &srt_fParticlesAlphaMultiplier);
 }
@@ -136,7 +136,7 @@ void SSRT::Scene::NormalizeShellVariables()
   srt_fLightMuzzleOffset                    = Max(srt_fLightMuzzleOffset, 0.0f);
 
   srt_bLightSphericalIgnoreEditorModels     = !!srt_bLightSphericalIgnoreEditorModels;
-  srt_bModelUseOriginalNormals              = !!srt_bModelUseOriginalNormals;
+  srt_bWeaponUseOriginalNormals             = !!srt_bWeaponUseOriginalNormals;
 
   srt_fParticlesAlphaMultiplier             = Max(srt_fParticlesAlphaMultiplier, 0.0f);
 }
@@ -262,6 +262,7 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
     info.vertexCount = model.vertexCount;
     info.pVertexData = model.vertices;
     info.pNormalData = model.normals;
+    info.flags = model.invertedNormals ? RG_GEOMETRY_UPLOAD_GENERATE_INVERTED_NORMALS_BIT : 0;
     info.pTexCoordLayerData[0] = model.texCoordLayers[0];
     info.pTexCoordLayerData[1] = nullptr;
     info.pTexCoordLayerData[2] = nullptr;

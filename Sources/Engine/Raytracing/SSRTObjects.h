@@ -74,6 +74,8 @@ struct CModelGeometry : public CAbstractGeometry
 {
   Vector<FLOAT, 4>    color;
 
+  bool                invertedNormals;
+
   bool                isSpecular;
   bool                isReflective;
 

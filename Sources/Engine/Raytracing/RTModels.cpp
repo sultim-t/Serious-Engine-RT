@@ -51,7 +51,7 @@ extern FLOAT srt_fLightSphericalPolygonOffset;
 
 extern FLOAT srt_fLightMuzzleOffset;
 
-extern INDEX srt_bModelUseOriginalNormals;
+extern INDEX srt_bWeaponUseOriginalNormals;
 
 
 
@@ -281,8 +281,12 @@ static void FlushModelInfo(ULONG entityID,
 
   RT_SetBlend(modelInfo.blendEnable, modelInfo.blendSrc, modelInfo.blendDst, stt, forceTranslucency);
 
-  // don't draw rasterized parts of first person viewer
-  if (!(modelInfo.visibilityType == RG_GEOMETRY_VISIBILITY_TYPE_FIRST_PERSON_VIEWER && modelInfo.isRasterized))
+  modelInfo.invertedNormals = rm.rm_ulFlags & RMF_INVERTED;
+
+  // ignore rasterized parts of first person viewer
+  bool isRasterizedFirstPerson = modelInfo.visibilityType == RG_GEOMETRY_VISIBILITY_TYPE_FIRST_PERSON_VIEWER && modelInfo.isRasterized;
+
+  if (!isRasterizedFirstPerson)
   {
     pScene->AddModel(modelInfo);
   }
@@ -740,6 +744,7 @@ static void RT_SetupModelRendering(CModelObject &mo,
   BOOL bYInverted = rm.rm_vStretch(2) < 0;
   BOOL bZInverted = rm.rm_vStretch(3) < 0;
   rm.rm_ulFlags &= ~RMF_INVERTED;
+  // RT: i.e. the sum (bXInverted+bYInverted+bZInverted) is odd
   if (bXInverted != bYInverted != bZInverted != 0) 
   {
     rm.rm_ulFlags |= RMF_INVERTED;
@@ -955,7 +960,7 @@ static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &
   pnorMipBase = &_anorMipBase[ 0 ];
 
   // RT: always get normals
-  const BOOL bNeedNormals = srt_bModelUseOriginalNormals;
+  const BOOL bNeedNormals = true;
 
   extern void UnpackFrame(CRenderModel & rm, BOOL bKeepNormals);
   UnpackFrame(rm, bNeedNormals);
@@ -1095,9 +1100,23 @@ static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &
     RT_VertexData vd = {};
     vd.vertexCount = _ctAllSrfVx;
     vd.pPositons = &_avtxSrfBase[0];
-    vd.pNormals = srt_bModelUseOriginalNormals ? &_anorSrfBase[0] : nullptr;
+    vd.pNormals = &_anorSrfBase[0];
     vd.pTexCoords = &_atexSrfBase[0];
     vd.pColors = &_acolSrfBase[0];
+
+    // RT: generate new normals for weapons if needed
+    bool generateNormals = (rm.rm_ulFlags & RMF_WEAPON) && !srt_bWeaponUseOriginalNormals;
+
+    // RT: always use original normals for hand model
+    if (generateNormals && mo.mo_toTexture.GetName() == "Models\\Weapons\\Hand.tex")
+    {
+      generateNormals = false;
+    }
+    
+    if (generateNormals)
+    {
+      vd.pNormals = nullptr;
+    }
 
     // RT: everything is set, copy model data to SSRT
     //RT_RenderOneSide(rm, TRUE);
