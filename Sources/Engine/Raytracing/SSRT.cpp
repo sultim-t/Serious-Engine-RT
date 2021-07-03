@@ -48,6 +48,12 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user INDEX srt_bReloadShaders;", &_srtGlobals.srt_bReloadShaders);
   _pShell->DeclareSymbol("persistent user INDEX srt_bTexturesOriginalSRGB;", &_srtGlobals.srt_bTexturesOriginalSRGB);
   _pShell->DeclareSymbol("persistent user INDEX srt_bIgnoreDynamicTexCoords;", &_srtGlobals.srt_bIgnoreDynamicTexCoords);
+
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorSaturation;", &_srtGlobals.srt_fSkyColorSaturation);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fNormalMapStrength;", &_srtGlobals.srt_fNormalMapStrength);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fEmissionMapBoost;", &_srtGlobals.srt_fEmissionMapBoost);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fEmissionMaxScreenColor;", &_srtGlobals.srt_fEmissionMaxScreenColor);
+
 }
 
 void SSRT::SSRTMain::NormalizeShellVariables()

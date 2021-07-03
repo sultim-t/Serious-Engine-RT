@@ -23,11 +23,14 @@ namespace SSRT
 
 struct SSRTGlobals
 {
-  FLOAT srt_fDefaultSpecularMetallic = 0.7f;
-  FLOAT srt_fDefaultSpecularRoughness = 0.02f;
-  FLOAT srt_fDefaultReflectiveMetallic = 1.0f;
-  FLOAT srt_fDefaultReflectiveRoughness = 0.0f;
+  INDEX srt_bVSync = 1;
+  INDEX srt_bReloadShaders = 0;
+  INDEX srt_bTexturesOriginalSRGB = 1;
   INDEX srt_bEnableViewerShadows = 1;
+  INDEX srt_bIgnoreDynamicTexCoords = 0;
+  INDEX srt_bShowGradients = 0;
+  INDEX srt_bShowMotionVectors = 0;
+
   FLOAT srt_fLightDirectionalIntensityMultiplier = 10.0f;
   FLOAT srt_fLightDirectionalSaturation = 0.5f;
   FLOAT srt_fLightDirectionalColorPow = 2.2f;
@@ -49,21 +52,29 @@ struct SSRTGlobals
   FLOAT srt_fLightSphericalPolygonOffset = 1.0f;
   INDEX srt_bLightSphericalIgnoreEditorModels = 0;
   FLOAT srt_fLightMuzzleOffset = 2.0f;
+
+  FLOAT srt_fDefaultSpecularMetallic = 0.7f;
+  FLOAT srt_fDefaultSpecularRoughness = 0.02f;
+  FLOAT srt_fDefaultReflectiveMetallic = 1.0f;
+  FLOAT srt_fDefaultReflectiveRoughness = 0.0f;
+
   INDEX srt_bWeaponUseOriginalNormals = 0;
+  FLOAT srt_fNormalMapStrength = 1.0f;
+
+  FLOAT srt_fEmissionMapBoost = 100.0f;
+  FLOAT srt_fEmissionMaxScreenColor = 2.0f;
+  
   FLOAT srt_fParticlesAlphaMultiplier = 1.0f;
-  INDEX srt_bVSync = 1;
+
+  RgSkyType srt_iSkyType = RG_SKY_TYPE_RASTERIZED_GEOMETRY;
+  FLOAT srt_fSkyColorMultiplier = 1.0f;
+  FLOAT srt_fSkyColorSaturation = 0.7f;
+  FLOAT3D srt_fSkyColorDefault = { 1, 1, 1 };
+
   INDEX srt_bTonemappingUseDefault = 0;
   FLOAT srt_fTonemappingWhitePoint = 1.5f;
   FLOAT srt_fTonemappingMinLogLuminance = 2.0f;
   FLOAT srt_fTonemappingMaxLogLuminance = 10.0f;
-  RgSkyType srt_iSkyType = RG_SKY_TYPE_RASTERIZED_GEOMETRY;
-  FLOAT srt_fSkyColorMultiplier = 1.0f;
-  FLOAT3D srt_fSkyColorDefault = { 1, 1, 1 };
-  INDEX srt_bShowGradients = 0;
-  INDEX srt_bShowMotionVectors = 0;
-  INDEX srt_bReloadShaders = 0;
-  INDEX srt_bTexturesOriginalSRGB = 1;
-  INDEX srt_bIgnoreDynamicTexCoords = 0;
 };
 
 }
