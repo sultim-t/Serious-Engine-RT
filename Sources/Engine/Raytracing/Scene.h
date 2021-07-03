@@ -61,9 +61,6 @@ public:
 
   const CustomInfo *GetCustomInfo() const;
 
-  static void InitShellVariables();
-  static void NormalizeShellVariables();
-
 private:
   void ProcessBrushes();
   void ProcessDynamicGeometry();

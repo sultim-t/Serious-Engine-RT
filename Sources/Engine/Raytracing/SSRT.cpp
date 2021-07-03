@@ -54,6 +54,40 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fEmissionMapBoost;", &_srtGlobals.srt_fEmissionMapBoost);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fEmissionMaxScreenColor;", &_srtGlobals.srt_fEmissionMaxScreenColor);
 
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fDefaultSpecularMetallic;", &_srtGlobals.srt_fDefaultSpecularMetallic);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fDefaultSpecularRoughness;", &_srtGlobals.srt_fDefaultSpecularRoughness);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fDefaultReflectiveMetallic;", &_srtGlobals.srt_fDefaultReflectiveMetallic);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fDefaultReflectiveRoughness;", &_srtGlobals.srt_fDefaultReflectiveRoughness);
+
+  _pShell->DeclareSymbol("persistent user INDEX srt_bEnableViewerShadows;", &_srtGlobals.srt_bEnableViewerShadows);
+
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightDirectionalIntensityMultiplier;", &_srtGlobals.srt_fLightDirectionalIntensityMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightDirectionalSaturation;", &_srtGlobals.srt_fLightDirectionalSaturation);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightDirectionalColorPow;", &_srtGlobals.srt_fLightDirectionalColorPow);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightDirectionalAngularDiameter;", &_srtGlobals.srt_fLightDirectionalAngularDiameter);
+
+  _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalMaxCount;", &_srtGlobals.srt_iLightSphericalMaxCount);
+  //_pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdHLower;", &_srtGlobals.srt_iLightSphericalHSVThresholdHLower);
+  //_pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdHUpper;", &_srtGlobals.srt_iLightSphericalHSVThresholdHUpper);
+  //_pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdVLower;", &_srtGlobals.srt_iLightSphericalHSVThresholdVLower);
+  //_pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdVUpper;", &_srtGlobals.srt_iLightSphericalHSVThresholdVUpper);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalIntensityMultiplier;", &_srtGlobals.srt_fLightSphericalIntensityMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalSaturation;", &_srtGlobals.srt_fLightSphericalSaturation);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalColorPow;", &_srtGlobals.srt_fLightSphericalColorPow);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalRadiusMultiplier;", &_srtGlobals.srt_fLightSphericalRadiusMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalRadiusOfDynamic;", &_srtGlobals.srt_fLightSphericalRadiusOfDynamic);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffMultiplier;", &_srtGlobals.srt_fLightSphericalFalloffMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffOfDynamicMultiplier;", &_srtGlobals.srt_fLightSphericalFalloffOfDynamicMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffOfDynamicMin;", &_srtGlobals.srt_fLightSphericalFalloffOfDynamicMin);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffOfDynamicMax;", &_srtGlobals.srt_fLightSphericalFalloffOfDynamicMax);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalPolygonOffset;", &_srtGlobals.srt_fLightSphericalPolygonOffset);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bLightSphericalIgnoreEditorModels;", &_srtGlobals.srt_bLightSphericalIgnoreEditorModels);
+
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightMuzzleOffset;", &_srtGlobals.srt_fLightMuzzleOffset);
+
+  _pShell->DeclareSymbol("persistent user INDEX srt_bWeaponUseOriginalNormals;", &_srtGlobals.srt_bWeaponUseOriginalNormals);
+
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fParticlesAlphaMultiplier;", &_srtGlobals.srt_fParticlesAlphaMultiplier);
 }
 
 void SSRT::SSRTMain::NormalizeShellVariables()
@@ -81,6 +115,40 @@ void SSRT::SSRTMain::NormalizeShellVariables()
   {
     _srtGlobals.srt_fSkyColorDefault(i) = ClampDn(_srtGlobals.srt_fSkyColorDefault(i), 0.0f);
   }
+
+  _srtGlobals.srt_fDefaultSpecularMetallic = Clamp(_srtGlobals.srt_fDefaultSpecularMetallic, 0.0f, 1.0f);
+  _srtGlobals.srt_fDefaultSpecularRoughness = Clamp(_srtGlobals.srt_fDefaultSpecularRoughness, 0.0f, 1.0f);
+  _srtGlobals.srt_fDefaultReflectiveMetallic = Clamp(_srtGlobals.srt_fDefaultReflectiveMetallic, 0.0f, 1.0f);
+  _srtGlobals.srt_fDefaultReflectiveRoughness = Clamp(_srtGlobals.srt_fDefaultReflectiveRoughness, 0.0f, 1.0f);
+
+  _srtGlobals.srt_bEnableViewerShadows = !!_srtGlobals.srt_bEnableViewerShadows;
+
+  _srtGlobals.srt_fLightDirectionalIntensityMultiplier = Max(_srtGlobals.srt_fLightDirectionalIntensityMultiplier, 0.0f);
+  _srtGlobals.srt_fLightDirectionalSaturation = Max(_srtGlobals.srt_fLightDirectionalSaturation, 0.0f);
+  _srtGlobals.srt_fLightDirectionalColorPow = Max(_srtGlobals.srt_fLightDirectionalColorPow, 0.0f);
+  _srtGlobals.srt_fLightDirectionalAngularDiameter = Max(_srtGlobals.srt_fLightDirectionalAngularDiameter, 0.0f);
+
+  //_srtGlobals.srt_iLightSphericalHSVThresholdHLower     = Clamp<INDEX>(_srtGlobals.srt_iLightSphericalHSVThresholdHLower, 0, 255);
+  //_srtGlobals.srt_iLightSphericalHSVThresholdHUpper     = Clamp<INDEX>(_srtGlobals.srt_iLightSphericalHSVThresholdHUpper, 0, 255);
+  //_srtGlobals.srt_iLightSphericalHSVThresholdVLower     = Clamp<INDEX>(_srtGlobals.srt_iLightSphericalHSVThresholdVLower, 0, 255);
+  //_srtGlobals.srt_iLightSphericalHSVThresholdVUpper     = Clamp<INDEX>(_srtGlobals.srt_iLightSphericalHSVThresholdVUpper, 0, 255);
+  _srtGlobals.srt_fLightSphericalIntensityMultiplier = Max(_srtGlobals.srt_fLightSphericalIntensityMultiplier, 0.0f);
+  _srtGlobals.srt_fLightSphericalSaturation = Max(_srtGlobals.srt_fLightSphericalSaturation, 0.0f);
+  _srtGlobals.srt_fLightSphericalColorPow = Max(_srtGlobals.srt_fLightSphericalColorPow, 0.0f);
+  _srtGlobals.srt_fLightSphericalRadiusMultiplier = Max(_srtGlobals.srt_fLightSphericalRadiusMultiplier, 0.0f);
+  _srtGlobals.srt_fLightSphericalFalloffMultiplier = Max(_srtGlobals.srt_fLightSphericalFalloffMultiplier, 0.0f);
+
+  _srtGlobals.srt_fLightSphericalRadiusOfDynamic = Max(_srtGlobals.srt_fLightSphericalRadiusOfDynamic, 0.0f);
+  _srtGlobals.srt_fLightSphericalFalloffOfDynamicMultiplier = Max(_srtGlobals.srt_fLightSphericalFalloffOfDynamicMultiplier, 0.0f);
+  _srtGlobals.srt_fLightSphericalFalloffOfDynamicMin = Max(_srtGlobals.srt_fLightSphericalFalloffOfDynamicMin, 0.0f);
+  _srtGlobals.srt_fLightSphericalFalloffOfDynamicMax = Max(_srtGlobals.srt_fLightSphericalFalloffOfDynamicMax, 0.0f);
+
+  _srtGlobals.srt_fLightMuzzleOffset = Max(_srtGlobals.srt_fLightMuzzleOffset, 0.0f);
+
+  _srtGlobals.srt_bLightSphericalIgnoreEditorModels = !!_srtGlobals.srt_bLightSphericalIgnoreEditorModels;
+  _srtGlobals.srt_bWeaponUseOriginalNormals = !!_srtGlobals.srt_bWeaponUseOriginalNormals;
+
+  _srtGlobals.srt_fParticlesAlphaMultiplier = Max(_srtGlobals.srt_fParticlesAlphaMultiplier, 0.0f);
 }
 
 
@@ -150,7 +218,6 @@ SSRT::SSRTMain::SSRTMain() :
   textureUploader = new TextureUploader(instance);
 
   SSRTMain::InitShellVariables();
-  Scene::InitShellVariables();
 }
 SSRT::SSRTMain::~SSRTMain()
 {
@@ -329,12 +396,17 @@ void SSRT::SSRTMain::EndFrame()
   frameInfo.skyViewerPosition = { backgroundViewerPos(1), backgroundViewerPos(2), backgroundViewerPos(3) };
   frameInfo.skyColorDefault = { _srtGlobals.srt_fSkyColorDefault(1), _srtGlobals.srt_fSkyColorDefault(2), _srtGlobals.srt_fSkyColorDefault(3) };
   frameInfo.skyColorMultiplier = _srtGlobals.srt_fSkyColorMultiplier;
+  frameInfo.skyColorSaturation = _srtGlobals.srt_fSkyColorSaturation;
 
   memcpy(frameInfo.view,        worldRenderInfo.viewMatrix,       16 * sizeof(float));
   memcpy(frameInfo.projection,  worldRenderInfo.projectionMatrix, 16 * sizeof(float));
 
   frameInfo.dbgShowMotionVectors = !!_srtGlobals.srt_bShowMotionVectors;
   frameInfo.dbgShowGradients = !!_srtGlobals.srt_bShowGradients;
+
+  frameInfo.normalMapStrength = _srtGlobals.srt_fNormalMapStrength;
+  frameInfo.emissionMapBoost = _srtGlobals.srt_fEmissionMapBoost;
+  frameInfo.emissionMaxScreenColor = _srtGlobals.srt_fEmissionMaxScreenColor;
 
   RgResult r = rgDrawFrame(instance, &frameInfo);
   RG_CHECKERROR(r);
