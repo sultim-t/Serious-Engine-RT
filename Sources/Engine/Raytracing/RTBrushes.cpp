@@ -14,7 +14,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
 #include "StdH.h"
-#include "RTProcessing.h"
 
 #include <Engine/Entities/Entity.h>
 #include <Engine/Brushes/Brush.h>
@@ -28,12 +27,14 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Templates/DynamicArray.cpp>
 
 
+#include "RTProcessing.h"
+#include "SSRTGlobals.h"
+
+extern SSRT::SSRTGlobals _srtGlobals;
+
+
 
 constexpr uint32_t MAX_BRUSH_TEXTURE_COUNT = 3;
-
-
-
-extern RgSkyType srt_iSkyType;
 
 
 
@@ -138,7 +139,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
 
   const bool isRasterized = 
     (!isWater && RT_ShouldBeRasterized(polygonFlags)) ||
-    (isSky && srt_iSkyType == RG_SKY_TYPE_RASTERIZED_GEOMETRY);
+    (isSky && _srtGlobals.srt_iSkyType == RG_SKY_TYPE_RASTERIZED_GEOMETRY);
 
   if (onlyRasterized && !isRasterized)
   {

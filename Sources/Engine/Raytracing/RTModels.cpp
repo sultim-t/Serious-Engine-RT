@@ -14,7 +14,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
 #include "StdH.h"
-#include "RTProcessing.h"
 
 #include <Engine/Entities/Entity.h>
 #include <Engine/Models/RenderModel.h>
@@ -26,7 +25,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Base/ListIterator.inl>
 
-#include <Engine/Raytracing/SSRT.h>
+#include "SSRT.h"
+#include "RTProcessing.h"
+#include "SSRTGlobals.h"
+
+
+
+extern SSRT::SSRTGlobals _srtGlobals;
 
 
 extern INDEX gfx_bRenderModels;
@@ -34,24 +39,6 @@ extern INDEX gfx_bRenderPredicted;
 
 extern FLOAT mdl_fLODMul;
 extern FLOAT mdl_fLODAdd;
-
-extern FLOAT srt_fLightDirectionalSaturation;
-extern FLOAT srt_fLightDirectionalColorPow;
-extern FLOAT srt_fLightDirectionalIntensityMultiplier;
-
-//extern INDEX srt_iLightSphericalHSVThresholdHLower;
-//extern INDEX srt_iLightSphericalHSVThresholdHUpper;
-//extern INDEX srt_iLightSphericalHSVThresholdVLower;
-//extern INDEX srt_iLightSphericalHSVThresholdVUpper;
-
-extern FLOAT srt_fLightSphericalSaturation;
-extern FLOAT srt_fLightSphericalColorPow;
-extern FLOAT srt_fLightSphericalIntensityMultiplier;
-extern FLOAT srt_fLightSphericalPolygonOffset;
-
-extern FLOAT srt_fLightMuzzleOffset;
-
-extern INDEX srt_bWeaponUseOriginalNormals;
 
 
 
@@ -321,9 +308,9 @@ static FLOAT3D GetDirectionalLightColor(const CLightSource *plsLight)
   plsLight->GetLightColor(r, g, b);
   FLOAT3D color = { r / 255.0f, g / 255.0f, b / 255.0f };
 
-  RT_AdjustSaturation(color, srt_fLightDirectionalSaturation);
-  RT_AdjustPow(color, srt_fLightDirectionalColorPow);
-  color *= srt_fLightDirectionalIntensityMultiplier;
+  RT_AdjustSaturation(color, _srtGlobals.srt_fLightDirectionalSaturation);
+  RT_AdjustPow(color, _srtGlobals.srt_fLightDirectionalColorPow);
+  color *= _srtGlobals.srt_fLightDirectionalIntensityMultiplier;
 
   return color;
 }
@@ -335,9 +322,9 @@ static FLOAT3D GetSphericalLightColor(const CLightSource *plsLight)
   plsLight->GetLightColor(r, g, b);
   FLOAT3D color = { r / 255.0f, g / 255.0f, b / 255.0f };
 
-  RT_AdjustSaturation(color, srt_fLightSphericalSaturation);
-  RT_AdjustPow(color, srt_fLightSphericalColorPow);
-  color *= srt_fLightSphericalIntensityMultiplier;
+  RT_AdjustSaturation(color, _srtGlobals.srt_fLightSphericalSaturation);
+  RT_AdjustPow(color, _srtGlobals.srt_fLightSphericalColorPow);
+  color *= _srtGlobals.srt_fLightSphericalIntensityMultiplier;
 
   return color;
 }
@@ -388,7 +375,7 @@ static FLOAT3D RT_FixSphericalLightPosition(CEntity *pEn, const FLOAT3D &positio
 
 static FLOAT3D RT_FindMuzzleFlashPosition(CEntity *pEn, SSRT::Scene *pScene)
 {
-  if (srt_fLightMuzzleOffset < 0.01f)
+  if (_srtGlobals.srt_fLightMuzzleOffset < 0.01f)
   {
     return pScene->GetCameraPosition();
   }
@@ -399,8 +386,8 @@ static FLOAT3D RT_FindMuzzleFlashPosition(CEntity *pEn, SSRT::Scene *pScene)
   const FLOAT3D &cameraPos = pScene->GetCameraPosition();
   const FLOATmatrix3D &rot = pScene->GetCameraRotation();
   FLOAT3D forward = { rot(1, 3), rot(2, 3), rot(3, 3) };
-  FLOAT3D muzzlePos = cameraPos - forward * srt_fLightMuzzleOffset;
-  FLOAT3D rayDstPos = cameraPos - forward * (srt_fLightMuzzleOffset + eps);
+  FLOAT3D muzzlePos = cameraPos - forward * _srtGlobals.srt_fLightMuzzleOffset;
+  FLOAT3D rayDstPos = cameraPos - forward * (_srtGlobals.srt_fLightMuzzleOffset + eps);
 
 
   CCastRay crRay(pEn, cameraPos, rayDstPos);
@@ -414,12 +401,55 @@ static FLOAT3D RT_FindMuzzleFlashPosition(CEntity *pEn, SSRT::Scene *pScene)
   {
     const FLOAT3D &normal = (const FLOAT3D &)crRay.cr_pbpoBrushPolygon->bpo_pbplPlane->bpl_plAbsolute;
 
-    return crRay.cr_vHit + normal * srt_fLightSphericalPolygonOffset;
+    return crRay.cr_vHit + normal * _srtGlobals.srt_fLightSphericalPolygonOffset;
   }
   else
   {
     return muzzlePos;
   }
+}
+
+
+static void RT_AddModifiedSphereLightToScene(ULONG entityID,
+                                             const FLOAT3D &position,
+                                             const FLOAT3D &color,
+                                             float hotspotDistance,
+                                             float falloffDistance,
+                                             bool isDynamic,
+                                             bool isMuzzleFlash,
+                                             SSRT::Scene *pScene)
+{
+  SSRT::CSphereLight light = {};
+  light.entityID = entityID;
+  light.absPosition = position;
+  light.color = color;
+  light.radius = hotspotDistance;
+  light.falloffDistance = falloffDistance;
+  light.isDynamic = isDynamic;
+
+  if (isDynamic)
+  {
+    light.radius = _srtGlobals.srt_fLightSphericalRadiusOfDynamic;
+
+    if (isMuzzleFlash)
+    {
+      light.radius *= 0.1f;
+    }
+
+    float f = Clamp(hotspotDistance + falloffDistance,
+                    _srtGlobals.srt_fLightSphericalFalloffOfDynamicMin,
+                    _srtGlobals.srt_fLightSphericalFalloffOfDynamicMax);
+    light.falloffDistance = f * _srtGlobals.srt_fLightSphericalFalloffOfDynamicMultiplier;
+  }
+  else
+  {
+    light.radius = hotspotDistance * _srtGlobals.srt_fLightSphericalRadiusMultiplier;
+
+    float f = hotspotDistance + falloffDistance;
+    light.falloffDistance = f * _srtGlobals.srt_fLightSphericalFalloffMultiplier;
+  }
+
+  pScene->AddLight(light);
 }
 
 
@@ -478,12 +508,15 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *pScene)
     }
 
     bool isDynamic = plsLight->ls_ulFlags & LSF_DYNAMIC;
+    bool isMuzzleFlash = false;
 
     FLOAT3D position;
+
 
     if (entityID == pScene->GetViewerEntityID())
     {
       position = RT_FindMuzzleFlashPosition(pEn, pScene);
+      isMuzzleFlash = true;
     }
     /*else if (IsOfClass(pEn, "Player"))
     {
@@ -498,20 +531,16 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *pScene)
 
       if (isDynamic)
       {
-        position = RT_FixSphericalLightPosition(pEn, position, srt_fLightSphericalPolygonOffset, pScene->GetWorld());
+        position = RT_FixSphericalLightPosition(pEn, position, _srtGlobals.srt_fLightSphericalPolygonOffset, pScene->GetWorld());
       }
     }
 
 
-    SSRT::CSphereLight light = {};
-    light.entityID = entityID;
-    light.absPosition = position;
-    light.color = GetSphericalLightColor(plsLight);
-    light.hotspotDistance = plsLight->ls_rHotSpot;
-    light.faloffDistance = plsLight->ls_rFallOff;
-    light.isDynamic = isDynamic;
-
-    pScene->AddLight(light);
+    RT_AddModifiedSphereLightToScene(entityID, 
+                                     position, GetSphericalLightColor(plsLight),
+                                     plsLight->ls_rHotSpot, plsLight->ls_rFallOff,
+                                     isDynamic, isMuzzleFlash,
+                                     pScene);
   }
 }
 
@@ -543,29 +572,33 @@ static void RT_TryAddPotentialLight(CEntity *pEn, SSRT::Scene *pScene)
     }
   }
 
-  SSRT::CSphereLight light = {};
-  light.entityID = pEn->en_ulID;
+
+  // light.isDynamic = plsLight->ls_ulFlags & LSF_DYNAMIC;
+  // let it use dynamic radius/falloff adjustments to exaggurate light
+  const bool isDynamic = true;
+
 
   // if found
   if (closestLtIndex != -1)
   {
     const CLightSource *plsLight = RT_IgnoredLights[closestLtIndex];
 
-    light.absPosition = closestPos;
-    light.color = GetSphericalLightColor(plsLight);
-    light.hotspotDistance = plsLight->ls_rHotSpot;
-    light.faloffDistance = plsLight->ls_rFallOff;
+    RT_AddModifiedSphereLightToScene(pEn->en_ulID,
+                                     closestPos, GetSphericalLightColor(plsLight),
+                                     plsLight->ls_rHotSpot, plsLight->ls_rFallOff,
+                                     isDynamic, false,
+                                     pScene);
   }
   else
   {
     FLOAT3D color = { 1.0f, 0.7f, 0.35f };
-    color *= srt_fLightSphericalIntensityMultiplier;
+    color *= _srtGlobals.srt_fLightSphericalIntensityMultiplier;
 
-    float falloff = 1.0f;
+    float falloffDistance = 1.0f;
 
     if (pEn->en_pmoModelObject != nullptr)
     {
-      falloff *= pEn->en_pmoModelObject->mo_Stretch.Length();
+      falloffDistance *= pEn->en_pmoModelObject->mo_Stretch.Length();
 
       FLOATaabbox3D aabb;
       pEn->GetBoundingBox(aabb);
@@ -574,17 +607,14 @@ static void RT_TryAddPotentialLight(CEntity *pEn, SSRT::Scene *pScene)
     }
 
     // if there is no nearest light, then just use any params
-    light.absPosition = originalPos;
-    light.color = color;
-    light.hotspotDistance = 1.0f;
-    light.faloffDistance = falloff;
-  }
-  
-  // light.isDynamic = plsLight->ls_ulFlags & LSF_DYNAMIC;
-  // let it use dynamic radius/falloff adjustments to exaggurate light
-  light.isDynamic = true;
+    const float hotspotDistance = 1.0f;
 
-  pScene->AddLight(light);
+    RT_AddModifiedSphereLightToScene(pEn->en_ulID,
+                                     originalPos, color, 
+                                     hotspotDistance, falloffDistance,
+                                     isDynamic, false, 
+                                     pScene);
+  }
 }
 
 
@@ -1105,7 +1135,7 @@ static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &
     vd.pColors = &_acolSrfBase[0];
 
     // RT: generate new normals for weapons if needed
-    bool generateNormals = (rm.rm_ulFlags & RMF_WEAPON) && !srt_bWeaponUseOriginalNormals;
+    bool generateNormals = (rm.rm_ulFlags & RMF_WEAPON) && !_srtGlobals.srt_bWeaponUseOriginalNormals;
 
     // RT: always use original normals for hand model
     if (generateNormals && mo.mo_toTexture.GetName() == "Models\\Weapons\\Hand.tex")

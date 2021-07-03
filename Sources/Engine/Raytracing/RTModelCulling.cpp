@@ -14,7 +14,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
 #include "StdH.h"
-#include "RTProcessing.h"
 
 #include <Engine/Base/Lists.h>
 #include <Engine/Base/Relations.h>
@@ -28,6 +27,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Base/ListIterator.inl>
 #include <Engine/Templates/StaticStackArray.h>
 
+#include "RTProcessing.h"
+#include "SSRTGlobals.h"
+
+
+extern SSRT::SSRTGlobals _srtGlobals;
 
 
 // list of active sectors
@@ -63,10 +67,8 @@ static void RT_AddEntitiesInSector(CBrushSector *pbscSectorInside, SSRT::Scene *
       }
       else if (pen->en_RenderType == CEntity::RT_MODEL || pen->en_RenderType == CEntity::RT_EDITORMODEL)
       {
-        extern INDEX srt_bEnableViewerShadows;
-
         // if it's a viewer and there should be no shadows from it
-        if (!srt_bEnableViewerShadows && pScene->GetViewerEntityID() == pen->en_ulID)
+        if (!_srtGlobals.srt_bEnableViewerShadows && pScene->GetViewerEntityID() == pen->en_ulID)
         {
           continue;
         }

@@ -1503,6 +1503,9 @@
     <ClInclude Include="Raytracing\CustomInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Raytracing\SSRTGlobals.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Base\CTString.inl">

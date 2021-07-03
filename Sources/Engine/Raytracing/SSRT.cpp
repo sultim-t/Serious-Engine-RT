@@ -25,53 +25,42 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Templates/DynamicContainer.cpp>
 
-#include <Engine/Raytracing/SSRTObjects.h>
-
+#include "SSRTObjects.h"
+#include "SSRTGlobals.h"
 #include "Utils.h"
 
 
-extern INDEX srt_bVSync = 1;
-extern INDEX srt_bTonemappingUseDefault = 0;
-extern FLOAT srt_fTonemappingWhitePoint = 1.5f;
-extern FLOAT srt_fTonemappingMinLogLuminance = 2.0f;
-extern FLOAT srt_fTonemappingMaxLogLuminance = 10.0f;
-extern RgSkyType srt_iSkyType = RG_SKY_TYPE_RASTERIZED_GEOMETRY;
-extern FLOAT srt_fSkyColorMultiplier = 1.0f;
-extern FLOAT3D srt_fSkyColorDefault = { 1, 1, 1 };
-extern INDEX srt_bShowGradients = 0;
-extern INDEX srt_bShowMotionVectors = 0;
-extern INDEX srt_bReloadShaders = 0;
-extern INDEX srt_bTexturesOriginalSRGB = 1;
-extern INDEX srt_bIgnoreDynamicTexCoords = 0;
+extern SSRT::SSRTGlobals _srtGlobals = SSRT::SSRTGlobals();
+
 
 void SSRT::SSRTMain::InitShellVariables()
 {
-  _pShell->DeclareSymbol("persistent user INDEX srt_bVSync;", &srt_bVSync);
-  _pShell->DeclareSymbol("persistent user INDEX srt_bTonemappingUseDefault;", &srt_bTonemappingUseDefault);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingWhitePoint;", &srt_fTonemappingWhitePoint);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMinLogLuminance;", &srt_fTonemappingMinLogLuminance);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMaxLogLuminance;", &srt_fTonemappingMaxLogLuminance);
-  _pShell->DeclareSymbol("persistent user INDEX srt_iSkyType;", &srt_iSkyType);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorDefault[3];", &srt_fSkyColorDefault);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorMultiplier;", &srt_fSkyColorMultiplier);
-  _pShell->DeclareSymbol("persistent user INDEX srt_bShowGradients;", &srt_bShowGradients);
-  _pShell->DeclareSymbol("persistent user INDEX srt_bShowMotionVectors;", &srt_bShowMotionVectors);
-  _pShell->DeclareSymbol("persistent user INDEX srt_bReloadShaders;", &srt_bReloadShaders);
-  _pShell->DeclareSymbol("persistent user INDEX srt_bTexturesOriginalSRGB;", &srt_bTexturesOriginalSRGB);
-  _pShell->DeclareSymbol("persistent user INDEX srt_bIgnoreDynamicTexCoords;", &srt_bIgnoreDynamicTexCoords);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bVSync;", &_srtGlobals.srt_bVSync);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bTonemappingUseDefault;", &_srtGlobals.srt_bTonemappingUseDefault);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingWhitePoint;", &_srtGlobals.srt_fTonemappingWhitePoint);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMinLogLuminance;", &_srtGlobals.srt_fTonemappingMinLogLuminance);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMaxLogLuminance;", &_srtGlobals.srt_fTonemappingMaxLogLuminance);
+  _pShell->DeclareSymbol("persistent user INDEX srt_iSkyType;", &_srtGlobals.srt_iSkyType);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorDefault[3];", &_srtGlobals.srt_fSkyColorDefault);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorMultiplier;", &_srtGlobals.srt_fSkyColorMultiplier);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bShowGradients;", &_srtGlobals.srt_bShowGradients);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bShowMotionVectors;", &_srtGlobals.srt_bShowMotionVectors);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bReloadShaders;", &_srtGlobals.srt_bReloadShaders);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bTexturesOriginalSRGB;", &_srtGlobals.srt_bTexturesOriginalSRGB);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bIgnoreDynamicTexCoords;", &_srtGlobals.srt_bIgnoreDynamicTexCoords);
 }
 
 void SSRT::SSRTMain::NormalizeShellVariables()
 {
-  srt_bVSync = !!srt_bVSync;
-  srt_bTonemappingUseDefault = !!srt_bTonemappingUseDefault;
-  srt_bShowGradients = !!srt_bShowGradients;
-  srt_bShowMotionVectors = !!srt_bShowMotionVectors;
-  srt_bReloadShaders = !!srt_bReloadShaders;
-  srt_bTexturesOriginalSRGB = !!srt_bTexturesOriginalSRGB;
-  srt_bIgnoreDynamicTexCoords = !!srt_bIgnoreDynamicTexCoords;
+  _srtGlobals.srt_bVSync = !!_srtGlobals.srt_bVSync;
+  _srtGlobals.srt_bTonemappingUseDefault = !!_srtGlobals.srt_bTonemappingUseDefault;
+  _srtGlobals.srt_bShowGradients = !!_srtGlobals.srt_bShowGradients;
+  _srtGlobals.srt_bShowMotionVectors = !!_srtGlobals.srt_bShowMotionVectors;
+  _srtGlobals.srt_bReloadShaders = !!_srtGlobals.srt_bReloadShaders;
+  _srtGlobals.srt_bTexturesOriginalSRGB = !!_srtGlobals.srt_bTexturesOriginalSRGB;
+  _srtGlobals.srt_bIgnoreDynamicTexCoords = !!_srtGlobals.srt_bIgnoreDynamicTexCoords;
 
-  switch (srt_iSkyType)
+  switch (_srtGlobals.srt_iSkyType)
   {
   case RG_SKY_TYPE_COLOR:
   case RG_SKY_TYPE_CUBEMAP: 
@@ -79,12 +68,12 @@ void SSRT::SSRTMain::NormalizeShellVariables()
   case RG_SKY_TYPE_RAY_TRACED_GEOMETRY:
     break;
   default:  
-    srt_iSkyType = RG_SKY_TYPE_COLOR;
+    _srtGlobals.srt_iSkyType = RG_SKY_TYPE_COLOR;
   }
 
   for (uint32_t i = 1; i <= 3; i++)
   {
-    srt_fSkyColorDefault(i) = ClampDn(srt_fSkyColorDefault(i), 0.0f);
+    _srtGlobals.srt_fSkyColorDefault(i) = ClampDn(_srtGlobals.srt_fSkyColorDefault(i), 0.0f);
   }
 }
 
@@ -135,12 +124,12 @@ SSRT::SSRTMain::SSRTMain() :
 
   info.pOverridenTexturesFolderPath = overridenTexturesPath;
   info.pOverridenAlbedoAlphaTexturePostfix = "";
-  info.pOverridenNormalMetallicTexturePostfix = "_n";
-  info.pOverridenEmissionRoughnessTexturePostfix = "_e";
+  info.pOverridenRoughnessMetallicEmissionTexturePostfix = "_rme";
+  info.pOverridenNormalTexturePostfix = "_n";
 
   info.overridenAlbedoAlphaTextureIsSRGB = RG_TRUE;
-  info.overridenNormalMetallicTextureIsSRGB = RG_FALSE;
-  info.overridenEmissionRoughnessTextureIsSRGB = RG_FALSE;
+  info.overridenRoughnessMetallicEmissionTextureIsSRGB = RG_FALSE;
+  info.overridenNormalTextureIsSRGB = RG_FALSE;
 
   info.pWin32SurfaceInfo = &win32SurfaceInfo;
 
@@ -194,13 +183,13 @@ void SSRT::SSRTMain::StartFrame(CViewPort *pvp)
 
   RgStartFrameInfo startInfo = {};
   startInfo.surfaceSize = { curWindowWidth, curWindowHeight };
-  startInfo.requestShaderReload = srt_bReloadShaders;
-  startInfo.requestVSync = srt_bVSync;
+  startInfo.requestShaderReload = _srtGlobals.srt_bReloadShaders;
+  startInfo.requestVSync = _srtGlobals.srt_bVSync;
   startInfo.requestRasterizedSkyGeometryReuse = false;
 
   RgResult r = rgStartFrame(instance, &startInfo);
   RG_CHECKERROR(r);
-  srt_bReloadShaders = 0;
+  _srtGlobals.srt_bReloadShaders = 0;
 
   isFrameStarted = true;
 
@@ -319,27 +308,27 @@ void SSRT::SSRTMain::EndFrame()
   // if world wasn't rendered, don't adapt
   frameInfo.disableEyeAdaptation = !wasWorldProcessed;
 
-  frameInfo.overrideTonemappingParams = !srt_bTonemappingUseDefault;
-  frameInfo.luminanceWhitePoint = srt_fTonemappingWhitePoint;
-  frameInfo.minLogLuminance = srt_fTonemappingMinLogLuminance;
-  frameInfo.maxLogLuminance = srt_fTonemappingMaxLogLuminance;
+  frameInfo.overrideTonemappingParams = !_srtGlobals.srt_bTonemappingUseDefault;
+  frameInfo.luminanceWhitePoint = _srtGlobals.srt_fTonemappingWhitePoint;
+  frameInfo.minLogLuminance = _srtGlobals.srt_fTonemappingMinLogLuminance;
+  frameInfo.maxLogLuminance = _srtGlobals.srt_fTonemappingMaxLogLuminance;
   
-  frameInfo.skyType = srt_iSkyType == 3 ? RG_SKY_TYPE_RAY_TRACED_GEOMETRY : 
-                      srt_iSkyType == 2 ? RG_SKY_TYPE_RASTERIZED_GEOMETRY :
-                      srt_iSkyType == 1 ? RG_SKY_TYPE_CUBEMAP :
+  frameInfo.skyType = _srtGlobals.srt_iSkyType == 3 ? RG_SKY_TYPE_RAY_TRACED_GEOMETRY : 
+                      _srtGlobals.srt_iSkyType == 2 ? RG_SKY_TYPE_RASTERIZED_GEOMETRY :
+                      _srtGlobals.srt_iSkyType == 1 ? RG_SKY_TYPE_CUBEMAP :
                                           RG_SKY_TYPE_COLOR;
 
   FLOAT3D backgroundViewerPos = currentScene == nullptr ? FLOAT3D(0, 0, 0) : currentScene->GetBackgroundViewerPosition();
 
   frameInfo.skyViewerPosition = { backgroundViewerPos(1), backgroundViewerPos(2), backgroundViewerPos(3) };
-  frameInfo.skyColorDefault = { srt_fSkyColorDefault(1), srt_fSkyColorDefault(2), srt_fSkyColorDefault(3) };
-  frameInfo.skyColorMultiplier = srt_fSkyColorMultiplier;
+  frameInfo.skyColorDefault = { _srtGlobals.srt_fSkyColorDefault(1), _srtGlobals.srt_fSkyColorDefault(2), _srtGlobals.srt_fSkyColorDefault(3) };
+  frameInfo.skyColorMultiplier = _srtGlobals.srt_fSkyColorMultiplier;
 
   memcpy(frameInfo.view,        worldRenderInfo.viewMatrix,       16 * sizeof(float));
   memcpy(frameInfo.projection,  worldRenderInfo.projectionMatrix, 16 * sizeof(float));
 
-  frameInfo.dbgShowMotionVectors = !!srt_bShowMotionVectors;
-  frameInfo.dbgShowGradients = !!srt_bShowGradients;
+  frameInfo.dbgShowMotionVectors = !!_srtGlobals.srt_bShowMotionVectors;
+  frameInfo.dbgShowGradients = !!_srtGlobals.srt_bShowGradients;
 
   RgResult r = rgDrawFrame(instance, &frameInfo);
   RG_CHECKERROR(r);

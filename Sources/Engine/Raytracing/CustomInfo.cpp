@@ -14,7 +14,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
 #include "StdH.h"
-#include "CustomInfo.h"
 
 #include <Engine/Graphics/Texture.h>
 #include <Engine/Entities/Entity.h>
@@ -28,8 +27,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Base/ListIterator.inl>
 
 
-extern INDEX srt_bIgnoreDynamicTexCoords;
-extern INDEX srt_bLightSphericalIgnoreEditorModels;
+#include "CustomInfo.h"
+#include "SSRTGlobals.h"
+
+
+extern SSRT::SSRTGlobals _srtGlobals;
 
 
 constexpr float WORLD_BASE_FORCE_INVISIBLE_EPSILON = 0.5f;
@@ -126,7 +128,7 @@ bool SSRT::CustomInfo::HasModelFireTexture(CEntity *penModel) const
 
   // when editor light sources are enabled, lights from fire textures 
   // will be added, as they present in a world
-  if (!srt_bLightSphericalIgnoreEditorModels)
+  if (!_srtGlobals.srt_bLightSphericalIgnoreEditorModels)
   {
     return false;
   }
@@ -234,7 +236,7 @@ bool SSRT::CustomInfo::IsSphericalLightIgnored(const CLightSource *plsLight) con
 
 bool SSRT::CustomInfo::AreDynamicTexCoordsIgnored(CEntity *penBrush) const
 {
-  if (srt_bIgnoreDynamicTexCoords || penBrush->GetWorld() == nullptr)
+  if (_srtGlobals.srt_bIgnoreDynamicTexCoords || penBrush->GetWorld() == nullptr)
   {
     return true;
   }
@@ -279,7 +281,7 @@ bool SSRT::CustomInfo::HasLightEntityVertices(CEntity *pen) const
       return false;
     }
 
-    if (srt_bLightSphericalIgnoreEditorModels)
+    if (_srtGlobals.srt_bLightSphericalIgnoreEditorModels)
     {
       return false;
     }

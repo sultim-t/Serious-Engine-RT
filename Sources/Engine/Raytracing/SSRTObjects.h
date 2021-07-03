@@ -162,8 +162,8 @@ struct CSphereLight
 
   FLOAT3D         absPosition;
   FLOAT3D         color;
-  float           hotspotDistance;
-  float           faloffDistance;
+  float           radius;
+  float           falloffDistance;
   bool            isDynamic;
 };
 
