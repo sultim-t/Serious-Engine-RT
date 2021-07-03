@@ -423,8 +423,6 @@ static void RT_AddModifiedSphereLightToScene(ULONG entityID,
   light.entityID = entityID;
   light.absPosition = position;
   light.color = color;
-  light.radius = hotspotDistance;
-  light.falloffDistance = falloffDistance;
   light.isDynamic = isDynamic;
 
   if (isDynamic)
@@ -585,7 +583,8 @@ static void RT_TryAddPotentialLight(CEntity *pEn, SSRT::Scene *pScene)
 
     RT_AddModifiedSphereLightToScene(pEn->en_ulID,
                                      closestPos, GetSphericalLightColor(plsLight),
-                                     plsLight->ls_rHotSpot, plsLight->ls_rFallOff,
+                                     plsLight->ls_rHotSpot * _srtGlobals.srt_fLightSphericalRadiusOfPotentialMultiplier,
+                                     plsLight->ls_rFallOff * _srtGlobals.srt_fLightSphericalFalloffOfPotentialMultiplier,
                                      isDynamic, false,
                                      pScene);
   }
@@ -606,8 +605,11 @@ static void RT_TryAddPotentialLight(CEntity *pEn, SSRT::Scene *pScene)
       originalPos = aabb.Center();
     }
 
+    falloffDistance *= _srtGlobals.srt_fLightSphericalFalloffOfPotentialMultiplier;
+
     // if there is no nearest light, then just use any params
-    const float hotspotDistance = 1.0f;
+    float hotspotDistance = 1.0f;
+    hotspotDistance *= _srtGlobals.srt_fLightSphericalRadiusOfPotentialMultiplier;
 
     RT_AddModifiedSphereLightToScene(pEn->en_ulID,
                                      originalPos, color, 

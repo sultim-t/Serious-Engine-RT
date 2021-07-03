@@ -45,8 +45,10 @@ struct SSRTGlobals
   FLOAT srt_fLightSphericalColorPow = 2.2f;
   FLOAT srt_fLightSphericalRadiusMultiplier = 0.1f;
   FLOAT srt_fLightSphericalRadiusOfDynamic = 0.5f;
+  FLOAT srt_fLightSphericalRadiusOfPotentialMultiplier = 0.5f;
   FLOAT srt_fLightSphericalFalloffMultiplier = 1.0f;
   FLOAT srt_fLightSphericalFalloffOfDynamicMultiplier = 1.0f;
+  FLOAT srt_fLightSphericalFalloffOfPotentialMultiplier = 0.3f;
   FLOAT srt_fLightSphericalFalloffOfDynamicMin = 1.0f;
   FLOAT srt_fLightSphericalFalloffOfDynamicMax = 8.0f;
   FLOAT srt_fLightSphericalPolygonOffset = 1.0f;

@@ -76,8 +76,10 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalColorPow;", &_srtGlobals.srt_fLightSphericalColorPow);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalRadiusMultiplier;", &_srtGlobals.srt_fLightSphericalRadiusMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalRadiusOfDynamic;", &_srtGlobals.srt_fLightSphericalRadiusOfDynamic);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalRadiusOfPotentialMultiplier;", &_srtGlobals.srt_fLightSphericalRadiusOfPotentialMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffMultiplier;", &_srtGlobals.srt_fLightSphericalFalloffMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffOfDynamicMultiplier;", &_srtGlobals.srt_fLightSphericalFalloffOfDynamicMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffOfPotentialMultiplier;", &_srtGlobals.srt_fLightSphericalFalloffOfPotentialMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffOfDynamicMin;", &_srtGlobals.srt_fLightSphericalFalloffOfDynamicMin);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffOfDynamicMax;", &_srtGlobals.srt_fLightSphericalFalloffOfDynamicMax);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalPolygonOffset;", &_srtGlobals.srt_fLightSphericalPolygonOffset);
@@ -139,7 +141,9 @@ void SSRT::SSRTMain::NormalizeShellVariables()
   _srtGlobals.srt_fLightSphericalFalloffMultiplier = Max(_srtGlobals.srt_fLightSphericalFalloffMultiplier, 0.0f);
 
   _srtGlobals.srt_fLightSphericalRadiusOfDynamic = Max(_srtGlobals.srt_fLightSphericalRadiusOfDynamic, 0.0f);
+  _srtGlobals.srt_fLightSphericalRadiusOfPotentialMultiplier = Max(_srtGlobals.srt_fLightSphericalRadiusOfPotentialMultiplier, 0.0f);
   _srtGlobals.srt_fLightSphericalFalloffOfDynamicMultiplier = Max(_srtGlobals.srt_fLightSphericalFalloffOfDynamicMultiplier, 0.0f);
+  _srtGlobals.srt_fLightSphericalFalloffOfPotentialMultiplier = Max(_srtGlobals.srt_fLightSphericalFalloffOfPotentialMultiplier, 0.0f);
   _srtGlobals.srt_fLightSphericalFalloffOfDynamicMin = Max(_srtGlobals.srt_fLightSphericalFalloffOfDynamicMin, 0.0f);
   _srtGlobals.srt_fLightSphericalFalloffOfDynamicMax = Max(_srtGlobals.srt_fLightSphericalFalloffOfDynamicMax, 0.0f);
 
