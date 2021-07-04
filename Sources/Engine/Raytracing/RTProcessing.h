@@ -34,6 +34,8 @@ void RT_BrushProcessingClear();
 void RT_AddModelEntity(CEntity *penModel, SSRT::Scene *pScene);
 void RT_AddFirstPersonModel(CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::Scene *pScene);
 void RT_AddModelEntitiesAroundViewer(SSRT::Scene *pScene);
+
+void RT_ProcessModelLights(CEntity *penModel, SSRT::Scene *pScene);
 void RT_AddPotentialLightSources(SSRT::Scene *pScene);
 
 
