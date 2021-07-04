@@ -41,6 +41,7 @@ public:
   void AddBrush(const CBrushGeometry &brush);
   void AddLight(const CSphereLight &sphLt);
   void AddLight(const CDirectionalLight &dirLt);
+  void AddLight(const CSpotLight &spotLt);
   void UpdateBrush(CEntity *pEntity);
   void UpdateBrushNonStaticTexture(CTextureData *pTexture, uint32_t textureFrameIndex);
   void UpdateBrushTexCoords(const CUpdateTexCoordsInfo &info);
@@ -60,6 +61,7 @@ public:
   ANGLE3D GetBackgroundViewerOrientationAngle() const;
 
   const CustomInfo *GetCustomInfo() const;
+  const RgSpotlightInfo *GetSpotlightInfo() const;
 
 private:
   void ProcessBrushes();
@@ -84,8 +86,11 @@ private:
   FLOATmatrix3D     cameraRotation;
 
   // Scene light sources, cleaned up by the end of a frame
-  std::vector<CSphereLight>       sphLights;
-  std::vector<CDirectionalLight>  dirLights;
+  std::vector<CSphereLight>         sphLights;
+  std::vector<CDirectionalLight>    dirLights;
+  // std::optional
+  std::pair<bool, RgSpotlightInfo>  spotLightInfo;
+  
 };
 
 }

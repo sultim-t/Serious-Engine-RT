@@ -31,6 +31,9 @@ struct SSRTGlobals
   INDEX srt_bShowGradients = 0;
   INDEX srt_bShowMotionVectors = 0;
 
+  INDEX srt_bLightFixWithModels = 0;
+  INDEX srt_bLightFixWithTranslucent = 0;
+
   FLOAT srt_fLightDirectionalIntensityMultiplier = 10.0f;
   FLOAT srt_fLightDirectionalSaturation = 0.5f;
   FLOAT srt_fLightDirectionalColorPow = 2.2f;
@@ -65,7 +68,7 @@ struct SSRTGlobals
 
   FLOAT srt_fEmissionMapBoost = 100.0f;
   FLOAT srt_fEmissionMaxScreenColor = 2.0f;
-  
+
   FLOAT srt_fParticlesAlphaMultiplier = 1.0f;
 
   RgSkyType srt_iSkyType = RG_SKY_TYPE_RASTERIZED_GEOMETRY;
@@ -77,6 +80,16 @@ struct SSRTGlobals
   FLOAT srt_fTonemappingWhitePoint = 1.5f;
   FLOAT srt_fTonemappingMinLogLuminance = 2.0f;
   FLOAT srt_fTonemappingMaxLogLuminance = 10.0f;
+
+  INDEX srt_bSpotlightEnable = 0;
+  FLOAT3D srt_vSpotlightOffset = { -1.0f, -0.25f, 0.0f };
+  FLOAT3D srt_vSpotlightColor = { 2.5f, 2.5f, 2.5f };
+  FLOAT srt_fSpotlightRadius = 0.05f;
+  // In degrees
+  ANGLE srt_fSpotlightAngleOuter = 15.0f;
+  // In degrees
+  ANGLE srt_fSpotlightAngleInner = 3.0f;
+  FLOAT srt_fSpotlightFalloffDistance = 50.0f;
 };
 
 }

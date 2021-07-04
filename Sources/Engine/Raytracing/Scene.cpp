@@ -73,6 +73,7 @@ void SSRT::Scene::Update(const CWorldRenderingInfo &info)
   // clear previous data
   sphLights.clear();
   dirLights.clear();
+  spotLightInfo.first = false;
 
   // upload dynamic geometry (models)
   // and scan for movable geometry
@@ -275,6 +276,27 @@ void SSRT::Scene::AddLight(const CDirectionalLight &dirLt)
   RG_CHECKERROR(r);
 
   dirLights.push_back(dirLt);
+}
+
+void SSRT::Scene::AddLight(const CSpotLight &spotLt)
+{
+  spotLightInfo.first = true;
+  auto &sp = spotLightInfo.second;
+
+  sp.position = { spotLt.absPosition(1), spotLt.absPosition(2), spotLt.absPosition(3) };
+  sp.direction = { spotLt.direction(1), spotLt.direction(2), spotLt.direction(3) };
+  sp.upVector = { spotLt.upVector(1), spotLt.upVector(2), spotLt.upVector(3) };
+  sp.color = { _srtGlobals.srt_vSpotlightColor(1), _srtGlobals.srt_vSpotlightColor(2), _srtGlobals.srt_vSpotlightColor(3) };
+
+  sp.angleOuter = RadAngle(_srtGlobals.srt_fSpotlightAngleOuter);
+  sp.angleInner = RadAngle(_srtGlobals.srt_fSpotlightAngleInner);
+  sp.radius = _srtGlobals.srt_fSpotlightRadius;
+  sp.falloffDistance = _srtGlobals.srt_fSpotlightFalloffDistance;
+}
+
+const RgSpotlightInfo *SSRT::Scene::GetSpotlightInfo() const
+{
+  return spotLightInfo.first ? &spotLightInfo.second : nullptr;
 }
 
 void SSRT::Scene::UpdateBrush(CEntity *pEntity)

@@ -164,7 +164,14 @@ struct CSphereLight
   FLOAT3D         color;
   float           radius;
   float           falloffDistance;
-  bool            isDynamic;
+};
+
+
+struct CSpotLight
+{
+  FLOAT3D         absPosition;
+  FLOAT3D         direction;
+  FLOAT3D         upVector;
 };
 
 

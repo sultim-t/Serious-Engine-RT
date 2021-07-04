@@ -85,11 +85,22 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalPolygonOffset;", &_srtGlobals.srt_fLightSphericalPolygonOffset);
   _pShell->DeclareSymbol("persistent user INDEX srt_bLightSphericalIgnoreEditorModels;", &_srtGlobals.srt_bLightSphericalIgnoreEditorModels);
 
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightMuzzleOffset;", &_srtGlobals.srt_fLightMuzzleOffset);
-
   _pShell->DeclareSymbol("persistent user INDEX srt_bWeaponUseOriginalNormals;", &_srtGlobals.srt_bWeaponUseOriginalNormals);
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_fParticlesAlphaMultiplier;", &_srtGlobals.srt_fParticlesAlphaMultiplier);
+
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightMuzzleOffset;", &_srtGlobals.srt_fLightMuzzleOffset);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bLightFixWithModels;", &_srtGlobals.srt_bLightFixWithModels);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bLightFixWithTranslucent;", &_srtGlobals.srt_bLightFixWithTranslucent);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bSpotlightEnable;", &_srtGlobals.srt_bSpotlightEnable);
+
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fSpotlightRadius;", &_srtGlobals.srt_fSpotlightRadius);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fSpotlightAngleOuter;", &_srtGlobals.srt_fSpotlightAngleOuter);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fSpotlightAngleInner;", &_srtGlobals.srt_fSpotlightAngleInner);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fSpotlightFalloffDistance;", &_srtGlobals.srt_fSpotlightFalloffDistance);
+
+  _pShell->DeclareSymbol("persistent user FLOAT srt_vSpotlightOffset[3];", &_srtGlobals.srt_vSpotlightOffset);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_vSpotlightColor[3];", &_srtGlobals.srt_vSpotlightColor);
 }
 
 void SSRT::SSRTMain::NormalizeShellVariables()
@@ -411,6 +422,8 @@ void SSRT::SSRTMain::EndFrame()
   frameInfo.normalMapStrength = _srtGlobals.srt_fNormalMapStrength;
   frameInfo.emissionMapBoost = _srtGlobals.srt_fEmissionMapBoost;
   frameInfo.emissionMaxScreenColor = _srtGlobals.srt_fEmissionMaxScreenColor;
+
+  frameInfo.pSpotlightInfo = currentScene == nullptr ? nullptr : currentScene->GetSpotlightInfo();
 
   RgResult r = rgDrawFrame(instance, &frameInfo);
   RG_CHECKERROR(r);
