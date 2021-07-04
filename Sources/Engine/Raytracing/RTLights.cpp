@@ -40,6 +40,20 @@ static CStaticStackArray<CEntity *> RT_PotentialLights;
 
 
 
+template<class Type>
+inline Type SmoothStep(const Type edge0, const Type edge1, const Type x)
+{
+  Type t = Clamp((x - edge0) / (edge1 - edge0), (Type)0.0, (Type)1.0);
+  return t * t * (3.0 - 2.0 * t);
+}
+
+
+static bool RT_IsModelPlayer(CEntity *pEn)
+{
+  return IsOfClass(pEn, "Player");
+}
+
+
 static void RT_AdjustSaturation(FLOAT3D &color, float saturation)
 {
   const float luminance = color % FLOAT3D(0.2125f, 0.7154f, 0.0721f);
@@ -131,26 +145,18 @@ static FLOAT3D RT_FixSphericalLightPosition(CEntity *pEn, const FLOAT3D &positio
 }
 
 
-static FLOAT3D RT_FindMuzzleFlashPosition(CEntity *pEn, SSRT::Scene *pScene)
+static FLOAT3D RT_FindMuzzleFlashPosition(CEntity *pEn, 
+                                          const FLOAT3D &basePosition, 
+                                          const FLOAT3D &forward, 
+                                          SSRT::Scene *pScene)
 {
-  if (_srtGlobals.srt_fLightMuzzleOffset < 0.01f)
-  {
-    return pScene->GetCameraPosition();
-  }
-
-
-  // TODO: find muzzle flash from the weapon model, not from camera position
   float eps = 1.0f;
-  const FLOAT3D &cameraPos = pScene->GetCameraPosition();
-  const FLOATmatrix3D &rot = pScene->GetCameraRotation();
-  FLOAT3D forward = { rot(1, 3), rot(2, 3), rot(3, 3) };
-  FLOAT3D muzzlePos = cameraPos - forward * _srtGlobals.srt_fLightMuzzleOffset;
-  FLOAT3D rayDstPos = cameraPos - forward * (_srtGlobals.srt_fLightMuzzleOffset + eps);
+  FLOAT3D muzzlePos = basePosition - forward * _srtGlobals.srt_fLightMuzzleOffset;
+  FLOAT3D rayDstPos = basePosition - forward * (_srtGlobals.srt_fLightMuzzleOffset + eps);
 
-
-  CCastRay crRay(pEn, cameraPos, rayDstPos);
-  crRay.cr_ttHitModels = CCastRay::TT_NONE;     // only brushes block the damage
-  crRay.cr_bHitTranslucentPortals = FALSE;
+  CCastRay crRay(pEn, basePosition, rayDstPos);
+  crRay.cr_ttHitModels = _srtGlobals.srt_bLightFixWithModels ? CCastRay::TT_COLLISIONBOX : CCastRay::TT_NONE;
+  crRay.cr_bHitTranslucentPortals = _srtGlobals.srt_bLightFixWithTranslucent;
   crRay.cr_bPhysical = TRUE;
   pScene->GetWorld()->CastRay(crRay);
 
@@ -168,6 +174,93 @@ static FLOAT3D RT_FindMuzzleFlashPosition(CEntity *pEn, SSRT::Scene *pScene)
 }
 
 
+#define SPOTLIGHT_NEAR_FIX_DIST_MIN 2.0f
+#define SPOTLIGHT_NEAR_FIX_DIST_MAX 10.0f
+
+#define SPOTLIGHT_START_THRESHOLD 0.05f
+
+
+static void RT_FixSpotlightPosition(CEntity *pEn,
+                                    SSRT::Scene *pScene,
+                                    const FLOAT3D &direction,
+                                    FLOAT3D &refStartPosition,
+                                    FLOAT3D &refEndPosition)
+{
+  {
+    float len = (refStartPosition - pScene->GetCameraPosition()).Length();
+
+    if (len < SPOTLIGHT_START_THRESHOLD)
+    {
+      refStartPosition = pScene->GetCameraPosition();
+    }
+    else
+    {
+      CCastRay crRay(pEn, pScene->GetCameraPosition(), refStartPosition);
+      crRay.cr_ttHitModels = CCastRay::TT_NONE;
+      crRay.cr_bHitTranslucentPortals = _srtGlobals.srt_bLightFixWithTranslucent;
+      crRay.cr_bPhysical = TRUE;
+      pScene->GetWorld()->CastRay(crRay);
+
+      if (crRay.cr_penHit != nullptr && crRay.cr_pbpoBrushPolygon != nullptr)
+      {
+        refStartPosition = Lerp(pScene->GetCameraPosition(), refStartPosition, Clamp(crRay.cr_fHitDistance / len, SPOTLIGHT_START_THRESHOLD, 1.0f));
+      }
+    }
+  }
+
+  {
+    CCastRay crRay(pEn, pScene->GetCameraPosition(), pScene->GetCameraPosition() + direction * SPOTLIGHT_NEAR_FIX_DIST_MAX);
+    crRay.cr_ttHitModels = _srtGlobals.srt_bLightFixWithModels ? CCastRay::TT_COLLISIONBOX : CCastRay::TT_NONE;
+    crRay.cr_bHitTranslucentPortals = _srtGlobals.srt_bLightFixWithTranslucent;
+    crRay.cr_bPhysical = TRUE;
+    pScene->GetWorld()->CastRay(crRay);
+
+    FLOAT3D defaultEndPos = pScene->GetCameraPosition() + direction * _srtGlobals.srt_fSpotlightFalloffDistance;
+
+    // if found intersection
+    if (crRay.cr_penHit != nullptr)
+    {
+      refEndPosition = Lerp(crRay.cr_vHit,
+                            defaultEndPos,
+                            SmoothStep(SPOTLIGHT_NEAR_FIX_DIST_MIN, SPOTLIGHT_NEAR_FIX_DIST_MAX, crRay.cr_fHitDistance));
+    }
+    else
+    {
+      refEndPosition = defaultEndPos;
+    }
+  }
+}
+
+
+static FLOAT3D RT_FindMuzzleFlashPositionForFirstPerson(CEntity *pEn, SSRT::Scene *pScene)
+{
+  if (_srtGlobals.srt_fLightMuzzleOffset < 0.01f)
+  {
+    return pScene->GetCameraPosition();
+  }
+
+  // TODO: find muzzle flash from the weapon model, not from camera position
+  const FLOAT3D &cameraPos = pScene->GetCameraPosition();
+
+  const FLOATmatrix3D &rot = pScene->GetCameraRotation();
+  FLOAT3D forward = { rot(1, 3), rot(2, 3), rot(3, 3) };
+
+  return RT_FindMuzzleFlashPosition(pEn, cameraPos, forward, pScene);
+}
+
+
+static FLOAT3D RT_FindMuzzleFlashPositionForPlayerAABB(CEntity *pEn, SSRT::Scene *pScene)
+{
+  FLOATaabbox3D aabb;
+  pEn->GetBoundingBox(aabb);
+
+  const FLOATmatrix3D &rot = pEn->GetRotationMatrix();
+  FLOAT3D forward = { rot(1, 3), rot(2, 3), rot(3, 3) };
+
+  return RT_FindMuzzleFlashPosition(pEn, aabb.Center(), forward, pScene);
+}
+
+
 static void RT_AddModifiedSphereLightToScene(ULONG entityID,
                                              const FLOAT3D &position,
                                              const FLOAT3D &color,
@@ -181,7 +274,6 @@ static void RT_AddModifiedSphereLightToScene(ULONG entityID,
   light.entityID = entityID;
   light.absPosition = position;
   light.color = color;
-  light.isDynamic = isDynamic;
 
   if (isDynamic)
   {
@@ -204,6 +296,50 @@ static void RT_AddModifiedSphereLightToScene(ULONG entityID,
     float f = hotspotDistance + falloffDistance;
     light.falloffDistance = f * _srtGlobals.srt_fLightSphericalFalloffMultiplier;
   }
+
+  pScene->AddLight(light);
+}
+
+
+static void RT_AddSpotlight(CEntity *pEn, SSRT::Scene *pScene)
+{
+  const FLOATmatrix3D &rot = pScene->GetCameraRotation();
+  FLOAT3D right   = { rot(1, 1), rot(2, 1), rot(3, 1) };
+  FLOAT3D forward = { rot(1, 3), rot(2, 3), rot(3, 3) };
+  FLOAT3D up      = { rot(1, 2), rot(2, 2), rot(3, 2) };
+
+  forward *= -1;
+
+
+  FLOAT3D position, endPosition;
+
+  if (pEn->en_ulID == pScene->GetViewerEntityID())
+  {
+    position = pScene->GetCameraPosition();
+  }
+  else if (RT_IsModelPlayer(pEn))
+  {
+    FLOATaabbox3D aabb;
+    pEn->GetSize(aabb);
+
+    position = pEn->GetLerpedPlacement().pl_PositionVector + aabb.Center();
+  }
+  else
+  {
+    return;
+  }
+
+  position += right   * _srtGlobals.srt_vSpotlightOffset(1) +
+              up      * _srtGlobals.srt_vSpotlightOffset(2) +
+              forward * _srtGlobals.srt_vSpotlightOffset(3);
+
+  RT_FixSpotlightPosition(pEn, pScene, forward, position, endPosition);
+
+
+  SSRT::CSpotLight light = {};
+  light.absPosition = position;
+  light.direction = (endPosition - position).Normalize();
+  light.upVector = up;
 
   pScene->AddLight(light);
 }
@@ -266,21 +402,19 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *pScene)
     bool isDynamic = plsLight->ls_ulFlags & LSF_DYNAMIC;
     bool isMuzzleFlash = false;
 
-    FLOAT3D position;
 
+    FLOAT3D position;
 
     if (entityID == pScene->GetViewerEntityID())
     {
-      position = RT_FindMuzzleFlashPosition(pEn, pScene);
+      position = RT_FindMuzzleFlashPositionForFirstPerson(pEn, pScene);
       isMuzzleFlash = true;
     }
-    /*else if (IsOfClass(pEn, "Player"))
+    else if (RT_IsModelPlayer(pEn))
     {
-      FLOATaabbox3D aabb;
-      pEn->GetBoundingBox(aabb);
-
-      position = aabb.Center();
-    }*/
+      position = RT_FindMuzzleFlashPositionForPlayerAABB(pEn, pScene);
+      isMuzzleFlash = true;
+    }
     else
     {
       position = pEn->GetLerpedPlacement().pl_PositionVector;
@@ -390,6 +524,11 @@ void RT_ProcessModelLights(CEntity *penModel, SSRT::Scene *pScene)
   else if (pScene->GetCustomInfo()->HasModelFireTexture(penModel))
   {
     RT_PotentialLights.Push() = penModel;
+  }
+  
+  if (_srtGlobals.srt_bSpotlightEnable)
+  {
+    RT_AddSpotlight(penModel, pScene);
   }
 }
 
