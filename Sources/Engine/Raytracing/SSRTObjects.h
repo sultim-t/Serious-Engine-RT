@@ -172,6 +172,7 @@ struct CSpotLight
   FLOAT3D         absPosition;
   FLOAT3D         direction;
   FLOAT3D         upVector;
+  bool            isFirstPerson;
 };
 
 

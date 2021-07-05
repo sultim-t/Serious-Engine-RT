@@ -82,7 +82,8 @@ struct SSRTGlobals
   FLOAT srt_fTonemappingMaxLogLuminance = 10.0f;
 
   INDEX srt_bSpotlightEnable = 0;
-  FLOAT3D srt_vSpotlightOffset = { -1.0f, -0.25f, 0.0f };
+  FLOAT3D srt_vSpotlightOffset = { -1.0f, -0.25f, 0.0f }; 
+  FLOAT3D srt_vSpotlightOffsetThirdPerson = { 0.1f, 1.1f, 0.4f };
   FLOAT3D srt_vSpotlightColor = { 2.5f, 2.5f, 2.5f };
   FLOAT srt_fSpotlightRadius = 0.05f;
   // In degrees

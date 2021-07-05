@@ -19,6 +19,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Models/RenderModel.h>
 #include <Engine/Models/ModelObject.h>
 #include <Engine/Models/ModelData.h>
+#include <Engine/Network/Network.h>
 #include <Engine/Light/LightSource.h>
 #include <Engine/World/World.h>
 #include <Engine/World/WorldRayCasting.h>
@@ -304,44 +305,70 @@ static void RT_AddModifiedSphereLightToScene(ULONG entityID,
 static void RT_AddSpotlight(CEntity *pEn, SSRT::Scene *pScene)
 {
   const FLOATmatrix3D &rot = pScene->GetCameraRotation();
-  FLOAT3D right   = { rot(1, 1), rot(2, 1), rot(3, 1) };
-  FLOAT3D forward = { rot(1, 3), rot(2, 3), rot(3, 3) };
-  FLOAT3D up      = { rot(1, 2), rot(2, 2), rot(3, 2) };
+  const auto right = FLOAT3D(rot(1, 1), rot(2, 1), rot(3, 1));
+  const auto up = FLOAT3D(rot(1, 2), rot(2, 2), rot(3, 2));
+  const auto forward = FLOAT3D(rot(1, 3), rot(2, 3), rot(3, 3)) * -1;
 
-  forward *= -1;
-
-
-  FLOAT3D position, endPosition;
-
+  // if first person
   if (pEn->en_ulID == pScene->GetViewerEntityID())
   {
-    position = pScene->GetCameraPosition();
+    FLOAT3D position, endPosition;
+
+    position = 
+      pScene->GetCameraPosition() +
+      right   * _srtGlobals.srt_vSpotlightOffset(1) +
+      up      * _srtGlobals.srt_vSpotlightOffset(2) +
+      forward * _srtGlobals.srt_vSpotlightOffset(3);
+
+    RT_FixSpotlightPosition(pEn, pScene, forward, position, endPosition);
+
+
+    SSRT::CSpotLight light = {};
+    light.absPosition = position;
+    light.direction = (endPosition - position).Normalize();
+    light.upVector = up;
+    light.isFirstPerson = true;
+
+    pScene->AddLight(light);
   }
-  else if (RT_IsModelPlayer(pEn))
+  // only for local player
+  // NOTE: must be tested with splitscreen, there can be several local players
+  else if (_pNetwork->IsPlayerLocal(pEn))
   {
     FLOATaabbox3D aabb;
     pEn->GetSize(aabb);
 
-    position = pEn->GetLerpedPlacement().pl_PositionVector + aabb.Center();
+    FLOATmatrix3D playerRot;
+    MakeRotationMatrix(playerRot, pEn->GetPlacement().pl_OrientationAngle);
+
+    const auto playerForward = FLOAT3D(rot(1, 3), rot(2, 3), rot(3, 3)) * -1;
+    const auto playerUp = FLOAT3D(rot(1, 2), rot(2, 2), rot(3, 2));
+
+    // there's a dirty way to determine player's torso attachment, but it's complex to get a point and direction;
+    // this define is from "Models/Player/SeriousSam/Player.h"
+    // #define PLAYER_ATTACHMENT_TORSO 0
+    // CModelObject *pmo = &(pEn->GetModelObject()->GetAttachmentModel(PLAYER_ATTACHMENT_TORSO)->amo_moModelObject);
+
+    // instead, just use camera rotation, but use player's position with additional tweaks
+    const FLOAT3D offset =
+      aabb.Center() +
+      right         * _srtGlobals.srt_vSpotlightOffsetThirdPerson(1) +
+      playerUp      * _srtGlobals.srt_vSpotlightOffsetThirdPerson(2) +
+      playerForward * _srtGlobals.srt_vSpotlightOffsetThirdPerson(3);
+
+    
+    float flashlightHeight = 1.1f;
+
+
+    SSRT::CSpotLight light = {};
+
+    light.absPosition = pEn->GetLerpedPlacement().pl_PositionVector + offset;
+    light.direction = forward;
+    light.upVector = up;
+    light.isFirstPerson = false;
+
+    pScene->AddLight(light);
   }
-  else
-  {
-    return;
-  }
-
-  position += right   * _srtGlobals.srt_vSpotlightOffset(1) +
-              up      * _srtGlobals.srt_vSpotlightOffset(2) +
-              forward * _srtGlobals.srt_vSpotlightOffset(3);
-
-  RT_FixSpotlightPosition(pEn, pScene, forward, position, endPosition);
-
-
-  SSRT::CSpotLight light = {};
-  light.absPosition = position;
-  light.direction = (endPosition - position).Normalize();
-  light.upVector = up;
-
-  pScene->AddLight(light);
 }
 
 

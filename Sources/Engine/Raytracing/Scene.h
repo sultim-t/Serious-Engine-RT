@@ -68,6 +68,13 @@ private:
   void ProcessDynamicGeometry();
 
 private:
+  struct FlashlightState
+  {
+    bool isAdded;
+    RgSpotlightInfo spotlightInfo;
+  };
+
+private:
   RgInstance        instance;
   TextureUploader   *pTextureUploader;
   SceneBrushes      *pSceneBrushes;
@@ -88,8 +95,8 @@ private:
   // Scene light sources, cleaned up by the end of a frame
   std::vector<CSphereLight>         sphLights;
   std::vector<CDirectionalLight>    dirLights;
-  // std::optional
-  std::pair<bool, RgSpotlightInfo>  spotLightInfo;
+  FlashlightState                   firstPersonFlashlight;
+  FlashlightState                   thirdPersonFlashlight;
   
 };
 

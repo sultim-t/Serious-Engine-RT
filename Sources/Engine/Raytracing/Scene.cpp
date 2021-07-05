@@ -73,7 +73,8 @@ void SSRT::Scene::Update(const CWorldRenderingInfo &info)
   // clear previous data
   sphLights.clear();
   dirLights.clear();
-  spotLightInfo.first = false;
+  firstPersonFlashlight.isAdded = false;
+  thirdPersonFlashlight.isAdded = false;
 
   // upload dynamic geometry (models)
   // and scan for movable geometry
@@ -280,8 +281,10 @@ void SSRT::Scene::AddLight(const CDirectionalLight &dirLt)
 
 void SSRT::Scene::AddLight(const CSpotLight &spotLt)
 {
-  spotLightInfo.first = true;
-  auto &sp = spotLightInfo.second;
+  firstPersonFlashlight.isAdded |= spotLt.isFirstPerson;
+  thirdPersonFlashlight.isAdded |= !spotLt.isFirstPerson;
+
+  auto &sp = spotLt.isFirstPerson ? firstPersonFlashlight.spotlightInfo : thirdPersonFlashlight.spotlightInfo;
 
   sp.position = { spotLt.absPosition(1), spotLt.absPosition(2), spotLt.absPosition(3) };
   sp.direction = { spotLt.direction(1), spotLt.direction(2), spotLt.direction(3) };
@@ -296,7 +299,10 @@ void SSRT::Scene::AddLight(const CSpotLight &spotLt)
 
 const RgSpotlightInfo *SSRT::Scene::GetSpotlightInfo() const
 {
-  return spotLightInfo.first ? &spotLightInfo.second : nullptr;
+  return 
+    thirdPersonFlashlight.isAdded ? &thirdPersonFlashlight.spotlightInfo :
+    firstPersonFlashlight.isAdded ? &firstPersonFlashlight.spotlightInfo :
+    nullptr;
 }
 
 void SSRT::Scene::UpdateBrush(CEntity *pEntity)

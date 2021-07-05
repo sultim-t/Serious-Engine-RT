@@ -99,6 +99,7 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fSpotlightFalloffDistance;", &_srtGlobals.srt_fSpotlightFalloffDistance);
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_vSpotlightOffset[3];", &_srtGlobals.srt_vSpotlightOffset);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_vSpotlightOffsetThirdPerson[3];", &_srtGlobals.srt_vSpotlightOffsetThirdPerson);
   _pShell->DeclareSymbol("persistent user FLOAT srt_vSpotlightColor[3];", &_srtGlobals.srt_vSpotlightColor);
 
   // user controls
