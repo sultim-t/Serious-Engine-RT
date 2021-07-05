@@ -92,7 +92,6 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightMuzzleOffset;", &_srtGlobals.srt_fLightMuzzleOffset);
   _pShell->DeclareSymbol("persistent user INDEX srt_bLightFixWithModels;", &_srtGlobals.srt_bLightFixWithModels);
   _pShell->DeclareSymbol("persistent user INDEX srt_bLightFixWithTranslucent;", &_srtGlobals.srt_bLightFixWithTranslucent);
-  _pShell->DeclareSymbol("persistent user INDEX srt_bSpotlightEnable;", &_srtGlobals.srt_bSpotlightEnable);
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_fSpotlightRadius;", &_srtGlobals.srt_fSpotlightRadius);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fSpotlightAngleOuter;", &_srtGlobals.srt_fSpotlightAngleOuter);
@@ -101,6 +100,9 @@ void SSRT::SSRTMain::InitShellVariables()
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_vSpotlightOffset[3];", &_srtGlobals.srt_vSpotlightOffset);
   _pShell->DeclareSymbol("persistent user FLOAT srt_vSpotlightColor[3];", &_srtGlobals.srt_vSpotlightColor);
+
+  // user controls
+  _pShell->DeclareSymbol("user INDEX ctl_bFlashlight;", &_srtGlobals.srt_bSpotlightEnable);
 }
 
 void SSRT::SSRTMain::NormalizeShellVariables()
