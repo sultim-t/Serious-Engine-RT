@@ -102,6 +102,11 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_vSpotlightOffsetThirdPerson[3];", &_srtGlobals.srt_vSpotlightOffsetThirdPerson);
   _pShell->DeclareSymbol("persistent user FLOAT srt_vSpotlightColor[3];", &_srtGlobals.srt_vSpotlightColor);
 
+  _pShell->DeclareSymbol("persistent user INDEX srt_bMaxBounceShadowsUseDefault;", &_srtGlobals.srt_bMaxBounceShadowsUseDefault);
+  _pShell->DeclareSymbol("persistent user INDEX srt_iMaxBounceShadowsDirectionalLights;", &_srtGlobals.srt_iMaxBounceShadowsDirectionalLights);
+  _pShell->DeclareSymbol("persistent user INDEX srt_iMaxBounceShadowsSphereLights;", &_srtGlobals.srt_iMaxBounceShadowsSphereLights);
+  _pShell->DeclareSymbol("persistent user INDEX srt_iMaxBounceShadowsSpotlights;", &_srtGlobals.srt_iMaxBounceShadowsSpotlights);
+
   // user controls
   _pShell->DeclareSymbol("user INDEX ctl_bFlashlight;", &_srtGlobals.srt_bSpotlightEnable);
 }
@@ -167,6 +172,11 @@ void SSRT::SSRTMain::NormalizeShellVariables()
   _srtGlobals.srt_bWeaponUseOriginalNormals = !!_srtGlobals.srt_bWeaponUseOriginalNormals;
 
   _srtGlobals.srt_fParticlesAlphaMultiplier = Max(_srtGlobals.srt_fParticlesAlphaMultiplier, 0.0f);
+
+  _srtGlobals.srt_bMaxBounceShadowsUseDefault = !!_srtGlobals.srt_bMaxBounceShadowsUseDefault;
+  _srtGlobals.srt_iMaxBounceShadowsDirectionalLights = Max(_srtGlobals.srt_iMaxBounceShadowsDirectionalLights, (INDEX)0);
+  _srtGlobals.srt_iMaxBounceShadowsSphereLights      = Max(_srtGlobals.srt_iMaxBounceShadowsSphereLights,      (INDEX)0);
+  _srtGlobals.srt_iMaxBounceShadowsSpotlights        = Max(_srtGlobals.srt_iMaxBounceShadowsSpotlights,        (INDEX)0);
 }
 
 
@@ -383,12 +393,53 @@ void SSRT::SSRTMain::EndFrame()
     return;
   }
 
+
   // check shell variable, if it's null, then the game was stopped
   if (Utils::GetCurrentWorld() == nullptr)
   {
     delete currentScene;
     currentScene = nullptr;
   }
+
+
+  RgDrawFrameShadowParams shadowParams = {};
+  shadowParams.maxBounceShadowsDirectionalLights = _srtGlobals.srt_iMaxBounceShadowsDirectionalLights;
+  shadowParams.maxBounceShadowsSphereLights = _srtGlobals.srt_iMaxBounceShadowsSphereLights;
+  shadowParams.maxBounceShadowsSpotlights = _srtGlobals.srt_iMaxBounceShadowsSpotlights;
+
+
+  RgDrawFrameSkyParams skyParams = {};
+  {
+    skyParams.skyType = _srtGlobals.srt_iSkyType == 3 ? RG_SKY_TYPE_RAY_TRACED_GEOMETRY :
+      _srtGlobals.srt_iSkyType == 2 ? RG_SKY_TYPE_RASTERIZED_GEOMETRY :
+      _srtGlobals.srt_iSkyType == 1 ? RG_SKY_TYPE_CUBEMAP :
+      RG_SKY_TYPE_COLOR;
+
+    FLOAT3D backgroundViewerPos = currentScene == nullptr ? FLOAT3D(0, 0, 0) : currentScene->GetBackgroundViewerPosition();
+
+    skyParams.skyViewerPosition = { backgroundViewerPos(1), backgroundViewerPos(2), backgroundViewerPos(3) };
+    skyParams.skyColorDefault = { _srtGlobals.srt_fSkyColorDefault(1), _srtGlobals.srt_fSkyColorDefault(2), _srtGlobals.srt_fSkyColorDefault(3) };
+    skyParams.skyColorMultiplier = _srtGlobals.srt_fSkyColorMultiplier;
+    skyParams.skyColorSaturation = _srtGlobals.srt_fSkyColorSaturation;
+  }
+
+
+  RgDrawFrameTonemappingParams tmParams = {};
+  tmParams.luminanceWhitePoint = _srtGlobals.srt_fTonemappingWhitePoint;
+  tmParams.minLogLuminance = _srtGlobals.srt_fTonemappingMinLogLuminance;
+  tmParams.maxLogLuminance = _srtGlobals.srt_fTonemappingMaxLogLuminance;
+
+
+  RgDrawFrameOverridenTexturesParams tdParams = {};
+  tdParams.normalMapStrength = _srtGlobals.srt_fNormalMapStrength;
+  tdParams.emissionMapBoost = _srtGlobals.srt_fEmissionMapBoost;
+  tdParams.emissionMaxScreenColor = _srtGlobals.srt_fEmissionMaxScreenColor;
+
+
+  RgDrawFrameDebugParams dbgParams = {};
+  dbgParams.showMotionVectors = !!_srtGlobals.srt_bShowMotionVectors;
+  dbgParams.showGradients = !!_srtGlobals.srt_bShowGradients;
+
 
   RgDrawFrameInfo frameInfo = {};
   frameInfo.renderSize = { curWindowWidth, curWindowHeight };
@@ -398,38 +449,18 @@ void SSRT::SSRTMain::EndFrame()
 
   // if world wasn't rendered, don't adapt
   frameInfo.disableEyeAdaptation = !wasWorldProcessed;
-
-  frameInfo.overrideTonemappingParams = !_srtGlobals.srt_bTonemappingUseDefault;
-  frameInfo.luminanceWhitePoint = _srtGlobals.srt_fTonemappingWhitePoint;
-  frameInfo.minLogLuminance = _srtGlobals.srt_fTonemappingMinLogLuminance;
-  frameInfo.maxLogLuminance = _srtGlobals.srt_fTonemappingMaxLogLuminance;
+  frameInfo.pTonemappingParams = _srtGlobals.srt_bTonemappingUseDefault ? nullptr : &tmParams;
+  frameInfo.pShadowParams = _srtGlobals.srt_bMaxBounceShadowsUseDefault ? nullptr : &shadowParams;
+  frameInfo.pSkyParams = &skyParams;
+  frameInfo.pOverridenTexturesParams = &tdParams;
+  frameInfo.pDebugParams = &dbgParams;
   
-  frameInfo.skyType = _srtGlobals.srt_iSkyType == 3 ? RG_SKY_TYPE_RAY_TRACED_GEOMETRY : 
-                      _srtGlobals.srt_iSkyType == 2 ? RG_SKY_TYPE_RASTERIZED_GEOMETRY :
-                      _srtGlobals.srt_iSkyType == 1 ? RG_SKY_TYPE_CUBEMAP :
-                                          RG_SKY_TYPE_COLOR;
-
-  FLOAT3D backgroundViewerPos = currentScene == nullptr ? FLOAT3D(0, 0, 0) : currentScene->GetBackgroundViewerPosition();
-
-  frameInfo.skyViewerPosition = { backgroundViewerPos(1), backgroundViewerPos(2), backgroundViewerPos(3) };
-  frameInfo.skyColorDefault = { _srtGlobals.srt_fSkyColorDefault(1), _srtGlobals.srt_fSkyColorDefault(2), _srtGlobals.srt_fSkyColorDefault(3) };
-  frameInfo.skyColorMultiplier = _srtGlobals.srt_fSkyColorMultiplier;
-  frameInfo.skyColorSaturation = _srtGlobals.srt_fSkyColorSaturation;
-
   memcpy(frameInfo.view,        worldRenderInfo.viewMatrix,       16 * sizeof(float));
   memcpy(frameInfo.projection,  worldRenderInfo.projectionMatrix, 16 * sizeof(float));
 
-  frameInfo.dbgShowMotionVectors = !!_srtGlobals.srt_bShowMotionVectors;
-  frameInfo.dbgShowGradients = !!_srtGlobals.srt_bShowGradients;
-
-  frameInfo.normalMapStrength = _srtGlobals.srt_fNormalMapStrength;
-  frameInfo.emissionMapBoost = _srtGlobals.srt_fEmissionMapBoost;
-  frameInfo.emissionMaxScreenColor = _srtGlobals.srt_fEmissionMaxScreenColor;
-
-  frameInfo.pSpotlightInfo = currentScene == nullptr ? nullptr : currentScene->GetSpotlightInfo();
-
   RgResult r = rgDrawFrame(instance, &frameInfo);
   RG_CHECKERROR(r);
+
 
   wasWorldProcessed = false;
   isFrameStarted = false;

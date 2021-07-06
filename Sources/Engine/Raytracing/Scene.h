@@ -61,7 +61,6 @@ public:
   ANGLE3D GetBackgroundViewerOrientationAngle() const;
 
   const CustomInfo *GetCustomInfo() const;
-  const RgSpotlightInfo *GetSpotlightInfo() const;
 
 private:
   void ProcessBrushes();
@@ -71,7 +70,7 @@ private:
   struct FlashlightState
   {
     bool isAdded;
-    RgSpotlightInfo spotlightInfo;
+    RgSpotlightUploadInfo spotlightInfo;
   };
 
 private:

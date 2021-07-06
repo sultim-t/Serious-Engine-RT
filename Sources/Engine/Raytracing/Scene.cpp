@@ -297,14 +297,6 @@ void SSRT::Scene::AddLight(const CSpotLight &spotLt)
   sp.falloffDistance = _srtGlobals.srt_fSpotlightFalloffDistance;
 }
 
-const RgSpotlightInfo *SSRT::Scene::GetSpotlightInfo() const
-{
-  return 
-    thirdPersonFlashlight.isAdded ? &thirdPersonFlashlight.spotlightInfo :
-    firstPersonFlashlight.isAdded ? &firstPersonFlashlight.spotlightInfo :
-    nullptr;
-}
-
 void SSRT::Scene::UpdateBrush(CEntity *pEntity)
 {
   ASSERT(pEntity->en_RenderType == CEntity::RT_BRUSH);
@@ -381,6 +373,21 @@ void SSRT::Scene::ProcessDynamicGeometry()
 
   RT_AddModelEntitiesAroundViewer(this);
   RT_AddPotentialLightSources(this);
+
+
+  // spotlights are processed, add one of them;
+  // it's done here because a way to determine,
+  // if the camera is first or third person, wasn't found
+  RgSpotlightUploadInfo *info = 
+    thirdPersonFlashlight.isAdded ? &thirdPersonFlashlight.spotlightInfo :
+    firstPersonFlashlight.isAdded ? &firstPersonFlashlight.spotlightInfo :
+    nullptr;
+
+  if (info != nullptr)
+  {
+    RgResult r = rgUploadSpotlightLight(instance, info);
+    RG_CHECKERROR(r);
+  }
 }
 
 CEntity *SSRT::Scene::GetViewerEntity() const

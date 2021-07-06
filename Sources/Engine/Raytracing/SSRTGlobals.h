@@ -91,6 +91,11 @@ struct SSRTGlobals
   // In degrees
   ANGLE srt_fSpotlightAngleInner = 3.0f;
   FLOAT srt_fSpotlightFalloffDistance = 50.0f;
+
+  INDEX srt_bMaxBounceShadowsUseDefault = 0;
+  INDEX srt_iMaxBounceShadowsDirectionalLights = 8;
+  INDEX srt_iMaxBounceShadowsSphereLights = 2;
+  INDEX srt_iMaxBounceShadowsSpotlights = 1;
 };
 
 }
