@@ -402,6 +402,12 @@ void SSRT::SSRTMain::EndFrame()
   }
 
 
+  if (currentScene != nullptr)
+  {
+    currentScene->OnFrameEnd(currentFirstPersonModelCount > 0);
+  }
+
+
   RgDrawFrameShadowParams shadowParams = {};
   shadowParams.maxBounceShadowsDirectionalLights = _srtGlobals.srt_iMaxBounceShadowsDirectionalLights;
   shadowParams.maxBounceShadowsSphereLights = _srtGlobals.srt_iMaxBounceShadowsSphereLights;

@@ -373,15 +373,23 @@ void SSRT::Scene::ProcessDynamicGeometry()
 
   RT_AddModelEntitiesAroundViewer(this);
   RT_AddPotentialLightSources(this);
+}
 
-
+void SSRT::Scene::OnFrameEnd(bool isCameraFirstPerson)
+{
   // spotlights are processed, add one of them;
   // it's done here because a way to determine,
   // if the camera is first or third person, wasn't found
-  RgSpotlightUploadInfo *info = 
-    thirdPersonFlashlight.isAdded ? &thirdPersonFlashlight.spotlightInfo :
-    firstPersonFlashlight.isAdded ? &firstPersonFlashlight.spotlightInfo :
-    nullptr;
+  RgSpotlightUploadInfo *info = nullptr;
+
+  if (isCameraFirstPerson && firstPersonFlashlight.isAdded)
+  {
+    info = &firstPersonFlashlight.spotlightInfo;
+  }
+  else if (thirdPersonFlashlight.isAdded)
+  {
+    info = &thirdPersonFlashlight.spotlightInfo;
+  }
 
   if (info != nullptr)
   {

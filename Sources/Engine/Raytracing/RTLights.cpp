@@ -302,12 +302,130 @@ static void RT_AddModifiedSphereLightToScene(ULONG entityID,
 }
 
 
+// A dirty way to determine player's torso attachment to position a flashlight.
+static void RT_FixFlashlightWithPlayerTorso(CEntity *pEn, FLOAT3D &playerPos, FLOAT3D &playerRight, FLOAT3D &playerUp, FLOAT3D &playerForward)
+{
+  // this define is from "Models/Player/SeriousSam/Player.h"
+#define PLAYER_ATTACHMENT_TORSO 0
+
+  if (CModelObject *pmoParent = pEn->GetModelObject())
+  {
+    if (CAttachmentModelObject *pamo = pmoParent->GetAttachmentModel(PLAYER_ATTACHMENT_TORSO))
+    {
+      // get the position
+      const CAttachedModelPosition &amp = pmoParent->GetData()->md_aampAttachedPosition[pamo->amo_iAttachedPosition];
+
+      // unpack the reference vertices
+      FLOAT3D vCenter, vFront, vUp;
+      const INDEX iCenter = amp.amp_iCenterVertex;
+      const INDEX iFront = amp.amp_iFrontVertex;
+      const INDEX iUp = amp.amp_iUpVertex;
+
+      CRenderModel rmMain;
+      rmMain.rm_pmdModelData = pmoParent->GetData();
+      rmMain.rm_fDistanceFactor = 0;
+      rmMain.SetObjectPlacement(pEn->GetLerpedPlacement());
+      pmoParent->GetFrame(rmMain.rm_iFrame0, rmMain.rm_iFrame1, rmMain.rm_fRatio);
+      const INDEX ctVertices = rmMain.rm_pmdModelData->md_VerticesCt;
+      if (rmMain.rm_pmdModelData->md_Flags & MF_COMPRESSED_16BIT)
+      {
+        // set pFrame to point to last and next frames' vertices
+        rmMain.rm_pFrame16_0 = &rmMain.rm_pmdModelData->md_FrameVertices16[rmMain.rm_iFrame0 * ctVertices];
+        rmMain.rm_pFrame16_1 = &rmMain.rm_pmdModelData->md_FrameVertices16[rmMain.rm_iFrame1 * ctVertices];
+      }
+      else
+      {
+        // set pFrame to point to last and next frames' vertices
+        rmMain.rm_pFrame8_0 = &rmMain.rm_pmdModelData->md_FrameVertices8[rmMain.rm_iFrame0 * ctVertices];
+        rmMain.rm_pFrame8_1 = &rmMain.rm_pmdModelData->md_FrameVertices8[rmMain.rm_iFrame1 * ctVertices];
+      }
+      FLOAT3D &vDataStretch = rmMain.rm_pmdModelData->md_Stretch;
+      rmMain.rm_vStretch(1) = vDataStretch(1) * pmoParent->mo_Stretch(1);
+      rmMain.rm_vStretch(2) = vDataStretch(2) * pmoParent->mo_Stretch(2);
+      rmMain.rm_vStretch(3) = vDataStretch(3) * pmoParent->mo_Stretch(3);
+      rmMain.rm_vOffset = rmMain.rm_pmdModelData->md_vCompressedCenter;
+
+
+      auto unpackVertex = [pmoParent, &rmMain] (INDEX iVertex, FLOAT3D &vVertex)
+      {
+        // GetData()
+        const CModelData *data = pmoParent->GetData();
+
+        if (data->md_Flags & MF_COMPRESSED_16BIT)
+        {
+          // get 16 bit packed vertices
+          const SWPOINT3D &vsw0 = rmMain.rm_pFrame16_0[iVertex].mfv_SWPoint;
+          const SWPOINT3D &vsw1 = rmMain.rm_pFrame16_1[iVertex].mfv_SWPoint;
+          // convert them to float and lerp between them
+          vVertex(1) = (Lerp((FLOAT)vsw0(1), (FLOAT)vsw1(1), rmMain.rm_fRatio) - rmMain.rm_vOffset(1)) * rmMain.rm_vStretch(1);
+          vVertex(2) = (Lerp((FLOAT)vsw0(2), (FLOAT)vsw1(2), rmMain.rm_fRatio) - rmMain.rm_vOffset(2)) * rmMain.rm_vStretch(2);
+          vVertex(3) = (Lerp((FLOAT)vsw0(3), (FLOAT)vsw1(3), rmMain.rm_fRatio) - rmMain.rm_vOffset(3)) * rmMain.rm_vStretch(3);
+        }
+        else
+        {
+          // get 8 bit packed vertices
+          const SBPOINT3D &vsb0 = rmMain.rm_pFrame8_0[iVertex].mfv_SBPoint;
+          const SBPOINT3D &vsb1 = rmMain.rm_pFrame8_1[iVertex].mfv_SBPoint;
+          // convert them to float and lerp between them
+          vVertex(1) = (Lerp((FLOAT)vsb0(1), (FLOAT)vsb1(1), rmMain.rm_fRatio) - rmMain.rm_vOffset(1)) * rmMain.rm_vStretch(1);
+          vVertex(2) = (Lerp((FLOAT)vsb0(2), (FLOAT)vsb1(2), rmMain.rm_fRatio) - rmMain.rm_vOffset(2)) * rmMain.rm_vStretch(2);
+          vVertex(3) = (Lerp((FLOAT)vsb0(3), (FLOAT)vsb1(3), rmMain.rm_fRatio) - rmMain.rm_vOffset(3)) * rmMain.rm_vStretch(3);
+        }
+      };
+
+      unpackVertex(iCenter, vCenter);
+      unpackVertex(iFront, vFront);
+      unpackVertex(iUp, vUp);
+
+      // create front and up direction vectors
+      FLOAT3D vY = vUp - vCenter;
+      FLOAT3D vZ = vCenter - vFront;
+      // project center and directions from object to absolute space
+      const FLOATmatrix3D &mO2A = rmMain.rm_mObjectRotation;
+      const FLOAT3D &vO2A = rmMain.rm_vObjectPosition;
+      vCenter = vCenter * mO2A + vO2A;
+      vY = vY * mO2A;
+      vZ = vZ * mO2A;
+
+      // make a rotation matrix from the direction vectors
+      FLOAT3D vX = vY * vZ;
+      vY = vZ * vX;
+      vX.Normalize();
+      vY.Normalize();
+      vZ.Normalize();
+      FLOATmatrix3D mOrientation;
+      mOrientation(1, 1) = vX(1);  mOrientation(1, 2) = vY(1);  mOrientation(1, 3) = vZ(1);
+      mOrientation(2, 1) = vX(2);  mOrientation(2, 2) = vY(2);  mOrientation(2, 3) = vZ(2);
+      mOrientation(3, 1) = vX(3);  mOrientation(3, 2) = vY(3);  mOrientation(3, 3) = vZ(3);
+
+      FLOAT3D vOffset;
+      FLOATmatrix3D mRelative;
+      MakeRotationMatrix(mRelative, pamo->amo_plRelative.pl_OrientationAngle);
+      vOffset(1) = pamo->amo_plRelative.pl_PositionVector(1) * pmoParent->mo_Stretch(1);
+      vOffset(2) = pamo->amo_plRelative.pl_PositionVector(2) * pmoParent->mo_Stretch(2);
+      vOffset(3) = pamo->amo_plRelative.pl_PositionVector(3) * pmoParent->mo_Stretch(3);
+      FLOAT3D vO = vCenter + vOffset * mOrientation;
+      mOrientation *= mRelative; 
+      // rmAttached.SetObjectPlacement(vO, mOrientation);
+
+
+
+      playerPos = vO;
+
+      playerRight = FLOAT3D(mOrientation(1, 1), mOrientation(2, 1), mOrientation(3, 1));
+      playerUp = FLOAT3D(mOrientation(1, 2), mOrientation(2, 2), mOrientation(3, 2));
+      playerForward = FLOAT3D(mOrientation(1, 3), mOrientation(2, 3), mOrientation(3, 3)) * -1;
+    }
+  }
+}
+
+
 static void RT_AddSpotlight(CEntity *pEn, SSRT::Scene *pScene)
 {
-  const FLOATmatrix3D &rot = pScene->GetCameraRotation();
-  const auto right = FLOAT3D(rot(1, 1), rot(2, 1), rot(3, 1));
-  const auto up = FLOAT3D(rot(1, 2), rot(2, 2), rot(3, 2));
-  const auto forward = FLOAT3D(rot(1, 3), rot(2, 3), rot(3, 3)) * -1;
+  const FLOATmatrix3D &camRot = pScene->GetCameraRotation();
+  const auto camRight   = FLOAT3D(camRot(1, 1), camRot(2, 1), camRot(3, 1));
+  const auto camUp      = FLOAT3D(camRot(1, 2), camRot(2, 2), camRot(3, 2));
+  const auto camForward = FLOAT3D(camRot(1, 3), camRot(2, 3), camRot(3, 3)) * -1;
 
   // if first person
   if (pEn->en_ulID == pScene->GetViewerEntityID())
@@ -316,17 +434,17 @@ static void RT_AddSpotlight(CEntity *pEn, SSRT::Scene *pScene)
 
     position = 
       pScene->GetCameraPosition() +
-      right   * _srtGlobals.srt_vSpotlightOffset(1) +
-      up      * _srtGlobals.srt_vSpotlightOffset(2) +
-      forward * _srtGlobals.srt_vSpotlightOffset(3);
+      camRight   * _srtGlobals.srt_vSpotlightOffset(1) +
+      camUp      * _srtGlobals.srt_vSpotlightOffset(2) +
+      camForward * _srtGlobals.srt_vSpotlightOffset(3);
 
-    RT_FixSpotlightPosition(pEn, pScene, forward, position, endPosition);
+    RT_FixSpotlightPosition(pEn, pScene, camForward, position, endPosition);
 
 
     SSRT::CSpotLight light = {};
     light.absPosition = position;
     light.direction = (endPosition - position).Normalize();
-    light.upVector = up;
+    light.upVector = camUp;
     light.isFirstPerson = true;
 
     pScene->AddLight(light);
@@ -335,36 +453,31 @@ static void RT_AddSpotlight(CEntity *pEn, SSRT::Scene *pScene)
   // NOTE: must be tested with splitscreen, there can be several local players
   else if (_pNetwork->IsPlayerLocal(pEn))
   {
-    FLOATaabbox3D aabb;
-    pEn->GetSize(aabb);
-
+    // default rotation
     FLOATmatrix3D playerRot;
     MakeRotationMatrix(playerRot, pEn->GetPlacement().pl_OrientationAngle);
 
-    const auto playerForward = FLOAT3D(rot(1, 3), rot(2, 3), rot(3, 3)) * -1;
-    const auto playerUp = FLOAT3D(rot(1, 2), rot(2, 2), rot(3, 2));
+    auto playerRight   = FLOAT3D(playerRot(1, 1), playerRot(2, 1), playerRot(3, 1));
+    auto playerUp      = FLOAT3D(playerRot(1, 2), playerRot(2, 2), playerRot(3, 2));
+    auto playerForward = FLOAT3D(playerRot(1, 3), playerRot(2, 3), playerRot(3, 3)) * -1;
+   
+    // default position
+    auto playerPos = pEn->GetLerpedPlacement().pl_PositionVector + playerUp * 1.0f;
 
-    // there's a dirty way to determine player's torso attachment, but it's complex to get a point and direction;
-    // this define is from "Models/Player/SeriousSam/Player.h"
-    // #define PLAYER_ATTACHMENT_TORSO 0
-    // CModelObject *pmo = &(pEn->GetModelObject()->GetAttachmentModel(PLAYER_ATTACHMENT_TORSO)->amo_moModelObject);
 
-    // instead, just use camera rotation, but use player's position with additional tweaks
-    const FLOAT3D offset =
-      aabb.Center() +
-      right         * _srtGlobals.srt_vSpotlightOffsetThirdPerson(1) +
-      playerUp      * _srtGlobals.srt_vSpotlightOffsetThirdPerson(2) +
+    RT_FixFlashlightWithPlayerTorso(pEn, playerPos, playerRight, playerUp, playerForward);
+
+
+    playerPos += 
+      playerRight *_srtGlobals.srt_vSpotlightOffsetThirdPerson(1) +
+      playerUp * _srtGlobals.srt_vSpotlightOffsetThirdPerson(2) +
       playerForward * _srtGlobals.srt_vSpotlightOffsetThirdPerson(3);
-
-    
-    float flashlightHeight = 1.1f;
 
 
     SSRT::CSpotLight light = {};
-
-    light.absPosition = pEn->GetLerpedPlacement().pl_PositionVector + offset;
-    light.direction = forward;
-    light.upVector = up;
+    light.absPosition = playerPos;
+    light.direction = playerForward;
+    light.upVector = playerUp;
     light.isFirstPerson = false;
 
     pScene->AddLight(light);

@@ -62,6 +62,8 @@ public:
 
   const CustomInfo *GetCustomInfo() const;
 
+  void OnFrameEnd(bool isCameraFirstPerson);
+
 private:
   void ProcessBrushes();
   void ProcessDynamicGeometry();
