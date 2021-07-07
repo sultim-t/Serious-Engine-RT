@@ -56,11 +56,53 @@ struct RT_VertexData
 };
 
 
-static bool RT_ShouldBeRasterized(SurfaceTranslucencyType stt, bool forceTranslucency = false)
+constexpr const char *RT_TextureDirectoriesForcedAlphaTest[] =
 {
-  if (stt == STT_TRANSLUCENT || (forceTranslucency && ((stt == STT_OPAQUE) || (stt == STT_TRANSPARENT))))
+  "Models\\Effects\\BloodOnTheWall01\\",
+  "Models\\Effects\\BloodPatches01\\",
+  "Models\\Effects\\BulletOnTheWall\\",
+  "Models\\Plants\\Garden02\\",
+};
+
+
+static bool RT_IsAlphaTestForced(CTextureObject *pTo, SurfaceTranslucencyType stt)
+{
+  if (stt == STT_TRANSLUCENT && pTo != nullptr)
   {
-    return true;
+    CTFileName dir = pTo->GetName().FileDir();
+
+    for (const char *pNm : RT_TextureDirectoriesForcedAlphaTest)
+    {
+      if (dir == pNm)
+      {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+
+static bool RT_ShouldBeAlphaTested(CTextureObject *to, SurfaceTranslucencyType stt, bool forceTranslucency)
+{ 
+  // force translucency is for the cases when model changes its alpha value dynamically (e.g. fading out);
+  // it works only on opaque or alpha-tested models
+  bool changesDynamically = forceTranslucency && ((stt == STT_OPAQUE) || (stt == STT_TRANSPARENT));
+
+
+  // only if model changes (like disappering gibs, body parts), and should be detected as alpha-tested
+  return 
+    _srtGlobals.srt_bModelChangeableTranslucentToAlphaTested
+    && (changesDynamically || RT_IsAlphaTestForced(to, stt));
+}
+
+
+static bool RT_ShouldBeRasterized(SurfaceTranslucencyType stt, bool forceAlphaTest)
+{
+  if (stt == STT_TRANSLUCENT)
+  {
+    return !forceAlphaTest;
   }
   else if (stt == STT_ADD)
   {
@@ -105,9 +147,9 @@ static void RT_SetBlend(bool &blendEnable, RgBlendFactor &blendSrc, RgBlendFacto
 
 
 // RT: SetRenderingParameters(..) in RenderModel_View.cpp
-static RgGeometryPassThroughType GetPassThroughType(SurfaceTranslucencyType stt, bool forceTranslucency = false)
+static RgGeometryPassThroughType RT_GetPassThroughType(SurfaceTranslucencyType stt, bool forceAlphaTest)
 {
-  if (stt == STT_TRANSPARENT)
+  if (stt == STT_TRANSPARENT || forceAlphaTest)
   {
     return RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
   }
@@ -115,6 +157,32 @@ static RgGeometryPassThroughType GetPassThroughType(SurfaceTranslucencyType stt,
   {
     return RG_GEOMETRY_PASS_THROUGH_TYPE_OPAQUE;
   }
+}
+
+
+constexpr const char *RT_TextureDirectoriesForcedSpecular[] =
+{
+  "Models\\Effects\\BloodOnTheWall01\\",
+  "Models\\Effects\\BloodPatches01\\",
+  "Models\\Effects\\BulletOnTheWall\\",
+};
+
+static bool RT_IsSpecularForced(CTextureObject *pTo)
+{
+  if (pTo != nullptr)
+  {
+    CTFileName dir = pTo->GetName().FileDir();
+
+    for (const char *pNm : RT_TextureDirectoriesForcedSpecular)
+    {
+      if (dir == pNm)
+      {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 
@@ -204,8 +272,10 @@ static void FlushModelInfo(ULONG entityID,
   SSRT::CModelGeometry modelInfo = {};
   modelInfo.entityID = entityID;
   modelInfo.modelPartIndex = RT_ModelPartIndex;
-  modelInfo.passThroughType = GetPassThroughType(stt, forceTranslucency);
-  modelInfo.isRasterized = RT_ShouldBeRasterized(stt, forceTranslucency);
+
+  bool forceAlphaTest = RT_ShouldBeAlphaTested(to, stt, forceTranslucency);
+  modelInfo.passThroughType = RT_GetPassThroughType(stt, forceAlphaTest);
+  modelInfo.isRasterized = RT_ShouldBeRasterized(stt, forceAlphaTest);
 
   if (isFirstPersonWeapon)
   {
@@ -244,7 +314,7 @@ static void FlushModelInfo(ULONG entityID,
 
   modelInfo.color = { modelColor.r / 255.0f, modelColor.g / 255.0f, modelColor.b / 255.0f, modelColor.a / 255.0f };
   modelInfo.isReflective = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_REFLECTIONS;
-  modelInfo.isSpecular = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_SPECULAR;
+  modelInfo.isSpecular = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_SPECULAR || RT_IsSpecularForced(to);
 
   CTextureData *td = to != nullptr ? (CTextureData *)to->GetData() : nullptr;
 

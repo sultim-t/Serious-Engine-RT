@@ -96,6 +96,10 @@ struct SSRTGlobals
   INDEX srt_iMaxBounceShadowsDirectionalLights = 8;
   INDEX srt_iMaxBounceShadowsSphereLights = 2;
   INDEX srt_iMaxBounceShadowsSpotlights = 1;
+
+  // If true, translucent models that are changing its alpha (disappering gibs/body parts/blood),
+  // are uploaded as alpha-tested geometry
+  INDEX srt_bModelChangeableTranslucentToAlphaTested = 1;
 };
 
 }

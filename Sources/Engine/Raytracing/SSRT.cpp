@@ -107,6 +107,8 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user INDEX srt_iMaxBounceShadowsSphereLights;", &_srtGlobals.srt_iMaxBounceShadowsSphereLights);
   _pShell->DeclareSymbol("persistent user INDEX srt_iMaxBounceShadowsSpotlights;", &_srtGlobals.srt_iMaxBounceShadowsSpotlights);
 
+  _pShell->DeclareSymbol("persistent user INDEX srt_bModelChangeableTranslucentToAlphaTested;", &_srtGlobals.srt_bModelChangeableTranslucentToAlphaTested);
+
   // user controls
   _pShell->DeclareSymbol("user INDEX ctl_bFlashlight;", &_srtGlobals.srt_bSpotlightEnable);
 }
@@ -177,6 +179,8 @@ void SSRT::SSRTMain::NormalizeShellVariables()
   _srtGlobals.srt_iMaxBounceShadowsDirectionalLights = Max(_srtGlobals.srt_iMaxBounceShadowsDirectionalLights, (INDEX)0);
   _srtGlobals.srt_iMaxBounceShadowsSphereLights      = Max(_srtGlobals.srt_iMaxBounceShadowsSphereLights,      (INDEX)0);
   _srtGlobals.srt_iMaxBounceShadowsSpotlights        = Max(_srtGlobals.srt_iMaxBounceShadowsSpotlights,        (INDEX)0);
+
+  _srtGlobals.srt_bModelChangeableTranslucentToAlphaTested = !!_srtGlobals.srt_bModelChangeableTranslucentToAlphaTested;
 }
 
 
