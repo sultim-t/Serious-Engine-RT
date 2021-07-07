@@ -22,6 +22,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Raytracing/RTProcessing.h>
 
 #include "SSRTGlobals.h"
+#include <string>
 
 
 extern SSRT::SSRTGlobals _srtGlobals;
@@ -172,17 +173,45 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedAnimatedTextureInfo &an
   // must not be uploaded yet
   ASSERT(!materialExist[textureIndex]);
 
+  // must be 3-digit number for overriding
+  if (animInfo.frameCount > 999)
+  {
+    ASSERTALWAYS("Aniamated texture frame count must be less or equal to 999");
+    return;
+  }
+
+  // allocate for frame infos
   RgMaterial material;
   std::vector<RgStaticMaterialCreateInfo> frames(animInfo.frameCount);
 
-  const CTString &overridenPath = animInfo.path->FileDir() + animInfo.path->FileName() + OVERRIDEN_TEXTURE_FILE_EXTENSION;
+
+  // overriden path
+  std::string overridenPathBase = animInfo.path->FileDir();
+  overridenPathBase += animInfo.path->FileName();
+
+  const uint32_t counterOffset = overridenPathBase.length();
+  overridenPathBase += "000";
+
+  overridenPathBase += OVERRIDEN_TEXTURE_FILE_EXTENSION;
+
+  std::vector<char> allChars(animInfo.frameCount * (overridenPathBase.length() + 1));
+
 
   for (uint32_t i = 0; i < animInfo.frameCount; i++)
   {
-    auto &f = frames[i];
+    // copy base path
+    char *curFrameOvrd = &allChars[i * (overridenPathBase.length() + 1)];
+    memcpy(curFrameOvrd, overridenPathBase.data(), overridenPathBase.length());
+    curFrameOvrd[overridenPathBase.length()] = '\0';
+    
+    curFrameOvrd[counterOffset + 0] = '0' + (i / 100) % 10;
+    curFrameOvrd[counterOffset + 1] = '0' + (i / 10) % 10;
+    curFrameOvrd[counterOffset + 2] = '0' + i % 10;
+
 
     void *curFrameData = (uint8_t*)animInfo.frameData + i * animInfo.frameStride;
 
+    auto &f = frames[i];
     f.size.width = animInfo.width;
     f.size.height = animInfo.height;
     f.textures.albedoAlpha.pData = curFrameData;
@@ -191,8 +220,8 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedAnimatedTextureInfo &an
     f.filter = animInfo.filter;
     f.addressModeU = animInfo.wrapU;
     f.addressModeV = animInfo.wrapV;
-    f.disableOverride = true;
-    f.pRelativePath = overridenPath;
+    f.disableOverride = false;
+    f.pRelativePath = curFrameOvrd;
   }
 
   RgAnimatedMaterialCreateInfo info = {};
