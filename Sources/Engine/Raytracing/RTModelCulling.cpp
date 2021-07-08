@@ -113,6 +113,9 @@ static bool RT_TestModel(CEntity *pEn, SSRT::Scene *pScene)
     // if model's angular size is too small, ignore it
     if (fAngularSize < _srtGlobals.srt_fCullingMinAngularSize)
     {
+      // TODO: bullet holes are small, and are culled too early 
+      // (maybe add a distance threshold, at which all models will be rendered)
+
       return false;
     }
   }

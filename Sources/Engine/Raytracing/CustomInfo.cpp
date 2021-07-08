@@ -14,6 +14,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
 #include "StdH.h"
+#include "CustomInfo.h"
 
 #include <Engine/Graphics/Texture.h>
 #include <Engine/Entities/Entity.h>
@@ -22,13 +23,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Models/ModelData.h>
 #include <Engine/Light/LightSource.h>
 #include <Engine/Graphics/TextureEffects.h>
+#include <Engine/Raytracing/SSRTGlobals.h>
+#include <Engine/Raytracing/Scene.h>
 
 
 #include <Engine/Base/ListIterator.inl>
-
-
-#include "CustomInfo.h"
-#include "SSRTGlobals.h"
 
 
 extern SSRT::SSRTGlobals _srtGlobals;
@@ -37,8 +36,35 @@ extern SSRT::SSRTGlobals _srtGlobals;
 constexpr float WORLD_BASE_FORCE_INVISIBLE_EPSILON = 0.5f;
 
 
-SSRT::CustomInfo::CustomInfo()
+static struct 
 {
+  const char  *pWorldName;
+  INDEX       iCullingMaxSectorDepth;
+} 
+RT_WorldCullingMaxSectorDepth[] =
+{
+  { "01_Hatshepsut",        4 },
+  { "02_SandCanyon",        8 },
+  { "03_TombOfRamses",      7 },
+  { "04_ValleyOfTheKings",  5 },
+  { "05_MoonMountains",     4 },
+  { "06_Oasis",             4 },
+  { "07_Dunes",             8 },
+  { "08_Suburbs",           2 },
+  { "09_Sewers",            4 },
+  { "10_Metropolis",        5 },
+  { "11_AlleyOfSphinxes",   3 },
+  { "12_Karnak",            5 },
+  { "13_Luxor",             4 },
+  { "14_SacredYards",       4 },
+  { "15_TheGreatPyramid",   5 },
+};
+
+
+SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
+{
+  ASSERT(pWorld != nullptr);
+
   waterTextureNames = 
   {
     "WaterBase",
@@ -76,6 +102,25 @@ SSRT::CustomInfo::CustomInfo()
   };
 
   const char *texToIgnore = "LightBeam.tex";
+
+  const auto &wldName = pWorld->wo_fnmFileName.FileName();
+  bool found = false;
+
+  for (const auto &s : RT_WorldCullingMaxSectorDepth)
+  {
+    if (wldName == s.pWorldName)
+    {
+      _srtGlobals.srt_iCullingMaxSectorDepth = s.iCullingMaxSectorDepth;
+
+      found = true;
+      break;
+    }
+  }
+
+  if (!found)
+  {
+    _srtGlobals.srt_iCullingMaxSectorDepth = 8;
+  }
 }
 
 SSRT::CustomInfo::~CustomInfo()

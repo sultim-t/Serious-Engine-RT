@@ -38,11 +38,12 @@ SSRT::Scene::Scene(RgInstance _instance, CWorld *_pWorld, TextureUploader *_pTex
   instance(_instance),
   pTextureUploader(_pTextureUploader),
   pSceneBrushes(new SceneBrushes(_instance, _pWorld, _pTextureUploader)),
-  pCustomInfo(new CustomInfo()),
   pWorld(_pWorld),
   worldName(_pWorld->GetName()),
   pViewerEntity(nullptr)
 {
+  pCustomInfo = new CustomInfo(_pWorld);
+
   ASSERT(pWorld != nullptr);
   CPrintF("SSRT scene was created.\n");
 

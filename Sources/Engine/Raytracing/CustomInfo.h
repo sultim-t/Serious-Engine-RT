@@ -26,7 +26,7 @@ namespace SSRT
 class CustomInfo
 {
 public:
-  CustomInfo();
+  CustomInfo(CWorld *pWorld);
   ~CustomInfo();
 
   CustomInfo(const CustomInfo &other) = delete;
@@ -66,7 +66,6 @@ private:
   std::vector<LightIgnore> dirLightsToIgnore;
   // Names of worlds in which dynamic tex coords are ignored
   std::vector<std::string> dynTexCoordsWldToIgnore;
-
 };
 
 }
