@@ -100,6 +100,8 @@ struct SSRTGlobals
   // If true, translucent models that are changing its alpha (disappering gibs/body parts/blood),
   // are uploaded as alpha-tested geometry
   INDEX srt_bModelChangeableTranslucentToAlphaTested = 1;
+
+  INDEX srt_iCullingMaxSectorDepth = 2;
 };
 
 }

@@ -15,6 +15,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "StdH.h"
 
+#include <unordered_map>
+
 #include <Engine/Base/Lists.h>
 #include <Engine/Base/Relations.h>
 #include <Engine/Brushes/Brush.h>
@@ -38,6 +40,8 @@ extern SSRT::SSRTGlobals _srtGlobals;
 static CListHead RT_lhActiveSectors;
 // RT: currently added models, used for clearing ENF_INRENDERING flag at the end of scanning
 static CStaticStackArray<CEntity*> RT_saAddedModels;
+
+static std::unordered_map<CBrushSector *, INDEX> RT_umBrushSectorDepth;
 
 
 /* Add to rendering all entities that are inside an zoning brush sector. */
@@ -79,6 +83,7 @@ static void RT_AddEntitiesInSector(CBrushSector *pbscSectorInside, SSRT::Scene *
         }
         pen->en_ulFlags |= ENF_INRENDERING;
 
+        // dir lights are added separately, without culling
         bool isDirLight = pen->GetLightSource() != nullptr && (pen->GetLightSource()->ls_ulFlags & LSF_DIRECTIONAL);
 
         // add it as a model and scan for light sources
@@ -138,8 +143,14 @@ static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::Scene *pScene)
 
 
 /* Add to rendering one particular zoning brush sector. */
-static void RT_AddGivenZoningSector(CBrushSector *pbsc, SSRT::Scene *pScene)
+static void RT_AddGivenZoningSector(CBrushSector *pbsc, INDEX iSectorDepth, SSRT::Scene *pScene)
 {
+  // RT: if should be culled
+  if (iSectorDepth >= _srtGlobals.srt_iCullingMaxSectorDepth)
+  {
+    return;
+  }
+
   // get the sector's brush mip, brush and entity
   CBrushMip *pbmBrushMip = pbsc->bsc_pbmBrushMip;
   CBrush3D *pbrBrush = pbmBrushMip->bm_pbrBrush;
@@ -183,12 +194,15 @@ static void RT_AddZoningSectorsAroundEntity(CEntity *pen, SSRT::Scene *pScene)
       {
         // add to list of sectors to add
         lhToAdd.AddTail(pbsc->bsc_lnInActiveSectors);
+
+        // RT: zero depth for viewer sectors
+        RT_umBrushSectorDepth[pbsc] = 0;
       }
     ENDFOR
   }
 
   const DOUBLE3D re_vdViewSphere = FLOATtoDOUBLE(pScene->GetCameraPosition());
-  const double re_dViewSphereR = 30.0;
+  const double re_dViewSphereR = 1.0f;
 
   // for each active sector
   while (!lhToAdd.IsEmpty())
@@ -197,8 +211,11 @@ static void RT_AddZoningSectorsAroundEntity(CEntity *pen, SSRT::Scene *pScene)
     // remove it from list of sectors to add
     pbsc->bsc_lnInActiveSectors.Remove();
 
+    ASSERT(RT_umBrushSectorDepth.find(pbsc) != RT_umBrushSectorDepth.end());
+    INDEX iDepth = RT_umBrushSectorDepth[pbsc];
+
     // add it to final list
-    RT_AddGivenZoningSector(pbsc, pScene);
+    RT_AddGivenZoningSector(pbsc, iDepth, pScene);
     // if isn't really added (wrong mip)
     if (!pbsc->bsc_lnInActiveSectors.IsLinked())
     {
@@ -221,10 +238,14 @@ static void RT_AddZoningSectorsAroundEntity(CEntity *pen, SSRT::Scene *pScene)
           if (!pbscRelated->bsc_lnInActiveSectors.IsLinked())
           {
             // if the view sphere is in the sector
-            if (pbscRelated->bsc_bspBSPTree.TestSphere(re_vdViewSphere, re_dViewSphereR) >= 0)
+            // if (pbscRelated->bsc_bspBSPTree.TestSphere(re_vdViewSphere, re_dViewSphereR) >= 0)
             {
               // add it to list to add
               lhToAdd.AddTail(pbscRelated->bsc_lnInActiveSectors);
+
+              // RT: increase depth for the related sector
+              ASSERT(RT_umBrushSectorDepth.find(pbscRelated) == RT_umBrushSectorDepth.end());
+              RT_umBrushSectorDepth[pbscRelated] = iDepth + 1;
             }
           }
         ENDFOR
@@ -249,6 +270,7 @@ static void RT_CleanupScanning()
   }
 
   RT_saAddedModels.PopAll();
+  RT_umBrushSectorDepth.clear();
 }
 
 
@@ -261,10 +283,12 @@ void RT_AddModelEntitiesAroundViewer(SSRT::Scene *pScene)
 
   ASSERT(RT_lhActiveSectors.IsEmpty());
   ASSERT(RT_saAddedModels.Count() == 0);
+  ASSERT(RT_umBrushSectorDepth.empty());
 
   RT_AddZoningSectorsAroundEntity(pScene->GetViewerEntity(), pScene);
 
   RT_CleanupScanning();
   ASSERT(RT_lhActiveSectors.IsEmpty());
   ASSERT(RT_saAddedModels.Count() == 0);
+  ASSERT(RT_umBrushSectorDepth.empty());
 }

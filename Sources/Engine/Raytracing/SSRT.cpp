@@ -108,6 +108,7 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user INDEX srt_iMaxBounceShadowsSpotlights;", &_srtGlobals.srt_iMaxBounceShadowsSpotlights);
 
   _pShell->DeclareSymbol("persistent user INDEX srt_bModelChangeableTranslucentToAlphaTested;", &_srtGlobals.srt_bModelChangeableTranslucentToAlphaTested);
+  _pShell->DeclareSymbol("persistent user INDEX srt_iCullingMaxSectorDepth;", &_srtGlobals.srt_iCullingMaxSectorDepth);
 
   // user controls
   _pShell->DeclareSymbol("user INDEX ctl_bFlashlight;", &_srtGlobals.srt_bSpotlightEnable);
