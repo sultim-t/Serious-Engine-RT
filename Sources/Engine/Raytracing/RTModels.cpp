@@ -33,12 +33,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 extern SSRT::SSRTGlobals _srtGlobals;
 
-
 extern INDEX gfx_bRenderModels;
 extern INDEX gfx_bRenderPredicted;
-
-extern FLOAT mdl_fLODMul;
-extern FLOAT mdl_fLODAdd;
 
 
 
@@ -359,8 +355,7 @@ static float RT_GetMipFactor(const FLOAT3D &position, const CModelObject &mo, SS
     distance /= Max(mo.mo_Stretch(1), Max(mo.mo_Stretch(2), mo.mo_Stretch(3)));
   }
 
-  const float rtLodFix = +0.2f;
-  return Log2(distance) * (mdl_fLODMul + rtLodFix) + mdl_fLODAdd;
+  return Log2(distance) * (_srtGlobals.srt_fModelLODMul) + _srtGlobals.srt_fModelLODAdd;
 }
 
 
@@ -515,7 +510,7 @@ static void RT_SetupModelRendering(CModelObject &mo,
   rm.rm_fMipFactor = RT_GetMipFactor(rm.rm_vObjectPosition, mo, scene);
 
   // get current mip model using mip factor
-  rm.rm_iMipLevel = 0;
+  rm.rm_iMipLevel = mo.GetMipModel(rm.rm_fMipFactor);
   //mo.mo_iLastRenderMipLevel = rm.rm_iMipLevel;
   // get current vertices mask
   rm.rm_pmmiMip = &rm.rm_pmdModelData->md_MipInfos[ rm.rm_iMipLevel ];
