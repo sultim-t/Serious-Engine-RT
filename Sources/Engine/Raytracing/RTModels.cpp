@@ -968,12 +968,6 @@ static void RT_RenderOneModel(CEntity &en,
     return;
   }
 
-  // if too far
-  if (!moModel.IsModelVisible(RT_GetMipFactor(plModel.pl_PositionVector, moModel, scene)))
-  {
-    return;
-  }
-
   // RT: just any params; AdjustShadingParameters is used for very different logic, like model fading by time
   COLOR colLight   = C_GRAY;
   COLOR colAmbient = C_dGRAY;
