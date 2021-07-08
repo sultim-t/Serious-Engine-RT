@@ -18,7 +18,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Graphics/Texture.h>
 #include <Engine/Entities/Entity.h>
-#include <Engine/World/World.h>
 #include <Engine/Models/ModelObject.h>
 #include <Engine/Models/ModelData.h>
 #include <Engine/Light/LightSource.h>
@@ -33,31 +32,137 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 extern SSRT::SSRTGlobals _srtGlobals;
 
 
-constexpr float WORLD_BASE_FORCE_INVISIBLE_EPSILON = 0.5f;
+enum class EWorld
+{
+  None,
+  Hatshepsut,
+  SandCanyon,       
+  TombOfRamses,    
+  ValleyOfTheKings,
+  MoonMountains,  
+  Oasis,           
+  Dunes,            
+  Suburbs,        
+  Sewers,        
+  Metropolis,      
+  AlleyOfSphinxes,
+  Karnak,            
+  Luxor,            
+  SacredYards,      
+  TheGreatPyramid,  
+};
+
+
+
+static struct
+{
+  const char  *pName;
+  EWorld      eWorld;
+}
+RT_WorldNameToEnum[] =
+{
+  { "01_Hatshepsut",        EWorld::Hatshepsut        },
+  { "02_SandCanyon",        EWorld::SandCanyon        },
+  { "03_TombOfRamses",      EWorld::TombOfRamses      },
+  { "04_ValleyOfTheKings",  EWorld::ValleyOfTheKings  },
+  { "05_MoonMountains",     EWorld::MoonMountains     },
+  { "06_Oasis",             EWorld::Oasis             },
+  { "07_Dunes",             EWorld::Dunes             },
+  { "08_Suburbs",           EWorld::Suburbs           },
+  { "09_Sewers",            EWorld::Sewers            },
+  { "10_Metropolis",        EWorld::Metropolis        },
+  { "11_AlleyOfSphinxes",   EWorld::AlleyOfSphinxes   },
+  { "12_Karnak",            EWorld::Karnak            },
+  { "13_Luxor",             EWorld::Luxor             },
+  { "14_SacredYards",       EWorld::SacredYards       },
+  { "15_TheGreatPyramid",   EWorld::TheGreatPyramid   },
+};
+
+
+static EWorld GetWorldEnum(CWorld *pWorld)
+{
+  const auto &wldName = pWorld->wo_fnmFileName.FileName();
+
+  for (const auto &n : RT_WorldNameToEnum)
+  {
+    if (n.pName == wldName)
+    {
+      return n.eWorld;
+    }
+  }
+  
+  return EWorld::None;
+}
 
 
 static struct 
 {
-  const char  *pWorldName;
-  INDEX       iCullingMaxSectorDepth;
+  EWorld  eWorld;
+  INDEX   iCullingMaxSectorDepth;
+  bool    bIgnoreDynamicTexCoords;
 } 
-RT_WorldCullingMaxSectorDepth[] =
+RT_WorldParams[] =
 {
-  { "01_Hatshepsut",        4 },
-  { "02_SandCanyon",        8 },
-  { "03_TombOfRamses",      7 },
-  { "04_ValleyOfTheKings",  5 },
-  { "05_MoonMountains",     4 },
-  { "06_Oasis",             4 },
-  { "07_Dunes",             8 },
-  { "08_Suburbs",           2 },
-  { "09_Sewers",            4 },
-  { "10_Metropolis",        5 },
-  { "11_AlleyOfSphinxes",   3 },
-  { "12_Karnak",            5 },
-  { "13_Luxor",             4 },
-  { "14_SacredYards",       4 },
-  { "15_TheGreatPyramid",   5 },
+  { EWorld::Hatshepsut,        4, false },
+  { EWorld::SandCanyon,        8, false },
+  { EWorld::TombOfRamses,      7, false },
+  { EWorld::ValleyOfTheKings,  5, false },
+  { EWorld::MoonMountains,     4, false },
+  { EWorld::Oasis,             4, false },
+  { EWorld::Dunes,             8, false },
+  { EWorld::Suburbs,           2, false },
+  { EWorld::Sewers,            4, false },
+  { EWorld::Metropolis,        5, false },
+  { EWorld::AlleyOfSphinxes,   3, false },
+  { EWorld::Karnak,            5, true  },
+  { EWorld::Luxor,             4, false },
+  { EWorld::SacredYards,       4, false },
+  { EWorld::TheGreatPyramid,   5, false },
+};
+
+
+constexpr float WORLD_BASE_FORCE_INVISIBLE_EPSILON = 0.5f;
+
+static struct
+{
+  EWorld eWorld;
+  FLOAT3D vPosition;
+}
+RT_WorldBaseToIgnore[] =
+{
+  { EWorld::Hatshepsut,       { 0,        1152,   64 } },
+  { EWorld::SandCanyon,       { 224,       128, -312 } },
+  { EWorld::SandCanyon,       { 224,       128, -120 } },
+  { EWorld::SandCanyon,       { -98.5f, 113.5f,   18 } },
+  { EWorld::ValleyOfTheKings, { 0,          96,    0 } },
+  { EWorld::MoonMountains,    { -64,        80,  -64 } },
+  { EWorld::Oasis,            { 128,       -16,    0 } },
+};
+
+
+static struct
+{
+  EWorld      eWorld;
+  const char  *pEntityName;
+}
+RT_DirectionalLightsToIgnore[] =
+{
+  { EWorld::Oasis, "Temple Roof" },
+};
+
+
+const char * const RT_WaterTextureNames[] =
+{
+  "WaterBase",
+  "WaterFX",
+  "WaterFall01",
+  "WaterFall02",
+};
+
+
+const char *const RT_FireTextureNames[] =
+{
+  "Fire",
 };
 
 
@@ -65,61 +170,37 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
 {
   ASSERT(pWorld != nullptr);
 
-  waterTextureNames = 
-  {
-    "WaterBase",
-    "WaterFX",
-    "WaterFall01",
-    "WaterFall02",
-  };
+  EWorld eCurrentWorld = GetWorldEnum(pWorld);
 
-  fireTextureNames =
-  {
-    "Fire",
-  };
 
   // Positions of unnecessary brushes (that also have "World Base" names)
-  worldBaseToIgnore =
+  for (const auto &b : RT_WorldBaseToIgnore)
   {
-    { "01_Hatshepsut",        { 0, 1152, 64 }       },
-    { "02_SandCanyon",        { 224, 128, -312}     },
-    { "02_SandCanyon",        { 224, 128, -120}     },
-    { "02_SandCanyon",        { -98.5f, 113.5f, 18} },
-    { "04_ValleyOfTheKings",  { 0, 96, 0 }          },
-    { "05_MoonMountains",     { -64, 80, -64}       },
-    { "06_Oasis",             { 128, -16, 0}        },
-  };
-
-  // Positions of unnecessary brushes (that also have "World Base" names)
-  dirLightsToIgnore =
-  {
-    { "06_Oasis", "Temple Roof" },
-  };
-
-  dynTexCoordsWldToIgnore =
-  {
-    "12_Karnak"
-  };
-
-  const char *texToIgnore = "LightBeam.tex";
-
-  const auto &wldName = pWorld->wo_fnmFileName.FileName();
-  bool found = false;
-
-  for (const auto &s : RT_WorldCullingMaxSectorDepth)
-  {
-    if (wldName == s.pWorldName)
+    if (b.eWorld == eCurrentWorld)
     {
-      _srtGlobals.srt_iCullingMaxSectorDepth = s.iCullingMaxSectorDepth;
-
-      found = true;
-      break;
+      worldBasePositionsToIgnore.push_back(b.vPosition);
     }
   }
 
-  if (!found)
+  // Positions of unnecessary brushes (that also have "World Base" names)
+  for (const auto &d : RT_DirectionalLightsToIgnore)
   {
-    _srtGlobals.srt_iCullingMaxSectorDepth = 8;
+    if (d.eWorld == eCurrentWorld)
+    {
+      dirLightsNamesToIgnore.push_back(d.pEntityName);
+    }
+  }
+
+  _srtGlobals.srt_iCullingMaxSectorDepth = 8;
+  _srtGlobals.srt_bIgnoreDynamicTexCoords = false;
+
+  for (const auto &s : RT_WorldParams)
+  {
+    if (s.eWorld == eCurrentWorld)
+    {
+      _srtGlobals.srt_iCullingMaxSectorDepth = s.iCullingMaxSectorDepth;
+      _srtGlobals.srt_bIgnoreDynamicTexCoords = s.bIgnoreDynamicTexCoords;
+    }
   }
 }
 
@@ -139,7 +220,7 @@ bool SSRT::CustomInfo::IsWaterTexture(CTextureData *ptd) const
     return true;
   }
 
-  return IsTextureNameIn(ptd, waterTextureNames);
+  return IsTextureNameIn(ptd, RT_WaterTextureNames, ARRAYCOUNT(RT_WaterTextureNames));
 }
 
 bool SSRT::CustomInfo::IsFireTexture(CTextureData *ptd) const
@@ -161,7 +242,7 @@ bool SSRT::CustomInfo::IsFireTexture(CTextureData *ptd) const
     return false;
   }
 
-  return IsTextureNameIn(ptd, fireTextureNames);
+  return IsTextureNameIn(ptd, RT_FireTextureNames, ARRAYCOUNT(RT_FireTextureNames));
 }
 
 bool SSRT::CustomInfo::HasModelFireTexture(CEntity *penModel) const
@@ -195,17 +276,11 @@ bool SSRT::CustomInfo::IsBrushIgnored(CEntity *penBrush) const
   if (!(penBrush->en_ulFlags & ENF_ZONING) && penBrush->GetName() == "World Base")
   {
     // check if it's exactly those unnecessary polygons
-    for (const auto &ignore : worldBaseToIgnore)
+    for (const auto &vIgnorePos : worldBasePositionsToIgnore)
     {
-      // if not for the current world
-      if (penBrush->GetWorld() == nullptr || penBrush->GetWorld()->wo_fnmFileName.FileName() != ignore.worldName.c_str())
-      {
-        continue;
-      }
-
       const FLOAT3D &p = penBrush->GetPlacement().pl_PositionVector;
 
-      bool isInside = (p - ignore.position).ManhattanNorm() < WORLD_BASE_FORCE_INVISIBLE_EPSILON;
+      bool isInside = (p - vIgnorePos).ManhattanNorm() < WORLD_BASE_FORCE_INVISIBLE_EPSILON;
 
       if (isInside)
       {
@@ -226,12 +301,11 @@ bool SSRT::CustomInfo::IsDirectionalLightIgnored(const CLightSource *plsLight) c
     return false;
   }
 
-  const auto &wldName = pen->GetWorld()->wo_fnmFileName.FileName();
   const auto &ltName = plsLight->ls_penEntity->GetName();
 
-  for (const auto &ignore : dirLightsToIgnore)
+  for (const auto &strEntityName : dirLightsNamesToIgnore)
   {
-    if (wldName == ignore.worldName.c_str() && ltName == ignore.entityName.c_str())
+    if (ltName == strEntityName.c_str())
     {
       return true;
     }
@@ -281,29 +355,14 @@ bool SSRT::CustomInfo::IsSphericalLightIgnored(const CLightSource *plsLight) con
 
 bool SSRT::CustomInfo::AreDynamicTexCoordsIgnored(CEntity *penBrush) const
 {
-  if (_srtGlobals.srt_bIgnoreDynamicTexCoords || penBrush->GetWorld() == nullptr)
-  {
-    return true;
-  }
-
-  const auto &wldName = penBrush->GetWorld()->wo_fnmFileName.FileName();
-
-  for (const auto &ignore : dynTexCoordsWldToIgnore)
-  {
-    if (wldName == ignore.c_str())
-    {
-      return true;
-    }
-  }
-
-  return false;
+  return _srtGlobals.srt_bIgnoreDynamicTexCoords;
 }
 
-bool SSRT::CustomInfo::IsTextureNameIn(CTextureData *ptd, const std::vector<std::string> &collection)
+bool SSRT::CustomInfo::IsTextureNameIn(CTextureData *ptd, const char * const pCollection[], uint32_t iCount)
 {
-  for (const auto &name : collection)
+  for (uint32_t i = 0; i < iCount; i++)
   {
-    if (ptd->GetName().FileName() == name.c_str())
+    if (ptd->GetName().FileName() == pCollection[i])
     {
       return true;
     }

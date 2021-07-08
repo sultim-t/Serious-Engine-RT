@@ -19,6 +19,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <vector>
 
 #include <Engine/Math/Vector.h>
+#include <Engine/World/World.h>
 
 namespace SSRT
 {
@@ -43,29 +44,12 @@ public:
   bool AreDynamicTexCoordsIgnored(CEntity *penBrush) const;
 
 private:
-  static bool IsTextureNameIn(CTextureData *ptd, const std::vector<std::string> &collection);
+  static bool IsTextureNameIn(CTextureData *ptd, const char * const pCollection[], uint32_t iCount);
   bool HasLightEntityVertices(CEntity *pen) const;
 
 private:
-  struct WorldBaseIgnore
-  {
-    std::string worldName;
-    FLOAT3D position;
-  };
-
-  struct LightIgnore
-  {
-    std::string worldName;
-    std::string entityName;
-  };
-
-private:
-  std::vector<std::string> waterTextureNames;
-  std::vector<std::string> fireTextureNames;
-  std::vector<WorldBaseIgnore> worldBaseToIgnore;
-  std::vector<LightIgnore> dirLightsToIgnore;
-  // Names of worlds in which dynamic tex coords are ignored
-  std::vector<std::string> dynTexCoordsWldToIgnore;
+  std::vector<FLOAT3D>     worldBasePositionsToIgnore;
+  std::vector<std::string> dirLightsNamesToIgnore;
 };
 
 }
