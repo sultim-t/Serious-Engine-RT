@@ -123,6 +123,12 @@ const SSRT::CustomInfo *SSRT::Scene::GetCustomInfo() const
   return pCustomInfo;
 }
 
+SSRT::CustomInfo *SSRT::Scene::GetCustomInfo()
+{
+  ASSERT(pCustomInfo != nullptr);
+  return pCustomInfo;
+}
+
 void SSRT::Scene::AddModel(const CModelGeometry &model)
 {
   if (model.vertices == nullptr || model.vertexCount == 0 || model.indices == nullptr || model.indexCount == 0)

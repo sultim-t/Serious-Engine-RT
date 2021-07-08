@@ -61,6 +61,7 @@ public:
   ANGLE3D GetBackgroundViewerOrientationAngle() const;
 
   const CustomInfo *GetCustomInfo() const;
+  CustomInfo *GetCustomInfo();
 
   void OnFrameEnd(bool isCameraFirstPerson);
 

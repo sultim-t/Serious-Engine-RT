@@ -36,8 +36,9 @@ public:
   CustomInfo &operator=(CustomInfo &&other) noexcept = delete;
 
   bool IsWaterTexture(CTextureData *ptd) const;
-  bool IsFireTexture(CTextureData *ptd) const;
-  bool HasModelFireTexture(CEntity *penModel) const;
+  bool IsFireTexture(CTextureData *ptd);
+  bool HasModelFireTexture(CEntity *penModel);
+  bool IsAngularSizeCullingDisabled(CEntity *penModel);
   bool IsBrushIgnored(CEntity *penBrush) const;
   bool IsDirectionalLightIgnored(const CLightSource *plsLight) const;
   bool IsSphericalLightIgnored(const CLightSource *plsLight) const;
@@ -50,6 +51,8 @@ private:
 private:
   std::vector<FLOAT3D>     worldBasePositionsToIgnore;
   std::vector<std::string> dirLightsNamesToIgnore;
+
+  std::vector<CTextureData *> ptdCachedBulletHoleTextures;
 };
 
 }

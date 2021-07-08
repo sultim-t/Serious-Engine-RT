@@ -94,6 +94,12 @@ static bool RT_TestModel(CEntity *pEn, SSRT::Scene *pScene)
     return !(pEn->GetLightSource()->ls_ulFlags & LSF_DIRECTIONAL);
   }
 
+  // add, if culling is disabled for this model
+  if (pScene->GetCustomInfo()->IsAngularSizeCullingDisabled(pEn))
+  {
+    return true;
+  }
+
   // if it's not a light source,
   // check anglular size of entity's sphere
   FLOAT3D vCenter;
@@ -113,9 +119,6 @@ static bool RT_TestModel(CEntity *pEn, SSRT::Scene *pScene)
     // if model's angular size is too small, ignore it
     if (fAngularSize < _srtGlobals.srt_fCullingMinAngularSize)
     {
-      // TODO: bullet holes are small, and are culled too early 
-      // (maybe add a distance threshold, at which all models will be rendered)
-
       return false;
     }
   }

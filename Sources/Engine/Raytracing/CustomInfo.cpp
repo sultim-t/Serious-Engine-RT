@@ -25,6 +25,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Raytracing/SSRTGlobals.h>
 #include <Engine/Raytracing/Scene.h>
 
+#include <Engine/Templates/Stock_CtextureData.h>
+
 
 #include <Engine/Base/ListIterator.inl>
 
@@ -160,9 +162,17 @@ const char * const RT_WaterTextureNames[] =
 };
 
 
-const char *const RT_FireTextureNames[] =
+const char * const RT_FireTextureNames[] =
 {
   "Fire",
+};
+
+
+// bullet holes has small angular size, but they're important
+const char *const RT_BulletHoleTexturePaths[] =
+{
+  "Models\\Effects\\BulletOnTheWall\\Bullet.tex",
+  "Models\\Effects\\BulletOnTheWall\\BulletSand.tex",
 };
 
 
@@ -202,6 +212,11 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       _srtGlobals.srt_bIgnoreDynamicTexCoords = s.bIgnoreDynamicTexCoords;
     }
   }
+
+  for (const char *pTdPath : RT_BulletHoleTexturePaths)
+  {
+     ptdCachedBulletHoleTextures.push_back(_pTextureStock->st_ntObjects.Find(pTdPath));
+  }
 }
 
 SSRT::CustomInfo::~CustomInfo()
@@ -223,7 +238,7 @@ bool SSRT::CustomInfo::IsWaterTexture(CTextureData *ptd) const
   return IsTextureNameIn(ptd, RT_WaterTextureNames, ARRAYCOUNT(RT_WaterTextureNames));
 }
 
-bool SSRT::CustomInfo::IsFireTexture(CTextureData *ptd) const
+bool SSRT::CustomInfo::IsFireTexture(CTextureData *ptd)
 {
   if (ptd == nullptr)
   {
@@ -245,7 +260,7 @@ bool SSRT::CustomInfo::IsFireTexture(CTextureData *ptd) const
   return IsTextureNameIn(ptd, RT_FireTextureNames, ARRAYCOUNT(RT_FireTextureNames));
 }
 
-bool SSRT::CustomInfo::HasModelFireTexture(CEntity *penModel) const
+bool SSRT::CustomInfo::HasModelFireTexture(CEntity *penModel)
 {
   if (penModel->en_RenderType != CEntity::RT_MODEL)
   {
@@ -266,8 +281,33 @@ bool SSRT::CustomInfo::HasModelFireTexture(CEntity *penModel) const
     return false;
   }
 
-  auto *td = (CTextureData *)pmoModelObject->mo_toTexture.GetData();
-  return IsFireTexture(td);
+  auto *ptd = (CTextureData *)pmoModelObject->mo_toTexture.GetData();
+  return IsFireTexture(ptd);
+}
+
+bool SSRT::CustomInfo::IsAngularSizeCullingDisabled(CEntity *penModel)
+{
+  if (penModel->en_RenderType != CEntity::RT_MODEL)
+  {
+    return false;
+  }
+
+  CModelObject *pmoModelObject = penModel->GetModelForRendering();
+
+  if (pmoModelObject == nullptr)
+  {
+    return false;
+  }
+
+  auto *ptd = (CTextureData *)pmoModelObject->mo_toTexture.GetData();
+
+  if (ptd == nullptr || ptd->td_ctFrames != 1 || ptd->td_ptegEffect != nullptr)
+  {
+    return false;
+  }
+
+  // if found in cache
+  return std::find(ptdCachedBulletHoleTextures.begin(), ptdCachedBulletHoleTextures.end(), ptd) != ptdCachedBulletHoleTextures.end();
 }
 
 bool SSRT::CustomInfo::IsBrushIgnored(CEntity *penBrush) const
@@ -360,6 +400,11 @@ bool SSRT::CustomInfo::AreDynamicTexCoordsIgnored(CEntity *penBrush) const
 
 bool SSRT::CustomInfo::IsTextureNameIn(CTextureData *ptd, const char * const pCollection[], uint32_t iCount)
 {
+  if (ptd == nullptr)
+  {
+    return false;
+  }
+
   for (uint32_t i = 0; i < iCount; i++)
   {
     if (ptd->GetName().FileName() == pCollection[i])
