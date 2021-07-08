@@ -1038,7 +1038,7 @@ static void RT_Post_RenderModels(CEntity &en,
 
 
 void RT_AddModelEntity(CEntity *penModel, SSRT::Scene *pScene)
-{
+{        
   RT_ModelPartIndex = 0;
 
   // if the entity is currently active or hidden, don't add it again
@@ -1049,6 +1049,12 @@ void RT_AddModelEntity(CEntity *penModel, SSRT::Scene *pScene)
 
   // skip the entity if predicted, and predicted entities should not be rendered
   if (penModel->IsPredicted() && !gfx_bRenderPredicted)
+  {
+    return;
+  }
+
+  // if it's a viewer and there should be no shadows from it
+  if (!_srtGlobals.srt_bEnableViewerShadows && pScene->GetViewerEntityID() == penModel->en_ulID)
   {
     return;
   }

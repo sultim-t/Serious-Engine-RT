@@ -102,6 +102,9 @@ struct SSRTGlobals
   INDEX srt_bModelChangeableTranslucentToAlphaTested = 1;
 
   INDEX srt_iCullingMaxSectorDepth = 2;
+  FLOAT srt_fCullingMinAngularSize = 1.0f;
+
+  FLOAT2D srt_fRenderSize = {};
 };
 
 }

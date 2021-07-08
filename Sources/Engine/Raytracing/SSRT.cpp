@@ -109,6 +109,7 @@ void SSRT::SSRTMain::InitShellVariables()
 
   _pShell->DeclareSymbol("persistent user INDEX srt_bModelChangeableTranslucentToAlphaTested;", &_srtGlobals.srt_bModelChangeableTranslucentToAlphaTested);
   _pShell->DeclareSymbol("persistent user INDEX srt_iCullingMaxSectorDepth;", &_srtGlobals.srt_iCullingMaxSectorDepth);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fCullingMinAngularSize;", &_srtGlobals.srt_fCullingMinAngularSize);
 
   // user controls
   _pShell->DeclareSymbol("user INDEX ctl_bFlashlight;", &_srtGlobals.srt_bSpotlightEnable);
@@ -182,6 +183,8 @@ void SSRT::SSRTMain::NormalizeShellVariables()
   _srtGlobals.srt_iMaxBounceShadowsSpotlights        = Max(_srtGlobals.srt_iMaxBounceShadowsSpotlights,        (INDEX)0);
 
   _srtGlobals.srt_bModelChangeableTranslucentToAlphaTested = !!_srtGlobals.srt_bModelChangeableTranslucentToAlphaTested;
+
+  _srtGlobals.srt_fCullingMinAngularSize = Clamp(_srtGlobals.srt_fCullingMinAngularSize, 0.0f, 89.5f);
 }
 
 
@@ -304,6 +307,8 @@ void SSRT::SSRTMain::StartFrame(CViewPort *pvp)
 
   curWindowWidth = pvp->vp_Raster.ra_Width;
   curWindowHeight = pvp->vp_Raster.ra_Height;
+
+  _srtGlobals.srt_fRenderSize = { (float)curWindowWidth, (float)curWindowHeight };
 }
 
 void SSRT::SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)

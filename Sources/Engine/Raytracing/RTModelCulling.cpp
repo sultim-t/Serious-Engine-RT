@@ -22,6 +22,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Brushes/Brush.h>
 #include <Engine/Entities/Entity.h>
 #include <Engine/Light/LightSource.h>
+#include <Engine/Models/ModelData.h>
+#include <Engine/Models/ModelObject.h>
 #include <Engine/World/World.h>
 #include <Engine/Templates/BSP.h>
 #include <Engine/Raytracing/Scene.h>
@@ -39,10 +41,84 @@ extern SSRT::SSRTGlobals _srtGlobals;
 // list of active sectors
 static CListHead RT_lhActiveSectors;
 // RT: currently added models, used for clearing ENF_INRENDERING flag at the end of scanning
-static CStaticStackArray<CEntity*> RT_saAddedModels;
+static CStaticStackArray<CEntity *> RT_saAddedModels;
 
 static std::unordered_map<CBrushSector *, INDEX> RT_umBrushSectorDepth;
 
+
+// RT: modified version of RenderModel.cpp::CalculateBoundingBox
+static void CalculateBoundingSphere(CEntity *pEn, FLOAT3D *vOutCenter, float *fOutRadius)
+{
+  CModelObject *pmo = pEn->GetModelObject();
+
+  // get model's data and lerp info
+  CModelData *pmdModelData = (CModelData *)pmo->GetData();
+
+  INDEX iFrame0, iFrame1;
+  FLOAT fRatio;
+  pmo->GetFrame(iFrame0, iFrame1, fRatio);
+
+  // calculate projection model bounding box in object space
+  const FLOAT3D &vMin0 = pmdModelData->md_FrameInfos[iFrame0].mfi_Box.Min();
+  const FLOAT3D &vMax0 = pmdModelData->md_FrameInfos[iFrame0].mfi_Box.Max();
+  const FLOAT3D &vMin1 = pmdModelData->md_FrameInfos[iFrame1].mfi_Box.Min();
+  const FLOAT3D &vMax1 = pmdModelData->md_FrameInfos[iFrame1].mfi_Box.Max();
+
+  FLOAT3D vObjectMinBB = Lerp(vMin0, vMin1, fRatio);
+  FLOAT3D vObjectMaxBB = Lerp(vMax0, vMax1, fRatio);
+  vObjectMinBB(1) *= pmo->mo_Stretch(1);  vObjectMaxBB(1) *= pmo->mo_Stretch(1);
+  vObjectMinBB(2) *= pmo->mo_Stretch(2);  vObjectMaxBB(2) *= pmo->mo_Stretch(2);
+  vObjectMinBB(3) *= pmo->mo_Stretch(3);  vObjectMaxBB(3) *= pmo->mo_Stretch(3);
+
+  FLOATaabbox3D aabb(vObjectMaxBB, vObjectMinBB);
+
+  FLOATaabbox3D enAabb;
+  pEn->GetBoundingBox(enAabb);
+
+  *vOutCenter = pEn->GetPlacement().pl_PositionVector + aabb.Center();
+  *fOutRadius = Max(aabb.Size().Length(), enAabb.Size().Length());
+}
+
+
+static bool RT_TestModel(CEntity *pEn, SSRT::Scene *pScene)
+{
+  if (pEn->en_ulFlags & ENF_INRENDERING)
+  {
+    return false;
+  }
+
+  // always add light sources
+  if (pEn->GetLightSource() != nullptr)
+  {
+    // dir lights are added separately, without culling
+    return !(pEn->GetLightSource()->ls_ulFlags & LSF_DIRECTIONAL);
+  }
+
+  // if it's not a light source,
+  // check anglular size of entity's sphere
+  FLOAT3D vCenter;
+  float fRadius;
+  CalculateBoundingSphere(pEn, &vCenter, &fRadius);
+
+  float fDistance = (vCenter - pScene->GetCameraPosition()).Length();
+
+  if (fDistance > fRadius)
+  {
+    float fAngularSize = ATan(fRadius / fDistance) * 2.0f;
+    
+    // adjust for the current resolution
+    float fRenderArea = _srtGlobals.srt_fRenderSize(1) * _srtGlobals.srt_fRenderSize(2);
+    fAngularSize *= (1920.0f * 1080.0f) / Max(fRenderArea, 1.0f);
+
+    // if model's angular size is too small, ignore it
+    if (fAngularSize < _srtGlobals.srt_fCullingMinAngularSize)
+    {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 /* Add to rendering all entities that are inside an zoning brush sector. */
 static void RT_AddEntitiesInSector(CBrushSector *pbscSectorInside, SSRT::Scene *pScene)
@@ -71,27 +147,16 @@ static void RT_AddEntitiesInSector(CBrushSector *pbscSectorInside, SSRT::Scene *
       }
       else if (pen->en_RenderType == CEntity::RT_MODEL || pen->en_RenderType == CEntity::RT_EDITORMODEL)
       {
-        // if it's a viewer and there should be no shadows from it
-        if (!_srtGlobals.srt_bEnableViewerShadows && pScene->GetViewerEntityID() == pen->en_ulID)
+        if (!RT_TestModel(pen, pScene))
         {
           continue;
         }
 
-        if (pen->en_ulFlags & ENF_INRENDERING)
-        {
-          continue;
-        }
         pen->en_ulFlags |= ENF_INRENDERING;
 
-        // dir lights are added separately, without culling
-        bool isDirLight = pen->GetLightSource() != nullptr && (pen->GetLightSource()->ls_ulFlags & LSF_DIRECTIONAL);
-
         // add it as a model and scan for light sources
-        if (!isDirLight)
-        {
-          RT_AddModelEntity(pen, pScene);
-        }
-
+        RT_AddModelEntity(pen, pScene);
+        
         // also, add its particles
         RT_AddParticlesForEntity(pen, pScene);
         

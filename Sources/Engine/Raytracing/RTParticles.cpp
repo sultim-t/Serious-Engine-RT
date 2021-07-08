@@ -14,18 +14,21 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
 
 #include "StdH.h"
-#include "RTProcessing.h"
 
 #include <Engine/Entities/Entity.h>
 #include <Engine/Graphics/DrawPort.h>
 #include <Engine/Math/Projection.h>
 #include <Engine/Raytracing/SSRT.h>
+#include <Engine/Raytracing/RTProcessing.h>
+#include <Engine/Raytracing/SSRTGlobals.h>
 #include <Engine/World/World.h>
 
 #include <Engine/Templates/DynamicContainer.cpp>
 
 
 extern INDEX gfx_bRenderParticles;
+
+extern SSRT::SSRTGlobals _srtGlobals;
 
 extern CEntity *_Particle_penCurrentViewer;
 extern FLOAT _Particle_fCurrentMip;
