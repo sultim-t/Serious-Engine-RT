@@ -245,6 +245,21 @@ static void RT_AddGivenZoningSector(CBrushSector *pbsc, INDEX iSectorDepth, SSRT
 }
 
 
+static bool RT_IsZoningSectorThin(const CBrushSector &bsc)
+{
+  FLOAT3D vSize = bsc.bsc_boxRelative.Size();
+
+  bool isThin[3] =
+  {
+    vSize(1) <= _srtGlobals.srt_fCullingThinSectorSize,
+    vSize(2) <= _srtGlobals.srt_fCullingThinSectorSize,
+    vSize(3) <= _srtGlobals.srt_fCullingThinSectorSize,
+  };
+
+  return isThin[0] || isThin[1] || isThin[2];
+}
+
+
 static void RT_AddZoningSectorsAroundEntity(CEntity *pen, SSRT::Scene *pScene)
 {
   // works only for non-zoning entities
@@ -279,6 +294,8 @@ static void RT_AddZoningSectorsAroundEntity(CEntity *pen, SSRT::Scene *pScene)
     ASSERT(RT_umBrushSectorDepth.find(pbsc) != RT_umBrushSectorDepth.end());
     INDEX iDepth = RT_umBrushSectorDepth[pbsc];
 
+    bool isThin = RT_IsZoningSectorThin(*pbsc);
+
     // add it to final list
     RT_AddGivenZoningSector(pbsc, iDepth, pScene);
     // if isn't really added (wrong mip)
@@ -308,9 +325,9 @@ static void RT_AddZoningSectorsAroundEntity(CEntity *pen, SSRT::Scene *pScene)
               // add it to list to add
               lhToAdd.AddTail(pbscRelated->bsc_lnInActiveSectors);
 
-              // RT: increase depth for the related sector
+              // RT: increase depth for the related sector, if it's not too thin
               ASSERT(RT_umBrushSectorDepth.find(pbscRelated) == RT_umBrushSectorDepth.end());
-              RT_umBrushSectorDepth[pbscRelated] = iDepth + 1;
+              RT_umBrushSectorDepth[pbscRelated] = isThin ? iDepth : iDepth + 1;
             }
           }
         ENDFOR

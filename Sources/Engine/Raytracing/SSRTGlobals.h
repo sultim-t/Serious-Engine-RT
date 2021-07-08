@@ -101,8 +101,9 @@ struct SSRTGlobals
   // are uploaded as alpha-tested geometry
   INDEX srt_bModelChangeableTranslucentToAlphaTested = 1;
 
-  INDEX srt_iCullingMaxSectorDepth = 2;
+  INDEX srt_iCullingMaxSectorDepth = 6;
   FLOAT srt_fCullingMinAngularSize = 1.0f;
+  FLOAT srt_fCullingThinSectorSize = 1.1f;
 
   FLOAT srt_fModelLODMul = 1.0f;
   FLOAT srt_fModelLODAdd = 0.0f;

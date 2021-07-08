@@ -110,6 +110,8 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user INDEX srt_bModelChangeableTranslucentToAlphaTested;", &_srtGlobals.srt_bModelChangeableTranslucentToAlphaTested);
   _pShell->DeclareSymbol("persistent user INDEX srt_iCullingMaxSectorDepth;", &_srtGlobals.srt_iCullingMaxSectorDepth);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fCullingMinAngularSize;", &_srtGlobals.srt_fCullingMinAngularSize);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fCullingThinSectorSize;", &_srtGlobals.srt_fCullingThinSectorSize);
+
   _pShell->DeclareSymbol("persistent user FLOAT srt_fModelLODMul;", &_srtGlobals.srt_fModelLODMul);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fModelLODAdd;", &_srtGlobals.srt_fModelLODAdd);
 
@@ -186,7 +188,7 @@ void SSRT::SSRTMain::NormalizeShellVariables()
 
   _srtGlobals.srt_bModelChangeableTranslucentToAlphaTested = !!_srtGlobals.srt_bModelChangeableTranslucentToAlphaTested;
 
-  _srtGlobals.srt_fCullingMinAngularSize = Clamp(_srtGlobals.srt_fCullingMinAngularSize, 0.0f, 89.5f);
+  _srtGlobals.srt_fCullingMinAngularSize = Clamp(_srtGlobals.srt_fCullingMinAngularSize, -1.0f, 89.5f);
 }
 
 
