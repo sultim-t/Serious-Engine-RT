@@ -169,10 +169,26 @@ const char * const RT_FireTextureNames[] =
 
 
 // bullet holes has small angular size, but they're important
-const char *const RT_BulletHoleTexturePaths[] =
+const char * const RT_BulletHoleTexturePaths[] =
 {
   "Models\\Effects\\BulletOnTheWall\\Bullet.tex",
   "Models\\Effects\\BulletOnTheWall\\BulletSand.tex",
+};
+
+
+const char * const RT_TextureForcedReflectiveDirectories[] =
+{
+  "Models\\Effects\\BloodOnTheWall01\\",
+  "Models\\Effects\\BloodPatches01\\",
+};
+
+
+const char * const RT_TextureForcedAlphaTestDirectories[] =
+{
+  "Models\\Effects\\BloodOnTheWall01\\",
+  "Models\\Effects\\BloodPatches01\\",
+  "Models\\Effects\\BulletOnTheWall\\",
+  "Models\\Plants\\Garden02\\",
 };
 
 
@@ -238,7 +254,7 @@ bool SSRT::CustomInfo::IsWaterTexture(CTextureData *ptd) const
   return IsTextureNameIn(ptd, RT_WaterTextureNames, ARRAYCOUNT(RT_WaterTextureNames));
 }
 
-bool SSRT::CustomInfo::IsFireTexture(CTextureData *ptd)
+bool SSRT::CustomInfo::IsFireTexture(CTextureData *ptd) const
 {
   if (ptd == nullptr)
   {
@@ -260,7 +276,7 @@ bool SSRT::CustomInfo::IsFireTexture(CTextureData *ptd)
   return IsTextureNameIn(ptd, RT_FireTextureNames, ARRAYCOUNT(RT_FireTextureNames));
 }
 
-bool SSRT::CustomInfo::HasModelFireTexture(CEntity *penModel)
+bool SSRT::CustomInfo::HasModelFireTexture(CEntity *penModel) const
 {
   if (penModel->en_RenderType != CEntity::RT_MODEL)
   {
@@ -285,7 +301,7 @@ bool SSRT::CustomInfo::HasModelFireTexture(CEntity *penModel)
   return IsFireTexture(ptd);
 }
 
-bool SSRT::CustomInfo::IsAngularSizeCullingDisabled(CEntity *penModel)
+bool SSRT::CustomInfo::IsAngularSizeCullingDisabled(CEntity *penModel) const
 {
   if (penModel->en_RenderType != CEntity::RT_MODEL)
   {
@@ -396,6 +412,42 @@ bool SSRT::CustomInfo::IsSphericalLightIgnored(const CLightSource *plsLight) con
 bool SSRT::CustomInfo::AreDynamicTexCoordsIgnored(CEntity *penBrush) const
 {
   return _srtGlobals.srt_bIgnoreDynamicTexCoords;
+}
+
+bool SSRT::CustomInfo::IsReflectiveForced(CTextureObject *pTo) const
+{
+  if (pTo != nullptr)
+  {
+    CTFileName dir = pTo->GetName().FileDir();
+
+    for (const char *pNm : RT_TextureForcedReflectiveDirectories)
+    {
+      if (dir == pNm)
+      {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+bool SSRT::CustomInfo::IsAlphaTestForced(CTextureObject *pTo, bool isTranslucent) const
+{
+  if (isTranslucent && pTo != nullptr)
+  {
+    CTFileName dir = pTo->GetName().FileDir();
+
+    for (const char *pNm : RT_TextureForcedAlphaTestDirectories)
+    {
+      if (dir == pNm)
+      {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 bool SSRT::CustomInfo::IsTextureNameIn(CTextureData *ptd, const char * const pCollection[], uint32_t iCount)

@@ -52,45 +52,17 @@ struct RT_VertexData
 };
 
 
-constexpr const char *RT_TextureDirectoriesForcedAlphaTest[] =
-{
-  "Models\\Effects\\BloodOnTheWall01\\",
-  "Models\\Effects\\BloodPatches01\\",
-  "Models\\Effects\\BulletOnTheWall\\",
-  "Models\\Plants\\Garden02\\",
-};
-
-
-static bool RT_IsAlphaTestForced(CTextureObject *pTo, SurfaceTranslucencyType stt)
-{
-  if (stt == STT_TRANSLUCENT && pTo != nullptr)
-  {
-    CTFileName dir = pTo->GetName().FileDir();
-
-    for (const char *pNm : RT_TextureDirectoriesForcedAlphaTest)
-    {
-      if (dir == pNm)
-      {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
-
-static bool RT_ShouldBeAlphaTested(CTextureObject *to, SurfaceTranslucencyType stt, bool forceTranslucency)
+static bool RT_ShouldBeAlphaTested(CTextureObject *to, SurfaceTranslucencyType stt, bool forceTranslucency, SSRT::Scene *pScene)
 { 
   // force translucency is for the cases when model changes its alpha value dynamically (e.g. fading out);
   // it works only on opaque or alpha-tested models
   bool changesDynamically = forceTranslucency && ((stt == STT_OPAQUE) || (stt == STT_TRANSPARENT));
 
 
-  // only if model changes (like disappering gibs, body parts), and should be detected as alpha-tested
+  // if model changes (like disappering gibs, body parts) or must be detected as alpha-tested
   return 
     _srtGlobals.srt_bModelChangeableTranslucentToAlphaTested
-    && (changesDynamically || RT_IsAlphaTestForced(to, stt));
+    && (changesDynamically || pScene->GetCustomInfo()->IsAlphaTestForced(to, stt == STT_TRANSLUCENT));
 }
 
 
@@ -153,32 +125,6 @@ static RgGeometryPassThroughType RT_GetPassThroughType(SurfaceTranslucencyType s
   {
     return RG_GEOMETRY_PASS_THROUGH_TYPE_OPAQUE;
   }
-}
-
-
-constexpr const char *RT_TextureDirectoriesForcedSpecular[] =
-{
-  "Models\\Effects\\BloodOnTheWall01\\",
-  "Models\\Effects\\BloodPatches01\\",
-  "Models\\Effects\\BulletOnTheWall\\",
-};
-
-static bool RT_IsSpecularForced(CTextureObject *pTo)
-{
-  if (pTo != nullptr)
-  {
-    CTFileName dir = pTo->GetName().FileDir();
-
-    for (const char *pNm : RT_TextureDirectoriesForcedSpecular)
-    {
-      if (dir == pNm)
-      {
-        return true;
-      }
-    }
-  }
-
-  return false;
 }
 
 
@@ -269,7 +215,7 @@ static void FlushModelInfo(ULONG entityID,
   modelInfo.entityID = entityID;
   modelInfo.modelPartIndex = RT_ModelPartIndex;
 
-  bool forceAlphaTest = RT_ShouldBeAlphaTested(to, stt, forceTranslucency);
+  bool forceAlphaTest = RT_ShouldBeAlphaTested(to, stt, forceTranslucency, pScene);
   modelInfo.passThroughType = RT_GetPassThroughType(stt, forceAlphaTest);
   modelInfo.isRasterized = RT_ShouldBeRasterized(stt, forceAlphaTest);
 
@@ -309,8 +255,8 @@ static void FlushModelInfo(ULONG entityID,
   modelInfo.indices = pIndices;
 
   modelInfo.color = { modelColor.r / 255.0f, modelColor.g / 255.0f, modelColor.b / 255.0f, modelColor.a / 255.0f };
-  modelInfo.isReflective = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_REFLECTIONS;
-  modelInfo.isSpecular = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_SPECULAR || RT_IsSpecularForced(to);
+  modelInfo.isReflective = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_REFLECTIONS || pScene->GetCustomInfo()->IsReflectiveForced(to);
+  modelInfo.isSpecular = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_SPECULAR;
 
   CTextureData *td = to != nullptr ? (CTextureData *)to->GetData() : nullptr;
 

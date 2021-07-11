@@ -36,13 +36,15 @@ public:
   CustomInfo &operator=(CustomInfo &&other) noexcept = delete;
 
   bool IsWaterTexture(CTextureData *ptd) const;
-  bool IsFireTexture(CTextureData *ptd);
-  bool HasModelFireTexture(CEntity *penModel);
-  bool IsAngularSizeCullingDisabled(CEntity *penModel);
+  bool IsFireTexture(CTextureData *ptd) const;
+  bool HasModelFireTexture(CEntity *penModel) const;
+  bool IsAngularSizeCullingDisabled(CEntity *penModel) const;
   bool IsBrushIgnored(CEntity *penBrush) const;
   bool IsDirectionalLightIgnored(const CLightSource *plsLight) const;
   bool IsSphericalLightIgnored(const CLightSource *plsLight) const;
   bool AreDynamicTexCoordsIgnored(CEntity *penBrush) const;
+  bool IsReflectiveForced(CTextureObject *pTo) const;
+  bool IsAlphaTestForced(CTextureObject *pTo, bool isTranslucent) const;
 
 private:
   static bool IsTextureNameIn(CTextureData *ptd, const char * const pCollection[], uint32_t iCount);
