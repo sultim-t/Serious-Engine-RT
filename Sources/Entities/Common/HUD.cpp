@@ -32,6 +32,8 @@ extern FLOAT hud_fOpacity;
 extern FLOAT hud_fScaling;
 extern FLOAT hud_tmWeaponsOnScreen;
 
+extern INDEX hud_bShowFlashlightHint = 0;
+
 
 // player statistics sorting keys
 enum SortKeys {
@@ -557,7 +559,7 @@ extern void DrawHUD( const CPlayer *penPlayerCurrent, CDrawPort *pdpCurrent, BOO
 
   // cache local variables
   hud_fOpacity = Clamp( hud_fOpacity, 0.1f, 1.0f);
-  hud_fScaling = Clamp( hud_fScaling, 0.5f, 1.2f);
+  hud_fScaling = Clamp( hud_fScaling, 0.2f, 1.2f);
   _penPlayer  = penPlayerCurrent;
   _penWeapons = (CPlayerWeapons*)&*_penPlayer->m_penWeapons;
   _pDP        = pdpCurrent;
@@ -911,6 +913,19 @@ extern void DrawHUD( const CPlayer *penPlayerCurrent, CDrawPort *pdpCurrent, BOO
     _pDP->SetTextCharSpacing( -2.0f*fTextScale);
     _pDP->PutTextR( strLatency, _pixDPWidth, _pixDPHeight-pixFontHeight, C_WHITE|CT_OPAQUE);
   }
+
+  // RT: show
+  if (hud_bShowFlashlightHint)
+  {
+    bool isColored = (INDEX)(_pTimer->GetLerpedCurrentTick() * 2.0f) % 2;
+    CTString strFlashlightHint = isColored ? "Press a ^c24D500Flashlight^r button to toggle it" : "Press a Flashlight button to toggle it";
+    _pfdDisplayFont->SetVariableWidth();
+    _pDP->SetFont(_pfdDisplayFont);
+    _pDP->SetTextScaling(_fResolutionScaling * hud_fScaling * 2.0f);
+    _pDP->SetTextCharSpacing(1);
+    _pDP->PutTextCXY(strFlashlightHint, _pixDPWidth * 0.5f, _pixDPHeight * 0.65f, C_WHITE | CT_OPAQUE);
+  }
+
   // restore font defaults
   _pfdDisplayFont->SetVariableWidth();
   _pDP->SetFont( &_fdNumbersFont);
@@ -1018,6 +1033,9 @@ extern void DrawHUD( const CPlayer *penPlayerCurrent, CDrawPort *pdpCurrent, BOO
 // initialized all whats need for drawing HUD
 extern void InitHUD(void)
 {
+  // RT: ugly way
+  _pShell->DeclareSymbol("INDEX hud_bShowFlashlightHint;", &hud_bShowFlashlightHint);
+
   // try to
   try {
     // initialize and load HUD numbers font

@@ -80,6 +80,8 @@ void SSRT::Scene::Update(const CWorldRenderingInfo &info)
   // upload dynamic geometry (models)
   // and scan for movable geometry
   ProcessDynamicGeometry();
+
+  pCustomInfo->Update();
 }
 
 const CTString &SSRT::Scene::GetWorldName() const

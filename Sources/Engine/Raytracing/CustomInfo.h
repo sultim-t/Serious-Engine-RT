@@ -46,15 +46,24 @@ public:
   bool IsReflectiveForced(CTextureObject *pTo) const;
   bool IsAlphaTestForced(CTextureObject *pTo, bool isTranslucent) const;
 
+  void Update();
+
 private:
   static bool IsTextureNameIn(CTextureData *ptd, const char * const pCollection[], uint32_t iCount);
   bool HasLightEntityVertices(CEntity *pen) const;
+
+  void EnableFlashlightHint();
+  void DisableFlashlightHint();
 
 private:
   std::vector<FLOAT3D>     worldBasePositionsToIgnore;
   std::vector<std::string> dirLightsNamesToIgnore;
 
   std::vector<CTextureData *> ptdCachedBulletHoleTextures;
+
+  bool isFlashlightHintEnabled;
+  TIME tmFlashlightHintStart;
+  TIME tmFlashlightHintEnd;
 };
 
 }

@@ -94,6 +94,7 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user INDEX srt_bLightFixWithModels;", &_srtGlobals.srt_bLightFixWithModels);
   _pShell->DeclareSymbol("persistent user INDEX srt_bLightFixWithTranslucent;", &_srtGlobals.srt_bLightFixWithTranslucent);
 
+  _pShell->DeclareSymbol("persistent user INDEX srt_bFlashlightEnableTutorial;", &_srtGlobals.srt_bFlashlightEnableTutorial);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fFlashlightRadius;", &_srtGlobals.srt_fFlashlightRadius);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fFlashlightAngleOuter;", &_srtGlobals.srt_fFlashlightAngleOuter);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fFlashlightAngleInner;", &_srtGlobals.srt_fFlashlightAngleInner);

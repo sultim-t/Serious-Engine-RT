@@ -88,6 +88,7 @@ struct SSRTGlobals
   FLOAT srt_fTonemappingMaxLogLuminance = 0.0f;
 
   INDEX srt_bFlashlightEnable = 0;
+  INDEX srt_bFlashlightEnableTutorial = 0;
   FLOAT3D srt_vFlashlightOffset = { -1.0f, -0.25f, 0.0f }; 
   FLOAT3D srt_vFlashlightOffsetThirdPerson = { 0.15f, 0.4f, 0.2f };
   FLOAT3D srt_vFlashlightColor = { 2.5f, 2.5f, 2.5f };

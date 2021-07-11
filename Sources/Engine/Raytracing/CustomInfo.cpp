@@ -16,6 +16,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "StdH.h"
 #include "CustomInfo.h"
 
+#include <Engine/Base/Shell.h>
 #include <Engine/Graphics/Texture.h>
 #include <Engine/Entities/Entity.h>
 #include <Engine/Models/ModelObject.h>
@@ -232,6 +233,29 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   for (const char *pTdPath : RT_BulletHoleTexturePaths)
   {
      ptdCachedBulletHoleTextures.push_back(_pTextureStock->st_ntObjects.Find(pTdPath));
+  }
+
+
+  // always disable flashlight on level start
+  _srtGlobals.srt_bFlashlightEnable = false;
+
+  isFlashlightHintEnabled = true;
+  DisableFlashlightHint();
+
+  // enable hint onlt for particular levels
+  switch (eCurrentWorld)
+  {
+    case EWorld::SandCanyon:
+    case EWorld::TombOfRamses:
+    case EWorld::ValleyOfTheKings:
+    case EWorld::Sewers:
+      tmFlashlightHintStart = _pTimer->GetLerpedCurrentTick() + 1.0f;
+      tmFlashlightHintEnd = tmFlashlightHintStart + 5.0f;
+      break;
+    default:
+      tmFlashlightHintStart = -1.0f;
+      tmFlashlightHintEnd = -1.0f;
+      break;
   }
 }
 
@@ -491,4 +515,43 @@ bool SSRT::CustomInfo::HasLightEntityVertices(CEntity *pen) const
   CModelData *md = pen->GetModelObject()->GetData();
 
   return md != nullptr && md->md_VerticesCt > 0;
+}
+
+void SSRT::CustomInfo::Update()
+{
+  TIME tmCurrent = _pTimer->GetLerpedCurrentTick();
+
+  // if flashlight was enabled, don't show the hint anymore
+  if (_srtGlobals.srt_bFlashlightEnable)
+  {
+    tmFlashlightHintStart = -1.0;
+    tmFlashlightHintEnd = -1.0;
+  }
+
+  if (tmCurrent >= tmFlashlightHintStart && tmCurrent <= tmFlashlightHintEnd)
+  {
+    EnableFlashlightHint();
+  }
+  else
+  {
+    DisableFlashlightHint();
+  }
+}
+
+void SSRT::CustomInfo::EnableFlashlightHint()
+{
+  if (!isFlashlightHintEnabled)
+  {
+    _pShell->SetINDEX("hud_bShowFlashlightHint", 1);
+    isFlashlightHintEnabled = true;
+  }
+}
+
+void SSRT::CustomInfo::DisableFlashlightHint()
+{
+  if (isFlashlightHintEnabled)
+  {
+    _pShell->SetINDEX("hud_bShowFlashlightHint", 0);
+    isFlashlightHintEnabled = false;
+  }
 }
