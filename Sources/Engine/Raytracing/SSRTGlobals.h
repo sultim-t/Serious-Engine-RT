@@ -34,34 +34,40 @@ struct SSRTGlobals
   INDEX srt_bLightFixWithModels = 0;
   INDEX srt_bLightFixWithTranslucent = 0;
 
-  FLOAT srt_fLightDirectionalIntensityMultiplier = 10.0f;
-  FLOAT srt_fLightDirectionalSaturation = 0.5f;
-  FLOAT srt_fLightDirectionalColorPow = 2.2f;
-  FLOAT srt_fLightDirectionalAngularDiameter = 0.5f;
-  INDEX srt_iLightSphericalMaxCount = 1024;
-  INDEX srt_iLightSphericalHSVThresholdHLower = 20;
-  INDEX srt_iLightSphericalHSVThresholdHUpper = 45;
-  INDEX srt_iLightSphericalHSVThresholdVLower = 80;
-  INDEX srt_iLightSphericalHSVThresholdVUpper = 255;
-  FLOAT srt_fLightSphericalIntensityMultiplier = 1.0f;
-  FLOAT srt_fLightSphericalSaturation = 0.75f;
-  FLOAT srt_fLightSphericalColorPow = 2.2f;
-  FLOAT srt_fLightSphericalRadiusMultiplier = 0.1f;
-  FLOAT srt_fLightSphericalRadiusOfDynamic = 0.5f;
-  FLOAT srt_fLightSphericalRadiusOfPotentialMultiplier = 0.5f;
-  FLOAT srt_fLightSphericalFalloffMultiplier = 1.0f;
-  FLOAT srt_fLightSphericalFalloffOfDynamicMultiplier = 1.0f;
-  FLOAT srt_fLightSphericalFalloffOfPotentialMultiplier = 0.3f;
-  FLOAT srt_fLightSphericalFalloffOfDynamicMin = 1.0f;
-  FLOAT srt_fLightSphericalFalloffOfDynamicMax = 8.0f;
-  FLOAT srt_fLightSphericalPolygonOffset = 1.0f;
-  INDEX srt_bLightSphericalIgnoreEditorModels = 0;
-  FLOAT srt_fLightMuzzleOffset = 2.0f;
+  FLOAT srt_fSunIntensity = 4.0f;
+  FLOAT srt_fSunSaturation = 0.5f;
+  FLOAT srt_fSunColorPow = 2.2f;
+  FLOAT srt_fSunAngularDiameter = 0.5f;
 
-  FLOAT srt_fDefaultSpecularMetallic = 0.7f;
-  FLOAT srt_fDefaultSpecularRoughness = 0.02f;
-  FLOAT srt_fDefaultReflectiveMetallic = 1.0f;
-  FLOAT srt_fDefaultReflectiveRoughness = 0.0f;
+  INDEX srt_iLightSphMaxCount = 1024;
+  FLOAT srt_fLightSphSaturation = 0.75f;
+  FLOAT srt_fLightSphColorPow = 2.2f;
+  FLOAT srt_fLightSphPolygonOffset = 1.0f;
+  INDEX srt_bLightSphIgnoreEditorModels = 0;
+
+  FLOAT srt_fOriginalLightSphIntensity = 1.0f;
+  FLOAT srt_fOriginalLightSphRadiusMultiplier = 0.05f;
+  FLOAT srt_fOriginalLightSphFalloffMultiplier = 1.0f;
+
+  FLOAT srt_fDynamicLightSphIntensity = 1.0f;
+  FLOAT srt_fDynamicLightSphRadius = 0.25f;
+  FLOAT srt_fDynamicLightSphFalloffMultiplier = 3.0f;
+  FLOAT srt_fDynamicLightSphFalloffMin = 3.0f;
+  FLOAT srt_fDynamicLightSphFalloffMax = 128.0f;
+ 
+  FLOAT srt_fPotentialLightSphIntensity = 1.0f;
+  FLOAT srt_fPotentialLightSphRadiusMultiplier = 0.5f;
+  FLOAT srt_fPotentialLightSphFalloffMultiplier = 0.25f;
+
+  FLOAT srt_fMuzzleLightIntensity = 1.0f;
+  FLOAT srt_fMuzzleLightRadius = 0.25f;
+  FLOAT srt_fMuzzleLightFalloffMultiplier = 2.0f;
+  FLOAT srt_fMuzzleLightOffset = 3.0f;
+
+  FLOAT srt_fModelSpecularMetallicDefault = 0.85f;
+  FLOAT srt_fModelSpecularRoughnessDefault = 0.025f;
+  FLOAT srt_fModelReflectiveMetallicDefault = 1.0f;
+  FLOAT srt_fModelReflectiveRoughnessDefault = 0.0001f;
 
   INDEX srt_bWeaponUseOriginalNormals = 0;
   FLOAT srt_fNormalMapStrength = 1.0f;
@@ -77,25 +83,25 @@ struct SSRTGlobals
   FLOAT3D srt_fSkyColorDefault = { 1, 1, 1 };
 
   INDEX srt_bTonemappingUseDefault = 0;
-  FLOAT srt_fTonemappingWhitePoint = 1.5f;
-  FLOAT srt_fTonemappingMinLogLuminance = 2.0f;
-  FLOAT srt_fTonemappingMaxLogLuminance = 10.0f;
+  FLOAT srt_fTonemappingWhitePoint = 1.0f;
+  FLOAT srt_fTonemappingMinLogLuminance = -2.0f;
+  FLOAT srt_fTonemappingMaxLogLuminance = 0.0f;
 
-  INDEX srt_bSpotlightEnable = 0;
-  FLOAT3D srt_vSpotlightOffset = { -1.0f, -0.25f, 0.0f }; 
-  FLOAT3D srt_vSpotlightOffsetThirdPerson = { 0.15f, 0.4f, 0.2f };
-  FLOAT3D srt_vSpotlightColor = { 2.5f, 2.5f, 2.5f };
-  FLOAT srt_fSpotlightRadius = 0.05f;
+  INDEX srt_bFlashlightEnable = 0;
+  FLOAT3D srt_vFlashlightOffset = { -1.0f, -0.25f, 0.0f }; 
+  FLOAT3D srt_vFlashlightOffsetThirdPerson = { 0.15f, 0.4f, 0.2f };
+  FLOAT3D srt_vFlashlightColor = { 2.5f, 2.5f, 2.5f };
+  FLOAT srt_fFlashlightRadius = 0.05f;
   // In degrees
-  ANGLE srt_fSpotlightAngleOuter = 15.0f;
+  ANGLE srt_fFlashlightAngleOuter = 15.0f;
   // In degrees
-  ANGLE srt_fSpotlightAngleInner = 3.0f;
-  FLOAT srt_fSpotlightFalloffDistance = 50.0f;
+  ANGLE srt_fFlashlightAngleInner = 0.0f;
+  FLOAT srt_fFlashlightFalloffDistance = 50.0f;
 
   INDEX srt_bMaxBounceShadowsUseDefault = 0;
   INDEX srt_iMaxBounceShadowsDirectionalLights = 8;
-  INDEX srt_iMaxBounceShadowsSphereLights = 2;
-  INDEX srt_iMaxBounceShadowsSpotlights = 1;
+  INDEX srt_iMaxBounceShadowsSphereLights = 1;
+  INDEX srt_iMaxBounceShadowsSpotlights = 2;
 
   // If true, translucent models that are changing its alpha (disappering gibs/body parts/blood),
   // are uploaded as alpha-tested geometry

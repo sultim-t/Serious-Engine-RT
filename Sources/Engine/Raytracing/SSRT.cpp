@@ -54,53 +54,54 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fEmissionMapBoost;", &_srtGlobals.srt_fEmissionMapBoost);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fEmissionMaxScreenColor;", &_srtGlobals.srt_fEmissionMaxScreenColor);
 
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fDefaultSpecularMetallic;", &_srtGlobals.srt_fDefaultSpecularMetallic);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fDefaultSpecularRoughness;", &_srtGlobals.srt_fDefaultSpecularRoughness);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fDefaultReflectiveMetallic;", &_srtGlobals.srt_fDefaultReflectiveMetallic);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fDefaultReflectiveRoughness;", &_srtGlobals.srt_fDefaultReflectiveRoughness);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fModelSpecularMetallicDefault;", &_srtGlobals.srt_fModelSpecularMetallicDefault);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fModelSpecularRoughnessDefault;", &_srtGlobals.srt_fModelSpecularRoughnessDefault);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fModelReflectiveMetallicDefault;", &_srtGlobals.srt_fModelReflectiveMetallicDefault);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fModelReflectiveRoughnessDefault;", &_srtGlobals.srt_fModelReflectiveRoughnessDefault);
 
   _pShell->DeclareSymbol("persistent user INDEX srt_bEnableViewerShadows;", &_srtGlobals.srt_bEnableViewerShadows);
 
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightDirectionalIntensityMultiplier;", &_srtGlobals.srt_fLightDirectionalIntensityMultiplier);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightDirectionalSaturation;", &_srtGlobals.srt_fLightDirectionalSaturation);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightDirectionalColorPow;", &_srtGlobals.srt_fLightDirectionalColorPow);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightDirectionalAngularDiameter;", &_srtGlobals.srt_fLightDirectionalAngularDiameter);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fSunIntensity;", &_srtGlobals.srt_fSunIntensity);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fSunSaturation;", &_srtGlobals.srt_fSunSaturation);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fSunColorPow;", &_srtGlobals.srt_fSunColorPow);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fSunAngularDiameter;", &_srtGlobals.srt_fSunAngularDiameter);
 
-  _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalMaxCount;", &_srtGlobals.srt_iLightSphericalMaxCount);
-  //_pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdHLower;", &_srtGlobals.srt_iLightSphericalHSVThresholdHLower);
-  //_pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdHUpper;", &_srtGlobals.srt_iLightSphericalHSVThresholdHUpper);
-  //_pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdVLower;", &_srtGlobals.srt_iLightSphericalHSVThresholdVLower);
-  //_pShell->DeclareSymbol("persistent user INDEX srt_iLightSphericalHSVThresholdVUpper;", &_srtGlobals.srt_iLightSphericalHSVThresholdVUpper);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalIntensityMultiplier;", &_srtGlobals.srt_fLightSphericalIntensityMultiplier);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalSaturation;", &_srtGlobals.srt_fLightSphericalSaturation);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalColorPow;", &_srtGlobals.srt_fLightSphericalColorPow);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalRadiusMultiplier;", &_srtGlobals.srt_fLightSphericalRadiusMultiplier);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalRadiusOfDynamic;", &_srtGlobals.srt_fLightSphericalRadiusOfDynamic);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalRadiusOfPotentialMultiplier;", &_srtGlobals.srt_fLightSphericalRadiusOfPotentialMultiplier);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffMultiplier;", &_srtGlobals.srt_fLightSphericalFalloffMultiplier);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffOfDynamicMultiplier;", &_srtGlobals.srt_fLightSphericalFalloffOfDynamicMultiplier);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffOfPotentialMultiplier;", &_srtGlobals.srt_fLightSphericalFalloffOfPotentialMultiplier);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffOfDynamicMin;", &_srtGlobals.srt_fLightSphericalFalloffOfDynamicMin);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalFalloffOfDynamicMax;", &_srtGlobals.srt_fLightSphericalFalloffOfDynamicMax);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphericalPolygonOffset;", &_srtGlobals.srt_fLightSphericalPolygonOffset);
-  _pShell->DeclareSymbol("persistent user INDEX srt_bLightSphericalIgnoreEditorModels;", &_srtGlobals.srt_bLightSphericalIgnoreEditorModels);
+  _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphMaxCount;", &_srtGlobals.srt_iLightSphMaxCount);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphSaturation;", &_srtGlobals.srt_fLightSphSaturation);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphColorPow;", &_srtGlobals.srt_fLightSphColorPow);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphPolygonOffset;", &_srtGlobals.srt_fLightSphPolygonOffset);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bLightSphIgnoreEditorModels;", &_srtGlobals.srt_bLightSphIgnoreEditorModels);
 
-  _pShell->DeclareSymbol("persistent user INDEX srt_bWeaponUseOriginalNormals;", &_srtGlobals.srt_bWeaponUseOriginalNormals);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fOriginalLightSphIntensity;", &_srtGlobals.srt_fOriginalLightSphIntensity);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fOriginalLightSphRadiusMultiplier;", &_srtGlobals.srt_fOriginalLightSphRadiusMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fOriginalLightSphFalloffMultiplier;", &_srtGlobals.srt_fOriginalLightSphFalloffMultiplier);
 
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fParticlesAlphaMultiplier;", &_srtGlobals.srt_fParticlesAlphaMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fDynamicLightSphIntensity;", &_srtGlobals.srt_fDynamicLightSphIntensity);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fDynamicLightSphRadius;", &_srtGlobals.srt_fDynamicLightSphRadius);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fDynamicLightSphFalloffMultiplier;", &_srtGlobals.srt_fDynamicLightSphFalloffMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fDynamicLightSphFalloffMin;", &_srtGlobals.srt_fDynamicLightSphFalloffMin);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fDynamicLightSphFalloffMax;", &_srtGlobals.srt_fDynamicLightSphFalloffMax);
 
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightMuzzleOffset;", &_srtGlobals.srt_fLightMuzzleOffset);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fPotentialLightSphIntensity;", &_srtGlobals.srt_fPotentialLightSphIntensity);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fPotentialLightSphRadiusMultiplier;", &_srtGlobals.srt_fPotentialLightSphRadiusMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fPotentialLightSphFalloffMultiplier;", &_srtGlobals.srt_fPotentialLightSphFalloffMultiplier);
+
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fMuzzleLightIntensity;", &_srtGlobals.srt_fMuzzleLightIntensity);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fMuzzleLightRadius;", &_srtGlobals.srt_fMuzzleLightRadius);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fMuzzleLightFalloffMultiplier;", &_srtGlobals.srt_fMuzzleLightFalloffMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fMuzzleLightOffset;", &_srtGlobals.srt_fMuzzleLightOffset);
+
   _pShell->DeclareSymbol("persistent user INDEX srt_bLightFixWithModels;", &_srtGlobals.srt_bLightFixWithModels);
   _pShell->DeclareSymbol("persistent user INDEX srt_bLightFixWithTranslucent;", &_srtGlobals.srt_bLightFixWithTranslucent);
 
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fSpotlightRadius;", &_srtGlobals.srt_fSpotlightRadius);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fSpotlightAngleOuter;", &_srtGlobals.srt_fSpotlightAngleOuter);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fSpotlightAngleInner;", &_srtGlobals.srt_fSpotlightAngleInner);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fSpotlightFalloffDistance;", &_srtGlobals.srt_fSpotlightFalloffDistance);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fFlashlightRadius;", &_srtGlobals.srt_fFlashlightRadius);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fFlashlightAngleOuter;", &_srtGlobals.srt_fFlashlightAngleOuter);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fFlashlightAngleInner;", &_srtGlobals.srt_fFlashlightAngleInner);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fFlashlightFalloffDistance;", &_srtGlobals.srt_fFlashlightFalloffDistance);
 
-  _pShell->DeclareSymbol("persistent user FLOAT srt_vSpotlightOffset[3];", &_srtGlobals.srt_vSpotlightOffset);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_vSpotlightOffsetThirdPerson[3];", &_srtGlobals.srt_vSpotlightOffsetThirdPerson);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_vSpotlightColor[3];", &_srtGlobals.srt_vSpotlightColor);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_vFlashlightOffset[3];", &_srtGlobals.srt_vFlashlightOffset);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_vFlashlightOffsetThirdPerson[3];", &_srtGlobals.srt_vFlashlightOffsetThirdPerson);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_vFlashlightColor[3];", &_srtGlobals.srt_vFlashlightColor);
 
   _pShell->DeclareSymbol("persistent user INDEX srt_bMaxBounceShadowsUseDefault;", &_srtGlobals.srt_bMaxBounceShadowsUseDefault);
   _pShell->DeclareSymbol("persistent user INDEX srt_iMaxBounceShadowsDirectionalLights;", &_srtGlobals.srt_iMaxBounceShadowsDirectionalLights);
@@ -115,8 +116,12 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fModelLODMul;", &_srtGlobals.srt_fModelLODMul);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fModelLODAdd;", &_srtGlobals.srt_fModelLODAdd);
 
+  _pShell->DeclareSymbol("persistent user INDEX srt_bWeaponUseOriginalNormals;", &_srtGlobals.srt_bWeaponUseOriginalNormals);
+
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fParticlesAlphaMultiplier;", &_srtGlobals.srt_fParticlesAlphaMultiplier);
+
   // user controls
-  _pShell->DeclareSymbol("user INDEX ctl_bFlashlight;", &_srtGlobals.srt_bSpotlightEnable);
+  _pShell->DeclareSymbol("user INDEX ctl_bFlashlight;", &_srtGlobals.srt_bFlashlightEnable);
 }
 
 void SSRT::SSRTMain::NormalizeShellVariables()
@@ -145,38 +150,38 @@ void SSRT::SSRTMain::NormalizeShellVariables()
     _srtGlobals.srt_fSkyColorDefault(i) = ClampDn(_srtGlobals.srt_fSkyColorDefault(i), 0.0f);
   }
 
-  _srtGlobals.srt_fDefaultSpecularMetallic = Clamp(_srtGlobals.srt_fDefaultSpecularMetallic, 0.0f, 1.0f);
-  _srtGlobals.srt_fDefaultSpecularRoughness = Clamp(_srtGlobals.srt_fDefaultSpecularRoughness, 0.0f, 1.0f);
-  _srtGlobals.srt_fDefaultReflectiveMetallic = Clamp(_srtGlobals.srt_fDefaultReflectiveMetallic, 0.0f, 1.0f);
-  _srtGlobals.srt_fDefaultReflectiveRoughness = Clamp(_srtGlobals.srt_fDefaultReflectiveRoughness, 0.0f, 1.0f);
+  _srtGlobals.srt_fModelSpecularMetallicDefault = Clamp(_srtGlobals.srt_fModelSpecularMetallicDefault, 0.0f, 1.0f);
+  _srtGlobals.srt_fModelSpecularRoughnessDefault = Clamp(_srtGlobals.srt_fModelSpecularRoughnessDefault, 0.0f, 1.0f);
+  _srtGlobals.srt_fModelReflectiveMetallicDefault = Clamp(_srtGlobals.srt_fModelReflectiveMetallicDefault, 0.0f, 1.0f);
+  _srtGlobals.srt_fModelReflectiveRoughnessDefault = Clamp(_srtGlobals.srt_fModelReflectiveRoughnessDefault, 0.0f, 1.0f);
 
   _srtGlobals.srt_bEnableViewerShadows = !!_srtGlobals.srt_bEnableViewerShadows;
 
-  _srtGlobals.srt_fLightDirectionalIntensityMultiplier = Max(_srtGlobals.srt_fLightDirectionalIntensityMultiplier, 0.0f);
-  _srtGlobals.srt_fLightDirectionalSaturation = Max(_srtGlobals.srt_fLightDirectionalSaturation, 0.0f);
-  _srtGlobals.srt_fLightDirectionalColorPow = Max(_srtGlobals.srt_fLightDirectionalColorPow, 0.0f);
-  _srtGlobals.srt_fLightDirectionalAngularDiameter = Max(_srtGlobals.srt_fLightDirectionalAngularDiameter, 0.0f);
+  _srtGlobals.srt_fSunIntensity = Max(_srtGlobals.srt_fSunIntensity, 0.0f);
+  _srtGlobals.srt_fSunSaturation = Max(_srtGlobals.srt_fSunSaturation, 0.0f);
+  _srtGlobals.srt_fSunColorPow = Max(_srtGlobals.srt_fSunColorPow, 0.0f);
+  _srtGlobals.srt_fSunAngularDiameter = Max(_srtGlobals.srt_fSunAngularDiameter, 0.0f);
 
-  //_srtGlobals.srt_iLightSphericalHSVThresholdHLower     = Clamp<INDEX>(_srtGlobals.srt_iLightSphericalHSVThresholdHLower, 0, 255);
-  //_srtGlobals.srt_iLightSphericalHSVThresholdHUpper     = Clamp<INDEX>(_srtGlobals.srt_iLightSphericalHSVThresholdHUpper, 0, 255);
-  //_srtGlobals.srt_iLightSphericalHSVThresholdVLower     = Clamp<INDEX>(_srtGlobals.srt_iLightSphericalHSVThresholdVLower, 0, 255);
-  //_srtGlobals.srt_iLightSphericalHSVThresholdVUpper     = Clamp<INDEX>(_srtGlobals.srt_iLightSphericalHSVThresholdVUpper, 0, 255);
-  _srtGlobals.srt_fLightSphericalIntensityMultiplier = Max(_srtGlobals.srt_fLightSphericalIntensityMultiplier, 0.0f);
-  _srtGlobals.srt_fLightSphericalSaturation = Max(_srtGlobals.srt_fLightSphericalSaturation, 0.0f);
-  _srtGlobals.srt_fLightSphericalColorPow = Max(_srtGlobals.srt_fLightSphericalColorPow, 0.0f);
-  _srtGlobals.srt_fLightSphericalRadiusMultiplier = Max(_srtGlobals.srt_fLightSphericalRadiusMultiplier, 0.0f);
-  _srtGlobals.srt_fLightSphericalFalloffMultiplier = Max(_srtGlobals.srt_fLightSphericalFalloffMultiplier, 0.0f);
+  _srtGlobals.srt_fOriginalLightSphIntensity = Max(_srtGlobals.srt_fOriginalLightSphIntensity, 0.0f);
+  _srtGlobals.srt_fOriginalLightSphRadiusMultiplier = Max(_srtGlobals.srt_fOriginalLightSphRadiusMultiplier, 0.0f);
+  _srtGlobals.srt_fOriginalLightSphFalloffMultiplier = Max(_srtGlobals.srt_fOriginalLightSphFalloffMultiplier, 0.0f);
 
-  _srtGlobals.srt_fLightSphericalRadiusOfDynamic = Max(_srtGlobals.srt_fLightSphericalRadiusOfDynamic, 0.0f);
-  _srtGlobals.srt_fLightSphericalRadiusOfPotentialMultiplier = Max(_srtGlobals.srt_fLightSphericalRadiusOfPotentialMultiplier, 0.0f);
-  _srtGlobals.srt_fLightSphericalFalloffOfDynamicMultiplier = Max(_srtGlobals.srt_fLightSphericalFalloffOfDynamicMultiplier, 0.0f);
-  _srtGlobals.srt_fLightSphericalFalloffOfPotentialMultiplier = Max(_srtGlobals.srt_fLightSphericalFalloffOfPotentialMultiplier, 0.0f);
-  _srtGlobals.srt_fLightSphericalFalloffOfDynamicMin = Max(_srtGlobals.srt_fLightSphericalFalloffOfDynamicMin, 0.0f);
-  _srtGlobals.srt_fLightSphericalFalloffOfDynamicMax = Max(_srtGlobals.srt_fLightSphericalFalloffOfDynamicMax, 0.0f);
+  _srtGlobals.srt_fDynamicLightSphIntensity = Max(_srtGlobals.srt_fDynamicLightSphIntensity, 0.0f);
+  _srtGlobals.srt_fDynamicLightSphRadius = Max(_srtGlobals.srt_fDynamicLightSphRadius, 0.0f);
+  _srtGlobals.srt_fDynamicLightSphFalloffMultiplier = Max(_srtGlobals.srt_fDynamicLightSphFalloffMultiplier, 0.0f);
+  _srtGlobals.srt_fDynamicLightSphFalloffMin = Max(_srtGlobals.srt_fDynamicLightSphFalloffMin, 0.0f);
+  _srtGlobals.srt_fDynamicLightSphFalloffMax = Max(_srtGlobals.srt_fDynamicLightSphFalloffMax, 0.0f);
 
-  _srtGlobals.srt_fLightMuzzleOffset = Max(_srtGlobals.srt_fLightMuzzleOffset, 0.0f);
+  _srtGlobals.srt_fPotentialLightSphIntensity = Max(_srtGlobals.srt_fPotentialLightSphIntensity, 0.0f);
+  _srtGlobals.srt_fPotentialLightSphRadiusMultiplier = Max(_srtGlobals.srt_fPotentialLightSphRadiusMultiplier, 0.0f);
+  _srtGlobals.srt_fPotentialLightSphFalloffMultiplier = Max(_srtGlobals.srt_fPotentialLightSphFalloffMultiplier, 0.0f);
 
-  _srtGlobals.srt_bLightSphericalIgnoreEditorModels = !!_srtGlobals.srt_bLightSphericalIgnoreEditorModels;
+  _srtGlobals.srt_fMuzzleLightIntensity = Max(_srtGlobals.srt_fMuzzleLightIntensity, 0.0f);
+  _srtGlobals.srt_fMuzzleLightRadius = Max(_srtGlobals.srt_fMuzzleLightRadius, 0.0f);
+  _srtGlobals.srt_fMuzzleLightFalloffMultiplier = Max(_srtGlobals.srt_fMuzzleLightFalloffMultiplier, 0.0f);
+  _srtGlobals.srt_fMuzzleLightOffset = Max(_srtGlobals.srt_fMuzzleLightOffset, 0.0f);
+
+  _srtGlobals.srt_bLightSphIgnoreEditorModels = !!_srtGlobals.srt_bLightSphIgnoreEditorModels;
   _srtGlobals.srt_bWeaponUseOriginalNormals = !!_srtGlobals.srt_bWeaponUseOriginalNormals;
 
   _srtGlobals.srt_fParticlesAlphaMultiplier = Max(_srtGlobals.srt_fParticlesAlphaMultiplier, 0.0f);
@@ -188,7 +193,7 @@ void SSRT::SSRTMain::NormalizeShellVariables()
 
   _srtGlobals.srt_bModelChangeableTranslucentToAlphaTested = !!_srtGlobals.srt_bModelChangeableTranslucentToAlphaTested;
 
-  _srtGlobals.srt_fCullingMinAngularSize = Clamp(_srtGlobals.srt_fCullingMinAngularSize, -1.0f, 89.5f);
+  _srtGlobals.srt_fCullingMinAngularSize = Clamp(_srtGlobals.srt_fCullingMinAngularSize, -1.0f, 89.9f);
 }
 
 

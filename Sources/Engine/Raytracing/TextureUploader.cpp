@@ -189,7 +189,7 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedAnimatedTextureInfo &an
   std::string overridenPathBase = animInfo.path->FileDir();
   overridenPathBase += animInfo.path->FileName();
 
-  const uint32_t counterOffset = overridenPathBase.length();
+  const uint32_t counterOffset = (uint32_t)overridenPathBase.length();
   overridenPathBase += "000";
 
   overridenPathBase += OVERRIDEN_TEXTURE_FILE_EXTENSION;

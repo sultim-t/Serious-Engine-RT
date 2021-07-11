@@ -285,7 +285,7 @@ bool SSRT::CustomInfo::HasModelFireTexture(CEntity *penModel) const
 
   // when editor light sources are enabled, lights from fire textures 
   // will be added, as they present in a world
-  if (!_srtGlobals.srt_bLightSphericalIgnoreEditorModels)
+  if (!_srtGlobals.srt_bLightSphIgnoreEditorModels)
   {
     return false;
   }
@@ -482,7 +482,7 @@ bool SSRT::CustomInfo::HasLightEntityVertices(CEntity *pen) const
       return false;
     }
 
-    if (_srtGlobals.srt_bLightSphericalIgnoreEditorModels)
+    if (_srtGlobals.srt_bLightSphIgnoreEditorModels)
     {
       return false;
     }

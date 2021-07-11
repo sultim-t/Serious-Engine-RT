@@ -141,13 +141,13 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
 
   if (model.isSpecular)
   {
-    roughness = _srtGlobals.srt_fDefaultSpecularRoughness;
-    metallic = _srtGlobals.srt_fDefaultSpecularMetallic;
+    roughness = _srtGlobals.srt_fModelSpecularRoughnessDefault;
+    metallic = _srtGlobals.srt_fModelSpecularMetallicDefault;
   }
   else if (model.isReflective)
   {
-    roughness = _srtGlobals.srt_fDefaultReflectiveRoughness;
-    metallic = _srtGlobals.srt_fDefaultReflectiveMetallic;
+    roughness = _srtGlobals.srt_fModelReflectiveRoughnessDefault;
+    metallic = _srtGlobals.srt_fModelReflectiveMetallicDefault;
   }
 
   if (!model.isRasterized)
@@ -254,7 +254,7 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
 
 void SSRT::Scene::AddLight(const CSphereLight &sphLt)
 {
-  if (sphLights.size() >= (uint64_t)_srtGlobals.srt_iLightSphericalMaxCount)
+  if (sphLights.size() >= (uint64_t)_srtGlobals.srt_iLightSphMaxCount)
   {
     return;
   }
@@ -278,7 +278,7 @@ void SSRT::Scene::AddLight(const CDirectionalLight &dirLt)
   info.uniqueID = dirLt.entityID;
   info.color = { dirLt.color(1), dirLt.color(2), dirLt.color(3) };
   info.direction = { dirLt.direction(1), dirLt.direction(2), dirLt.direction(3) };
-  info.angularDiameterDegrees = _srtGlobals.srt_fLightDirectionalAngularDiameter;
+  info.angularDiameterDegrees = _srtGlobals.srt_fSunAngularDiameter;
 
   RgResult r = rgUploadDirectionalLight(instance, &info);
   RG_CHECKERROR(r);
@@ -296,12 +296,12 @@ void SSRT::Scene::AddLight(const CSpotLight &spotLt)
   sp.position = { spotLt.absPosition(1), spotLt.absPosition(2), spotLt.absPosition(3) };
   sp.direction = { spotLt.direction(1), spotLt.direction(2), spotLt.direction(3) };
   sp.upVector = { spotLt.upVector(1), spotLt.upVector(2), spotLt.upVector(3) };
-  sp.color = { _srtGlobals.srt_vSpotlightColor(1), _srtGlobals.srt_vSpotlightColor(2), _srtGlobals.srt_vSpotlightColor(3) };
+  sp.color = { _srtGlobals.srt_vFlashlightColor(1), _srtGlobals.srt_vFlashlightColor(2), _srtGlobals.srt_vFlashlightColor(3) };
 
-  sp.angleOuter = RadAngle(_srtGlobals.srt_fSpotlightAngleOuter);
-  sp.angleInner = RadAngle(_srtGlobals.srt_fSpotlightAngleInner);
-  sp.radius = _srtGlobals.srt_fSpotlightRadius;
-  sp.falloffDistance = _srtGlobals.srt_fSpotlightFalloffDistance;
+  sp.angleOuter = RadAngle(_srtGlobals.srt_fFlashlightAngleOuter);
+  sp.angleInner = RadAngle(_srtGlobals.srt_fFlashlightAngleInner);
+  sp.radius = _srtGlobals.srt_fFlashlightRadius;
+  sp.falloffDistance = _srtGlobals.srt_fFlashlightFalloffDistance;
 }
 
 void SSRT::Scene::UpdateBrush(CEntity *pEntity)
