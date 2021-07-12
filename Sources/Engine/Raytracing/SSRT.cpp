@@ -119,11 +119,10 @@ void SSRT::SSRTMain::InitShellVariables()
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_fParticlesAlphaMultiplier;", &_srtGlobals.srt_fParticlesAlphaMultiplier);
 
-  _pShell->DeclareSymbol("           user INDEX srt_bAnimatedSunEnable;", &_srtGlobals.srt_bAnimatedSunEnable);
   _pShell->DeclareSymbol("           user FLOAT srt_vAnimatedSunTargetEuler[3];", &_srtGlobals.srt_vAnimatedSunTargetEuler);
   _pShell->DeclareSymbol("           user INDEX srt_bAnimatedSunRestart;", &_srtGlobals.srt_bAnimatedSunRestart);
   _pShell->DeclareSymbol("           user FLOAT srt_fAnimatedSunTimeOffsetStart;", &_srtGlobals.srt_fAnimatedSunTimeOffsetStart);
-  _pShell->DeclareSymbol("           user FLOAT srt_fAnimatedSunTimeOffsetEnd;", &_srtGlobals.srt_fAnimatedSunTimeOffsetEnd);
+  _pShell->DeclareSymbol("           user FLOAT srt_fAnimatedSunTimeLength;", &_srtGlobals.srt_fAnimatedSunTimeLength);
 
   // user controls
   _pShell->DeclareSymbol("user INDEX ctl_bFlashlight;", &_srtGlobals.srt_bFlashlightEnable);
@@ -184,9 +183,7 @@ void SSRT::SSRTMain::NormalizeShellVariables()
 
   _srtGlobals.srt_fCullingMinAngularSize = Clamp(_srtGlobals.srt_fCullingMinAngularSize, -1.0f, 89.9f);
 
-  _srtGlobals.srt_bAnimatedSunEnable = !!_srtGlobals.srt_bAnimatedSunEnable;
   _srtGlobals.srt_bAnimatedSunRestart = !!_srtGlobals.srt_bAnimatedSunRestart;
-  _srtGlobals.srt_fAnimatedSunTimeOffsetEnd = Max(_srtGlobals.srt_fAnimatedSunTimeOffsetStart + 0.0001f, _srtGlobals.srt_fAnimatedSunTimeOffsetEnd);
 }
 
 

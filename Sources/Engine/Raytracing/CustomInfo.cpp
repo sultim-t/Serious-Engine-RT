@@ -265,19 +265,19 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   switch (eCurrentWorld)
   {
     case EWorld::Hatshepsut:
-      _srtGlobals.srt_bAnimatedSunEnable = true;
-      _srtGlobals.srt_fAnimatedSunTimeOffsetStart = 360;
-      _srtGlobals.srt_fAnimatedSunTimeOffsetEnd = 480;
+      _srtGlobals.srt_fAnimatedSunTimeOffsetStart = 6 * 60;
+      _srtGlobals.srt_fAnimatedSunTimeLength = 2 * 60;
       _srtGlobals.srt_vAnimatedSunTargetEuler = { 35, -45, 0 };
       break;
     case EWorld::Oasis:
-      _srtGlobals.srt_bAnimatedSunEnable = true;
       _srtGlobals.srt_fAnimatedSunTimeOffsetStart = 60;
-      _srtGlobals.srt_fAnimatedSunTimeOffsetEnd = 300;
+      _srtGlobals.srt_fAnimatedSunTimeLength = 4 * 60;
       _srtGlobals.srt_vAnimatedSunTargetEuler = { -27, -70, 0 };
       break;
     default:
-      _srtGlobals.srt_bAnimatedSunEnable = false;
+      _srtGlobals.srt_fAnimatedSunTimeOffsetStart = 0;
+      // disable animation
+      _srtGlobals.srt_fAnimatedSunTimeLength = -1;
       _srtGlobals.srt_vAnimatedSunTargetEuler = { 45, -45, 0 };
       break;
   }
@@ -473,7 +473,7 @@ FLOAT3D SSRT::CustomInfo::GetAnimatedSunDirection(const FLOAT3D &vOriginalEuler)
 {
   TIME tmCurrent = _pTimer->GetLerpedCurrentTick();
 
-  if (!_srtGlobals.srt_bAnimatedSunEnable)
+  if (_srtGlobals.srt_fAnimatedSunTimeLength <= 0.0f)
   {
     FLOAT3D vDirection;
     AnglesToDirectionVector(vOriginalEuler, vDirection);
@@ -488,7 +488,7 @@ FLOAT3D SSRT::CustomInfo::GetAnimatedSunDirection(const FLOAT3D &vOriginalEuler)
   qTarget.FromEuler(_srtGlobals.srt_vAnimatedSunTargetEuler);
 
   FLOAT t = SmoothStep(tmAnimatedSunOrigin + _srtGlobals.srt_fAnimatedSunTimeOffsetStart, 
-                       tmAnimatedSunOrigin + _srtGlobals.srt_fAnimatedSunTimeOffsetEnd,
+                       tmAnimatedSunOrigin + _srtGlobals.srt_fAnimatedSunTimeOffsetStart + _srtGlobals.srt_fAnimatedSunTimeLength,
                        tmCurrent);
 
   FLOATquat3D qLerped = Slerp(t, qOrigin, qTarget);

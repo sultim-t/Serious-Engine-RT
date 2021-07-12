@@ -115,14 +115,14 @@ struct SSRTGlobals
 
   FLOAT2D srt_fRenderSize = {};
 
-  INDEX srt_bAnimatedSunEnable = 0;
   FLOAT3D srt_vAnimatedSunTargetEuler = {};
   // Set current time as the origin time
   INDEX srt_bAnimatedSunRestart = 0;
-  // Animation starts from (origin + offsetStart) time point
+  // Animation starts from (Origin + OffsetStart) time point
   FLOAT srt_fAnimatedSunTimeOffsetStart = 0;
-  // Animation ends on (origin + offsetEnd) time point
-  FLOAT srt_fAnimatedSunTimeOffsetEnd = 0;
+  // Animation ends on (Origin + OffsetStart + Length) time point.
+  // Animation is disabled, if it's negative
+  FLOAT srt_fAnimatedSunTimeLength = 0;
 };
 
 }
