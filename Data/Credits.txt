@@ -1,0 +1,238 @@
+CREDITS
+
+
+SERIOUS SAM: RAY TRACED
+
+PROGRAMMING
+ADDITIONAL 2D ART
+Sultim Tsyrendashiev
+
+Special thanks to Dreamy Cecil and other members 
+of Serious Sam modding community
+
+
+CROTEAM:
+
+PROGRAMMING
+Alen Ladavac
+Davor Hunski
+Dean Sekulic
+Nikola Mosettig
+Darko Martinovic
+
+GAME DESIGN
+Davor Hunski
+Davor Tomicic
+
+2D ART
+Dinko Pavicic
+Petar Ivancek
+Zeljko Visnjic
+
+3D ART
+Admir Elezovic
+Tomislav Pongrac
+
+LEVEL DESIGN
+Davor Tomicic
+Davor Hunski
+Ivan Mika
+Tomislav Pongrac
+Damjan Mravunac
+
+MUSIC & SOUND
+Damjan Mravunac
+
+CEO
+Roman Ribaric
+
+
+OTHER:
+
+Serious Sam Voice by John J. Dick aka "Booger"
+
+Moral Boost by LEVELORD and Old Man Murray
+
+amp11lib library by Niklas Beisert
+
+Additional Programming by Damir Perovic
+
+Additional Moral Boost by
+Michael Harris
+Matt "Lutrosis" McGill
+Korey "Wussboy" Peters
+
+Additional Artwork by
+Hrvoje Colic
+Mladen Tripalo
+Aleksandar Vjestica
+
+Manual by William Haskins
+
+Serious Testing by
+Tarantula Testing Suite: Mark Lloyd, Denby Grace, Andy Mason, 
+Phil Alexander, Matt Hewitt, Jim Cree, Phil Deane, Lee Johnson, 
+Kevin Hobson, Paul Byers, Julian Turner, Charlie Kinloch, 
+Kit Brown, Tim Bates, Rob Dunkin
+TalonSoft: Phil Santiago, Chien Yu, Lisa Nawrot, Kai Ma, 
+Josh Rose, Josh Noll, Stephen Thomas, Frank Kirchner, 
+Ryan Littlefield, Scott Vail, Stacey Sharpe, Joe Covello,
+Anne Takeuchi
+
+
+SPECIAL THANKS:
+
+Michael Abrash
+Duck Aiea
+"Angel"
+Michael Belovesick
+"Benjamin"
+John Bergerud
+Joey Blankenship
+"BLooD"
+Jim Bloom
+Aljosa Brajdic
+Darrin Buchanan
+Silvano Bucic
+Aaron Burton
+F. J. "Dominatrix" Campos
+John Carmack
+Newton Cheung
+"Chet"
+Vernon Chiang
+"Collective2000"
+Sean Coyne
+Marko Dabrovic
+Shaun Davis
+Kif Davis
+"Dclock"
+Elio Del Giudice
+Danko Dolinar
+Sebastien Domine
+Alex Duigan
+"FireintheEast"
+Matt Fairclough
+Josh Galloway
+Keith Galocy
+Mark Geraghty
+Kevin "G Money" Glowacki
+Slava Gostrenko
+"Grassy"
+"Grim Reaper"
+Jim Hafner-Eaton
+Brian Harvey
+Mike "StarHawk" Hawks
+Chris Hecker
+"Hell"
+Bernd Holtmann
+Mihael Horvatek
+Robert "Apache" Howarth
+Marshall T. Ireland
+Paul Jacobson
+Dean Janacek
+Zoran Jankovic
+Dorijan Jelincic
+Kristina Jeren
+Joseph Kain
+Hannu Kankaanpaa
+Garret Keirns
+John Kellas
+"Ken"
+"Kilky"
+Randy Kimmett
+Branimir Kovac
+Joe Kreiner
+Julian Kreisler
+Jurica Kresonja
+Igor Krota
+KSET Computer Division
+"LaserRage"
+Jessy Lecomte
+Chia Chin Lee
+Russel Leonard
+Chris Lock
+Samantha Lynn
+Leon Magdic
+Ian Mayall
+Eric McCall
+Matt McClure
+"Mike"
+Harry Miller
+Scott Miller
+Doug Myres
+Jason Mitchell
+"MrEprize"
+Terry Nagy
+Kresimir Nesek
+Vjekoslav Nesek
+Dave Oldcorn
+Daniel Omachi
+Mike Orciari
+Erik P.
+Daniel Peacock
+Matt Poole
+Chris "ProfeSSor" Porosky
+Mitch Potts
+Scott "RainWolf"
+Zach "Goldfinger" Rand
+Scot "Roger Roadkill" Ranney
+Jasmin Redzepagic
+"Relic"
+"Reverend"
+Scott Riddle
+"RoMaN"
+Hrvoje Roncevic
+Zdenko Sabljic
+"Sam the Dingbat"
+Goran Sarlija
+Joost Schuur
+Kenneth Scott
+Marko Sekulic
+Hazard J. Simpson
+Elias Slater
+Derek Smart
+Jeff Smith
+John Spitzer
+"Spunky"
+Jos Stam
+Marko "Fritz" Stifanic
+Rick "Crow" Stirling
+Sam "Serious" Stone
+Kevin Strange
+Christian Studer
+Shawn Swift
+Brandon "Gutspiller" Taylor
+"TheRabidMexican"
+Nicolas Thibieroz
+Tim Tibbetts
+"Tom"
+Jonathan Trainor
+Nick Triantos
+Teo Valic
+Jan Van Oekelen
+Randy J. VanderHeyden
+Roberto Vdovic
+Luke Vernon
+Damian Wegner
+Mike Wenn
+Charles Whatley
+Billy "Wicked" Wilson
+Mike Wilson
+Devin Winterbottom
+Chet Witkowski
+David Wright
+Gabriel Wunderlich
+Omar Yehia
+Zoran "Gandalf" Zmiric
+
+but most importantly our families, girlfriends and friends.
+
+Serious thanks goes to (in random order):
+Shinobi, forager, Gor@n, xxzen, VoOdOo, Mate, Innova, mr man,
+Entroper, Vesto, Shinigami, Protoz, Max Damage, Pendragon,
+Ashaman, ClickerClicker, Devil N, FM, Infernal-Divinity,
+Kaeto, koslov, mike, Napalm man, ReelExterminator, Rich,
+sooperFoX, The Judge, Wesisapie, Xnerd,
+and all other Serious Sam Forum veterans. Thanks for the support.
+
+Mega serious special thanks goes to Robert Westmoreland.
