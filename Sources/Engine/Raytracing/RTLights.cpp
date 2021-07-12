@@ -524,7 +524,9 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *pScene)
     SSRT::CDirectionalLight light = {};
     light.entityID = entityID;
     light.direction = RT_GetDirectionalLightDirection(plsLight, pScene);
-    light.color = RT_GetDirectionalLightColor(plsLight) * _srtGlobals.srt_fSunIntensity;
+    light.color = RT_GetDirectionalLightColor(plsLight) * 
+                  _srtGlobals.srt_fSunIntensity * 
+                  (1.0 - pScene->GetCustomInfo()->GetCloudsOpacity());
 
     pScene->AddLight(light);
   }

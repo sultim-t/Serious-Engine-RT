@@ -37,7 +37,7 @@ extern SSRT::SSRTGlobals _srtGlobals;
 
 enum class EWorld
 {
-  None,
+  Other,
   Hatshepsut,
   SandCanyon,       
   TombOfRamses,    
@@ -94,7 +94,7 @@ static EWorld GetWorldEnum(CWorld *pWorld)
     }
   }
   
-  return EWorld::None;
+  return EWorld::Other;
 }
 
 
@@ -264,6 +264,12 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
 
   switch (eCurrentWorld)
   {
+    case EWorld::Hatshepsut:
+      _srtGlobals.srt_bAnimatedSunEnable = true;
+      _srtGlobals.srt_fAnimatedSunTimeOffsetStart = 360;
+      _srtGlobals.srt_fAnimatedSunTimeOffsetEnd = 480;
+      _srtGlobals.srt_vAnimatedSunTargetEuler = { 35, -45, 0 };
+      break;
     case EWorld::Oasis:
       _srtGlobals.srt_bAnimatedSunEnable = true;
       _srtGlobals.srt_fAnimatedSunTimeOffsetStart = 60;
@@ -272,8 +278,14 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       break;
     default:
       _srtGlobals.srt_bAnimatedSunEnable = false;
+      _srtGlobals.srt_vAnimatedSunTargetEuler = { 45, -45, 0 };
       break;
   }
+
+
+  // Hatshepsut level has clouds that should obscure the sun
+  bSunIntensityDependsOnSkyClouds = eCurrentWorld == EWorld::Hatshepsut;
+  fSkyCloudsOpacity = 0.0f;
 }
 
 SSRT::CustomInfo::~CustomInfo()
@@ -487,6 +499,11 @@ FLOAT3D SSRT::CustomInfo::GetAnimatedSunDirection(const FLOAT3D &vOriginalEuler)
   return FLOAT3D(0, 0, -1) * mLerped;
 }
 
+FLOAT SSRT::CustomInfo::GetCloudsOpacity() const
+{
+  return bSunIntensityDependsOnSkyClouds ? fSkyCloudsOpacity : 0.0f;
+}
+
 bool SSRT::CustomInfo::AreDynamicTexCoordsIgnored(CEntity *penBrush) const
 {
   return _srtGlobals.srt_bIgnoreDynamicTexCoords;
@@ -615,5 +632,24 @@ void SSRT::CustomInfo::DisableFlashlightHint()
   {
     _pShell->SetINDEX("hud_bShowFlashlightHint", 0);
     isFlashlightHintEnabled = false;
+  }
+}
+
+void SSRT::CustomInfo::OnSkyBrushAdd(const SSRT::CBrushGeometry &brush)
+{
+  ASSERT(brush.isSky);
+
+  if (!bSunIntensityDependsOnSkyClouds)
+  {
+    return;
+  }
+
+  const uint32_t iCloudsLayer = 1;
+
+  // hardcoded way to determine cloud opacity
+  if (brush.textures[iCloudsLayer] != nullptr && brush.textures[iCloudsLayer]->GetName().FileName() == "Storm5")
+  {
+    // get alpha value
+    fSkyCloudsOpacity = Clamp(brush.layerColors[iCloudsLayer](4), 0.0f, 1.0f);
   }
 }

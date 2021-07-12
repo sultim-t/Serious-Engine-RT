@@ -20,6 +20,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Math/Vector.h>
 #include <Engine/World/World.h>
+#include <Engine/Raytracing/SSRTObjects.h>
 
 namespace SSRT
 {
@@ -49,8 +50,10 @@ public:
   bool IsDirectionalLightIgnored(const CLightSource *plsLight) const;
   bool IsSphericalLightIgnored(const CLightSource *plsLight) const;
   FLOAT3D GetAnimatedSunDirection(const FLOAT3D &vOriginalEuler) const;
+  FLOAT GetCloudsOpacity() const;
 
   void Update();
+  void OnSkyBrushAdd(const CBrushGeometry &brush);
 
 private:
   static bool IsTextureNameIn(CTextureData *ptd, const char * const pCollection[], uint32_t iCount);
@@ -70,6 +73,9 @@ private:
   TIME tmFlashlightHintEnd;
 
   TIME tmAnimatedSunOrigin;
+
+  bool bSunIntensityDependsOnSkyClouds;
+  FLOAT fSkyCloudsOpacity;
 };
 
 }

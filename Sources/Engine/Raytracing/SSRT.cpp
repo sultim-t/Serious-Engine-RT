@@ -41,8 +41,8 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMinLogLuminance;", &_srtGlobals.srt_fTonemappingMinLogLuminance);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMaxLogLuminance;", &_srtGlobals.srt_fTonemappingMaxLogLuminance);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorMultiplier;", &_srtGlobals.srt_fSkyColorMultiplier);
-  _pShell->DeclareSymbol("persistent user INDEX srt_bShowGradients;", &_srtGlobals.srt_bShowGradients);
-  _pShell->DeclareSymbol("persistent user INDEX srt_bShowMotionVectors;", &_srtGlobals.srt_bShowMotionVectors);
+  _pShell->DeclareSymbol("           user INDEX srt_bShowGradients;", &_srtGlobals.srt_bShowGradients);
+  _pShell->DeclareSymbol("           user INDEX srt_bShowMotionVectors;", &_srtGlobals.srt_bShowMotionVectors);
   _pShell->DeclareSymbol("           user INDEX srt_bReloadShaders;", &_srtGlobals.srt_bReloadShaders);
   _pShell->DeclareSymbol("persistent user INDEX srt_bTexturesOriginalSRGB;", &_srtGlobals.srt_bTexturesOriginalSRGB);
   _pShell->DeclareSymbol("persistent user INDEX srt_bIgnoreDynamicTexCoords;", &_srtGlobals.srt_bIgnoreDynamicTexCoords);
@@ -119,11 +119,11 @@ void SSRT::SSRTMain::InitShellVariables()
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_fParticlesAlphaMultiplier;", &_srtGlobals.srt_fParticlesAlphaMultiplier);
 
-  _pShell->DeclareSymbol("persistent user INDEX srt_bAnimatedSunEnable;", &_srtGlobals.srt_bAnimatedSunEnable);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_vAnimatedSunTargetEuler[3];", &_srtGlobals.srt_vAnimatedSunTargetEuler);
-  _pShell->DeclareSymbol("persistent user INDEX srt_bAnimatedSunRestart;", &_srtGlobals.srt_bAnimatedSunRestart);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fAnimatedSunTimeOffsetStart;", &_srtGlobals.srt_fAnimatedSunTimeOffsetStart);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fAnimatedSunTimeOffsetEnd;", &_srtGlobals.srt_fAnimatedSunTimeOffsetEnd);
+  _pShell->DeclareSymbol("           user INDEX srt_bAnimatedSunEnable;", &_srtGlobals.srt_bAnimatedSunEnable);
+  _pShell->DeclareSymbol("           user FLOAT srt_vAnimatedSunTargetEuler[3];", &_srtGlobals.srt_vAnimatedSunTargetEuler);
+  _pShell->DeclareSymbol("           user INDEX srt_bAnimatedSunRestart;", &_srtGlobals.srt_bAnimatedSunRestart);
+  _pShell->DeclareSymbol("           user FLOAT srt_fAnimatedSunTimeOffsetStart;", &_srtGlobals.srt_fAnimatedSunTimeOffsetStart);
+  _pShell->DeclareSymbol("           user FLOAT srt_fAnimatedSunTimeOffsetEnd;", &_srtGlobals.srt_fAnimatedSunTimeOffsetEnd);
 
   // user controls
   _pShell->DeclareSymbol("user INDEX ctl_bFlashlight;", &_srtGlobals.srt_bFlashlightEnable);

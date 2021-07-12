@@ -251,6 +251,11 @@ void SSRT::Scene::AddBrush(const CBrushGeometry &brush)
 {
   pSceneBrushes->RegisterBrush(brush);
 
+  if (brush.isSky)
+  {
+    pCustomInfo->OnSkyBrushAdd(brush);
+  }
+
   GeometryExporter::ExportGeometry(brush);
 }
 
