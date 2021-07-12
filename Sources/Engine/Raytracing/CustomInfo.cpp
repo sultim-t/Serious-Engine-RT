@@ -198,6 +198,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   ASSERT(pWorld != nullptr);
 
   EWorld eCurrentWorld = GetWorldEnum(pWorld);
+  TIME tmWorldCreation = 0;
 
 
   // Positions of unnecessary brushes (that also have "World Base" names)
@@ -249,12 +250,28 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     case EWorld::TombOfRamses:
     case EWorld::ValleyOfTheKings:
     case EWorld::Sewers:
-      tmFlashlightHintStart = _pTimer->GetLerpedCurrentTick() + 1.0f;
+      tmFlashlightHintStart = tmWorldCreation + 1.0f;
       tmFlashlightHintEnd = tmFlashlightHintStart + 5.0f;
       break;
     default:
       tmFlashlightHintStart = -1.0f;
       tmFlashlightHintEnd = -1.0f;
+      break;
+  }
+
+
+  tmAnimatedSunOrigin = tmWorldCreation;
+
+  switch (eCurrentWorld)
+  {
+    case EWorld::Oasis:
+      _srtGlobals.srt_bAnimatedSunEnable = true;
+      _srtGlobals.srt_fAnimatedSunTimeOffsetStart = 60;
+      _srtGlobals.srt_fAnimatedSunTimeOffsetEnd = 300;
+      _srtGlobals.srt_vAnimatedSunTargetEuler = { -27, -70, 0 };
+      break;
+    default:
+      _srtGlobals.srt_bAnimatedSunEnable = false;
       break;
   }
 }
@@ -433,6 +450,43 @@ bool SSRT::CustomInfo::IsSphericalLightIgnored(const CLightSource *plsLight) con
   return true;
 }
 
+template<class Type>
+inline Type SmoothStep(const Type edge0, const Type edge1, const Type x)
+{
+  Type t = Clamp((x - edge0) / (edge1 - edge0), (Type)0.0, (Type)1.0);
+  return t * t * (3.0 - 2.0 * t);
+}
+
+FLOAT3D SSRT::CustomInfo::GetAnimatedSunDirection(const FLOAT3D &vOriginalEuler) const
+{
+  TIME tmCurrent = _pTimer->GetLerpedCurrentTick();
+
+  if (!_srtGlobals.srt_bAnimatedSunEnable)
+  {
+    FLOAT3D vDirection;
+    AnglesToDirectionVector(vOriginalEuler, vDirection);
+  
+    return vDirection;
+  }
+
+  FLOATquat3D qOrigin;
+  qOrigin.FromEuler(vOriginalEuler);
+
+  FLOATquat3D qTarget;
+  qTarget.FromEuler(_srtGlobals.srt_vAnimatedSunTargetEuler);
+
+  FLOAT t = SmoothStep(tmAnimatedSunOrigin + _srtGlobals.srt_fAnimatedSunTimeOffsetStart, 
+                       tmAnimatedSunOrigin + _srtGlobals.srt_fAnimatedSunTimeOffsetEnd,
+                       tmCurrent);
+
+  FLOATquat3D qLerped = Slerp(t, qOrigin, qTarget);
+
+  FLOATmatrix3D mLerped;
+  qLerped.ToMatrix(mLerped);
+
+  return FLOAT3D(0, 0, -1) * mLerped;
+}
+
 bool SSRT::CustomInfo::AreDynamicTexCoordsIgnored(CEntity *penBrush) const
 {
   return _srtGlobals.srt_bIgnoreDynamicTexCoords;
@@ -521,6 +575,7 @@ void SSRT::CustomInfo::Update()
 {
   TIME tmCurrent = _pTimer->GetLerpedCurrentTick();
 
+
   // if flashlight was enabled, don't show the hint anymore
   if (_srtGlobals.srt_bFlashlightEnable)
   {
@@ -535,6 +590,13 @@ void SSRT::CustomInfo::Update()
   else
   {
     DisableFlashlightHint();
+  }
+
+
+  if (_srtGlobals.srt_bAnimatedSunRestart)
+  {
+    tmAnimatedSunOrigin = tmCurrent;
+    _srtGlobals.srt_bAnimatedSunRestart = 0;
   }
 }
 

@@ -16,6 +16,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "StdH.h"
 
 #include <Engine/Entities/Entity.h>
+#include <Engine/Math/Quaternion.h>
 #include <Engine/Models/RenderModel.h>
 #include <Engine/Models/ModelObject.h>
 #include <Engine/Models/ModelData.h>
@@ -75,7 +76,7 @@ static void RT_AdjustPow(FLOAT3D &color, float power)
 }
 
 
-static FLOAT3D GetDirectionalLightColor(const CLightSource *plsLight)
+static FLOAT3D RT_GetDirectionalLightColor(const CLightSource *plsLight)
 {
   UBYTE r, g, b;
   plsLight->GetLightColor(r, g, b);
@@ -88,7 +89,7 @@ static FLOAT3D GetDirectionalLightColor(const CLightSource *plsLight)
 }
 
 
-static FLOAT3D GetSphericalLightColor(const CLightSource *plsLight)
+static FLOAT3D RT_GetSphericalLightColor(const CLightSource *plsLight)
 {
   UBYTE r, g, b;
   plsLight->GetLightColor(r, g, b);
@@ -98,6 +99,14 @@ static FLOAT3D GetSphericalLightColor(const CLightSource *plsLight)
   RT_AdjustPow(color, _srtGlobals.srt_fLightSphColorPow);
 
   return color;
+}
+
+
+static FLOAT3D RT_GetDirectionalLightDirection(const CLightSource *plsLight, SSRT::Scene *pScene)
+{
+  CPlacement3D pl = plsLight->ls_penEntity->GetLerpedPlacement();
+
+  return pScene->GetCustomInfo()->GetAnimatedSunDirection(pl.pl_OrientationAngle);
 }
 
 
@@ -512,13 +521,10 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *pScene)
       return;
     }
 
-    FLOAT3D direction;
-    AnglesToDirectionVector(pEn->GetLerpedPlacement().pl_OrientationAngle, direction);
-
     SSRT::CDirectionalLight light = {};
     light.entityID = entityID;
-    light.direction = direction;
-    light.color = GetDirectionalLightColor(plsLight) * _srtGlobals.srt_fSunIntensity;
+    light.direction = RT_GetDirectionalLightDirection(plsLight, pScene);
+    light.color = RT_GetDirectionalLightColor(plsLight) * _srtGlobals.srt_fSunIntensity;
 
     pScene->AddLight(light);
   }
@@ -567,7 +573,7 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *pScene)
       _srtGlobals.srt_fOriginalLightSphIntensity;
 
     RT_AddModifiedSphereLightToScene(entityID,
-                                     position, GetSphericalLightColor(plsLight) * intensity,
+                                     position, RT_GetSphericalLightColor(plsLight) * intensity,
                                      plsLight->ls_rHotSpot, plsLight->ls_rFallOff,
                                      isDynamic, isMuzzleFlash,
                                      pScene);
@@ -614,7 +620,7 @@ static void RT_TryAddPotentialLight(CEntity *pEn, SSRT::Scene *pScene)
     const CLightSource *plsLight = RT_IgnoredLights[closestLtIndex];
 
     RT_AddModifiedSphereLightToScene(pEn->en_ulID,
-                                     closestPos, GetSphericalLightColor(plsLight) * _srtGlobals.srt_fPotentialLightSphIntensity,
+                                     closestPos, RT_GetSphericalLightColor(plsLight) * _srtGlobals.srt_fPotentialLightSphIntensity,
                                      plsLight->ls_rHotSpot * _srtGlobals.srt_fPotentialLightSphRadiusMultiplier,
                                      plsLight->ls_rFallOff * _srtGlobals.srt_fPotentialLightSphFalloffMultiplier,
                                      isDynamic, false,

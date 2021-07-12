@@ -38,13 +38,17 @@ public:
   bool IsWaterTexture(CTextureData *ptd) const;
   bool IsFireTexture(CTextureData *ptd) const;
   bool HasModelFireTexture(CEntity *penModel) const;
+
   bool IsAngularSizeCullingDisabled(CEntity *penModel) const;
-  bool IsBrushIgnored(CEntity *penBrush) const;
-  bool IsDirectionalLightIgnored(const CLightSource *plsLight) const;
-  bool IsSphericalLightIgnored(const CLightSource *plsLight) const;
-  bool AreDynamicTexCoordsIgnored(CEntity *penBrush) const;
   bool IsReflectiveForced(CTextureObject *pTo) const;
   bool IsAlphaTestForced(CTextureObject *pTo, bool isTranslucent) const;
+
+  bool IsBrushIgnored(CEntity *penBrush) const;
+  bool AreDynamicTexCoordsIgnored(CEntity *penBrush) const;
+
+  bool IsDirectionalLightIgnored(const CLightSource *plsLight) const;
+  bool IsSphericalLightIgnored(const CLightSource *plsLight) const;
+  FLOAT3D GetAnimatedSunDirection(const FLOAT3D &vOriginalEuler) const;
 
   void Update();
 
@@ -64,6 +68,8 @@ private:
   bool isFlashlightHintEnabled;
   TIME tmFlashlightHintStart;
   TIME tmFlashlightHintEnd;
+
+  TIME tmAnimatedSunOrigin;
 };
 
 }
