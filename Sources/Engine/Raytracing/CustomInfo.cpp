@@ -57,7 +57,7 @@ enum class EWorld
 
 
 
-static struct
+const struct
 {
   const char  *pName;
   EWorld      eWorld;
@@ -98,7 +98,35 @@ static EWorld GetWorldEnum(CWorld *pWorld)
 }
 
 
-static struct 
+const struct
+{
+  EWorld  eWorld;
+  FLOAT   fSunIntensity;
+  FLOAT   fSunSaturation;
+  FLOAT   fSkyColorMultiplier;
+  FLOAT   fSkyColorSaturation;
+}
+RT_WorldIlluminationDefaultParams[] =
+{
+  { EWorld::Hatshepsut,        4.0f, 0.5f, 1.0f, 0.75f },
+  { EWorld::SandCanyon,        4.0f, 0.5f, 1.0f, 0.75f },
+  { EWorld::TombOfRamses,      4.0f, 0.5f, 1.0f, 0.75f },
+  { EWorld::ValleyOfTheKings,  4.0f, 0.5f, 1.0f, 0.75f },
+  { EWorld::MoonMountains,     4.0f, 0.5f, 1.0f, 0.75f },
+  { EWorld::Oasis,             4.0f, 0.5f, 1.0f, 0.75f },
+  { EWorld::Dunes,             4.0f, 0.5f, 1.0f, 0.75f },
+  { EWorld::Suburbs,           4.0f, 0.5f, 1.0f, 0.75f },
+  { EWorld::Sewers,            4.0f, 0.5f, 1.0f, 0.75f },
+  { EWorld::Metropolis,        4.0f, 0.5f, 1.0f, 0.75f },
+  { EWorld::AlleyOfSphinxes,   4.0f, 0.5f, 1.0f, 0.75f },
+  { EWorld::Karnak,            4.0f, 0.5f, 1.0f, 0.75f },
+  { EWorld::Luxor,             4.0f, 0.5f, 1.0f, 0.75f },
+  { EWorld::SacredYards,       4.0f, 0.5f, 1.0f, 0.75f },
+  { EWorld::TheGreatPyramid,   4.0f, 0.5f, 1.0f, 0.75f },
+};
+
+
+const struct
 {
   EWorld  eWorld;
   INDEX   iCullingMaxSectorDepth;
@@ -126,7 +154,7 @@ RT_WorldParams[] =
 
 constexpr float WORLD_BASE_FORCE_INVISIBLE_EPSILON = 0.5f;
 
-static struct
+const struct
 {
   EWorld eWorld;
   FLOAT3D vPosition;
@@ -143,7 +171,7 @@ RT_WorldBaseToIgnore[] =
 };
 
 
-static struct
+const struct
 {
   EWorld      eWorld;
   const char  *pEntityName;
@@ -198,7 +226,12 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   ASSERT(pWorld != nullptr);
 
   EWorld eCurrentWorld = GetWorldEnum(pWorld);
-  TIME tmWorldCreation = 0;
+  
+  // It's not the actual world start time, it's 
+  // the time SSRT scene was initialized. So 
+  // loading a saved game after quitting a world, 
+  // will result in wrong sun animation/flashlight hint
+  TIME tmWorldCreation = _pTimer->GetLerpedCurrentTick();
 
 
   // Positions of unnecessary brushes (that also have "World Base" names)
@@ -228,6 +261,17 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     {
       _srtGlobals.srt_iCullingMaxSectorDepth = s.iCullingMaxSectorDepth;
       _srtGlobals.srt_bIgnoreDynamicTexCoords = s.bIgnoreDynamicTexCoords;
+    }
+  }
+
+  for (const auto &s : RT_WorldIlluminationDefaultParams)
+  {
+    if (s.eWorld == eCurrentWorld)
+    {
+      _srtGlobals.srt_fSunIntensity = s.fSunIntensity;
+      _srtGlobals.srt_fSunSaturation = s.fSunSaturation;
+      _srtGlobals.srt_fSkyColorMultiplier = s.fSkyColorMultiplier;
+      _srtGlobals.srt_fSkyColorSaturation = s.fSkyColorSaturation;
     }
   }
 
@@ -265,7 +309,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   switch (eCurrentWorld)
   {
     case EWorld::Hatshepsut:
-      _srtGlobals.srt_fAnimatedSunTimeOffsetStart = 6 * 60;
+      _srtGlobals.srt_fAnimatedSunTimeOffsetStart = 4 * 60;
       _srtGlobals.srt_fAnimatedSunTimeLength = 2 * 60;
       _srtGlobals.srt_vAnimatedSunTargetEuler = { 35, -45, 0 };
       break;
@@ -286,6 +330,9 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   // Hatshepsut level has clouds that should obscure the sun
   bSunIntensityDependsOnSkyClouds = eCurrentWorld == EWorld::Hatshepsut;
   fSkyCloudsOpacity = 0.0f;
+  // lower sky intensity while it's cloudy
+  bSkyboxIntensityDependsOnSkyClouds = eCurrentWorld == EWorld::Hatshepsut;
+  fSkyboxCloudyIntensity = 0.25f;
 }
 
 SSRT::CustomInfo::~CustomInfo()
@@ -502,6 +549,18 @@ FLOAT3D SSRT::CustomInfo::GetAnimatedSunDirection(const FLOAT3D &vOriginalEuler)
 FLOAT SSRT::CustomInfo::GetCloudsOpacity() const
 {
   return bSunIntensityDependsOnSkyClouds ? fSkyCloudsOpacity : 0.0f;
+}
+
+FLOAT SSRT::CustomInfo::GetSkyIntensity() const
+{
+  return 
+    _srtGlobals.srt_fSkyColorMultiplier *
+    (bSkyboxIntensityDependsOnSkyClouds ? Lerp(1.0f, fSkyboxCloudyIntensity, fSkyCloudsOpacity) : 1.0f);
+}
+
+FLOAT SSRT::CustomInfo::GetSkySaturation() const
+{
+  return _srtGlobals.srt_fSkyColorSaturation;
 }
 
 bool SSRT::CustomInfo::AreDynamicTexCoordsIgnored(CEntity *penBrush) const

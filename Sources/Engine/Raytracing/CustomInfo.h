@@ -51,6 +51,8 @@ public:
   bool IsSphericalLightIgnored(const CLightSource *plsLight) const;
   FLOAT3D GetAnimatedSunDirection(const FLOAT3D &vOriginalEuler) const;
   FLOAT GetCloudsOpacity() const;
+  FLOAT GetSkyIntensity() const;
+  FLOAT GetSkySaturation() const;
 
   void Update();
   void OnSkyBrushAdd(const CBrushGeometry &brush);
@@ -76,6 +78,9 @@ private:
 
   bool bSunIntensityDependsOnSkyClouds;
   FLOAT fSkyCloudsOpacity;
+
+  bool bSkyboxIntensityDependsOnSkyClouds;
+  FLOAT fSkyboxCloudyIntensity;
 };
 
 }

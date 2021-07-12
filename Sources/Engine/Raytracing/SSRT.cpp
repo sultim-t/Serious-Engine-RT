@@ -431,8 +431,8 @@ void SSRT::SSRTMain::EndFrame()
 
     skyParams.skyViewerPosition = { backgroundViewerPos(1), backgroundViewerPos(2), backgroundViewerPos(3) };
     skyParams.skyColorDefault = { 0, 0, 0 };
-    skyParams.skyColorMultiplier = _srtGlobals.srt_fSkyColorMultiplier;
-    skyParams.skyColorSaturation = _srtGlobals.srt_fSkyColorSaturation;
+    skyParams.skyColorMultiplier = currentScene == nullptr ? 1.0f : currentScene->GetCustomInfo()->GetSkyIntensity();
+    skyParams.skyColorSaturation = currentScene == nullptr ? 1.0f : currentScene->GetCustomInfo()->GetSkySaturation();
   }
 
 
