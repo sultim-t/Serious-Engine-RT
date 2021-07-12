@@ -136,10 +136,12 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
 
   const bool isMovable = penBrush->en_ulPhysicsFlags & EPF_MOVABLE;
   const bool isSky = penBrush->en_ulFlags & ENF_BACKGROUND;
+  // assuming that sky type is always RG_SKY_TYPE_RASTERIZED_GEOMETRY
+  const bool isRasterizedSky = isSky;
 
   const bool isRasterized = 
     (!isWater && RT_ShouldBeRasterized(polygonFlags)) ||
-    (isSky && _srtGlobals.srt_iSkyType == RG_SKY_TYPE_RASTERIZED_GEOMETRY);
+    isRasterizedSky;
 
   if (onlyRasterized && !isRasterized)
   {

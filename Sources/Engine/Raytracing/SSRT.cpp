@@ -40,8 +40,6 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingWhitePoint;", &_srtGlobals.srt_fTonemappingWhitePoint);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMinLogLuminance;", &_srtGlobals.srt_fTonemappingMinLogLuminance);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMaxLogLuminance;", &_srtGlobals.srt_fTonemappingMaxLogLuminance);
-  _pShell->DeclareSymbol("persistent user INDEX srt_iSkyType;", &_srtGlobals.srt_iSkyType);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorDefault[3];", &_srtGlobals.srt_fSkyColorDefault);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorMultiplier;", &_srtGlobals.srt_fSkyColorMultiplier);
   _pShell->DeclareSymbol("persistent user INDEX srt_bShowGradients;", &_srtGlobals.srt_bShowGradients);
   _pShell->DeclareSymbol("persistent user INDEX srt_bShowMotionVectors;", &_srtGlobals.srt_bShowMotionVectors);
@@ -140,22 +138,6 @@ void SSRT::SSRTMain::NormalizeShellVariables()
   _srtGlobals.srt_bReloadShaders = !!_srtGlobals.srt_bReloadShaders;
   _srtGlobals.srt_bTexturesOriginalSRGB = !!_srtGlobals.srt_bTexturesOriginalSRGB;
   _srtGlobals.srt_bIgnoreDynamicTexCoords = !!_srtGlobals.srt_bIgnoreDynamicTexCoords;
-
-  switch (_srtGlobals.srt_iSkyType)
-  {
-  case RG_SKY_TYPE_COLOR:
-  case RG_SKY_TYPE_CUBEMAP: 
-  case RG_SKY_TYPE_RASTERIZED_GEOMETRY: 
-  case RG_SKY_TYPE_RAY_TRACED_GEOMETRY:
-    break;
-  default:  
-    _srtGlobals.srt_iSkyType = RG_SKY_TYPE_COLOR;
-  }
-
-  for (uint32_t i = 1; i <= 3; i++)
-  {
-    _srtGlobals.srt_fSkyColorDefault(i) = ClampDn(_srtGlobals.srt_fSkyColorDefault(i), 0.0f);
-  }
 
   _srtGlobals.srt_fModelSpecularMetallicDefault = Clamp(_srtGlobals.srt_fModelSpecularMetallicDefault, 0.0f, 1.0f);
   _srtGlobals.srt_fModelSpecularRoughnessDefault = Clamp(_srtGlobals.srt_fModelSpecularRoughnessDefault, 0.0f, 1.0f);
@@ -446,15 +428,12 @@ void SSRT::SSRTMain::EndFrame()
 
   RgDrawFrameSkyParams skyParams = {};
   {
-    skyParams.skyType = _srtGlobals.srt_iSkyType == 3 ? RG_SKY_TYPE_RAY_TRACED_GEOMETRY :
-      _srtGlobals.srt_iSkyType == 2 ? RG_SKY_TYPE_RASTERIZED_GEOMETRY :
-      _srtGlobals.srt_iSkyType == 1 ? RG_SKY_TYPE_CUBEMAP :
-      RG_SKY_TYPE_COLOR;
+    skyParams.skyType = RG_SKY_TYPE_RASTERIZED_GEOMETRY;
 
     FLOAT3D backgroundViewerPos = currentScene == nullptr ? FLOAT3D(0, 0, 0) : currentScene->GetBackgroundViewerPosition();
 
     skyParams.skyViewerPosition = { backgroundViewerPos(1), backgroundViewerPos(2), backgroundViewerPos(3) };
-    skyParams.skyColorDefault = { _srtGlobals.srt_fSkyColorDefault(1), _srtGlobals.srt_fSkyColorDefault(2), _srtGlobals.srt_fSkyColorDefault(3) };
+    skyParams.skyColorDefault = { 0, 0, 0 };
     skyParams.skyColorMultiplier = _srtGlobals.srt_fSkyColorMultiplier;
     skyParams.skyColorSaturation = _srtGlobals.srt_fSkyColorSaturation;
   }

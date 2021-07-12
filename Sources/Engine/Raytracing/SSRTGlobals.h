@@ -77,10 +77,8 @@ struct SSRTGlobals
 
   FLOAT srt_fParticlesAlphaMultiplier = 1.0f;
 
-  RgSkyType srt_iSkyType = RG_SKY_TYPE_RASTERIZED_GEOMETRY;
   FLOAT srt_fSkyColorMultiplier = 1.0f;
   FLOAT srt_fSkyColorSaturation = 0.7f;
-  FLOAT3D srt_fSkyColorDefault = { 1, 1, 1 };
 
   INDEX srt_bTonemappingUseDefault = 0;
   FLOAT srt_fTonemappingWhitePoint = 1.0f;
