@@ -229,7 +229,8 @@ void OpenMainWindowFullScreen( PIX pixSizeI, PIX pixSizeJ)
   ASSERT( _hwndMain==NULL);
   // create a window, invisible initially
   _hwndMain = CreateWindowExA(
-    WS_EX_TOPMOST | WS_EX_APPWINDOW,
+    // WS_EX_TOPMOST | WS_EX_APPWINDOW,
+    WS_EX_APPWINDOW,
     APPLICATION_NAME,
     "",   // title
     WS_POPUP,

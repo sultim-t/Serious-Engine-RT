@@ -917,8 +917,11 @@ int SubMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int 
             // pause game
             _pNetwork->TogglePause();
           }
+
+        #ifndef SE1_RAYTRACING
           // if in full screen
           if( sam_bFullScreenActive) {
+
             // reset display mode and minimize window
             _pGfx->ResetDisplayMode();
             ShowWindow(_hwndMain, SW_MINIMIZE);
@@ -927,12 +930,19 @@ int SubMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int 
             // just minimize the window
             ShowWindow(_hwndMain, SW_MINIMIZE);
           }
+        #else
+          // RT: don't delete context when the window shoudl be minimized
+          ShowWindow(_hwndMain, SW_MINIMIZE);
+        #endif // !SE1_RAYTRACING
+
           break;
         // if should restore
         case SC_RESTORE:
           if( _bWindowChanging) break;
           _bWindowChanging  = TRUE;
           _bReconsiderInput = TRUE;
+
+        #ifndef SE1_RAYTRACING
           // if in full screen
           if( sam_bFullScreenActive) {
             ShowWindow(_hwndMain, SW_SHOWNORMAL);
@@ -943,7 +953,12 @@ int SubMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int 
           } else {
             // restore window
             ShowWindow(_hwndMain, SW_SHOWNORMAL);
-          }
+          } 
+        #else
+          // RT: don't recreate context when the window should be restored
+          ShowWindow(_hwndMain, SW_SHOWNORMAL);
+        #endif // !SE1_RAYTRACING
+
           break;
         // if should maximize
         case SC_MAXIMIZE:
@@ -1498,6 +1513,12 @@ const INDEX ctDefaultModes = ARRAYCOUNT(aDefaultModes);
 void StartNewMode( enum GfxAPIType eGfxAPI, INDEX iAdapter, PIX pixSizeI, PIX pixSizeJ,
                    enum DisplayDepth eColorDepth, BOOL bFullScreenMode)
 {
+#ifdef SE1_RAYTRACING
+  // RT: force default depth option
+  eColorDepth = DD_DEFAULT;
+#endif // SE1_RAYTRACING
+
+
   CPrintF( TRANS("\n* START NEW DISPLAY MODE ...\n"));
 
   // try to set the mode
