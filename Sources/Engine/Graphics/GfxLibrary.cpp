@@ -2239,6 +2239,126 @@ static void GfxVarPostFunc(void *pvVar)
 
 #endif
 
+void ForceModernHardwareGraphicsSettings()
+{
+  // modified version of Scripts\GLSettings\Initial.ini
 
+  gap_iUseTextureUnits = 4;
+  gap_bOptimizeStateChanges = 1;
+  gap_iOptimizeDepthReads = 1;
+  gap_iOptimizeClipping = 2;
+  gap_bAllowGrayTextures = 1;
+  gap_bAllowSingleMipmap = 1;
+  gap_iTextureFiltering = 21;
+  gap_iTextureAnisotropy = 16;
+  gap_fTextureLODBias = 0;
+  gap_iSwapInterval = 0;
+  gap_iRefreshRate = 0;
+  gap_bForceTruform = 0;
+  gap_iTruformLevel = 0;
+  gap_iDithering = 2;
+
+  ogl_bUseCompiledVertexArrays = 0;
+  ogl_bExclusive = 1;
+  ogl_bAllowQuadArrays = 1;
+  ogl_iMaxBurstSize = 0;
+  ogl_iTextureCompressionType = 1;
+  ogl_bTruformLinearNormals = 1;
+  ogl_iFinish = 1;
+
+  d3d_bUseHardwareTnL = 1;
+  d3d_bAlternateDepthReads = 0;
+  // d3d_bOptimizeVertexBuffers = 0;
+  d3d_iVertexBuffersSize = 512;
+  d3d_iVertexRangeTreshold = 99;
+  d3d_iMaxBurstSize = 21;
+  d3d_iFinish = 0;
+
+  mdl_fLODMul = 1;
+  mdl_fLODAdd = 0;
+  mdl_iLODDisappear = 1;
+  mdl_bRenderDetail = 1;
+  mdl_bRenderSpecular = 1;
+  mdl_bRenderReflection = 1;
+  mdl_iShadowQuality = 1;
+
+  /* if (sys_strModExt == "")
+  {
+    // no overbrighting on models in original SSam
+    mdl_bAllowOverbright = 0;
+  }
+  else */
+  {
+    // everything else goes!
+    mdl_bAllowOverbright = 1;
+  }
+
+  wld_iDetailRemovingBias = 3;
+  wld_bTextureLayers = 111;
+  wld_bRenderMirrors = 1;
+
+  tex_bFineEffect = 1;
+  tex_bFineFog = 1;
+  tex_iFogSize = 7;
+  tex_iDithering = 0;
+  tex_iFiltering = -1;
+  tex_iEffectFiltering = 4;
+  tex_bProgressiveFilter = 0;
+  tex_bCompressAlphaChannel = 0;
+  tex_bAlternateCompression = 0;
+  tex_bDynamicMipmaps = 1;
+
+  shd_iFiltering = 3;
+  shd_iDithering = 0;
+  shd_iAllowDynamic = 1;
+  shd_bDynamicMipmaps = 1;
+  shd_bCacheAll = 1;
+  shd_bAllowFlats = 1;
+
+  gfx_iLensFlareQuality = 3;
+  gfx_bClearScreen = 0;
+  gfx_bDisableMultiMonSupport = 1;
+  gfx_tmProbeDecay = 60;
+  // gfx_fProbeRatio = 0.5;
+
+  // gam_bPretouch = 0;
+
+  // gfx_fEnvParticlesDensity = 1.0;
+  // gfx_fEnvParticlesRange = 1.0;
+
+
+
+  // modified version of Scripts\GLSettings\Default.ini
+
+  wld_iDetailRemovingBias = 2;
+  gap_iTextureFiltering = 22;
+
+
+
+  // modified version of Scripts\GLSettings\RAM.ini
+
+  tex_iNormalQuality = 0;
+  tex_iAnimationQuality = 11;
+  tex_iNormalSize = 9;
+  tex_iAnimationSize = 7;
+  tex_iEffectSize = 8;
+  shd_iStaticSize = 8;
+  shd_iDynamicSize = 8;
+  shd_bFineQuality = 1;
+  shd_fCacheSize = 16;
+  shd_tmFlushDelay = 40;
+  mdl_bFineQuality = 1;
+  gfx_tmProbeDecay = 300;
+  // gfx_fProbeRatio = 2.0;
+
+
+  gfx_fBrightness = 0.0f;
+  gfx_fContrast = 1.0f;
+  gfx_fGamma = 1.0f;
+  gfx_fBiasR = 1.0f;
+  gfx_fBiasG = 1.0f;
+  gfx_fBiasB = 1.0f;
+  gfx_iLevels = 256;
+}
 
 
