@@ -30,6 +30,7 @@ void CVideoOptionsMenu::Initialize_t(void)
   gm_mgTitle.mg_strText = TRANS("VIDEO");
   gm_lhGadgets.AddTail(gm_mgTitle.mg_lnNode);
 
+#ifndef SE1_RAYTRACING
   TRIGGER_MG(gm_mgDisplayAPITrigger, 0,
     gm_mgApply, gm_mgDisplayAdaptersTrigger, TRANS("GRAPHICS API"), astrDisplayAPIRadioTexts);
   gm_mgDisplayAPITrigger.mg_strTip = TRANS("choose graphics API to be used");
@@ -48,6 +49,28 @@ void CVideoOptionsMenu::Initialize_t(void)
   TRIGGER_MG(gm_mgBitsPerPixelTrigger, 5,
     gm_mgFullScreenTrigger, gm_mgVideoRendering, TRANS("BITS PER PIXEL"), astrBitsPerPixelRadioTexts);
   gm_mgBitsPerPixelTrigger.mg_strTip = TRANS("select number of colors used for display");
+#else
+  TRIGGER_MG(gm_mgDisplayAPITrigger, 0,
+    gm_mgApply, gm_mgDisplayAdaptersTrigger, TRANS("GRAPHICS API"), astrDisplayAPIRadioTexts);
+  gm_mgDisplayAPITrigger.mg_strTip = TRANS("choose graphics API to be used");
+  TRIGGER_MG(gm_mgDisplayAdaptersTrigger, 1,
+    gm_mgDisplayAPITrigger, gm_mgResolutionsTrigger, TRANS("DISPLAY ADAPTER"), astrNoYes);
+  gm_mgDisplayAdaptersTrigger.mg_strTip = TRANS("choose display adapter to be used");
+  TRIGGER_MG(gm_mgResolutionsTrigger, 2,
+    gm_mgDisplayAdaptersTrigger, gm_mgFullScreenTrigger, TRANS("RESOLUTION"), astrNoYes);
+  gm_mgResolutionsTrigger.mg_strTip = TRANS("select video mode resolution");
+  TRIGGER_MG(gm_mgFullScreenTrigger, 3,
+    gm_mgResolutionsTrigger, gm_mgVideoRendering, TRANS("FULL SCREEN"), astrNoYes);
+  gm_mgFullScreenTrigger.mg_strTip = TRANS("make game run in a window or in full screen");
+
+  // ignored
+  TRIGGER_MG(gm_mgDisplayPrefsTrigger, 128,
+    gm_mgDisplayAdaptersTrigger, gm_mgResolutionsTrigger, TRANS("PREFERENCES"), astrDisplayPrefsRadioTexts);
+  gm_mgDisplayPrefsTrigger.mg_strTip = TRANS("balance between speed and rendering quality, depending on your system");
+  TRIGGER_MG(gm_mgBitsPerPixelTrigger, 128,
+    gm_mgFullScreenTrigger, gm_mgVideoRendering, TRANS("BITS PER PIXEL"), astrBitsPerPixelRadioTexts);
+  gm_mgBitsPerPixelTrigger.mg_strTip = TRANS("select number of colors used for display");
+#endif
 
   gm_mgDisplayPrefsTrigger.mg_pOnTriggerChange = NULL;
   gm_mgDisplayAPITrigger.mg_pOnTriggerChange = NULL;
@@ -57,8 +80,13 @@ void CVideoOptionsMenu::Initialize_t(void)
   gm_mgBitsPerPixelTrigger.mg_pOnTriggerChange = NULL;
 
   gm_mgVideoRendering.mg_bfsFontSize = BFS_MEDIUM;
+#ifndef SE1_RAYTRACING
   gm_mgVideoRendering.mg_boxOnScreen = BoxMediumRow(7.0f);
   gm_mgVideoRendering.mg_pmgUp = &gm_mgBitsPerPixelTrigger;
+#else
+  gm_mgVideoRendering.mg_boxOnScreen = BoxMediumRow(5.0f);
+  gm_mgVideoRendering.mg_pmgUp = &gm_mgFullScreenTrigger;
+#endif // !SE1_RAYTRACING
   gm_mgVideoRendering.mg_pmgDown = &gm_mgApply;
   gm_mgVideoRendering.mg_strText = TRANS("RENDERING OPTIONS");
   gm_mgVideoRendering.mg_strTip = TRANS("manually adjust rendering settings");

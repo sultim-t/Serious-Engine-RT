@@ -134,6 +134,9 @@ void CGfxLibrary::SetViewport_Vulkan(float leftUpperX, float leftUpperY, float w
 SvkMain::SvkMain()
 {
   Reset_Vulkan();
+
+  extern void ForceModernHardwareGraphicsSettings();
+  ForceModernHardwareGraphicsSettings();
 }
 
 // initialize Vulkan driver
@@ -350,9 +353,9 @@ void SvkMain::Reset_Vulkan()
   gl_VkPhFeatures = {};
   gl_VkPhSurfCapabilities = {};
 
-  gl_VkQueueFamGraphics = VK_NULL_HANDLE;
-  gl_VkQueueFamTransfer = VK_NULL_HANDLE;
-  gl_VkQueueFamPresent = VK_NULL_HANDLE;
+  gl_VkQueueFamGraphics = 0;
+  gl_VkQueueFamTransfer = 0;
+  gl_VkQueueFamPresent = 0;
   gl_VkQueueGraphics = VK_NULL_HANDLE;
   gl_VkQueueTransfer = VK_NULL_HANDLE;
   gl_VkQueuePresent = VK_NULL_HANDLE;
