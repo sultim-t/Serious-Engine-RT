@@ -25,7 +25,7 @@ void SvkMain::CreateTexturesDataStructure()
 
   // make hash table tall to reduce linear searches
   gl_VkTextures.New(512, 8);
-  gl_VkLastTextureId = 0;
+  gl_VkLastTextureId = 1;
 
   // average RGBA texture size with mipmaps in bytes
   const uint32_t AvgTextureSize = 256 * 256 * 4 * 4 / 3;
@@ -53,7 +53,7 @@ void SvkMain::DestroyTexturesDataStructure()
   }
 
   gl_VkTextures.Clear();
-  gl_VkLastTextureId = 0;
+  gl_VkLastTextureId = 1;
 }
 
 void SvkMain::SetTexture(uint32_t textureUnit, uint32_t textureId, SvkSamplerFlags samplerFlags)
@@ -121,6 +121,11 @@ VkDescriptorSet SvkMain::GetTextureDescriptor(uint32_t textureId)
 
 void SvkMain::AddTextureToDeletion(uint32_t textureId)
 {
+  if (textureId == gl_VkEmptyTextureId)
+  {
+    return;
+  }
+
   SvkTextureObject *sto = gl_VkTextures.TryGet(textureId);
   if (sto != nullptr)
   {

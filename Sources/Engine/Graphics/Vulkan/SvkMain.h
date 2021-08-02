@@ -103,6 +103,7 @@ public:
   // all loaded textures
   SvkStaticHashTable<SvkTextureObject>    gl_VkTextures;
   uint32_t                                gl_VkLastTextureId;
+  uint32_t                                gl_VkEmptyTextureId;
   SvkMemoryPool                           *gl_VkImageMemPool;
 
   VkDescriptorPool                        gl_VkTextureDescPools[gl_VkMaxCmdBufferCount];

@@ -44,7 +44,6 @@ FLOAT	VkViewMatrix[16];
 // fog/haze textures
 extern ULONG _fog_ulTexture;
 extern ULONG _haze_ulTexture;
-static uint32_t _no_ulTexture;
 static VkDescriptorSet _no_ulTextureDescSet;
 
 extern BOOL GFX_abTexture[GFX_MAXTEXUNITS];
@@ -345,6 +344,7 @@ void SvkMain::Reset_Vulkan()
   gl_VkGlobalSamplerState = 0;
 
   gl_VkLastTextureId = 1;
+  gl_VkEmptyTextureId = UINT32_MAX;
   gl_VkImageMemPool = nullptr;
 
   gl_VkPhysDevice = VK_NULL_HANDLE;
@@ -487,8 +487,8 @@ void SvkMain::InitContext_Vulkan()
 
   uint32_t noTexturePixels[] = { 0xFFFFFFFF, 0xFFFFFFFF };
   VkExtent2D noTextureSize = { 1, 1 };
-  _no_ulTexture = CreateTexture();
-  InitTexture32Bit(_no_ulTexture, VK_FORMAT_R8G8B8A8_UNORM, noTexturePixels, &noTextureSize, 1, false);
+  gl_VkEmptyTextureId = CreateTexture();
+  InitTexture32Bit(gl_VkEmptyTextureId, VK_FORMAT_R8G8B8A8_UNORM, noTexturePixels, &noTextureSize, 1, false);
 
   // prepare pattern texture
   extern CTexParams _tpPattern;
@@ -902,7 +902,8 @@ void SvkMain::StartFrame()
 
   PrepareDescriptorSets(gl_VkCmdBufferCurrent);
 
-  _no_ulTextureDescSet = GetTextureDescriptor(_no_ulTexture);
+  _no_ulTextureDescSet = GetTextureDescriptor(gl_VkEmptyTextureId);
+  ASSERT(_no_ulTextureDescSet != VK_NULL_HANDLE);
 
   vkResetCommandPool(gl_VkDevice, gl_VkCmdPools[gl_VkCmdBufferCurrent], VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
 
