@@ -309,7 +309,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   switch (eCurrentWorld)
   {
     case EWorld::Hatshepsut:
-      _srtGlobals.srt_fAnimatedSunTimeOffsetStart = 4 * 60;
+      _srtGlobals.srt_fAnimatedSunTimeOffsetStart = 3 * 60;
       _srtGlobals.srt_fAnimatedSunTimeLength = 2 * 60;
       _srtGlobals.srt_vAnimatedSunTargetEuler = { 35, -45, 0 };
       break;

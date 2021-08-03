@@ -276,7 +276,10 @@ void SSRT::TextureUploader::AddMaterial(uint32_t textureIndex, RgMaterial materi
 
 void SSRT::TextureUploader::DestroyMaterial(uint32_t textureIndex)
 {
-  ASSERT(materialExist[textureIndex]);
+  if (!materialExist[textureIndex])
+  {
+    return;
+  }
 
   RgResult r = rgDestroyMaterial(instance, materials[textureIndex]);
   RG_CHECKERROR(r);
