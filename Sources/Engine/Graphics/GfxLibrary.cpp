@@ -911,6 +911,7 @@ extern void ReloadTextures(void)
 
 extern void UnbindAllTextures(void)
 {
+  if (_pTextureStock != nullptr)
   {
     FOREACHINDYNAMICCONTAINER(_pTextureStock->st_ctObjects, CTextureData, ittd)
     {
