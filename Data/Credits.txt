@@ -1,14 +1,29 @@
 CREDITS
 
-
 SERIOUS SAM: RAY TRACED
 
 PROGRAMMING
 ADDITIONAL 2D ART
 Sultim Tsyrendashiev
 
-Special thanks to Dreamy Cecil and other members 
+SPECIAL THANKS:
+
+Croteam
+(for the great game)
+
+Linux and x64 port of SE
+(github.com/icculus/Serious-Engine)
+
+Dreamy Cecil
+(for additional help with SE)
+
+zcaliptium 
+(for additional x64 compatibility)
+
+and other members
 of Serious Sam modding community
+
+
 
 
 CROTEAM:
