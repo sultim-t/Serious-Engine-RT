@@ -33,6 +33,7 @@ extern FLOAT hud_fScaling;
 extern FLOAT hud_tmWeaponsOnScreen;
 
 extern INDEX hud_bShowFlashlightHint = 0;
+extern INDEX hud_bShowExtra = 0;
 
 
 // player statistics sorting keys
@@ -703,7 +704,7 @@ extern void DrawHUD( const CPlayer *penPlayerCurrent, CDrawPort *pdpCurrent, BOO
   FillWeaponAmmoTables();
 
   // loop thru all ammo types
-  if (!GetSP()->sp_bInfiniteAmmo) {
+  if (!GetSP()->sp_bInfiniteAmmo && hud_bShowExtra) {
     for( i=7; i>=0; i--) {
       // if no ammo and hasn't got that weapon - just skip this ammo
       AmmoInfo &ai = _aaiAmmo[i];
@@ -915,7 +916,7 @@ extern void DrawHUD( const CPlayer *penPlayerCurrent, CDrawPort *pdpCurrent, BOO
   }
 
   // RT: show
-  if (hud_bShowFlashlightHint)
+  if (_pGfx->gl_eCurrentAPI == GfxAPIType::GAT_RT && hud_bShowFlashlightHint)
   {
     bool isColored = (INDEX)(_pTimer->GetLerpedCurrentTick() * 2.0f) % 2;
     CTString strFlashlightHint = isColored ? "Press a ^c24D500Flashlight^r button to toggle it" : "Press a Flashlight button to toggle it";
@@ -944,70 +945,75 @@ extern void DrawHUD( const CPlayer *penPlayerCurrent, CDrawPort *pdpCurrent, BOO
     iScore = iScoreSum;
   }
 
-  // prepare and draw score or frags info 
-  strValue.PrintF( "%d", iScore);
-  fRow = pixTopBound  +fHalfUnit;
-  fCol = pixLeftBound +fHalfUnit;
-  fAdv = fAdvUnit+ fChrUnit*fWidthAdj/2 -fHalfUnit;
-  HUD_DrawBorder( fCol,      fRow, fOneUnit,           fOneUnit, colBorder);
-  HUD_DrawBorder( fCol+fAdv, fRow, fChrUnit*fWidthAdj, fOneUnit, colBorder);
-  HUD_DrawText(   fCol+fAdv, fRow, strValue, colScore, 1.0f);
-  HUD_DrawIcon(   fCol,      fRow, _toFrags, colScore, 1.0f, FALSE);
-
-  // eventually draw mana info 
-  if( bScoreMatch || bFragMatch) {
-    strValue.PrintF( "%d", iMana);
-    fRow = pixTopBound  + fNextUnit+fHalfUnit;
-    fCol = pixLeftBound + fHalfUnit;
-    fAdv = fAdvUnit+ fChrUnit*fWidthAdj/2 -fHalfUnit;
-    HUD_DrawBorder( fCol,      fRow, fOneUnit,           fOneUnit, colBorder);
-    HUD_DrawBorder( fCol+fAdv, fRow, fChrUnit*fWidthAdj, fOneUnit, colBorder);
-    HUD_DrawText(   fCol+fAdv, fRow, strValue,  colMana, 1.0f);
-    HUD_DrawIcon(   fCol,      fRow, _toDeaths, colMana, 1.0f, FALSE);
-  }
-
-  // if single player or cooperative mode
-  if( bSinglePlay || bCooperative)
+  // always show extras in multiplayer game
+  if (hud_bShowExtra || !bSinglePlay)
   {
-    // prepare and draw hiscore info 
-    strValue.PrintF( "%d", Max(_penPlayer->m_iHighScore, _penPlayer->m_psGameStats.ps_iScore));
-    BOOL bBeating = _penPlayer->m_psGameStats.ps_iScore>_penPlayer->m_iHighScore;
-    fRow = pixTopBound+fHalfUnit;
-    fCol = 320.0f-fOneUnit-fChrUnit*8/2;
-    fAdv = fAdvUnit+ fChrUnit*8/2 -fHalfUnit;
-    HUD_DrawBorder( fCol,      fRow, fOneUnit,   fOneUnit, colBorder);
-    HUD_DrawBorder( fCol+fAdv, fRow, fChrUnit*8, fOneUnit, colBorder);
-    HUD_DrawText(   fCol+fAdv, fRow, strValue, NONE, bBeating ? 0.0f : 1.0f);
-    HUD_DrawIcon(   fCol,      fRow, _toHiScore, _colHUD, 1.0f, FALSE);
+    // prepare and draw score or frags info 
+    strValue.PrintF("%d", iScore);
+    fRow = pixTopBound + fHalfUnit;
+    fCol = pixLeftBound + fHalfUnit;
+    fAdv = fAdvUnit + fChrUnit * fWidthAdj / 2 - fHalfUnit;
+    HUD_DrawBorder(fCol, fRow, fOneUnit, fOneUnit, colBorder);
+    HUD_DrawBorder(fCol + fAdv, fRow, fChrUnit * fWidthAdj, fOneUnit, colBorder);
+    HUD_DrawText(fCol + fAdv, fRow, strValue, colScore, 1.0f);
+    HUD_DrawIcon(fCol, fRow, _toFrags, colScore, 1.0f, FALSE);
 
-    // prepare and draw unread messages
-    if( hud_bShowMessages && _penPlayer->m_ctUnreadMessages>0) {
-      strValue.PrintF( "%d", _penPlayer->m_ctUnreadMessages);
+    // eventually draw mana info 
+    if (bScoreMatch || bFragMatch)
+    {
+      strValue.PrintF("%d", iMana);
+      fRow = pixTopBound + fNextUnit + fHalfUnit;
+      fCol = pixLeftBound + fHalfUnit;
+      fAdv = fAdvUnit + fChrUnit * fWidthAdj / 2 - fHalfUnit;
+      HUD_DrawBorder(fCol, fRow, fOneUnit, fOneUnit, colBorder);
+      HUD_DrawBorder(fCol + fAdv, fRow, fChrUnit * fWidthAdj, fOneUnit, colBorder);
+      HUD_DrawText(fCol + fAdv, fRow, strValue, colMana, 1.0f);
+      HUD_DrawIcon(fCol, fRow, _toDeaths, colMana, 1.0f, FALSE);
+    }
+
+    // if single player or cooperative mode
+    if( bSinglePlay || bCooperative)
+    {
+      // prepare and draw hiscore info 
+      strValue.PrintF( "%d", Max(_penPlayer->m_iHighScore, _penPlayer->m_psGameStats.ps_iScore));
+      BOOL bBeating = _penPlayer->m_psGameStats.ps_iScore>_penPlayer->m_iHighScore;
       fRow = pixTopBound+fHalfUnit;
-      fCol = pixRightBound-fHalfUnit-fAdvUnit-fChrUnit*4;
-      const FLOAT tmIn = 0.5f;
-      const FLOAT tmOut = 0.5f;
-      const FLOAT tmStay = 2.0f;
-      FLOAT tmDelta = _pTimer->GetLerpedCurrentTick()-_penPlayer->m_tmAnimateInbox;
-      COLOR col = _colHUD;
-      if (tmDelta>0 && tmDelta<(tmIn+tmStay+tmOut) && bSinglePlay) {
-        FLOAT fRatio = 0.0f;
-        if (tmDelta<tmIn) {
-          fRatio = tmDelta/tmIn;
-        } else if (tmDelta>tmIn+tmStay) {
-          fRatio = (tmIn+tmStay+tmOut-tmDelta)/tmOut;
-        } else {
-          fRatio = 1.0f;
+      fCol = 320.0f-fOneUnit-fChrUnit*8/2;
+      fAdv = fAdvUnit+ fChrUnit*8/2 -fHalfUnit;
+      HUD_DrawBorder( fCol,      fRow, fOneUnit,   fOneUnit, colBorder);
+      HUD_DrawBorder( fCol+fAdv, fRow, fChrUnit*8, fOneUnit, colBorder);
+      HUD_DrawText(   fCol+fAdv, fRow, strValue, NONE, bBeating ? 0.0f : 1.0f);
+      HUD_DrawIcon(   fCol,      fRow, _toHiScore, _colHUD, 1.0f, FALSE);
+
+      // prepare and draw unread messages
+      if( hud_bShowMessages && _penPlayer->m_ctUnreadMessages>0) {
+        strValue.PrintF( "%d", _penPlayer->m_ctUnreadMessages);
+        fRow = pixTopBound+fHalfUnit;
+        fCol = pixRightBound-fHalfUnit-fAdvUnit-fChrUnit*4;
+        const FLOAT tmIn = 0.5f;
+        const FLOAT tmOut = 0.5f;
+        const FLOAT tmStay = 2.0f;
+        FLOAT tmDelta = _pTimer->GetLerpedCurrentTick()-_penPlayer->m_tmAnimateInbox;
+        COLOR col = _colHUD;
+        if (tmDelta>0 && tmDelta<(tmIn+tmStay+tmOut) && bSinglePlay) {
+          FLOAT fRatio = 0.0f;
+          if (tmDelta<tmIn) {
+            fRatio = tmDelta/tmIn;
+          } else if (tmDelta>tmIn+tmStay) {
+            fRatio = (tmIn+tmStay+tmOut-tmDelta)/tmOut;
+          } else {
+            fRatio = 1.0f;
+          }
+          fRow+=fAdvUnit*5*fRatio;
+          fCol-=fAdvUnit*15*fRatio;
+          col = LerpColor(_colHUD, C_WHITE|0xFF, fRatio);
         }
-        fRow+=fAdvUnit*5*fRatio;
-        fCol-=fAdvUnit*15*fRatio;
-        col = LerpColor(_colHUD, C_WHITE|0xFF, fRatio);
+        fAdv = fAdvUnit+ fChrUnit*4/2 -fHalfUnit;
+        HUD_DrawBorder( fCol,      fRow, fOneUnit,   fOneUnit, col);
+        HUD_DrawBorder( fCol+fAdv, fRow, fChrUnit*4, fOneUnit, col);
+        HUD_DrawText(   fCol+fAdv, fRow, strValue,   col, 1.0f);
+        HUD_DrawIcon(   fCol,      fRow, _toMessage, col, 0.0f, TRUE);
       }
-      fAdv = fAdvUnit+ fChrUnit*4/2 -fHalfUnit;
-      HUD_DrawBorder( fCol,      fRow, fOneUnit,   fOneUnit, col);
-      HUD_DrawBorder( fCol+fAdv, fRow, fChrUnit*4, fOneUnit, col);
-      HUD_DrawText(   fCol+fAdv, fRow, strValue,   col, 1.0f);
-      HUD_DrawIcon(   fCol,      fRow, _toMessage, col, 0.0f, TRUE);
     }
   }
 
@@ -1035,6 +1041,7 @@ extern void InitHUD(void)
 {
   // RT: ugly way
   _pShell->DeclareSymbol("INDEX hud_bShowFlashlightHint;", &hud_bShowFlashlightHint);
+  _pShell->DeclareSymbol("persistent user INDEX hud_bShowExtra;", &hud_bShowExtra);
 
   // try to
   try {

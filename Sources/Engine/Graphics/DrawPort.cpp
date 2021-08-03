@@ -138,7 +138,7 @@ void CDrawPort::InitCloned( CDrawPort *pdpBase, DOUBLE rMinI,DOUBLE rMinJ, DOUBL
   dp_fTextScaling = pdpBase->dp_fTextScaling;
   dp_fTextAspect  = pdpBase->dp_fTextAspect;
   dp_iTextMode    = pdpBase->dp_iTextMode;
-  dp_fWideAdjustment   = pdpBase->dp_fWideAdjustment;
+  dp_fWideAdjustment = IsWideScreen() ? 9.0f / 12.0f : 1.0f; // pdpBase->dp_fWideAdjustment;
   dp_bRenderingOverlay = pdpBase->dp_bRenderingOverlay;
   // reset rest of vars
   dp_ulBlendingRA = 0;
