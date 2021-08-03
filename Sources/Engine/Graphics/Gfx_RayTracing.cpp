@@ -165,6 +165,9 @@ void CGfxLibrary::InitContext_RayTracing()
 
 void CGfxLibrary::EndDriver_RayTracing()
 {
+  extern void UnbindAllTextures(void);
+  UnbindAllTextures();
+
   ASSERT(gl_SSRT != nullptr);
   delete gl_SSRT;
 

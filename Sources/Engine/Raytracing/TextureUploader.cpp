@@ -276,7 +276,7 @@ void SSRT::TextureUploader::AddMaterial(uint32_t textureIndex, RgMaterial materi
 
 void SSRT::TextureUploader::DestroyMaterial(uint32_t textureIndex)
 {
-  if (!materialExist[textureIndex])
+  if (textureIndex >= materialExist.size() || !materialExist[textureIndex])
   {
     return;
   }

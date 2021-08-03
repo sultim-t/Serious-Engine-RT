@@ -909,6 +909,18 @@ extern void ReloadTextures(void)
 }
 
 
+extern void UnbindAllTextures(void)
+{
+  {
+    FOREACHINDYNAMICCONTAINER(_pTextureStock->st_ctObjects, CTextureData, ittd)
+    {
+      CTextureData &td = *ittd;
+      td.Unbind();
+    }
+  }
+}
+
+
 // refreshes all textures and shadow maps
 static void RefreshTextures(void)
 {
