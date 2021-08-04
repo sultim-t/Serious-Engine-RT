@@ -387,6 +387,8 @@ void SSRT::Scene::ProcessDynamicGeometry()
 
   RT_AddModelEntitiesAroundViewer(this);
   RT_AddPotentialLightSources(this);
+
+  RT_PrintBrushPolygonInfo(this);
 }
 
 void SSRT::Scene::OnFrameEnd(bool isCameraFirstPerson)

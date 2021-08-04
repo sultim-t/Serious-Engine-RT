@@ -30,6 +30,7 @@ void RT_AddRasterizedBrushEntity(CEntity *penBrush, SSRT::Scene *pScene);
 void RT_UpdateBrushNonStaticTexture(CEntity *penBrush, SSRT::Scene *pScene);
 void RT_UpdateBrushTexCoords(CEntity *penBrush, SSRT::Scene *pScene);
 void RT_BrushProcessingClear();
+void RT_PrintBrushPolygonInfo(SSRT::Scene *pScene);
 
 void RT_AddModelEntity(CEntity *penModel, SSRT::Scene *pScene);
 void RT_AddFirstPersonModel(CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::Scene *pScene);

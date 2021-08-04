@@ -22,6 +22,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Raytracing/SSRT.h>
 #include <Engine/World/World.h>
 #include <Engine/World/WorldSettings.h>
+#include <Engine/World/WorldRayCasting.h>
 
 #include <Engine/Templates/DynamicArray.h>
 #include <Engine/Templates/DynamicArray.cpp>
@@ -903,6 +904,66 @@ void RT_UpdateBrushNonStaticTexture(CEntity *penBrush, SSRT::Scene *scene)
               scene->UpdateBrushNonStaticTexture(td, tdFrame);
             }
           }
+        }
+      }
+    }
+  }
+}
+
+
+void RT_PrintBrushPolygonInfo(SSRT::Scene *pScene)
+{
+  if (!_srtGlobals.srt_bPrintBrushPolygonInfo)
+  {
+    return;
+  }
+
+  _srtGlobals.srt_bPrintBrushPolygonInfo = 0;
+
+  if (pScene == nullptr || pScene->GetWorld() == nullptr)
+  {
+    return;
+  }
+
+  const auto &mRotation = pScene->GetCameraRotation();
+  const auto vForward = FLOAT3D(mRotation(1, 3), mRotation(2, 3), mRotation(3, 3)) * -1;
+
+  CCastRay crRay(pScene->GetViewerEntity(), pScene->GetCameraPosition(), pScene->GetCameraPosition() + vForward * 400.0f);
+  crRay.cr_ttHitModels = CCastRay::TT_NONE;
+  crRay.cr_bHitTranslucentPortals = FALSE;
+  crRay.cr_bPhysical = TRUE;
+  pScene->GetWorld()->CastRay(crRay);
+
+  CPrintF("\n");
+
+  if (crRay.cr_penHit != nullptr)
+  {
+    if (crRay.cr_penHit->GetBrush() == nullptr)
+    {
+      CPrintF("Not a brush");
+      return;
+    }
+
+    CPrintF("%s\n", crRay.cr_penHit->GetName());
+    CPrintF("cr_fHitDistance: %fm\n", crRay.cr_fHitDistance);
+
+    if (crRay.cr_pbscBrushSector != nullptr)
+    {
+      CPrintF("bsc_strName: %s\n", crRay.cr_pbscBrushSector->bsc_strName);
+      CPrintF("bsc_iInWorld: %i\n", crRay.cr_pbscBrushSector->bsc_iInWorld);
+    }
+
+    if (crRay.cr_pbpoBrushPolygon != nullptr)
+    {
+      CPrintF("bpo_iInWorld: %i\n", crRay.cr_pbpoBrushPolygon->bpo_iInWorld);
+
+      for (uint32_t i = 0; i < 3; i++)
+      {
+        CTextureData *ptd = (CTextureData *)crRay.cr_pbpoBrushPolygon->bpo_abptTextures[i].bpt_toTexture.ao_AnimData;
+
+        if (ptd != nullptr)
+        {
+          CPrintF("%s\n", ptd->GetName().str_String);
         }
       }
     }

@@ -25,6 +25,7 @@ struct SSRTGlobals
 {
   INDEX srt_bVSync = 1;
   INDEX srt_bReloadShaders = 0;
+  INDEX srt_bPrintBrushPolygonInfo = 0;
   INDEX srt_bTexturesOriginalSRGB = 1;
   INDEX srt_bEnableViewerShadows = 1;
   INDEX srt_bIgnoreDynamicTexCoords = 0;

@@ -44,6 +44,7 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("           user INDEX srt_bShowGradients;", &_srtGlobals.srt_bShowGradients);
   _pShell->DeclareSymbol("           user INDEX srt_bShowMotionVectors;", &_srtGlobals.srt_bShowMotionVectors);
   _pShell->DeclareSymbol("           user INDEX srt_bReloadShaders;", &_srtGlobals.srt_bReloadShaders);
+  _pShell->DeclareSymbol("           user INDEX srt_bPrintBrushPolygonInfo;", &_srtGlobals.srt_bPrintBrushPolygonInfo);
   _pShell->DeclareSymbol("persistent user INDEX srt_bTexturesOriginalSRGB;", &_srtGlobals.srt_bTexturesOriginalSRGB);
   _pShell->DeclareSymbol("persistent user INDEX srt_bIgnoreDynamicTexCoords;", &_srtGlobals.srt_bIgnoreDynamicTexCoords);
 
