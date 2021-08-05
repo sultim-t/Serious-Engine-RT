@@ -607,6 +607,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
     bool ignorePolygon = (polygon.bpo_ulFlags & BPOF_INVISIBLE) != 0;
     ignorePolygon     |= (polygon.bpo_ulFlags & BPOF_OCCLUDER) != 0;
     ignorePolygon     |= isPortal && !isTranslucent;
+    ignorePolygon     |= pScene->GetCustomInfo()->IsBrushPolygonIgnored(&polygon);
 
     // if shouldn't be rendered in game
     if (ignorePolygon)

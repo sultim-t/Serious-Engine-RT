@@ -63,6 +63,8 @@ struct CAbstractGeometry
   RgBlendFactor       blendSrc;
   RgBlendFactor       blendDst;
 
+  bool                isSky;
+
 public:
   virtual ~CAbstractGeometry() = default;
   virtual uint64_t    GetUniqueID() const = 0;
@@ -108,7 +110,6 @@ struct CBrushGeometry : public CAbstractGeometry
   bool                hasScrollingTextures;
 
   bool                isRasterized;
-  bool                isSky;
 
 public:
   static uint64_t GetBrushUniqueID(ULONG entityID, uint32_t brushPartIndex);

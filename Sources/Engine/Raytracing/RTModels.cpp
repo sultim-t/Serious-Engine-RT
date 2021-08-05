@@ -229,7 +229,8 @@ static void FlushModelInfo(ULONG entityID,
   }
   else if (isBackground)
   {
-    modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_SKYBOX;
+    modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0;
+    modelInfo.isSky = true;
 
     // convert rotation from background viewer space to world space,
     // as RTGL1 accepts viewer position
@@ -240,7 +241,7 @@ static void FlushModelInfo(ULONG entityID,
   }
   else
   {
-    modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_WORLD;
+    modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0;
   }
 
   modelInfo.absPosition = rm.rm_vObjectPosition;

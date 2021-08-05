@@ -333,6 +333,23 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   // lower sky intensity while it's cloudy
   bSkyboxIntensityDependsOnSkyClouds = eCurrentWorld == EWorld::Hatshepsut;
   fSkyboxCloudyIntensity = 0.25f;
+
+
+  switch (eCurrentWorld)
+  {
+    case EWorld::Oasis:
+      brushSectorsToIgnore.push_back(67);
+      brushSectorsToIgnore.push_back(68);
+
+      // TODO: hide this when inside
+      brushPolygonsToIgnore.push_back({ 53, 1139 });
+      brushPolygonsToIgnore.push_back({ 3, 590 });
+      brushPolygonsToIgnore.push_back({ 3, 591 });
+      brushPolygonsToIgnore.push_back({ 3, 592 });
+      brushPolygonsToIgnore.push_back({ 3, 563 });
+      brushSectorsToIgnore.push_back(90);
+      break;
+  }
 }
 
 SSRT::CustomInfo::~CustomInfo()
@@ -442,6 +459,30 @@ bool SSRT::CustomInfo::IsBrushIgnored(CEntity *penBrush) const
       {
         return true;
       }
+    }
+  }
+
+  return false;
+}
+
+bool SSRT::CustomInfo::IsBrushPolygonIgnored(const CBrushPolygon *pPolygon) const
+{
+  ASSERT(pPolygon->bpo_pbscSector != nullptr);
+
+  for (const IgnoredBrushSector &s : brushSectorsToIgnore)
+  {
+    if (pPolygon->bpo_pbscSector->bsc_iInWorld == s)
+    {
+      return true;
+    }
+  }
+
+  for (const IgnoredBrushPoly &p : brushPolygonsToIgnore)
+  {
+    if (pPolygon->bpo_pbscSector->bsc_iInWorld == p.iBrushSectorIndex &&
+        pPolygon->bpo_iInWorld == p.iBrushPolygonIndex)
+    {
+      return true;
     }
   }
 

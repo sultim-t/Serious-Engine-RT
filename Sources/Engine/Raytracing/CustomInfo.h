@@ -44,7 +44,9 @@ public:
   bool IsReflectiveForced(CTextureObject *pTo) const;
   bool IsAlphaTestForced(CTextureObject *pTo, bool isTranslucent) const;
 
+  // TODO: refactoring for IsBrushIgnored
   bool IsBrushIgnored(CEntity *penBrush) const;
+  bool IsBrushPolygonIgnored(const CBrushPolygon *pPolygon) const;
   bool AreDynamicTexCoordsIgnored(CEntity *penBrush) const;
 
   bool IsDirectionalLightIgnored(const CLightSource *plsLight) const;
@@ -65,6 +67,15 @@ private:
   void DisableFlashlightHint();
 
 private:
+  struct IgnoredBrushPoly
+  {
+    INDEX iBrushSectorIndex;
+    INDEX iBrushPolygonIndex;
+  };
+
+  typedef INDEX IgnoredBrushSector;
+
+private:
   std::vector<FLOAT3D>     worldBasePositionsToIgnore;
   std::vector<std::string> dirLightsNamesToIgnore;
 
@@ -81,6 +92,9 @@ private:
 
   bool bSkyboxIntensityDependsOnSkyClouds;
   FLOAT fSkyboxCloudyIntensity;
+
+  std::vector<IgnoredBrushPoly> brushPolygonsToIgnore;
+  std::vector<IgnoredBrushSector> brushSectorsToIgnore;
 };
 
 }

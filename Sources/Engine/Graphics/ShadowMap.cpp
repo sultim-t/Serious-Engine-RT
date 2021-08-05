@@ -537,6 +537,11 @@ void CShadowMap::Prepare(void)
 // provide the data for uploading 
 void CShadowMap::SetAsCurrent(void)
 {
+  if (_pGfx->gl_eCurrentAPI == GAT_RT)
+  {
+    return;
+  }
+
   ASSERT( sm_pulCachedShadowMap!=NULL && sm_iFirstCachedMipLevel<31);
 
   // eventually re-adjust LOD bias

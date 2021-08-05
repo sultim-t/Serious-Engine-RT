@@ -188,8 +188,6 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
   }
   else
   {
-    bool isSky = model.visibilityType == RG_GEOMETRY_VISIBILITY_TYPE_SKYBOX;
-
     RgRasterizedGeometryVertexArrays vertInfo = {};
     vertInfo.pVertexData = model.vertices;
     vertInfo.pTexCoordData = model.texCoordLayers[0];
@@ -209,7 +207,7 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
     info.blendFuncSrc = model.blendSrc;
     info.blendFuncDst = model.blendDst;
     info.depthTest = RG_TRUE;
-    info.renderType = isSky ? RG_RASTERIZED_GEOMETRY_RENDER_TYPE_SKY : RG_RASTERIZED_GEOMETRY_RENDER_TYPE_DEFAULT;
+    info.renderType = model.isSky ? RG_RASTERIZED_GEOMETRY_RENDER_TYPE_SKY : RG_RASTERIZED_GEOMETRY_RENDER_TYPE_DEFAULT;
 
     Utils::CopyTransform(info.transform, model);
 

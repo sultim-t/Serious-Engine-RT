@@ -58,13 +58,15 @@ void SSRT::SceneBrushes::RegisterBrush(const CBrushGeometry &brush)
 
   if (!brush.isRasterized)
   {
+    ASSERT(!brush.isSky);
+
     RgGeometryUploadInfo stInfo = {};
     stInfo.uniqueID = brush.GetUniqueID();
     stInfo.geomType = brush.isMovable ?
       RG_GEOMETRY_TYPE_STATIC_MOVABLE :
       RG_GEOMETRY_TYPE_STATIC;
     stInfo.passThroughType = brush.passThroughType;
-    stInfo.visibilityType = brush.isSky ? RG_GEOMETRY_VISIBILITY_TYPE_SKYBOX : RG_GEOMETRY_VISIBILITY_TYPE_WORLD;
+    stInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0;
     stInfo.vertexCount = brush.vertexCount;
     stInfo.pVertexData = brush.vertices;
     stInfo.pNormalData = brush.normals;
