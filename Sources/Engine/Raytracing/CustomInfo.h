@@ -96,13 +96,21 @@ private:
     INDEX iBrushSectorIndex;
     INDEX iBrushPolygonIndex;
   };
+  struct IgnoredBrushPolyRange
+  {
+    INDEX iBrushSectorIndex;
+    INDEX iBrushPolygonIndexStart;
+    INDEX iBrushPolygonIndexEnd;
+  };
 
   typedef INDEX IgnoredBrushSector;
 
 private:
   EWorld eCurrentWorld;
 
-  std::vector<FLOAT3D>     worldBasePositionsToIgnore;
+  bool bCheckOnlyZoningForBrushIgnored;
+  std::vector<FLOAT3D> worldBasePositionsToIgnore;
+  
   std::vector<std::string> dirLightsNamesToIgnore;
 
   std::vector<CTextureData *> ptdCachedBulletHoleTextures;
@@ -122,6 +130,7 @@ private:
   std::vector<IgnoredBrushPoly> brushPolygonsToIgnore;
   std::vector<IgnoredBrushSector> brushSectorsToIgnore;
 
+  std::vector<IgnoredBrushPolyRange> brushPolygonRangesToMask;
   std::vector<IgnoredBrushPoly> brushPolygonsToMask;
   std::vector<IgnoredBrushSector> brushSectorsToMask;
 };

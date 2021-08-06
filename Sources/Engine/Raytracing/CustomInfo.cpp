@@ -139,16 +139,18 @@ const struct
 {
   EWorld eWorld;
   FLOAT3D vPosition;
+  bool canBeZoning;
 }
 RT_WorldBaseToIgnore[] =
 {
-  { EWorld::Hatshepsut,       { 0,        1152,   64 } },
-  { EWorld::SandCanyon,       { 224,       128, -312 } },
-  { EWorld::SandCanyon,       { 224,       128, -120 } },
-  { EWorld::SandCanyon,       { -98.5f, 113.5f,   18 } },
-  { EWorld::ValleyOfTheKings, { 0,          96,    0 } },
-  { EWorld::MoonMountains,    { -64,        80,  -64 } },
-  { EWorld::Oasis,            { 128,       -16,    0 } },
+  { EWorld::Hatshepsut,       {      0,   1152,   64 }, false },
+  { EWorld::SandCanyon,       {    224,    128, -312 }, false },
+  { EWorld::SandCanyon,       {    224,    128, -120 }, false },
+  { EWorld::SandCanyon,       { -98.5f, 113.5f,   18 }, false },
+  { EWorld::ValleyOfTheKings, {      0,     96,    0 }, false },
+  { EWorld::ValleyOfTheKings, {    190, -69.5f, -420 }, true },
+  { EWorld::MoonMountains,    {    -64,     80,  -64 }, false },
+  { EWorld::Oasis,            {    128,    -16,    0 }, false },
 };
 
 
@@ -216,11 +218,14 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
 
 
   // Positions of unnecessary brushes (that also have "World Base" names)
+  bCheckOnlyZoningForBrushIgnored = true;
   for (const auto &b : RT_WorldBaseToIgnore)
   {
     if (b.eWorld == eCurrentWorld)
     {
       worldBasePositionsToIgnore.push_back(b.vPosition);
+
+      bCheckOnlyZoningForBrushIgnored &= b.canBeZoning;
     }
   }
 
@@ -327,12 +332,13 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       break;
 
     case EWorld::ValleyOfTheKings:
-      brushSectorsToIgnore =
+      brushPolygonRangesToMask =
       {
-        // black box outside
-        203,
+        { 10, 817, 832 },
+        { 10, 781, 798 },
+        { 10, 744, 753 },
+        { 10, 712, 719 },
       };
-
       break;
 
     case EWorld::MoonMountains:
@@ -512,6 +518,16 @@ RgGeometryPrimaryVisibilityType SSRT::CustomInfo::GetBrushMaskBit(const CBrushPo
     }
   }
 
+  for (const IgnoredBrushPolyRange &r : brushPolygonRangesToMask)
+  {
+    if (pPolygon->bpo_pbscSector->bsc_iInWorld == r.iBrushSectorIndex &&
+        pPolygon->bpo_iInWorld >= r.iBrushPolygonIndexStart && 
+        pPolygon->bpo_iInWorld <= r.iBrushPolygonIndexEnd)
+    {
+      return RgGeometryPrimaryVisibilityType::RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1;
+    }
+  }
+
   return RgGeometryPrimaryVisibilityType::RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0;
 }
 
@@ -524,6 +540,14 @@ uint32_t SSRT::CustomInfo::GetCullMask(const FLOAT3D &vCameraPosition) const
       {
         return 0b000;
       }
+      break;
+
+    case EWorld::ValleyOfTheKings:
+      if (vCameraPosition(3) > 242.0f)
+      {
+        return 0b001;
+      }
+
       break;
 
     case EWorld::Oasis:
@@ -547,8 +571,15 @@ uint32_t SSRT::CustomInfo::GetCullMask(const FLOAT3D &vCameraPosition) const
 
 bool SSRT::CustomInfo::IsBrushIgnored(CEntity *penBrush) const
 { 
-  // ugly way to remove terrain planes above the world
-  if (!(penBrush->en_ulFlags & ENF_ZONING) && penBrush->GetName() == "World Base")
+  bool isZoning = penBrush->en_ulFlags & ENF_ZONING; 
+
+  if (bCheckOnlyZoningForBrushIgnored && !isZoning)
+  {
+    return false;
+  }
+
+  // ugly way to remove terrain planes and other unnecessary entities above the world
+  if (penBrush->GetName() == "World Base")
   {
     // check if it's exactly those unnecessary polygons
     for (const auto &vIgnorePos : worldBasePositionsToIgnore)
