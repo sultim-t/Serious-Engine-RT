@@ -37,6 +37,29 @@ extern INDEX gap_bAllowSingleMipmap;
 extern FLOAT gfx_tmProbeDecay;
 
 
+constexpr const char *RT_ForceClampUVTextureNames[] =
+{
+  "Textures\\Levels\\Hatshepsut\\ColumnArtwork01.tex",
+  "Textures\\Levels\\ChambersOfHorus\\EyeOfRa02.tex"
+};
+
+static void TryFixWrapping(SSRT::CPreparedTextureInfo &info)
+{
+  if (!info.isDynamic)
+  {
+    for (const auto &n : RT_ForceClampUVTextureNames)
+    {
+      if (*info.path == n)
+      {
+        info.wrapU = RG_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        info.wrapV = RG_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        break;
+      }
+    }
+  }
+}
+
+
 static void UnpackTexParams(const CTexParams &tpLocal, RgSamplerFilter *filter, RgSamplerAddressMode *wrapU, RgSamplerAddressMode *wrapV)
 {
   switch (tpLocal.tp_iFilter)
@@ -238,6 +261,8 @@ static void SetCurrentAndUpload(CTextureData &td, PIX pixWidth, PIX pixHeight, S
     info.path = &td.GetName();
 
     UnpackTexParams(td.td_tpLocal, &info.filter, &info.wrapU, &info.wrapV);
+
+    TryFixWrapping(info);
 
     // instead of gfxUploadTexture
     uploader->UploadTexture(info);
