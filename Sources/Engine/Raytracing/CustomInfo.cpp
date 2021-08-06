@@ -352,10 +352,12 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
         { 68, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
       };
 
-      // top of the building
+      // not visible from the inside of the building
       brushPolygonsToMask =
       {
         { 53, 1139, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 53, 1140, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 53, 1142, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
         { 3, 590, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
         { 3, 591, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
         { 3, 592, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
