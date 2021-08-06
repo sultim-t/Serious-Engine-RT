@@ -324,10 +324,6 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
         // black box outside
         3,
       };
-      // TODO: make terrain invisible when in the space cutscene
-      break;
-
-    case EWorld::SandCanyon:
       break;
 
     case EWorld::ValleyOfTheKings:
@@ -523,15 +519,26 @@ uint32_t SSRT::CustomInfo::GetCullMask(const FLOAT3D &vCameraPosition) const
 {
   switch (eCurrentWorld)
   {
-    case EWorld::Karnak:
-      if (vCameraPosition(1) > 659.0f && vCameraPosition(3) > 2002.0f)
+    case EWorld::Hatshepsut:
+      if (vCameraPosition(1) > 3000.0f)
+      {
+        return 0b000;
+      }
+      break;
+
+    case EWorld::Oasis:
+      if ((vCameraPosition(1) > 26.0f && vCameraPosition(3) < -82.0f) || vCameraPosition(3) < -127.0f)
       {
         return 0b001;
       }
       break;
 
-    case EWorld::Oasis:
-      // TODO
+    case EWorld::Karnak:
+      // unhide start room window polygons
+      if (vCameraPosition(1) > 659.0f && vCameraPosition(3) > 2002.0f)
+      {
+        return 0b001;
+      }
       break;
   }
 

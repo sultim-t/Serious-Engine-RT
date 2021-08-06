@@ -219,6 +219,8 @@ static void FlushModelInfo(ULONG entityID,
   modelInfo.passThroughType = RT_GetPassThroughType(stt, forceAlphaTest);
   modelInfo.isRasterized = RT_ShouldBeRasterized(stt, forceAlphaTest);
 
+  modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0;
+
   if (isFirstPersonWeapon)
   {
     modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_FIRST_PERSON;
@@ -238,10 +240,6 @@ static void FlushModelInfo(ULONG entityID,
     MakeInverseRotationMatrix(bv, pScene->GetBackgroundViewerOrientationAngle());
 
     rotation = bv * rotation;
-  }
-  else
-  {
-    modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0;
   }
 
   modelInfo.absPosition = rm.rm_vObjectPosition;
