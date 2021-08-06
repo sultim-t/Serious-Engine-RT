@@ -327,17 +327,17 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       brushSectorsToIgnore = 
       {
         // black box outside
-        3,
+        { 3, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
       };
       break;
 
     case EWorld::ValleyOfTheKings:
       brushPolygonRangesToMask =
       {
-        { 10, 817, 832 },
-        { 10, 781, 798 },
-        { 10, 744, 753 },
-        { 10, 712, 719 },
+        { 10, 817, 832, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 10, 781, 798, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 10, 744, 753, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 10, 712, 719, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
       };
       break;
 
@@ -348,29 +348,30 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       brushSectorsToIgnore =
       {
         // black boxes outside
-        67, 68,
+        { 67, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 }, 
+        { 68, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
       };
 
       // top of the building
       brushPolygonsToMask =
       {
-        { 53, 1139 },
-        { 3, 590 },
-        { 3, 591 },
-        { 3, 592 },
-        { 3, 563 }
+        { 53, 1139, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 3, 590, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 3, 591, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 3, 592, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 3, 563, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 }
       };
       brushSectorsToMask = 
       {
-        90
+        { 90, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 }
       };
       break;
 
     case EWorld::Metropolis:
       brushPolygonsToIgnore =
       {
-        { 7, 131 },
-        { 7, 132 },
+        { 7, 131, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
+        { 7, 132, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
       };
       break;
 
@@ -378,28 +379,28 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       brushPolygonsToIgnore =
       {
         // start room roof
-        { 180, 3014 },
+        { 180, 3014, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
 
         // windows all right
-        { 64, 1210 },
-        { 64, 1211 },
-        { 64, 1186 },
-        { 64, 1187 },
-        { 64, 1188 },
-        { 64, 1189 },
+        { 64, 1210, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
+        { 64, 1211, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
+        { 64, 1186, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
+        { 64, 1187, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
+        { 64, 1188, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
+        { 64, 1189, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
 
         // windows all left
-        { 64, 1191 },
-        { 64, 1190 },
-        { 64, 1214 },
+        { 64, 1191, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
+        { 64, 1190, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
+        { 64, 1214, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
       };
 
       brushPolygonsToMask =
       {
         // start room left windows
-        { 180, 3015 },
+        { 180, 3015, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
         // start room right windows
-        { 180, 3018 },
+        { 180, 3018, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
       };
 
       break;
@@ -503,9 +504,9 @@ RgGeometryPrimaryVisibilityType SSRT::CustomInfo::GetBrushMaskBit(const CBrushPo
   
   for (const IgnoredBrushSector &s : brushSectorsToMask)
   {
-    if (pPolygon->bpo_pbscSector->bsc_iInWorld == s)
+    if (pPolygon->bpo_pbscSector->bsc_iInWorld == s.iBrushSectorIndex)
     {
-      return RgGeometryPrimaryVisibilityType::RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1;
+      return s.eMaskBit;
     }
   }
 
@@ -514,7 +515,7 @@ RgGeometryPrimaryVisibilityType SSRT::CustomInfo::GetBrushMaskBit(const CBrushPo
     if (pPolygon->bpo_pbscSector->bsc_iInWorld == p.iBrushSectorIndex &&
         pPolygon->bpo_iInWorld == p.iBrushPolygonIndex)
     {
-      return RgGeometryPrimaryVisibilityType::RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1;
+      return p.eMaskBit;
     }
   }
 
@@ -524,7 +525,7 @@ RgGeometryPrimaryVisibilityType SSRT::CustomInfo::GetBrushMaskBit(const CBrushPo
         pPolygon->bpo_iInWorld >= r.iBrushPolygonIndexStart && 
         pPolygon->bpo_iInWorld <= r.iBrushPolygonIndexEnd)
     {
-      return RgGeometryPrimaryVisibilityType::RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1;
+      return r.eMaskBit;
     }
   }
 
@@ -547,7 +548,9 @@ uint32_t SSRT::CustomInfo::GetCullMask(const FLOAT3D &vCameraPosition) const
       {
         return 0b001;
       }
+      break;
 
+    case EWorld::MoonMountains:
       break;
 
     case EWorld::Oasis:
@@ -604,7 +607,7 @@ bool SSRT::CustomInfo::IsBrushSectorIgnored(const CBrushSector *pSector) const
 
   for (const IgnoredBrushSector &s : brushSectorsToIgnore)
   {
-    if (pSector->bsc_iInWorld == s)
+    if (pSector->bsc_iInWorld == s.iBrushSectorIndex)
     {
       return true;
     }
@@ -620,7 +623,7 @@ bool SSRT::CustomInfo::IsBrushPolygonIgnored(const CBrushPolygon *pPolygon) cons
 
   for (const IgnoredBrushSector &s : brushSectorsToIgnore)
   {
-    if (pPolygon->bpo_pbscSector->bsc_iInWorld == s)
+    if (pPolygon->bpo_pbscSector->bsc_iInWorld == s.iBrushSectorIndex)
     {
       return true;
     }

@@ -91,19 +91,25 @@ private:
   void DisableFlashlightHint();
 
 private:
+
+  struct IgnoredBrushSector
+  {    
+    INDEX iBrushSectorIndex;
+    RgGeometryPrimaryVisibilityType eMaskBit;
+  };
   struct IgnoredBrushPoly
   {
     INDEX iBrushSectorIndex;
     INDEX iBrushPolygonIndex;
+    RgGeometryPrimaryVisibilityType eMaskBit;
   };
   struct IgnoredBrushPolyRange
   {
     INDEX iBrushSectorIndex;
     INDEX iBrushPolygonIndexStart;
     INDEX iBrushPolygonIndexEnd;
+    RgGeometryPrimaryVisibilityType eMaskBit;
   };
-
-  typedef INDEX IgnoredBrushSector;
 
 private:
   EWorld eCurrentWorld;
