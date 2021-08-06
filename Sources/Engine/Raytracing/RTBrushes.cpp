@@ -120,13 +120,14 @@ static RgGeometryMaterialBlendType RT_GetMaterialBlendType(UBYTE layerBlendingTy
 }
 
 
-static void RT_FlushBrushInfo(CEntity *penBrush, 
+static void RT_FlushBrushInfo(CEntity *penBrush,
                               uint32_t brushPartIndex,
-                              CBrushPolygonTexture *const textures[MAX_BRUSH_TEXTURE_COUNT], 
+                              CBrushPolygonTexture *const textures[MAX_BRUSH_TEXTURE_COUNT],
                               uint32_t polygonFlags,
                               const RT_TextureLayerBlending &blending,
                               bool hasScrollingTextures,
                               bool isWater,
+                              RgGeometryPrimaryVisibilityType maskBit,
                               bool onlyRasterized,
                               SSRT::Scene *pScene)
 {
@@ -243,6 +244,8 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   // will be overriden
   brushInfo.blendEnable = false;
   brushInfo.blendSrc = brushInfo.blendDst = RG_BLEND_FACTOR_ONE;
+
+  brushInfo.maskBit = maskBit;
 
   pScene->AddBrush(brushInfo);
 }
@@ -575,13 +578,14 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
     lastBlending.layerColor[i] = C_WHITE | CT_OPAQUE;
     lastBlending.layerBlendingType[i] = STXF_BLEND_OPAQUE;
   }
+  RgGeometryPrimaryVisibilityType lastBrushMaskBit = RgGeometryPrimaryVisibilityType::RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0;
 
 
-  auto flushLastSavedInfo = [onlyTexCoords, onlyRasterized, penBrush, &pLastTextures, &lastFlags, &lastBlending, &lastHasSrollingTextures, &lastIsWater, pScene] ()
+  auto flushLastSavedInfo = [onlyTexCoords, onlyRasterized, penBrush, &pLastTextures, &lastFlags, &lastBlending, &lastHasSrollingTextures, &lastIsWater, &lastBrushMaskBit, pScene] ()
   {
     if (!onlyTexCoords)
     {
-      RT_FlushBrushInfo(penBrush, RT_BrushPartIndex, pLastTextures, lastFlags, lastBlending, lastHasSrollingTextures, lastIsWater, onlyRasterized, pScene);
+      RT_FlushBrushInfo(penBrush, RT_BrushPartIndex, pLastTextures, lastFlags, lastBlending, lastHasSrollingTextures, lastIsWater, lastBrushMaskBit, onlyRasterized, pScene);
     }
     // update tex coords only for scrolling textures
     else if (lastHasSrollingTextures)
@@ -703,6 +707,8 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
     {
       isWaterPolygon = RT_HasWaterTextures(polygon, isWaterTexture, pScene);
     }
+
+    RgGeometryPrimaryVisibilityType maskBit = pScene->GetCustomInfo()->GetBrushMaskBit(&polygon);
   #pragma endregion
 
 
@@ -711,7 +717,8 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
       !RT_AreTexturesSame(pLastTextures, polygon.bpo_abptTextures) ||
       !RT_AreBlendingsSame(lastBlending, curBlending) ||
       lastFlags != polygonFlags ||
-      lastHasSrollingTextures != hasScrollingTextures;
+      lastHasSrollingTextures != hasScrollingTextures ||
+      lastBrushMaskBit != maskBit;
 
     if (mustBeFlushed)
     {
@@ -769,6 +776,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
     lastBlending = curBlending;
     lastHasSrollingTextures = hasScrollingTextures;
     lastIsWater = isWaterPolygon;
+    lastBrushMaskBit = maskBit;
     for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
     {
       pLastTextures[i] = &polygon.bpo_abptTextures[i];
@@ -826,7 +834,8 @@ static void RT_ProcessBrushEntity(CEntity *penBrush, bool onlyTexCoords, bool on
     FOREACHINDYNAMICARRAY(pbm->bm_abscSectors, CBrushSector, itbsc)
     {
       // if the sector is not hidden
-      if (!(itbsc->bsc_ulFlags & BSCF_HIDDEN))
+      if (!(itbsc->bsc_ulFlags & BSCF_HIDDEN) &&
+          !pScene->GetCustomInfo()->IsBrushSectorIgnored(itbsc))
       {
         // add that sector to active sectors
         RT_AddActiveSector(itbsc.Current(), penBrush, onlyTexCoords, onlyRasterized, pScene);
@@ -919,6 +928,11 @@ void RT_PrintBrushPolygonInfo(SSRT::Scene *pScene)
     return;
   }
 
+  bool bWithTranslucent = _srtGlobals.srt_bPrintBrushPolygonInfo / 10 % 10;
+  bool bIsPhysical = _srtGlobals.srt_bPrintBrushPolygonInfo / 100 % 10;
+  bool bWithTerrainInvisibleTris = _srtGlobals.srt_bPrintBrushPolygonInfo / 1000 % 10;
+
+
   _srtGlobals.srt_bPrintBrushPolygonInfo = 0;
 
   if (pScene == nullptr || pScene->GetWorld() == nullptr)
@@ -929,10 +943,11 @@ void RT_PrintBrushPolygonInfo(SSRT::Scene *pScene)
   const auto &mRotation = pScene->GetCameraRotation();
   const auto vForward = FLOAT3D(mRotation(1, 3), mRotation(2, 3), mRotation(3, 3)) * -1;
 
-  CCastRay crRay(pScene->GetViewerEntity(), pScene->GetCameraPosition(), pScene->GetCameraPosition() + vForward * 400.0f);
+  CCastRay crRay(pScene->GetViewerEntity(), pScene->GetCameraPosition(), pScene->GetCameraPosition() + vForward * 500.0f);
   crRay.cr_ttHitModels = CCastRay::TT_NONE;
-  crRay.cr_bHitTranslucentPortals = FALSE;
-  crRay.cr_bPhysical = TRUE;
+  crRay.cr_bHitTranslucentPortals = bWithTranslucent;
+  crRay.cr_bPhysical = bIsPhysical;
+  crRay.cr_bHitTerrainInvisibleTris = bWithTerrainInvisibleTris;
   pScene->GetWorld()->CastRay(crRay);
 
   CPrintF("\n");
@@ -946,6 +961,7 @@ void RT_PrintBrushPolygonInfo(SSRT::Scene *pScene)
     }
 
     CPrintF("%s\n", crRay.cr_penHit->GetName());
+    CPrintF("en_ulID: %i\n", crRay.cr_penHit->en_ulID);
     CPrintF("cr_fHitDistance: %fm\n", crRay.cr_fHitDistance);
 
     if (crRay.cr_pbscBrushSector != nullptr)

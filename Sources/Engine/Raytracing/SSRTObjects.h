@@ -65,6 +65,8 @@ struct CAbstractGeometry
 
   bool                isSky;
 
+  RgGeometryPrimaryVisibilityType maskBit;
+
 public:
   virtual ~CAbstractGeometry() = default;
   virtual uint64_t    GetUniqueID() const = 0;

@@ -35,26 +35,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 extern SSRT::SSRTGlobals _srtGlobals;
 
 
-enum class EWorld
-{
-  Other,
-  Hatshepsut,
-  SandCanyon,       
-  TombOfRamses,    
-  ValleyOfTheKings,
-  MoonMountains,  
-  Oasis,           
-  Dunes,            
-  Suburbs,        
-  Sewers,        
-  Metropolis,      
-  AlleyOfSphinxes,
-  Karnak,            
-  Luxor,            
-  SacredYards,      
-  TheGreatPyramid,  
-};
-
+typedef SSRT::CustomInfo::EWorld EWorld;
 
 
 const struct
@@ -225,7 +206,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
 {
   ASSERT(pWorld != nullptr);
 
-  EWorld eCurrentWorld = GetWorldEnum(pWorld);
+  eCurrentWorld = GetWorldEnum(pWorld);
   
   // It's not the actual world start time, it's 
   // the time SSRT scene was initialized. So 
@@ -337,17 +318,88 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
 
   switch (eCurrentWorld)
   {
-    case EWorld::Oasis:
-      brushSectorsToIgnore.push_back(67);
-      brushSectorsToIgnore.push_back(68);
+    case EWorld::Hatshepsut:
+      brushSectorsToIgnore = 
+      {
+        // black box outside
+        3,
+      };
+      // TODO: make terrain invisible when in the space cutscene
+      break;
 
-      // TODO: hide this when inside
-      brushPolygonsToIgnore.push_back({ 53, 1139 });
-      brushPolygonsToIgnore.push_back({ 3, 590 });
-      brushPolygonsToIgnore.push_back({ 3, 591 });
-      brushPolygonsToIgnore.push_back({ 3, 592 });
-      brushPolygonsToIgnore.push_back({ 3, 563 });
-      brushSectorsToIgnore.push_back(90);
+    case EWorld::SandCanyon:
+      break;
+
+    case EWorld::ValleyOfTheKings:
+      brushSectorsToIgnore =
+      {
+        // black box outside
+        203,
+      };
+
+      break;
+
+    case EWorld::MoonMountains:
+      break;
+
+    case EWorld::Oasis:
+      brushSectorsToIgnore =
+      {
+        // black boxes outside
+        67, 68,
+      };
+
+      // top of the building
+      brushPolygonsToMask =
+      {
+        { 53, 1139 },
+        { 3, 590 },
+        { 3, 591 },
+        { 3, 592 },
+        { 3, 563 }
+      };
+      brushSectorsToMask = 
+      {
+        90
+      };
+      break;
+
+    case EWorld::Metropolis:
+      brushPolygonsToIgnore =
+      {
+        { 7, 131 },
+        { 7, 132 },
+      };
+      break;
+
+    case EWorld::Karnak:
+      brushPolygonsToIgnore =
+      {
+        // start room roof
+        { 180, 3014 },
+
+        // windows all right
+        { 64, 1210 },
+        { 64, 1211 },
+        { 64, 1186 },
+        { 64, 1187 },
+        { 64, 1188 },
+        { 64, 1189 },
+
+        // windows all left
+        { 64, 1191 },
+        { 64, 1190 },
+        { 64, 1214 },
+      };
+
+      brushPolygonsToMask =
+      {
+        // start room left windows
+        { 180, 3015 },
+        // start room right windows
+        { 180, 3018 },
+      };
+
       break;
   }
 }
@@ -443,6 +495,49 @@ bool SSRT::CustomInfo::IsAngularSizeCullingDisabled(CEntity *penModel) const
   return std::find(ptdCachedBulletHoleTextures.begin(), ptdCachedBulletHoleTextures.end(), ptd) != ptdCachedBulletHoleTextures.end();
 }
 
+RgGeometryPrimaryVisibilityType SSRT::CustomInfo::GetBrushMaskBit(const CBrushPolygon *pPolygon) const
+{
+  ASSERT(pPolygon != nullptr && pPolygon->bpo_pbscSector != nullptr);
+  
+  for (const IgnoredBrushSector &s : brushSectorsToMask)
+  {
+    if (pPolygon->bpo_pbscSector->bsc_iInWorld == s)
+    {
+      return RgGeometryPrimaryVisibilityType::RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1;
+    }
+  }
+
+  for (const IgnoredBrushPoly &p : brushPolygonsToMask)
+  {
+    if (pPolygon->bpo_pbscSector->bsc_iInWorld == p.iBrushSectorIndex &&
+        pPolygon->bpo_iInWorld == p.iBrushPolygonIndex)
+    {
+      return RgGeometryPrimaryVisibilityType::RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1;
+    }
+  }
+
+  return RgGeometryPrimaryVisibilityType::RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0;
+}
+
+uint32_t SSRT::CustomInfo::GetCullMask(const FLOAT3D &vCameraPosition) const
+{
+  switch (eCurrentWorld)
+  {
+    case EWorld::Karnak:
+      if (vCameraPosition(1) > 659.0f && vCameraPosition(3) > 2002.0f)
+      {
+        return 0b001;
+      }
+      break;
+
+    case EWorld::Oasis:
+      // TODO
+      break;
+  }
+
+  return 0b111;
+}
+
 bool SSRT::CustomInfo::IsBrushIgnored(CEntity *penBrush) const
 { 
   // ugly way to remove terrain planes above the world
@@ -465,8 +560,24 @@ bool SSRT::CustomInfo::IsBrushIgnored(CEntity *penBrush) const
   return false;
 }
 
+bool SSRT::CustomInfo::IsBrushSectorIgnored(const CBrushSector *pSector) const
+{
+  ASSERT(pSector != nullptr);
+
+  for (const IgnoredBrushSector &s : brushSectorsToIgnore)
+  {
+    if (pSector->bsc_iInWorld == s)
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 bool SSRT::CustomInfo::IsBrushPolygonIgnored(const CBrushPolygon *pPolygon) const
 {
+  ASSERT(pPolygon != nullptr);
   ASSERT(pPolygon->bpo_pbscSector != nullptr);
 
   for (const IgnoredBrushSector &s : brushSectorsToIgnore)

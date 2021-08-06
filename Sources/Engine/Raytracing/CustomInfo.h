@@ -28,6 +28,27 @@ namespace SSRT
 class CustomInfo
 {
 public:
+  enum class EWorld
+  {
+    Other,
+    Hatshepsut,
+    SandCanyon,
+    TombOfRamses,
+    ValleyOfTheKings,
+    MoonMountains,
+    Oasis,
+    Dunes,
+    Suburbs,
+    Sewers,
+    Metropolis,
+    AlleyOfSphinxes,
+    Karnak,
+    Luxor,
+    SacredYards,
+    TheGreatPyramid,
+  };
+
+public:
   CustomInfo(CWorld *pWorld);
   ~CustomInfo();
 
@@ -44,10 +65,13 @@ public:
   bool IsReflectiveForced(CTextureObject *pTo) const;
   bool IsAlphaTestForced(CTextureObject *pTo, bool isTranslucent) const;
 
-  // TODO: refactoring for IsBrushIgnored
   bool IsBrushIgnored(CEntity *penBrush) const;
+  bool IsBrushSectorIgnored(const CBrushSector *pSector) const;
   bool IsBrushPolygonIgnored(const CBrushPolygon *pPolygon) const;
   bool AreDynamicTexCoordsIgnored(CEntity *penBrush) const;
+  
+  RgGeometryPrimaryVisibilityType GetBrushMaskBit(const CBrushPolygon *pPolygon) const;
+  uint32_t GetCullMask(const FLOAT3D &vCameraPosition) const;
 
   bool IsDirectionalLightIgnored(const CLightSource *plsLight) const;
   bool IsSphericalLightIgnored(const CLightSource *plsLight) const;
@@ -76,6 +100,8 @@ private:
   typedef INDEX IgnoredBrushSector;
 
 private:
+  EWorld eCurrentWorld;
+
   std::vector<FLOAT3D>     worldBasePositionsToIgnore;
   std::vector<std::string> dirLightsNamesToIgnore;
 
@@ -95,6 +121,9 @@ private:
 
   std::vector<IgnoredBrushPoly> brushPolygonsToIgnore;
   std::vector<IgnoredBrushSector> brushSectorsToIgnore;
+
+  std::vector<IgnoredBrushPoly> brushPolygonsToMask;
+  std::vector<IgnoredBrushSector> brushSectorsToMask;
 };
 
 }
