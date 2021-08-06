@@ -133,6 +133,7 @@ private:
   bool bSkyboxIntensityDependsOnSkyClouds;
   FLOAT fSkyboxCloudyIntensity;
 
+  std::vector<IgnoredBrushPolyRange> brushPolygonRangesToIgnore;
   std::vector<IgnoredBrushPoly> brushPolygonsToIgnore;
   std::vector<IgnoredBrushSector> brushSectorsToIgnore;
 

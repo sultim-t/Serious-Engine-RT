@@ -342,6 +342,23 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       break;
 
     case EWorld::MoonMountains:
+      brushPolygonRangesToIgnore =
+      {
+        { 24, 1471, 1494, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 }
+      };
+
+      brushSectorsToMask =
+      {
+        // start terrain
+        { 0, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        // cave in the middle
+        { 6, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 14, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 15, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 16, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        // black pyramid
+        { 23, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_2 },
+      };
       break;
 
     case EWorld::Oasis:
@@ -553,6 +570,20 @@ uint32_t SSRT::CustomInfo::GetCullMask(const FLOAT3D &vCameraPosition) const
       break;
 
     case EWorld::MoonMountains:
+      if (vCameraPosition(3) > -193.0f)
+      {
+        // start terrain and middle cave are visible
+        return 0b011;
+      }
+      else if (vCameraPosition(3) < -345.0f)
+      {
+        // black pyramid is visible
+        return 0b101;
+      }
+      else
+      {
+        return 0b001;
+      }
       break;
 
     case EWorld::Oasis:
@@ -635,6 +666,16 @@ bool SSRT::CustomInfo::IsBrushPolygonIgnored(const CBrushPolygon *pPolygon) cons
   {
     if (pPolygon->bpo_pbscSector->bsc_iInWorld == p.iBrushSectorIndex &&
         pPolygon->bpo_iInWorld == p.iBrushPolygonIndex)
+    {
+      return true;
+    }
+  }
+
+  for (const IgnoredBrushPolyRange &r : brushPolygonRangesToIgnore)
+  {
+    if (pPolygon->bpo_pbscSector->bsc_iInWorld == r.iBrushSectorIndex &&
+        pPolygon->bpo_iInWorld >= r.iBrushPolygonIndexStart &&
+        pPolygon->bpo_iInWorld <= r.iBrushPolygonIndexEnd)
     {
       return true;
     }

@@ -945,6 +945,7 @@ void RT_PrintBrushPolygonInfo(SSRT::Scene *pScene)
 
   CCastRay crRay(pScene->GetViewerEntity(), pScene->GetCameraPosition(), pScene->GetCameraPosition() + vForward * 500.0f);
   crRay.cr_ttHitModels = CCastRay::TT_NONE;
+  crRay.cr_bHitPortals = bWithTranslucent;
   crRay.cr_bHitTranslucentPortals = bWithTranslucent;
   crRay.cr_bPhysical = bIsPhysical;
   crRay.cr_bHitTerrainInvisibleTris = bWithTerrainInvisibleTris;
