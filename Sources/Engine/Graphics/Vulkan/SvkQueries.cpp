@@ -18,8 +18,15 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #ifdef SE1_VULKAN
 
+constexpr bool DISABLE_OCCLUSION_QUERIES = true;
+
 void SvkMain::InitOcclusionQuerying()
 {
+  if (DISABLE_OCCLUSION_QUERIES)
+  {
+    return;
+  }
+
   // create query pool
   VkQueryPoolCreateInfo queryPoolInfo = {};
   queryPoolInfo.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
@@ -37,6 +44,11 @@ void SvkMain::InitOcclusionQuerying()
 
 void SvkMain::DestroyOcclusionQuerying()
 {
+  if (DISABLE_OCCLUSION_QUERIES)
+  {
+    return;
+  }
+
   for (uint32_t i = 0; i < gl_VkMaxCmdBufferCount; i++)
   {
     vkDestroyQueryPool(gl_VkDevice, gl_VkOcclusionQueryPools[i], nullptr);
@@ -47,6 +59,11 @@ void SvkMain::DestroyOcclusionQuerying()
 
 void SvkMain::ResetOcclusionQueries(VkCommandBuffer cmd, uint32_t cmdIndex)
 {
+  if (DISABLE_OCCLUSION_QUERIES)
+  {
+    return;
+  }
+
   ASSERT(gl_VkCmdIsRecording);
 
   gl_VkOcclusionQueryLast[cmdIndex] = 0;
@@ -55,6 +72,11 @@ void SvkMain::ResetOcclusionQueries(VkCommandBuffer cmd, uint32_t cmdIndex)
 
 uint32_t SvkMain::CreateOcclusionQuery(float fromx, float fromy, float tox, float toy, float z)
 {
+  if (DISABLE_OCCLUSION_QUERIES)
+  {
+    return 0;
+  }
+
   ASSERT(gl_VkCmdIsRecording);
   ASSERT(fromx <= tox && fromy <= toy);
 
@@ -102,6 +124,11 @@ uint32_t SvkMain::CreateOcclusionQuery(float fromx, float fromy, float tox, floa
 
 void SvkMain::GetOcclusionResults(uint32_t firstQuery, uint32_t queryCount, uint32_t *results)
 {
+  if (DISABLE_OCCLUSION_QUERIES)
+  {
+    return;
+  }
+
   VkResult r = vkGetQueryPoolResults(
     gl_VkDevice, gl_VkOcclusionQueryPools[gl_VkCmdBufferCurrent],
     firstQuery, queryCount,

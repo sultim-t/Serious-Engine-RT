@@ -253,7 +253,7 @@ static void UpdateDepthPointsVisibility( const CDrawPort *pdp, const INDEX iMirr
       queryCount++;
     }
 
-    uint32_t results[SVK_OCCLUSION_QUERIES_MAX];
+    uint32_t results[SVK_OCCLUSION_QUERIES_MAX] = {};
     _pGfx->gl_SvkMain->GetOcclusionResults(queries[0].queryId, queryCount, results);
 
     // get query results
