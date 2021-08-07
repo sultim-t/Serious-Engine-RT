@@ -799,6 +799,18 @@ FLOAT SSRT::CustomInfo::GetSkySaturation() const
   return _srtGlobals.srt_fSkyColorSaturation;
 }
 
+RgSkyType SSRT::CustomInfo::GetLevelSkyType() const
+{
+  switch (eCurrentWorld)
+  {
+    case EWorld::TombOfRamses:
+    case EWorld::Sewers:
+      return RG_SKY_TYPE_COLOR;
+    default:
+      return RG_SKY_TYPE_RASTERIZED_GEOMETRY;
+  }
+}
+
 bool SSRT::CustomInfo::AreDynamicTexCoordsIgnored(CEntity *penBrush) const
 {
   return _srtGlobals.srt_bIgnoreDynamicTexCoords;

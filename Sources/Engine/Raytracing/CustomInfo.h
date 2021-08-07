@@ -79,6 +79,7 @@ public:
   FLOAT GetCloudsOpacity() const;
   FLOAT GetSkyIntensity() const;
   FLOAT GetSkySaturation() const;
+  RgSkyType GetLevelSkyType() const;
 
   void Update();
   void OnSkyBrushAdd(const CBrushGeometry &brush);

@@ -426,7 +426,7 @@ void SSRT::SSRTMain::EndFrame()
 
   RgDrawFrameSkyParams skyParams = {};
   {
-    skyParams.skyType = RG_SKY_TYPE_RASTERIZED_GEOMETRY;
+    skyParams.skyType = currentScene == nullptr ? RG_SKY_TYPE_COLOR : currentScene->GetCustomInfo()->GetLevelSkyType();
 
     FLOAT3D backgroundViewerPos = currentScene == nullptr ? FLOAT3D(0, 0, 0) : currentScene->GetBackgroundViewerPosition();
 
