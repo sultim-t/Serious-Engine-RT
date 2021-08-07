@@ -57,17 +57,20 @@ void CVideoOptionsMenu::Initialize_t(void)
     gm_mgDisplayAPITrigger, gm_mgResolutionsTrigger, TRANS("DISPLAY ADAPTER"), astrNoYes);
   gm_mgDisplayAdaptersTrigger.mg_strTip = TRANS("choose display adapter to be used");
   TRIGGER_MG(gm_mgResolutionsTrigger, 2,
-    gm_mgDisplayAdaptersTrigger, gm_mgFullScreenTrigger, TRANS("RESOLUTION"), astrNoYes);
-  gm_mgResolutionsTrigger.mg_strTip = TRANS("select video mode resolution");
-  TRIGGER_MG(gm_mgFullScreenTrigger, 3,
+    gm_mgDisplayAdaptersTrigger, gm_mgVideoRendering, TRANS("WINDOW SIZE"), astrNoYes);
+  gm_mgResolutionsTrigger.mg_strTip = TRANS("select size of the presentation window");
+
+  // ignored
+  const int iOutOfScreenRow = 128;
+  
+  TRIGGER_MG(gm_mgFullScreenTrigger, iOutOfScreenRow,
     gm_mgResolutionsTrigger, gm_mgVideoRendering, TRANS("FULL SCREEN"), astrNoYes);
   gm_mgFullScreenTrigger.mg_strTip = TRANS("make game run in a window or in full screen");
 
-  // ignored
-  TRIGGER_MG(gm_mgDisplayPrefsTrigger, 128,
+  TRIGGER_MG(gm_mgDisplayPrefsTrigger, iOutOfScreenRow,
     gm_mgDisplayAdaptersTrigger, gm_mgResolutionsTrigger, TRANS("PREFERENCES"), astrDisplayPrefsRadioTexts);
   gm_mgDisplayPrefsTrigger.mg_strTip = TRANS("balance between speed and rendering quality, depending on your system");
-  TRIGGER_MG(gm_mgBitsPerPixelTrigger, 128,
+  TRIGGER_MG(gm_mgBitsPerPixelTrigger, iOutOfScreenRow,
     gm_mgFullScreenTrigger, gm_mgVideoRendering, TRANS("BITS PER PIXEL"), astrBitsPerPixelRadioTexts);
   gm_mgBitsPerPixelTrigger.mg_strTip = TRANS("select number of colors used for display");
 #endif
@@ -84,8 +87,8 @@ void CVideoOptionsMenu::Initialize_t(void)
   gm_mgVideoRendering.mg_boxOnScreen = BoxMediumRow(7.0f);
   gm_mgVideoRendering.mg_pmgUp = &gm_mgBitsPerPixelTrigger;
 #else
-  gm_mgVideoRendering.mg_boxOnScreen = BoxMediumRow(5.0f);
-  gm_mgVideoRendering.mg_pmgUp = &gm_mgFullScreenTrigger;
+  gm_mgVideoRendering.mg_boxOnScreen = BoxMediumRow(4.0f);
+  gm_mgVideoRendering.mg_pmgUp = &gm_mgResolutionsTrigger;
 #endif // !SE1_RAYTRACING
   gm_mgVideoRendering.mg_pmgDown = &gm_mgApply;
   gm_mgVideoRendering.mg_strText = TRANS("RENDERING OPTIONS");

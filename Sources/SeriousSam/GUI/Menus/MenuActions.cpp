@@ -629,15 +629,43 @@ static void FillResolutionsList(void)
   if (gmCurrent.gm_mgFullScreenTrigger.mg_iSelected == 0) {
     // always has fixed resolutions, but not greater than desktop
 
-    _ctResolutions = ARRAYCOUNT(apixWidths);
+    // RT: plus 1 for borderless mode that covers whole screen
+    _ctResolutions = ARRAYCOUNT(apixWidths) + 1;
     _astrResolutionTexts = new CTString[_ctResolutions];
     _admResolutionModes = new CDisplayMode[_ctResolutions];
     extern PIX _pixDesktopWidth;
+
+    int iFullscreenWidth = ::GetSystemMetrics(SM_CXSCREEN);
+    int iFullscreenHeight = ::GetSystemMetrics(SM_CYSCREEN);
+    ASSERT(_pixDesktopWidth == iFullscreenWidth);
+      
     INDEX iRes = 0;
     for (; iRes<_ctResolutions; iRes++) {
-      if (apixWidths[iRes][0]>_pixDesktopWidth) break;
+      if (apixWidths[iRes][0] > _pixDesktopWidth)
+      {
+        break;
+      }
+
+      if (apixWidths[iRes][0] == iFullscreenWidth && apixWidths[iRes][1] == iFullscreenHeight)
+      {
+        break;
+      }
+
       SetResolutionInList(iRes, apixWidths[iRes][0], apixWidths[iRes][1]);
     }
+
+    // RT: add borderless fullscreen
+    // check ResetMainWindowNormal() function if this is being modified
+    {
+      _astrResolutionTexts[iRes].PrintF("%dx%d (borderless)", iFullscreenWidth, iFullscreenHeight);
+
+      _admResolutionModes[iRes].dm_pixSizeI = iFullscreenWidth;
+      _admResolutionModes[iRes].dm_pixSizeJ = iFullscreenHeight;
+      _admResolutionModes[iRes].dm_ddDepth = DD_DEFAULT;
+
+      iRes++;
+    }
+
     _ctResolutions = iRes;
 
     // if fullscreen
@@ -749,6 +777,7 @@ extern void UpdateVideoOptionsButtons(INDEX iSelected)
   gmCurrent.gm_mgApply.mg_bEnabled = _bVideoOptionsChanged;
   // determine which should be visible
 
+#ifndef SE1_RAYTRACING
   gmCurrent.gm_mgFullScreenTrigger.mg_bEnabled = TRUE;
   if (da.da_ulFlags&DAF_FULLSCREENONLY) {
     gmCurrent.gm_mgFullScreenTrigger.mg_bEnabled = FALSE;
@@ -766,6 +795,13 @@ extern void UpdateVideoOptionsButtons(INDEX iSelected)
     gmCurrent.gm_mgBitsPerPixelTrigger.mg_iSelected = DepthToSwitch(DD_16BIT);
     gmCurrent.gm_mgBitsPerPixelTrigger.ApplyCurrentSelection();
   }
+#else
+  gmCurrent.gm_mgFullScreenTrigger.mg_bEnabled = FALSE;
+  gmCurrent.gm_mgFullScreenTrigger.mg_iSelected = 0;
+  gmCurrent.gm_mgBitsPerPixelTrigger.mg_bEnabled = FALSE;
+  gmCurrent.gm_mgBitsPerPixelTrigger.mg_iSelected = DepthToSwitch(DD_DEFAULT);
+  gmCurrent.gm_mgDisplayPrefsTrigger.mg_bEnabled = FALSE;
+#endif // !SE1_RAYTRACING
 
   // remember current selected resolution
   PIX pixSizeI, pixSizeJ;

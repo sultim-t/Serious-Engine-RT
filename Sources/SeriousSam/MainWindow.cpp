@@ -178,15 +178,46 @@ void CloseMainWindow(void)
 
 void ResetMainWindowNormal(void)
 {
+  int iFullscreenWidth = ::GetSystemMetrics(SM_CXSCREEN);
+  int iFullscreenHeight = ::GetSystemMetrics(SM_CYSCREEN);
+
+  // RT: let the size, that equals to the screen's one, be the borderless covering whole screen
+  bool bBorderlessFull = _pixLastSizeI == iFullscreenWidth && _pixLastSizeJ == iFullscreenHeight;
+
   ShowWindow( _hwndMain, SW_HIDE);
-  // add edges and title bar to window size so client area would have size that we requested
-  RECT rWindow, rClient;
-  GetClientRect( _hwndMain, &rClient);
-  GetWindowRect( _hwndMain, &rWindow);
-  const PIX pixWidth  = _pixLastSizeI + (rWindow.right-rWindow.left) - (rClient.right-rClient.left);
-  const PIX pixHeight = _pixLastSizeJ + (rWindow.bottom-rWindow.top) - (rClient.bottom-rClient.top);
-  const PIX pixPosX   = (::GetSystemMetrics(SM_CXSCREEN) - pixWidth ) /2;
-  const PIX pixPosY   = (::GetSystemMetrics(SM_CYSCREEN) - pixHeight) /2;
+
+  PIX pixWidth = 0;
+  PIX pixHeight = 0;
+
+  if (bBorderlessFull)
+  {
+    pixWidth = iFullscreenWidth;
+    pixHeight = iFullscreenHeight;
+  }
+  else
+  {
+    // add edges and title bar to window size so client area would have size that we requested
+    RECT rWindow, rClient;
+    GetClientRect(_hwndMain, &rClient);
+    GetWindowRect(_hwndMain, &rWindow);
+
+    pixWidth = _pixLastSizeI + (rWindow.right - rWindow.left) - (rClient.right - rClient.left);
+    pixHeight = _pixLastSizeJ + (rWindow.bottom - rWindow.top) - (rClient.bottom - rClient.top);
+  }
+
+  const PIX pixPosX   = (iFullscreenWidth - pixWidth ) /2;
+  const PIX pixPosY   = (iFullscreenHeight - pixHeight) /2;
+
+  if (bBorderlessFull)
+  {
+    LONG lStyle = GetWindowLong(_hwndMain, GWL_STYLE);
+    lStyle &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZE | WS_MAXIMIZE | WS_SYSMENU);
+    SetWindowLong(_hwndMain, GWL_STYLE, lStyle);
+    LONG lExStyle = GetWindowLong(_hwndMain, GWL_EXSTYLE);
+    lExStyle &= ~(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
+    SetWindowLong(_hwndMain, GWL_EXSTYLE, lExStyle);
+  }
+
   // set new window size and show it
   SetWindowPos( _hwndMain, NULL, pixPosX,pixPosY, pixWidth,pixHeight, SWP_NOZORDER);
   ShowWindow(   _hwndMain, SW_SHOW);
@@ -226,6 +257,10 @@ void OpenMainWindowNormal( PIX pixSizeI, PIX pixSizeJ)
 // open the main application window for fullscreen mode
 void OpenMainWindowFullScreen( PIX pixSizeI, PIX pixSizeJ)
 {
+  ASSERTALWAYS("Fullscreen is replaced by a borderless window that covers whole screen");
+  OpenMainWindowNormal(pixSizeI, pixSizeJ);
+  return;
+
   ASSERT( _hwndMain==NULL);
   // create a window, invisible initially
   _hwndMain = CreateWindowExA(
