@@ -219,7 +219,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
     brushInfo.textureFrames[iDstIndex] = to.GetFrame();
       
     // layer blending
-    brushInfo.layerBlendings[iDstIndex] = RT_GetMaterialBlendType(blending.layerBlendingType[iSrcIndex]);
+    auto blendType = RT_GetMaterialBlendType(blending.layerBlendingType[iSrcIndex]);
 
     // layer color
     GFXColor gcolor = GFXColor(blending.layerColor[iSrcIndex]);
@@ -236,7 +236,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
     if (iSrcIndex > 0)
     {
       // alpha-blended texture are oversaturated, ignore them
-      if (brushInfo.layerBlendings[iDstIndex] != RG_GEOMETRY_MATERIAL_BLEND_TYPE_ALPHA)
+      if (blendType != RG_GEOMETRY_MATERIAL_BLEND_TYPE_ALPHA)
       {
         fcolor(1) *= 2;
         fcolor(2) *= 2;
@@ -244,6 +244,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
       }
     }
 
+    brushInfo.layerBlendings[iDstIndex] = blendType;
     brushInfo.layerColors[iDstIndex] = fcolor;
 
     iDstIndex++;

@@ -125,7 +125,7 @@ extern CTextureObject *_ptoLogoEAX = NULL;
 
 #ifdef SS_THE_FIRST_ENCOUNTER
   extern CTString sam_strVersion = "1.10";
-  extern CTString sam_strModName = TRANS( "-   O P E N   S O U R C E   -" );
+  extern CTString sam_strModName = TRANS( "-   R A Y   T R A C E D   -" );
 
   extern CTString sam_strFirstLevel = "Levels\\01_Hatshepsut.wld";
   extern CTString sam_strIntroLevel = "Levels\\Intro.wld";
@@ -135,7 +135,7 @@ extern CTextureObject *_ptoLogoEAX = NULL;
   extern CTString sam_strTrainingLevel = "Levels\\KarnakDemo.wld";
 #else
   extern CTString sam_strVersion = "1.10";
-  extern CTString sam_strModName = TRANS( "-   O P E N   S O U R C E   -" );
+  extern CTString sam_strModName = TRANS( "-   R A Y   T R A C E D   -" );
 
   extern CTString sam_strFirstLevel = "Levels\\LevelsMP\\1_0_InTheLastEpisode.wld";
   extern CTString sam_strIntroLevel = "Levels\\LevelsMP\\Intro.wld";

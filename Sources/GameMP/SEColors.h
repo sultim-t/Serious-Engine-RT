@@ -16,16 +16,39 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #ifndef __SECOLORS_H
 #define __SECOLORS_H 1
 
+#ifdef SS_THE_FIRST_ENCOUNTER
+
+// names of defines are incorrect, should be white/green
+#define SE_COL_ORANGE_LIGHT     0xFAFAFF00
+#define SE_COL_ORANGE_NEUTRAL   0x00F20000
+#define SE_COL_ORANGE_DARK      0x007F0000
+#define SE_COL_ORANGE_DARK_LT   0x00BF0000
+
+#define SE_COL_BLUE_DARK_HV     0x01160400
+#define SE_COL_BLUE_DARK        0x255F2400
+#define SE_COL_BLUE_DARK_LT     0x29702D00
+#define SE_COL_BLUE_NEUTRAL     0x349D3A00
+#define SE_COL_BLUE_NEUTRAL_LT  0x3AAD3600
+#define SE_COL_BLUE_LIGHT       0x6AF53E00
+
+#else
+
 #define SE_COL_ORANGE_LIGHT     0xffd70000
 #define SE_COL_ORANGE_NEUTRAL   0xee9c0000
 #define SE_COL_ORANGE_DARK      0x9b4b0000
 #define SE_COL_ORANGE_DARK_LT   0xbc6a0000
+
 #define SE_COL_BLUE_DARK_HV     0x151c2300
 #define SE_COL_BLUE_DARK        0x2a384600
 #define SE_COL_BLUE_DARK_LT     0x43596f00
 #define SE_COL_BLUE_NEUTRAL     0x5c7a9900
 #define SE_COL_BLUE_NEUTRAL_LT  0x6097cc00
 #define SE_COL_BLUE_LIGHT       0x64b4ff00
+
+#endif
+
+
 #define SE_COL_BLUEGREEN_LT     0x6cff6c00
+
 
 #endif
