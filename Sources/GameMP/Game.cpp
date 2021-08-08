@@ -2742,11 +2742,11 @@ void CGame::GameMainLoop(void)
 static CTextureObject _toPointer;
 static CTextureObject _toBcgClouds;
 static CTextureObject _toBcgGrid;
-static CTextureObject _toBackdrop;
-static CTextureObject _toSamU;
-static CTextureObject _toSamD;
-static CTextureObject _toLeftU;
-static CTextureObject _toLeftD;
+//static CTextureObject _toBackdrop;
+//static CTextureObject _toSamU;
+//static CTextureObject _toSamD;
+//static CTextureObject _toLeftU;
+//static CTextureObject _toLeftD;
 
 static PIXaabbox2D _boxScreen_SE;
 static PIX _pixSizeI_SE;
@@ -2777,20 +2777,20 @@ void CGame::LCDInit(void)
     _toPointer.SetData_t(CTFILENAME("TexturesMP\\General\\Pointer.tex"));
     _toBcgGrid.SetData_t(CTFILENAME("TexturesMP\\General\\grid.tex"));
 #endif
-    _toBackdrop.SetData_t(CTFILENAME("TexturesMP\\General\\MenuBack.tex"));
+    //_toBackdrop.SetData_t(CTFILENAME("TexturesMP\\General\\MenuBack.tex"));
     //_toSamU.SetData_t(CTFILENAME("TexturesMP\\General\\SamU.tex"));
     //_toSamD.SetData_t(CTFILENAME("TexturesMP\\General\\SamD.tex"));
-    _toLeftU.SetData_t(CTFILENAME("TexturesMP\\General\\LeftU.tex"));
-    _toLeftD.SetData_t(CTFILENAME("TexturesMP\\General\\LeftD.tex"));
+    //_toLeftU.SetData_t(CTFILENAME("TexturesMP\\General\\LeftU.tex"));
+    //_toLeftD.SetData_t(CTFILENAME("TexturesMP\\General\\LeftD.tex"));
     // force constant textures
     ((CTextureData*)_toBcgClouds.GetData())->Force(TEX_CONSTANT);
     ((CTextureData*)_toPointer  .GetData())->Force(TEX_CONSTANT);
     ((CTextureData*)_toBcgGrid  .GetData())->Force(TEX_CONSTANT);
-    ((CTextureData*)_toBackdrop .GetData())->Force(TEX_CONSTANT);
+    //((CTextureData*)_toBackdrop .GetData())->Force(TEX_CONSTANT);
     //((CTextureData*)_toSamU     .GetData())->Force(TEX_CONSTANT);
     //((CTextureData*)_toSamD     .GetData())->Force(TEX_CONSTANT);
-    ((CTextureData*)_toLeftU    .GetData())->Force(TEX_CONSTANT);
-    ((CTextureData*)_toLeftD    .GetData())->Force(TEX_CONSTANT);
+    //((CTextureData*)_toLeftU    .GetData())->Force(TEX_CONSTANT);
+    //((CTextureData*)_toLeftD    .GetData())->Force(TEX_CONSTANT);
 
   } catch (char *strError) {
     FatalError("%s\n", strError);
@@ -2850,7 +2850,8 @@ void CGame::LCDScreenBoxOpenRight(COLOR col)
 }
 void CGame::LCDRenderClouds1(void)
 {
-  _pdp_SE->PutTexture(&_toBackdrop, _boxScreen_SE, C_WHITE|255);
+  //_pdp_SE->PutTexture(&_toBackdrop, _boxScreen_SE, C_WHITE|255);
+  _pdp_SE->Fill(SE_COL_BLUE_DARK_HV | 255);
 
   if (!_bPopup) {
 
@@ -2877,23 +2878,23 @@ void CGame::LCDRenderClouds1(void)
     iYB = iYM + iSize;
     iXL = -20;
     iXR = iXL + iSize;
-    box = PIXaabbox2D( PIX2D( iXL*_pdp_SE->GetWidth()/640, iYU*_pdp_SE->GetWidth()/640) ,
-                       PIX2D( iXR*_pdp_SE->GetWidth()/640, iYM*_pdp_SE->GetWidth()/640));
-    _pdp_SE->PutTexture(&_toLeftU, box, SE_COL_BLUE_NEUTRAL|200);
-    box = PIXaabbox2D( PIX2D( iXL*_pdp_SE->GetWidth()/640, iYM*_pdp_SE->GetWidth()/640) ,
-                       PIX2D( iXR*_pdp_SE->GetWidth()/640, iYB*_pdp_SE->GetWidth()/640));
-    _pdp_SE->PutTexture(&_toLeftD, box, SE_COL_BLUE_NEUTRAL|200);
-    iYU = iYB;
-    iYM = iYU + iSize;
-    iYB = iYM + iSize;
-    iXL = -20;
-    iXR = iXL + iSize;
-    box = PIXaabbox2D( PIX2D( iXL*_pdp_SE->GetWidth()/640, iYU*_pdp_SE->GetWidth()/640) ,
-                       PIX2D( iXR*_pdp_SE->GetWidth()/640, iYM*_pdp_SE->GetWidth()/640));
-    _pdp_SE->PutTexture(&_toLeftU, box, SE_COL_BLUE_NEUTRAL|200);
-    box = PIXaabbox2D( PIX2D( iXL*_pdp_SE->GetWidth()/640, iYM*_pdp_SE->GetWidth()/640) ,
-                       PIX2D( iXR*_pdp_SE->GetWidth()/640, iYB*_pdp_SE->GetWidth()/640));
-    _pdp_SE->PutTexture(&_toLeftD, box, SE_COL_BLUE_NEUTRAL|200);
+    //box = PIXaabbox2D( PIX2D( iXL*_pdp_SE->GetWidth()/640, iYU*_pdp_SE->GetWidth()/640) ,
+    //                   PIX2D( iXR*_pdp_SE->GetWidth()/640, iYM*_pdp_SE->GetWidth()/640));
+    //_pdp_SE->PutTexture(&_toLeftU, box, SE_COL_BLUE_NEUTRAL|200);
+    //box = PIXaabbox2D( PIX2D( iXL*_pdp_SE->GetWidth()/640, iYM*_pdp_SE->GetWidth()/640) ,
+    //                   PIX2D( iXR*_pdp_SE->GetWidth()/640, iYB*_pdp_SE->GetWidth()/640));
+    //_pdp_SE->PutTexture(&_toLeftD, box, SE_COL_BLUE_NEUTRAL|200);
+    //iYU = iYB;
+    //iYM = iYU + iSize;
+    //iYB = iYM + iSize;
+    //iXL = -20;
+    //iXR = iXL + iSize;
+    //box = PIXaabbox2D( PIX2D( iXL*_pdp_SE->GetWidth()/640, iYU*_pdp_SE->GetWidth()/640) ,
+    //                   PIX2D( iXR*_pdp_SE->GetWidth()/640, iYM*_pdp_SE->GetWidth()/640));
+    //_pdp_SE->PutTexture(&_toLeftU, box, SE_COL_BLUE_NEUTRAL|200);
+    //box = PIXaabbox2D( PIX2D( iXL*_pdp_SE->GetWidth()/640, iYM*_pdp_SE->GetWidth()/640) ,
+    //                   PIX2D( iXR*_pdp_SE->GetWidth()/640, iYB*_pdp_SE->GetWidth()/640));
+    //_pdp_SE->PutTexture(&_toLeftD, box, SE_COL_BLUE_NEUTRAL|200);
   
   }
 
