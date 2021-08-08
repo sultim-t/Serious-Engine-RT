@@ -120,6 +120,9 @@ static RgGeometryMaterialBlendType RT_GetMaterialBlendType(UBYTE layerBlendingTy
 }
 
 
+#define IGNORE_BRUSH_COLOR 1
+
+
 static void RT_FlushBrushInfo(CEntity *penBrush,
                               uint32_t brushPartIndex,
                               CBrushPolygonTexture *const textures[MAX_BRUSH_TEXTURE_COUNT],
@@ -189,48 +192,61 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   brushInfo.brushPartIndex = brushPartIndex;
   brushInfo.hasScrollingTextures = hasScrollingTextures;
 
-  for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
+  uint32_t iDstIndex = 0;
+
+  for (uint32_t iSrcIndex = 0; iSrcIndex < MAX_BRUSH_TEXTURE_COUNT; iSrcIndex++)
   {
-    ASSERT(RT_AllSectorTexCoords[i].Count() == RT_AllSectorVertices.Count());
+    ASSERT(RT_AllSectorTexCoords[iSrcIndex].Count() == RT_AllSectorVertices.Count());
 
-    brushInfo.texCoordLayers[i] = &RT_AllSectorTexCoords[i][0];
-
-    if (textures[i] == nullptr)
+    if (textures[iSrcIndex] == nullptr)
     {
       continue;
     }
 
-    CTextureObject &to = textures[i]->bpt_toTexture;
+    CTextureObject &to = textures[iSrcIndex]->bpt_toTexture;
     CTextureData *td = (CTextureData *)to.GetData();
 
-    brushInfo.textureObjects[i] = &to;
-
-    if (td != nullptr)
+    if (td == nullptr)
     {
-      // layer texture data
-      brushInfo.textures[i] = td;
-      brushInfo.textureFrames[i] = to.GetFrame();
-      
-      // layer blending
-      brushInfo.layerBlendings[i] = RT_GetMaterialBlendType(blending.layerBlendingType[i]);
+      continue;
+    }
 
-      // layer color
-      GFXColor gcolor = GFXColor(blending.layerColor[i]);
-      Vector<FLOAT, 4> fcolor = { (float)gcolor.r, (float)gcolor.g , (float)gcolor.b, (float)gcolor.a };
-      fcolor /= 255.0f;
-      
-      brushInfo.layerColors[i] = fcolor;
+    brushInfo.textureObjects[iDstIndex] = &to;
+    brushInfo.texCoordLayers[iDstIndex] = &RT_AllSectorTexCoords[iSrcIndex][0];
 
-      // texture modulation for second and third textures (RSSetInitialTextureParametersMT)
-      if (i > 0)
+    // layer texture data
+    brushInfo.textures[iDstIndex] = td;
+    brushInfo.textureFrames[iDstIndex] = to.GetFrame();
+      
+    // layer blending
+    brushInfo.layerBlendings[iDstIndex] = RT_GetMaterialBlendType(blending.layerBlendingType[iSrcIndex]);
+
+    // layer color
+    GFXColor gcolor = GFXColor(blending.layerColor[iSrcIndex]);
+    Vector<FLOAT, 4> fcolor = { (float)gcolor.r, (float)gcolor.g , (float)gcolor.b, (float)gcolor.a };
+    fcolor /= 255.0f;
+
+  #ifdef IGNORE_BRUSH_COLOR
+    fcolor(1) = 1.0f;
+    fcolor(2) = 1.0f;
+    fcolor(3) = 1.0f;
+  #endif // IGNORE_BRUSH_COLOR
+
+    // texture modulation for second and third textures (RSSetInitialTextureParametersMT)
+    if (iSrcIndex > 0)
+    {
+      // alpha-blended texture are oversaturated, ignore them
+      if (brushInfo.layerBlendings[iDstIndex] != RG_GEOMETRY_MATERIAL_BLEND_TYPE_ALPHA)
       {
-        // alpha-blended texture are oversaturated, ignore them
-        if (brushInfo.layerBlendings[i] != RG_GEOMETRY_MATERIAL_BLEND_TYPE_ALPHA)
-        {
-          brushInfo.layerColors[i] *= 2;
-        }
+        fcolor(1) *= 2;
+        fcolor(2) *= 2;
+        fcolor(3) *= 2;
       }
     }
+
+    brushInfo.layerColors[iDstIndex] = fcolor;
+
+    iDstIndex++;
   }
 
   bool isWaterReflective = isWater && !(polygonFlags & BPOF_TRANSLUCENT);
