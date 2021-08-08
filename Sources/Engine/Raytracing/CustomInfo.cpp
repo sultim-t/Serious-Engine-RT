@@ -86,24 +86,12 @@ const struct
   FLOAT   fSunSaturation;
   FLOAT   fSkyColorMultiplier;
   FLOAT   fSkyColorSaturation;
+  FLOAT   fTonemappingMinLogLuminance;
+  FLOAT   fTonemappingMaxLogLuminance;
 }
-RT_WorldIlluminationDefaultParams[] =
+RT_WorldIlluminationParams[] =
 {
-  { EWorld::Hatshepsut,        4.0f, 0.5f, 1.0f, 0.75f },
-  { EWorld::SandCanyon,        4.0f, 0.5f, 1.0f, 0.75f },
-  { EWorld::TombOfRamses,      4.0f, 0.5f, 1.0f, 0.75f },
-  { EWorld::ValleyOfTheKings,  4.0f, 0.5f, 1.0f, 0.75f },
-  { EWorld::MoonMountains,     4.0f, 0.5f, 1.0f, 0.75f },
-  { EWorld::Oasis,             4.0f, 0.5f, 1.0f, 0.75f },
-  { EWorld::Dunes,             4.0f, 0.5f, 1.0f, 0.75f },
-  { EWorld::Suburbs,           4.0f, 0.5f, 1.0f, 0.75f },
-  { EWorld::Sewers,            4.0f, 0.5f, 1.0f, 0.75f },
-  { EWorld::Metropolis,        4.0f, 0.5f, 1.0f, 0.75f },
-  { EWorld::AlleyOfSphinxes,   4.0f, 0.5f, 1.0f, 0.75f },
-  { EWorld::Karnak,            4.0f, 0.5f, 1.0f, 0.75f },
-  { EWorld::Luxor,             4.0f, 0.5f, 1.0f, 0.75f },
-  { EWorld::SacredYards,       4.0f, 0.5f, 1.0f, 0.75f },
-  { EWorld::TheGreatPyramid,   4.0f, 0.5f, 1.0f, 0.75f },
+  { EWorld::TheGreatPyramid, 0.5f, 1.0f, 0.25f, 1.0f, 0.0f, 2.0f },
 };
 
 
@@ -250,7 +238,16 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     }
   }
 
-  for (const auto &s : RT_WorldIlluminationDefaultParams)
+
+  {
+    _srtGlobals.srt_fSunIntensity = 4.0f;
+    _srtGlobals.srt_fSunSaturation = 0.5f;
+    _srtGlobals.srt_fSkyColorMultiplier = 1.0f;
+    _srtGlobals.srt_fSkyColorSaturation = 0.75f;
+    _srtGlobals.srt_fTonemappingMinLogLuminance = -2.0f;
+    _srtGlobals.srt_fTonemappingMaxLogLuminance = 0.0f;
+  }
+  for (const auto &s : RT_WorldIlluminationParams)
   {
     if (s.eWorld == eCurrentWorld)
     {
@@ -258,8 +255,11 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       _srtGlobals.srt_fSunSaturation = s.fSunSaturation;
       _srtGlobals.srt_fSkyColorMultiplier = s.fSkyColorMultiplier;
       _srtGlobals.srt_fSkyColorSaturation = s.fSkyColorSaturation;
+      _srtGlobals.srt_fTonemappingMinLogLuminance = s.fTonemappingMinLogLuminance;
+      _srtGlobals.srt_fTonemappingMaxLogLuminance = s.fTonemappingMaxLogLuminance;
     }
   }
+
 
   for (const char *pTdPath : RT_BulletHoleTexturePaths)
   {
@@ -304,9 +304,14 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       _srtGlobals.srt_fAnimatedSunTimeLength = 4 * 60;
       _srtGlobals.srt_vAnimatedSunTargetEuler = { -27, -70, 0 };
       break;
+    case EWorld::TheGreatPyramid:
+      _srtGlobals.srt_fAnimatedSunTimeOffsetStart = 0;
+      _srtGlobals.srt_fAnimatedSunTimeLength = 0;
+      _srtGlobals.srt_vAnimatedSunTargetEuler = { -135, -45, 0 };
+      break;
     default:
       _srtGlobals.srt_fAnimatedSunTimeOffsetStart = 0;
-      // disable animation
+      // disable animation (length=-1)
       _srtGlobals.srt_fAnimatedSunTimeLength = -1;
       _srtGlobals.srt_vAnimatedSunTargetEuler = { 45, -45, 0 };
       break;
@@ -756,13 +761,25 @@ FLOAT3D SSRT::CustomInfo::GetAnimatedSunDirection(const FLOAT3D &vOriginalEuler)
 {
   TIME tmCurrent = _pTimer->GetLerpedCurrentTick();
 
-  if (_srtGlobals.srt_fAnimatedSunTimeLength <= 0.0f)
+  // -1 for original direction
+  if (_srtGlobals.srt_fAnimatedSunTimeLength < -0.5f)
   {
     FLOAT3D vDirection;
     AnglesToDirectionVector(vOriginalEuler, vDirection);
   
     return vDirection;
   }
+
+  // 0 for overriden direction without lerping
+  if (_srtGlobals.srt_fAnimatedSunTimeLength < 0.05f)
+  {
+    FLOAT3D vDirection;
+    AnglesToDirectionVector(_srtGlobals.srt_vAnimatedSunTargetEuler, vDirection);
+
+    return vDirection;
+  }
+
+  // >0 for animated
 
   FLOATquat3D qOrigin;
   qOrigin.FromEuler(vOriginalEuler);
