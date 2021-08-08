@@ -32,7 +32,7 @@ struct SSRTGlobals
   INDEX srt_bShowGradients = 0;
   INDEX srt_bShowMotionVectors = 0;
 
-  INDEX srt_bLightFixWithModels = 0;
+  INDEX srt_bLightFixWithModels = 1;
   INDEX srt_bLightFixWithTranslucent = 0;
 
   FLOAT srt_fSunIntensity = 4.0f;

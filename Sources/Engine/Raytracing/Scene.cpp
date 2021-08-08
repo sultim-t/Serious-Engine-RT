@@ -45,7 +45,9 @@ SSRT::Scene::Scene(RgInstance _instance, CWorld *_pWorld, TextureUploader *_pTex
   pCustomInfo = new CustomInfo(_pWorld);
 
   ASSERT(pWorld != nullptr);
+#ifndef NDEBUG
   CPrintF("SSRT scene was created.\n");
+#endif // !NDEBUG
 
   // upload static geometry (brushes)
   ProcessBrushes();
@@ -53,7 +55,9 @@ SSRT::Scene::Scene(RgInstance _instance, CWorld *_pWorld, TextureUploader *_pTex
 
 SSRT::Scene::~Scene()
 {
+#ifndef NDEBUG
   CPrintF("SSRT scene was deleted.\n");
+#endif // !NDEBUG
 
   delete pSceneBrushes;
   delete pCustomInfo;

@@ -62,6 +62,7 @@ void COptionsMenu::Initialize_t(void)
   gm_lhGadgets.AddTail(gm_mgNetworkOptions.mg_lnNode);
   gm_mgNetworkOptions.mg_pActivatedFunction = NULL;
 
+#ifndef SE1_RAYTRACING
   gm_mgCustomOptions.mg_bfsFontSize = BFS_LARGE;
   gm_mgCustomOptions.mg_boxOnScreen = BoxBigRow(4);
   gm_mgCustomOptions.mg_pmgUp = &gm_mgNetworkOptions;
@@ -79,4 +80,31 @@ void COptionsMenu::Initialize_t(void)
   gm_mgAddonOptions.mg_strTip = TRANS("choose from list of addons to execute");
   gm_lhGadgets.AddTail(gm_mgAddonOptions.mg_lnNode);
   gm_mgAddonOptions.mg_pActivatedFunction = NULL;
+#else
+  // ignored
+  const int iOutOfScreenRow = 128;
+
+  gm_mgCustomOptions.mg_bfsFontSize = BFS_LARGE;
+  gm_mgCustomOptions.mg_boxOnScreen = BoxBigRow(iOutOfScreenRow);
+  gm_mgCustomOptions.mg_pmgUp = &gm_mgNetworkOptions;
+  gm_mgCustomOptions.mg_pmgDown = &gm_mgAddonOptions;
+  gm_mgCustomOptions.mg_strText = TRANS("ADVANCED OPTIONS");
+  gm_mgCustomOptions.mg_strTip = TRANS("for advanced users only");
+  gm_lhGadgets.AddTail(gm_mgCustomOptions.mg_lnNode);
+  gm_mgCustomOptions.mg_pActivatedFunction = NULL;
+
+  gm_mgAddonOptions.mg_bfsFontSize = BFS_LARGE;
+  gm_mgAddonOptions.mg_boxOnScreen = BoxBigRow(iOutOfScreenRow);
+  gm_mgAddonOptions.mg_pmgUp = &gm_mgCustomOptions;
+  gm_mgAddonOptions.mg_pmgDown = &gm_mgVideoOptions;
+  gm_mgAddonOptions.mg_strText = TRANS("EXECUTE ADDON");
+  gm_mgAddonOptions.mg_strTip = TRANS("choose from list of addons to execute");
+  gm_lhGadgets.AddTail(gm_mgAddonOptions.mg_lnNode);
+  gm_mgAddonOptions.mg_pActivatedFunction = NULL;
+
+
+  gm_mgNetworkOptions.mg_pmgDown = &gm_mgVideoOptions;
+  gm_mgCustomOptions.mg_bEnabled = FALSE;
+  gm_mgAddonOptions.mg_bEnabled = FALSE;
+#endif // !SE1_RAYTRACING
 }

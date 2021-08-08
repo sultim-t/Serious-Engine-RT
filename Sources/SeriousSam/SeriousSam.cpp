@@ -62,10 +62,14 @@ extern INDEX sam_iScreenSizeJ = 768;  // current size of the window
 extern INDEX sam_iDisplayDepth  = 0;  // 0==default, 1==16bit, 2==32bit
 extern INDEX sam_iDisplayAdapter = 0; 
 #ifdef SE1_VULKAN
-extern INDEX sam_iGfxAPI = 1;         // 1==Vulkan
+extern INDEX sam_iGfxAPI = 2;         // 1==Vulkan, 2==RayTracing
 #else
 extern INDEX sam_iGfxAPI = 0;         // 0==OpenGL
 #endif // SE1_VULKAN
+#ifdef SE1_RAYTRACING
+static INDEX sam_bShowRayTracingOptions = 0;    // for rendering options menu
+static INDEX sam_bShowRasterizationOptions = 0; // for rendering options menu
+#endif
 extern INDEX sam_bFirstStarted = FALSE;
 extern FLOAT sam_tmDisplayModeReport = 5.0f;
 extern INDEX sam_bShowAllLevels = FALSE;
@@ -497,6 +501,11 @@ BOOL Init( HINSTANCE hInstance, int nCmdShow, CTString strCmdLine)
   _pShell->DeclareSymbol("user INDEX sam_bMenuHiScore;",  &sam_bMenuHiScore);
   _pShell->DeclareSymbol("user INDEX sam_bToggleConsole;",&sam_bToggleConsole);
   _pShell->DeclareSymbol("INDEX sam_iStartCredits;", &sam_iStartCredits);
+
+#ifdef SE1_RAYTRACING
+  _pShell->DeclareSymbol("INDEX sam_bShowRayTracingOptions;", &sam_bShowRayTracingOptions);
+  _pShell->DeclareSymbol("INDEX sam_bShowRasterizationOptions;", &sam_bShowRasterizationOptions);
+#endif
 
   InitializeGame();
   _pNetwork->md_strGameID = sam_strGameName;
@@ -1555,6 +1564,11 @@ void StartNewMode( enum GfxAPIType eGfxAPI, INDEX iAdapter, PIX pixSizeI, PIX pi
   // if succeeded
   } else {
     _iDisplayModeChangeFlag = 1;  // all ok
+
+  #ifdef SE1_RAYTRACING
+    sam_bShowRayTracingOptions = eGfxAPI == GfxAPIType::GAT_RT;
+    sam_bShowRasterizationOptions = !sam_bShowRayTracingOptions;
+  #endif
   }
 
   // apply 3D-acc settings

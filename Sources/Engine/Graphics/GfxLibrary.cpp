@@ -2325,14 +2325,12 @@ void ForceModernHardwareGraphicsSettings()
   shd_iDithering = 0;
   shd_iAllowDynamic = 1;
   shd_bDynamicMipmaps = 1;
-  shd_bCacheAll = 1;
+  shd_bCacheAll = 0;
   shd_bAllowFlats = 1;
 
   gfx_iLensFlareQuality = 3;
   gfx_bClearScreen = 0;
   gfx_bDisableMultiMonSupport = 1;
-  gfx_tmProbeDecay = 60;
-  // gfx_fProbeRatio = 0.5;
 
   // gam_bPretouch = 0;
 
@@ -2361,7 +2359,7 @@ void ForceModernHardwareGraphicsSettings()
   shd_fCacheSize = 16;
   shd_tmFlushDelay = 40;
   mdl_bFineQuality = 1;
-  gfx_tmProbeDecay = 300;
+  gfx_tmProbeDecay = 0;
   // gfx_fProbeRatio = 2.0;
 
 
