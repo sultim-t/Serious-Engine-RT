@@ -159,8 +159,8 @@ static FLOAT3D RT_FindMuzzleFlashPosition(CEntity *pEn,
                                           SSRT::Scene *pScene)
 {
   float eps = 1.0f;
-  FLOAT3D muzzlePos = basePosition - forward * _srtGlobals.srt_fMuzzleLightOffset;
-  FLOAT3D rayDstPos = basePosition - forward * (_srtGlobals.srt_fMuzzleLightOffset + eps);
+  FLOAT3D muzzlePos = basePosition + forward * _srtGlobals.srt_fMuzzleLightOffset;
+  FLOAT3D rayDstPos = basePosition + forward * (_srtGlobals.srt_fMuzzleLightOffset + eps);
 
   CCastRay crRay(pEn, basePosition, rayDstPos);
   crRay.cr_ttHitModels = _srtGlobals.srt_bLightFixWithModels ? CCastRay::TT_COLLISIONBOX : CCastRay::TT_NONE;
@@ -251,9 +251,10 @@ static FLOAT3D RT_FindMuzzleFlashPositionForFirstPerson(CEntity *pEn, SSRT::Scen
   const FLOAT3D &cameraPos = pScene->GetCameraPosition();
 
   const FLOATmatrix3D &rot = pScene->GetCameraRotation();
-  FLOAT3D forward = { rot(1, 3), rot(2, 3), rot(3, 3) };
+  FLOAT3D forward = -FLOAT3D(rot(1, 3), rot(2, 3), rot(3, 3));
+  FLOAT3D up = FLOAT3D(rot(1, 2), rot(2, 2), rot(3, 2));
 
-  return RT_FindMuzzleFlashPosition(pEn, cameraPos, forward, pScene);
+  return RT_FindMuzzleFlashPosition(pEn, cameraPos + up * 0.2f, forward, pScene);
 }
 
 
@@ -263,7 +264,7 @@ static FLOAT3D RT_FindMuzzleFlashPositionForPlayerAABB(CEntity *pEn, SSRT::Scene
   pEn->GetBoundingBox(aabb);
 
   const FLOATmatrix3D &rot = pEn->GetRotationMatrix();
-  FLOAT3D forward = { rot(1, 3), rot(2, 3), rot(3, 3) };
+  FLOAT3D forward = -FLOAT3D(rot(1, 3), rot(2, 3), rot(3, 3));
 
   return RT_FindMuzzleFlashPosition(pEn, aabb.Center(), forward, pScene);
 }
