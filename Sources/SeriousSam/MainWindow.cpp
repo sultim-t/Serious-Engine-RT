@@ -217,6 +217,15 @@ void ResetMainWindowNormal(void)
     lExStyle &= ~(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
     SetWindowLong(_hwndMain, GWL_EXSTYLE, lExStyle);
   }
+  else
+  {
+    // disable maximize button
+    LONG lStyle = GetWindowLong(_hwndMain, GWL_STYLE);
+    lStyle &= ~(WS_MAXIMIZEBOX | WS_THICKFRAME);
+    // for WS_MAXIMIZEBOX
+    lStyle |= WS_SYSMENU; 
+    SetWindowLong(_hwndMain, GWL_STYLE, lStyle);
+  }
 
   // set new window size and show it
   SetWindowPos( _hwndMain, NULL, pixPosX,pixPosY, pixWidth,pixHeight, SWP_NOZORDER);
@@ -259,30 +268,6 @@ void OpenMainWindowFullScreen( PIX pixSizeI, PIX pixSizeJ)
 {
   ASSERTALWAYS("Fullscreen is replaced by a borderless window that covers whole screen");
   OpenMainWindowNormal(pixSizeI, pixSizeJ);
-  return;
-
-  ASSERT( _hwndMain==NULL);
-  // create a window, invisible initially
-  _hwndMain = CreateWindowExA(
-    // WS_EX_TOPMOST | WS_EX_APPWINDOW,
-    WS_EX_APPWINDOW,
-    APPLICATION_NAME,
-    "",   // title
-    WS_POPUP,
-    0,0,
-    pixSizeI, pixSizeJ,  // window size
-    NULL,
-    NULL,
-    _hInstance,
-    NULL);
-  // didn't make it?
-  if( _hwndMain==NULL) FatalError(TRANS("Cannot open main window!"));
-  SE_UpdateWindowHandle( _hwndMain);
-
-  // set window title and show it
-  sprintf( achWindowTitle, TRANS("Serious Sam (FullScreen %dx%d)"), pixSizeI, pixSizeJ);
-  SetWindowTextA( _hwndMain, achWindowTitle);
-  ShowWindow(    _hwndMain, SW_SHOWNORMAL);
 }
 
 

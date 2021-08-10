@@ -1344,11 +1344,11 @@ int PASCAL WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 BOOL TryToSetDisplayMode(enum GfxAPIType eGfxAPI, INDEX iAdapter, PIX pixSizeI, PIX pixSizeJ,
                          enum DisplayDepth eColorDepth, BOOL bFullScreenMode)
 {
-  CDisplayMode dmTmp;
-  dmTmp.dm_ddDepth = eColorDepth;
-  CPrintF(TRANS("  Starting display mode: %dx%dx%s (%s)\n"),
-          pixSizeI, pixSizeJ, dmTmp.DepthString(),
-          bFullScreenMode ? TRANS("fullscreen") : TRANS("window"));
+  // RT: force no fullscreen and default color depth option
+  bFullScreenMode = FALSE;
+  eColorDepth = DD_DEFAULT;
+
+  CPrintF(TRANS("  Starting display mode: %dx%d\n"), pixSizeI, pixSizeJ);
 
   // mark to start ignoring window size/position messages until settled down
   _bWindowChanging = TRUE;
@@ -1522,12 +1522,6 @@ const INDEX ctDefaultModes = ARRAYCOUNT(aDefaultModes);
 void StartNewMode( enum GfxAPIType eGfxAPI, INDEX iAdapter, PIX pixSizeI, PIX pixSizeJ,
                    enum DisplayDepth eColorDepth, BOOL bFullScreenMode)
 {
-#ifdef SE1_RAYTRACING
-  // RT: force default depth option
-  eColorDepth = DD_DEFAULT;
-#endif // SE1_RAYTRACING
-
-
   CPrintF( TRANS("\n* START NEW DISPLAY MODE ...\n"));
 
   // try to set the mode
