@@ -125,6 +125,13 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("           user FLOAT srt_fAnimatedSunTimeOffsetStart;", &_srtGlobals.srt_fAnimatedSunTimeOffsetStart);
   _pShell->DeclareSymbol("           user FLOAT srt_fAnimatedSunTimeLength;", &_srtGlobals.srt_fAnimatedSunTimeLength);
 
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fBloomIntensity;", &_srtGlobals.srt_fBloomIntensity);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fBloomInputThreshold;", &_srtGlobals.srt_fBloomInputThreshold);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fBloomInputThresholdLength;", &_srtGlobals.srt_fBloomInputThresholdLength);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fBloomUpsampleRadius;", &_srtGlobals.srt_fBloomUpsampleRadius);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fBloomEmissionMultiplier;", &_srtGlobals.srt_fBloomEmissionMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fBloomSkyMultiplier;", &_srtGlobals.srt_fBloomSkyMultiplier);
+
   // user controls
   _pShell->DeclareSymbol("user INDEX ctl_bFlashlight;", &_srtGlobals.srt_bFlashlightEnable);
 }
@@ -443,6 +450,15 @@ void SSRT::SSRTMain::EndFrame()
   tmParams.maxLogLuminance = _srtGlobals.srt_fTonemappingMaxLogLuminance;
 
 
+  RgDrawFrameBloomParams blParams = {};
+  blParams.bloomIntensity = _srtGlobals.srt_fBloomIntensity;
+  blParams.inputThreshold = _srtGlobals.srt_fBloomInputThreshold;
+  blParams.inputThresholdLength = _srtGlobals.srt_fBloomInputThresholdLength;
+  blParams.upsampleRadius = _srtGlobals.srt_fBloomUpsampleRadius;
+  blParams.bloomEmissionMultiplier = _srtGlobals.srt_fBloomEmissionMultiplier;
+  blParams.bloomSkyMultiplier = _srtGlobals.srt_fBloomSkyMultiplier;
+
+
   RgDrawFrameOverridenTexturesParams tdParams = {};
   tdParams.normalMapStrength = _srtGlobals.srt_fNormalMapStrength;
   tdParams.emissionMapBoost = _srtGlobals.srt_fEmissionMapBoost;
@@ -463,8 +479,10 @@ void SSRT::SSRTMain::EndFrame()
 
   // if world wasn't rendered, don't adapt
   frameInfo.disableEyeAdaptation = !wasWorldProcessed;
+  frameInfo.disableRayTracing = !wasWorldProcessed;
   frameInfo.pTonemappingParams = _srtGlobals.srt_bTonemappingUseDefault ? nullptr : &tmParams;
   frameInfo.pShadowParams = _srtGlobals.srt_bMaxBounceShadowsUseDefault ? nullptr : &shadowParams;
+  frameInfo.pBloomParams = &blParams;
   frameInfo.pSkyParams = &skyParams;
   frameInfo.pOverridenTexturesParams = &tdParams;
   frameInfo.pDebugParams = &dbgParams;

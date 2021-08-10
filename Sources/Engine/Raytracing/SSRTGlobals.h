@@ -124,6 +124,13 @@ struct SSRTGlobals
   // Animation ends on (Origin + OffsetStart + Length) time point.
   // Animation is disabled, if it's negative
   FLOAT srt_fAnimatedSunTimeLength = 0;
+
+  FLOAT srt_fBloomIntensity = 1.0f;
+  FLOAT srt_fBloomInputThreshold = 0.5f;
+  FLOAT srt_fBloomInputThresholdLength = 0.25f;
+  FLOAT srt_fBloomUpsampleRadius = 1.0f;
+  FLOAT srt_fBloomEmissionMultiplier = 32.0f;
+  FLOAT srt_fBloomSkyMultiplier = 0.1f;
 };
 
 }
