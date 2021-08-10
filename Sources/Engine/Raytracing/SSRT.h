@@ -57,7 +57,7 @@ public:
   void SetViewport(float leftUpperX, float leftUpperY, float width, float height, float minDepth, float maxDepth);
   void DeleteTexture(uint32_t textureID);
 
-private:
+  // Called on GfxLibrary initialization
   static void InitShellVariables();
   static void NormalizeShellVariables();
 

@@ -1306,6 +1306,8 @@ void CGfxLibrary::Init(void)
 
   // initialize gfx APIs support
   InitAPIs();
+
+  InitShellVariables_RayTracing();
 }
 
 

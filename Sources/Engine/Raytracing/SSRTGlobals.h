@@ -23,6 +23,7 @@ namespace SSRT
 
 struct SSRTGlobals
 {
+  INDEX srt_bDebugValidation = 0;
   INDEX srt_bVSync = 1;
   INDEX srt_bReloadShaders = 0;
   INDEX srt_bPrintBrushPolygonInfo = 0;

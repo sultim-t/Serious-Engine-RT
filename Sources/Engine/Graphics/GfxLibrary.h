@@ -242,6 +242,7 @@ private:
   void SetViewport_Vulkan(float leftUpperX, float leftUpperY, float width, float height, float minDepth, float maxDepth);
 
   // Vulkan ray tracing
+  void InitShellVariables_RayTracing();
   BOOL InitDriver_RayTracing();
   void InitContext_RayTracing();
   void EndDriver_RayTracing();

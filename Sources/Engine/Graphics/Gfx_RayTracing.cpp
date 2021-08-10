@@ -53,6 +53,12 @@ extern INDEX GFX_ctVertices;
 extern BOOL  GFX_bViewMatrix;
 
 
+void CGfxLibrary::InitShellVariables_RayTracing()
+{
+  SSRT::SSRTMain::InitShellVariables();
+}
+
+
 BOOL CGfxLibrary::InitDriver_RayTracing()
 {
   ASSERT(gl_SSRT == nullptr);

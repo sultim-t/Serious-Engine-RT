@@ -35,6 +35,7 @@ extern SSRT::SSRTGlobals _srtGlobals = SSRT::SSRTGlobals();
 
 void SSRT::SSRTMain::InitShellVariables()
 {
+  _pShell->DeclareSymbol("persistent user INDEX srt_bDebugValidation;", &_srtGlobals.srt_bDebugValidation);
   _pShell->DeclareSymbol("persistent user INDEX srt_bVSync;", &_srtGlobals.srt_bVSync);
   _pShell->DeclareSymbol("persistent user INDEX srt_bTonemappingUseDefault;", &_srtGlobals.srt_bTonemappingUseDefault);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingWhitePoint;", &_srtGlobals.srt_fTonemappingWhitePoint);
@@ -218,7 +219,7 @@ SSRT::SSRTMain::SSRTMain() :
 
   RgInstanceCreateInfo info = {};
   info.pName = "Serious Engine RT";
-  info.enableValidationLayer = RG_TRUE;
+  info.enableValidationLayer = _srtGlobals.srt_bDebugValidation;
   info.pShaderFolderPath = shadersPath;
   info.pBlueNoiseFilePath = blueNoiseFilePath;
 
@@ -259,8 +260,6 @@ SSRT::SSRTMain::SSRTMain() :
   RG_CHECKERROR(r);
 
   textureUploader = new TextureUploader(instance);
-
-  SSRTMain::InitShellVariables();
 }
 SSRT::SSRTMain::~SSRTMain()
 {
