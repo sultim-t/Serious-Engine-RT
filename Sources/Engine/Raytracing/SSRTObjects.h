@@ -82,6 +82,7 @@ struct CModelGeometry : public CAbstractGeometry
 
   bool                isSpecular;
   bool                isReflective;
+  bool                isEmissive;
 
   bool                isRasterized;
 

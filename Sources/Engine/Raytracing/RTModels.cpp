@@ -199,6 +199,7 @@ static void FlushModelInfo(ULONG entityID,
                            GFXColor modelColor,
                            bool forceTranslucency,
                            bool isBackground,
+                           bool isFullBright,
                            SSRT::Scene *pScene)
 {
   // RT: flush all
@@ -278,6 +279,8 @@ static void FlushModelInfo(ULONG entityID,
   RT_SetBlend(modelInfo.blendEnable, modelInfo.blendSrc, modelInfo.blendDst, stt, forceTranslucency);
 
   modelInfo.invertedNormals = rm.rm_ulFlags & RMF_INVERTED;
+
+  modelInfo.isEmissive = isFullBright; // rm.rm_rtRenderType & RT_SHADING_NONE;
 
   // ignore rasterized parts of first person viewer
   bool isRasterizedFirstPerson = modelInfo.visibilityType == RG_GEOMETRY_VISIBILITY_TYPE_FIRST_PERSON_VIEWER && modelInfo.isRasterized;
@@ -525,7 +528,9 @@ static void RT_RenderOneSide(ULONG entityID,
   INDEX ctElements = 0;
   ModelMipInfo &mmi = *rm.rm_pmmiMip;
 
-  auto flushModel = [entityID, &rm, &to, attchPath, &mmi, &vd, scene, &sttLast, forceTranslucency, isBackground] (INDEX firstIndex, INDEX indexCount)
+  bool isFullbright = false;
+
+  auto flushModel = [entityID, &rm, &to, attchPath, &mmi, &vd, scene, &sttLast, forceTranslucency, isBackground, &isFullbright] (INDEX firstIndex, INDEX indexCount)
   {
     ASSERT(firstIndex >= 0);
     if (indexCount <= 0)
@@ -538,7 +543,7 @@ static void RT_RenderOneSide(ULONG entityID,
 
     FlushModelInfo(entityID, rm, to, attchPath,
                    &mmi.mmpi_aiElements[firstIndex], indexCount,
-                   vd, sttLast, modelColor, forceTranslucency, isBackground, scene);
+                   vd, sttLast, modelColor, forceTranslucency, isBackground, isFullbright, scene);
   };
 
   {
@@ -552,6 +557,8 @@ static void RT_RenderOneSide(ULONG entityID,
       {
         break;
       }
+
+      isFullbright = ms.ms_sstShadingType == SST_FULLBRIGHT;
 
       // skip surface if ... 
       if (!(ulFlags & SRF_DIFFUSE)  // not in this layer,

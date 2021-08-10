@@ -170,10 +170,12 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
     info.pTexCoordLayerData[0] = model.texCoordLayers[0];
     info.pTexCoordLayerData[1] = nullptr;
     info.pTexCoordLayerData[2] = nullptr;
-    info.defaultMetallicity = metallic;
-    info.defaultRoughness = roughness;
     info.indexCount = model.indexCount;
     info.pIndexData = model.indices;
+
+    info.defaultMetallicity = metallic;
+    info.defaultRoughness = roughness;
+    info.defaultEmission = model.isEmissive ? _srtGlobals.srt_fEmissionForFullbright : 0.0f;
 
     info.layerColors[0] = { model.color(1), model.color(2), model.color(3), model.color(4) };
     info.layerBlendingTypes[0] = RG_GEOMETRY_MATERIAL_BLEND_TYPE_OPAQUE;

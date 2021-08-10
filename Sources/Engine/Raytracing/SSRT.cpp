@@ -41,7 +41,6 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingWhitePoint;", &_srtGlobals.srt_fTonemappingWhitePoint);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMinLogLuminance;", &_srtGlobals.srt_fTonemappingMinLogLuminance);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMaxLogLuminance;", &_srtGlobals.srt_fTonemappingMaxLogLuminance);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorMultiplier;", &_srtGlobals.srt_fSkyColorMultiplier);
   _pShell->DeclareSymbol("           user INDEX srt_bShowGradients;", &_srtGlobals.srt_bShowGradients);
   _pShell->DeclareSymbol("           user INDEX srt_bShowMotionVectors;", &_srtGlobals.srt_bShowMotionVectors);
   _pShell->DeclareSymbol("           user INDEX srt_bReloadShaders;", &_srtGlobals.srt_bReloadShaders);
@@ -49,10 +48,13 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user INDEX srt_bTexturesOriginalSRGB;", &_srtGlobals.srt_bTexturesOriginalSRGB);
   _pShell->DeclareSymbol("persistent user INDEX srt_bIgnoreDynamicTexCoords;", &_srtGlobals.srt_bIgnoreDynamicTexCoords);
 
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorMultiplier;", &_srtGlobals.srt_fSkyColorMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorSaturation;", &_srtGlobals.srt_fSkyColorSaturation);
+
   _pShell->DeclareSymbol("persistent user FLOAT srt_fNormalMapStrength;", &_srtGlobals.srt_fNormalMapStrength);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fEmissionMapBoost;", &_srtGlobals.srt_fEmissionMapBoost);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fEmissionMaxScreenColor;", &_srtGlobals.srt_fEmissionMaxScreenColor);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fEmissionForFullbright;", &_srtGlobals.srt_fEmissionForFullbright);
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_fModelSpecularMetallicDefault;", &_srtGlobals.srt_fModelSpecularMetallicDefault);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fModelSpecularRoughnessDefault;", &_srtGlobals.srt_fModelSpecularRoughnessDefault);
@@ -193,6 +195,10 @@ void SSRT::SSRTMain::NormalizeShellVariables()
   _srtGlobals.srt_fCullingMinAngularSize = Clamp(_srtGlobals.srt_fCullingMinAngularSize, -1.0f, 89.9f);
 
   _srtGlobals.srt_bAnimatedSunRestart = !!_srtGlobals.srt_bAnimatedSunRestart;
+
+  _srtGlobals.srt_fEmissionMapBoost = Max(_srtGlobals.srt_fEmissionMapBoost, 0.0f);
+  _srtGlobals.srt_fEmissionMaxScreenColor = Max(_srtGlobals.srt_fEmissionMaxScreenColor, 0.0f);
+  _srtGlobals.srt_fEmissionForFullbright = Max(_srtGlobals.srt_fEmissionForFullbright, 0.0f);
 }
 
 

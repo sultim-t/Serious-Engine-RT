@@ -74,8 +74,9 @@ struct SSRTGlobals
   INDEX srt_bWeaponUseOriginalNormals = 0;
   FLOAT srt_fNormalMapStrength = 1.0f;
 
-  FLOAT srt_fEmissionMapBoost = 100.0f;
-  FLOAT srt_fEmissionMaxScreenColor = 2.0f;
+  FLOAT srt_fEmissionMapBoost = 16.0f;
+  FLOAT srt_fEmissionMaxScreenColor = 32.0f;
+  FLOAT srt_fEmissionForFullbright = 1.0f;
 
   FLOAT srt_fParticlesAlphaMultiplier = 1.0f;
 
