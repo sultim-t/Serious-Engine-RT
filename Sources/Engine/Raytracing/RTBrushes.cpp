@@ -945,9 +945,10 @@ void RT_PrintBrushPolygonInfo(SSRT::Scene *pScene)
     return;
   }
 
-  bool bWithTranslucent = _srtGlobals.srt_bPrintBrushPolygonInfo / 10 % 10;
-  bool bIsPhysical = _srtGlobals.srt_bPrintBrushPolygonInfo / 100 % 10;
-  bool bWithTerrainInvisibleTris = _srtGlobals.srt_bPrintBrushPolygonInfo / 1000 % 10;
+  bool bWithModels = _srtGlobals.srt_bPrintBrushPolygonInfo / 10 % 10;
+  bool bWithTranslucent = _srtGlobals.srt_bPrintBrushPolygonInfo / 100 % 10;
+  bool bIsPhysical = _srtGlobals.srt_bPrintBrushPolygonInfo / 1000 % 10;
+  bool bWithTerrainInvisibleTris = _srtGlobals.srt_bPrintBrushPolygonInfo / 10000 % 10;
 
 
   _srtGlobals.srt_bPrintBrushPolygonInfo = 0;
@@ -961,7 +962,7 @@ void RT_PrintBrushPolygonInfo(SSRT::Scene *pScene)
   const auto vForward = FLOAT3D(mRotation(1, 3), mRotation(2, 3), mRotation(3, 3)) * -1;
 
   CCastRay crRay(pScene->GetViewerEntity(), pScene->GetCameraPosition(), pScene->GetCameraPosition() + vForward * 500.0f);
-  crRay.cr_ttHitModels = CCastRay::TT_NONE;
+  crRay.cr_ttHitModels = bWithModels ? CCastRay::TT_FULL: CCastRay::TT_NONE;
   crRay.cr_bHitPortals = bWithTranslucent;
   crRay.cr_bHitTranslucentPortals = bWithTranslucent;
   crRay.cr_bPhysical = bIsPhysical;
@@ -972,9 +973,18 @@ void RT_PrintBrushPolygonInfo(SSRT::Scene *pScene)
 
   if (crRay.cr_penHit != nullptr)
   {
-    if (crRay.cr_penHit->GetBrush() == nullptr)
+    if (crRay.cr_penHit->GetRenderType() == CEntity::RenderType::RT_MODEL)
     {
-      CPrintF("Not a brush");
+      CPrintF("Model:\n");
+      CPrintF("%s\n", crRay.cr_penHit->GetName());
+      CPrintF("en_ulID: %i\n", crRay.cr_penHit->en_ulID);
+      CPrintF("cr_fHitDistance: %fm\n", crRay.cr_fHitDistance);
+
+      return;
+    }
+
+    if (crRay.cr_penHit->GetRenderType() != CEntity::RenderType::RT_BRUSH)
+    {
       return;
     }
 

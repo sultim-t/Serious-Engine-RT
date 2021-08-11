@@ -183,7 +183,7 @@ static FLOAT3D RT_FindMuzzleFlashPosition(CEntity *pEn,
 
 
 #define SPOTLIGHT_NEAR_FIX_DIST_MIN 2.0f
-#define SPOTLIGHT_NEAR_FIX_DIST_MAX 10.0f
+#define SPOTLIGHT_NEAR_FIX_DIST_MAX 30.0f
 
 #define SPOTLIGHT_START_THRESHOLD 0.05f
 
@@ -211,7 +211,7 @@ static void RT_FixSpotlightPosition(CEntity *pEn,
 
       if (crRay.cr_penHit != nullptr && crRay.cr_pbpoBrushPolygon != nullptr)
       {
-        refStartPosition = Lerp(pScene->GetCameraPosition(), refStartPosition, Clamp(crRay.cr_fHitDistance / len, SPOTLIGHT_START_THRESHOLD, 1.0f));
+        refStartPosition = Lerp(pScene->GetCameraPosition(), refStartPosition, Clamp((crRay.cr_fHitDistance - 0.2f) / len, SPOTLIGHT_START_THRESHOLD, 1.0f));
       }
     }
   }

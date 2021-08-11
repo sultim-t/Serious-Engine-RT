@@ -93,8 +93,9 @@ RT_WorldIlluminationParams[] =
 {
   // defaults:               4.0f, 0.5f, 1.0f, 0.75f, -2.0f, 0.0f
   { EWorld::SandCanyon,      3.0f, 0.5f, 1.0f, 0.75f, -2.0f, 0.0f },
+  { EWorld::Suburbs,         4.0f, 0.5f, 0.5f,  1.0f, -2.0f, 0.0f },
   { EWorld::AlleyOfSphinxes, 4.0f, 0.5f, 0.5f, 0.75f, -2.0f, 0.0f },
-  { EWorld::TheGreatPyramid, 2.0f, 1.0f, 0.5f, 1.0f, 0.0f, 2.0f },
+  { EWorld::TheGreatPyramid, 2.0f, 1.0f, 0.5f,  1.0f,  0.0f, 2.0f },
   // TODO: Metropolis, Serious difficulty. Sky viewer pos: (3280,-96,-3280). Sun euler -125, -55
   // { EWorld::Metropolis,      0.5f, 0.5f, 0.25f, 0.75f, -2.0f, 0.0}
      { EWorld::Metropolis,      4.0f, 0.5f, 0.5f, 0.75f, -2.0f, 0.0f },
@@ -212,6 +213,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   TIME tmWorldCreation = _pTimer->GetLerpedCurrentTick();
 
 
+
   // Positions of unnecessary brushes (that also have "World Base" names)
   bCheckOnlyZoningForBrushIgnored = true;
   for (const auto &b : RT_WorldBaseToIgnore)
@@ -246,6 +248,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   }
 
 
+
   {
     _srtGlobals.srt_fSunIntensity = 4.0f;
     _srtGlobals.srt_fSunSaturation = 0.5f;
@@ -268,10 +271,12 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   }
 
 
+
   for (const char *pTdPath : RT_BulletHoleTexturePaths)
   {
      ptdCachedBulletHoleTextures.push_back(_pTextureStock->st_ntObjects.Find(pTdPath));
   }
+
 
 
   // always disable flashlight on level start
@@ -280,7 +285,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   isFlashlightHintEnabled = true;
   DisableFlashlightHint();
 
-  // enable hint onlt for particular levels
+  // enable hint only for particular levels
   switch (eCurrentWorld)
   {
     case EWorld::SandCanyon:
@@ -299,6 +304,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       tmFlashlightHintEnd = -1.0f;
       break;
   }
+
 
 
   tmAnimatedSunOrigin = tmWorldCreation;
