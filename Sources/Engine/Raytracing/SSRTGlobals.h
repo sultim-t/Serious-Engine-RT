@@ -70,6 +70,8 @@ struct SSRTGlobals
   FLOAT srt_fModelSpecularRoughnessDefault = 0.025f;
   FLOAT srt_fModelReflectiveMetallicDefault = 1.0f;
   FLOAT srt_fModelReflectiveRoughnessDefault = 0.0001f;
+  FLOAT srt_fBrushMetallicDefault = 0.04f;
+  FLOAT srt_fBrushRoughnessDefault = 0.5f;
 
   INDEX srt_bWeaponUseOriginalNormals = 0;
   FLOAT srt_fNormalMapStrength = 1.0f;

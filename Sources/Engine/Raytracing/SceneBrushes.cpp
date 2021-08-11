@@ -24,6 +24,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "TextureUploader.h"
 #include "RTProcessing.h"
 #include "Utils.h"
+#include "SSRTGlobals.h"
+
+
+extern SSRT::SSRTGlobals _srtGlobals;
 
 
 SSRT::SceneBrushes::SceneBrushes(RgInstance _instance, CWorld *_pWorld, TextureUploader *_pTextureUploader)
@@ -70,7 +74,8 @@ void SSRT::SceneBrushes::RegisterBrush(const CBrushGeometry &brush)
     stInfo.vertexCount = brush.vertexCount;
     stInfo.pVertexData = brush.vertices;
     stInfo.pNormalData = brush.normals;
-    stInfo.defaultRoughness = 1.0f;
+    stInfo.defaultRoughness = _srtGlobals.srt_fBrushRoughnessDefault;
+    stInfo.defaultMetallicity = _srtGlobals.srt_fBrushMetallicDefault;
     stInfo.indexCount = brush.indexCount;
     stInfo.pIndexData = brush.indices;
 

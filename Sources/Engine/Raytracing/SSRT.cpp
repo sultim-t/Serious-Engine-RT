@@ -61,6 +61,9 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fModelReflectiveMetallicDefault;", &_srtGlobals.srt_fModelReflectiveMetallicDefault);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fModelReflectiveRoughnessDefault;", &_srtGlobals.srt_fModelReflectiveRoughnessDefault);
 
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fBrushRoughnessDefault;", &_srtGlobals.srt_fBrushRoughnessDefault);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fBrushMetallicDefault;", &_srtGlobals.srt_fBrushMetallicDefault);
+
   _pShell->DeclareSymbol("persistent user INDEX srt_bEnableViewerShadows;", &_srtGlobals.srt_bEnableViewerShadows);
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_fSunIntensity;", &_srtGlobals.srt_fSunIntensity);

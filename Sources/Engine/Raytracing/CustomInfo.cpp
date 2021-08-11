@@ -286,9 +286,13 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     case EWorld::SandCanyon:
     case EWorld::TombOfRamses:
     case EWorld::ValleyOfTheKings:
-    case EWorld::Sewers:
       tmFlashlightHintStart = tmWorldCreation + 1.0f;
       tmFlashlightHintEnd = tmFlashlightHintStart + 5.0f;
+      break;
+    case EWorld::Sewers:
+      tmFlashlightHintStart = tmWorldCreation + 1.0f;
+      // a bit longer, because of cutscene
+      tmFlashlightHintEnd = tmFlashlightHintStart + 10.0f;
       break;
     default:
       tmFlashlightHintStart = -1.0f;
