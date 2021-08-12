@@ -96,8 +96,8 @@ RT_WorldIlluminationParams[] =
   { EWorld::Suburbs,         4.0f, 0.5f, 0.5f,  1.0f, -2.0f, 0.0f },
   { EWorld::AlleyOfSphinxes, 4.0f, 0.5f, 0.5f, 0.75f, -2.0f, 0.0f },
   { EWorld::TheGreatPyramid, 2.0f, 1.0f, 0.5f,  1.0f,  0.0f, 2.0f },
-  // TODO: Metropolis, Serious difficulty. Sky viewer pos: (3280,-96,-3280). Sun euler -125, -55
-  // { EWorld::Metropolis,      0.5f, 0.5f, 0.25f, 0.75f, -2.0f, 0.0}
+  // Metropolis, Serious difficulty. Sky viewer pos: (3280,-96,-3280). Sun euler -125, -55
+  // { EWorld::Metropolis,      0.75f, 0.5f, 0.25f, 0.75f, -2.0f, 0.0}
      { EWorld::Metropolis,      4.0f, 0.5f, 0.5f, 0.75f, -2.0f, 0.0f },
   { EWorld::Karnak, 4.0f, 0.9f, 0.5f, 1.0f, -2.0f, 0.0f },
 };
@@ -249,6 +249,18 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
 
 
 
+  bool isMetropolisSerious = false;
+
+  if (eCurrentWorld == EWorld::Metropolis && pWorld->GetBackgroundViewer() != nullptr)
+  {
+    const FLOAT3D &vBackgroundViewer = pWorld->GetBackgroundViewer()->GetLerpedPlacement().pl_PositionVector;
+    const FLOAT3D vSerious = { 3280, -96, -3280 };
+
+    isMetropolisSerious = (vBackgroundViewer - vSerious).ManhattanNorm() < 0.5f;
+  }
+
+
+
   {
     _srtGlobals.srt_fSunIntensity = 4.0f;
     _srtGlobals.srt_fSunSaturation = 0.5f;
@@ -267,8 +279,22 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       _srtGlobals.srt_fSkyColorSaturation = s.fSkyColorSaturation;
       _srtGlobals.srt_fTonemappingMinLogLuminance = s.fTonemappingMinLogLuminance;
       _srtGlobals.srt_fTonemappingMaxLogLuminance = s.fTonemappingMaxLogLuminance;
+      break;
     }
   }
+  // special case: Serious difficulty in Metropolis
+  if (isMetropolisSerious)
+  {    
+    // { EWorld::Metropolis,      0.75f, 0.5f, 0.25f, 0.75f, -2.0f, 0.0}
+
+    _srtGlobals.srt_fSunIntensity = 0.75f;
+    _srtGlobals.srt_fSunSaturation = 0.5f;
+    _srtGlobals.srt_fSkyColorMultiplier = 0.25f;
+    _srtGlobals.srt_fSkyColorSaturation = 0.75f;
+    _srtGlobals.srt_fTonemappingMinLogLuminance = -2.0f;
+    _srtGlobals.srt_fTonemappingMaxLogLuminance = 0.0;
+  }
+
 
 
 
@@ -309,6 +335,12 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
 
   tmAnimatedSunOrigin = tmWorldCreation;
 
+  {
+    _srtGlobals.srt_fAnimatedSunTimeOffsetStart = 0;
+    // disable animation (length=-1)
+    _srtGlobals.srt_fAnimatedSunTimeLength = -1;
+    _srtGlobals.srt_vAnimatedSunTargetEuler = { 45, -45, 0 };
+  }
   switch (eCurrentWorld)
   {
     case EWorld::Hatshepsut:
@@ -326,11 +358,13 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       _srtGlobals.srt_fAnimatedSunTimeLength = 0;
       _srtGlobals.srt_vAnimatedSunTargetEuler = { -135, -45, 0 };
       break;
-    default:
-      _srtGlobals.srt_fAnimatedSunTimeOffsetStart = 0;
-      // disable animation (length=-1)
-      _srtGlobals.srt_fAnimatedSunTimeLength = -1;
-      _srtGlobals.srt_vAnimatedSunTargetEuler = { 45, -45, 0 };
+    case EWorld::Metropolis:
+      if (isMetropolisSerious)
+      {
+        _srtGlobals.srt_fAnimatedSunTimeOffsetStart = 0;
+        _srtGlobals.srt_fAnimatedSunTimeLength = 0;
+        _srtGlobals.srt_vAnimatedSunTargetEuler = { -125, -55, 0 };
+      }
       break;
   }
 
