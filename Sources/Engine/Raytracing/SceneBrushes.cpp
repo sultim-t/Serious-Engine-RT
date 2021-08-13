@@ -76,6 +76,7 @@ void SSRT::SceneBrushes::RegisterBrush(const CBrushGeometry &brush)
     stInfo.pNormalData = brush.normals;
     stInfo.defaultRoughness = _srtGlobals.srt_fBrushRoughnessDefault;
     stInfo.defaultMetallicity = _srtGlobals.srt_fBrushMetallicDefault;
+    stInfo.defaultEmission = brush.isEmissive ? _srtGlobals.srt_fEmissionForFullbright : 0.0f;
     stInfo.indexCount = brush.indexCount;
     stInfo.pIndexData = brush.indices;
 

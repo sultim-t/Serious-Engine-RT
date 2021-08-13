@@ -221,6 +221,22 @@ const char * const RT_TexturePaths_ForcedAlphaTest[] =
 };
 
 
+const char *const RT_TexturePaths_ForceEmission[] =
+{
+  "Textures\\Levels\\GreatPyramid\\LiftHolders03.tex",
+  "Models\\CutSequences\\Pyramid\\RingBaseFX.tex",
+  "Models\\CutSequences\\Pyramid\\RingBase.tex",
+  "Models\\CutSequences\\Pyramid\\RingLightningFX.tex",
+};
+
+
+// TODO: ignore Amon model with/without reflection texture
+const char *const RT_TexturePaths_IgnoreModel[] =
+{
+  "Models\\Ages\\Egypt\\Gods\\Amon\\Amon.tex",
+};
+
+
 static bool vector_Contains(const std::vector<CTextureData*> &aVec, CTextureData *pTd)
 {
   return std::find(aVec.begin(), aVec.end(), pTd) != aVec.end();
@@ -346,6 +362,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     { RT_TexturePaths_ForcedReflective, ARRAYCOUNT(RT_TexturePaths_ForcedReflective), &ptdCachedTextures.aForceReflective },
     { RT_TexturePaths_Water,            ARRAYCOUNT(RT_TexturePaths_Water),            &ptdCachedTextures.aWater },
     { RT_TexturePaths_Fire,             ARRAYCOUNT(RT_TexturePaths_Fire),             &ptdCachedTextures.aFire },
+    { RT_TexturePaths_ForceEmission,    ARRAYCOUNT(RT_TexturePaths_ForceEmission),    &ptdCachedTextures.aForceEmission },
   };
 
   for (const auto &s : tdsToFind)
@@ -960,6 +977,16 @@ bool SSRT::CustomInfo::IsAlphaTestForced(CTextureObject *pTo, bool isTranslucent
   if (isTranslucent && pTo != nullptr && pTo->ao_AnimData != nullptr)
   {
     return vector_Contains(ptdCachedTextures.aForceAlphaTest, (CTextureData *)pTo->ao_AnimData);
+  }
+
+  return false;
+}
+
+bool SSRT::CustomInfo::IsEmissionForced(CTextureObject *pTo) const
+{
+  if (pTo != nullptr && pTo->ao_AnimData != nullptr)
+  {
+    return vector_Contains(ptdCachedTextures.aForceEmission, (CTextureData *)pTo->ao_AnimData);
   }
 
   return false;

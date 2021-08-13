@@ -64,6 +64,7 @@ struct CAbstractGeometry
   RgBlendFactor       blendDst;
 
   bool                isSky;
+  bool                isEmissive; 
 
   RgGeometryPrimaryVisibilityType maskBit;
 
@@ -82,7 +83,6 @@ struct CModelGeometry : public CAbstractGeometry
 
   bool                isSpecular;
   bool                isReflective;
-  bool                isEmissive;
 
   bool                isRasterized;
 

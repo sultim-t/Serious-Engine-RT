@@ -192,6 +192,8 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   brushInfo.brushPartIndex = brushPartIndex;
   brushInfo.hasScrollingTextures = hasScrollingTextures;
 
+  brushInfo.isEmissive = false;
+
   uint32_t iDstIndex = 0;
 
   for (uint32_t iSrcIndex = 0; iSrcIndex < MAX_BRUSH_TEXTURE_COUNT; iSrcIndex++)
@@ -246,6 +248,8 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
 
     brushInfo.layerBlendings[iDstIndex] = blendType;
     brushInfo.layerColors[iDstIndex] = fcolor;
+
+    brushInfo.isEmissive |= pScene->GetCustomInfo()->IsEmissionForced(&to);
 
     iDstIndex++;
   }

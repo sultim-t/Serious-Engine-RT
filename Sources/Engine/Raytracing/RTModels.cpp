@@ -282,6 +282,12 @@ static void FlushModelInfo(ULONG entityID,
 
   modelInfo.isEmissive = isFullBright; // rm.rm_rtRenderType & RT_SHADING_NONE;
 
+  if (!modelInfo.isRasterized && pScene->GetCustomInfo()->IsEmissionForced(to))
+  {
+    modelInfo.textures[0] = nullptr;
+    modelInfo.isEmissive = true;
+  }
+
   // ignore rasterized parts of first person viewer
   bool isRasterizedFirstPerson = modelInfo.visibilityType == RG_GEOMETRY_VISIBILITY_TYPE_FIRST_PERSON_VIEWER && modelInfo.isRasterized;
 
