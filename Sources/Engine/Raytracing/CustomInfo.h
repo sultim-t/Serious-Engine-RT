@@ -81,7 +81,7 @@ public:
   FLOAT GetSkySaturation() const;
   RgSkyType GetLevelSkyType() const;
 
-  void Update();
+  void Update(const FLOAT3D &vCameraPosition);
   void OnSkyBrushAdd(const CBrushGeometry &brush);
 
 private:
@@ -135,6 +135,8 @@ private:
   TIME tmFlashlightHintEnd;
 
   TIME tmAnimatedSunOrigin;
+
+  TIME tmAnimatedSkyIntensityOrigin;
 
   bool bSunIntensityDependsOnSkyClouds;
   FLOAT fSkyCloudsOpacity;

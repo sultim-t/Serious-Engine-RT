@@ -85,7 +85,7 @@ void SSRT::Scene::Update(const CWorldRenderingInfo &info)
   // and scan for movable geometry
   ProcessDynamicGeometry();
 
-  pCustomInfo->Update();
+  pCustomInfo->Update(this->cameraPosition);
 }
 
 const CTString &SSRT::Scene::GetWorldName() const

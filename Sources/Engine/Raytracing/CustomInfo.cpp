@@ -80,6 +80,13 @@ static EWorld GetWorldEnum(CWorld *pWorld)
 }
 
 
+constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_START = 0.75f;
+constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_END = 0.25f;
+constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_CHANGE_LENGTH = 30.0f;
+constexpr FLOAT GREAT_PYRAMID_SUN_INTENSITY_DEFAULT = 2.0;
+constexpr FLOAT GREAT_PYRAMID_SUN_INTENSITY_BOSS_FIGHT = 0.0;
+constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_BOSS_FIGHT = 1.0;
+
 const struct
 {
   EWorld  eWorld;
@@ -96,9 +103,9 @@ RT_WorldIlluminationParams[] =
   { EWorld::SandCanyon,      3.0f, 0.5f, 1.0f, 0.75f, -2.0f, 0.0f },
   { EWorld::Suburbs,         4.0f, 0.5f, 0.5f,  1.0f, -2.0f, 0.0f },
   { EWorld::AlleyOfSphinxes, 4.0f, 0.5f, 0.5f, 0.75f, -2.0f, 0.0f },
-  { EWorld::TheGreatPyramid, 2.0f, 1.0f, 0.5f,  1.0f,  0.0f, 2.0f },
+  { EWorld::TheGreatPyramid, GREAT_PYRAMID_SUN_INTENSITY_DEFAULT, 1.0f, 0.5f,  1.0f,  0.0f, 2.0f },
   { EWorld::Metropolis,      4.0f, 0.5f, 0.5f, 0.75f, -2.0f, 0.0f },
-  { EWorld::Karnak,          4.0f, 0.9f, 0.5f, 1.0f, -2.0f, 0.0f },
+  { EWorld::Karnak,          4.0f, 0.9f, 0.5f,  1.0f, -2.0f, 0.0f },
 };
 
 
@@ -313,6 +320,15 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     _srtGlobals.srt_fSkyColorSaturation = 0.75f;
     _srtGlobals.srt_fTonemappingMinLogLuminance = -2.0f;
     _srtGlobals.srt_fTonemappingMaxLogLuminance = 0.0;
+  }
+  // special case: Great Pyramid animated sky intensity
+  {
+    tmAnimatedSkyIntensityOrigin = -1.0f;
+
+    if (eCurrentWorld == EWorld::TheGreatPyramid)
+    {
+      _srtGlobals.srt_fSkyColorMultiplier = GREAT_PYRAMID_SKY_COLOR_START;
+    }
   }
 
 
@@ -974,7 +990,7 @@ bool SSRT::CustomInfo::HasLightEntityVertices(CEntity *pen) const
   return md != nullptr && md->md_VerticesCt > 0;
 }
 
-void SSRT::CustomInfo::Update()
+void SSRT::CustomInfo::Update(const FLOAT3D &vCameraPosition)
 {
   TIME tmCurrent = _pTimer->GetLerpedCurrentTick();
 
@@ -1000,6 +1016,34 @@ void SSRT::CustomInfo::Update()
   {
     tmAnimatedSunOrigin = tmCurrent;
     _srtGlobals.srt_bAnimatedSunRestart = 0;
+  }
+
+
+  if (eCurrentWorld == EWorld::TheGreatPyramid)
+  {
+    // if on boss fight arena
+    if (vCameraPosition(2) > 175.0f)
+    {
+      _srtGlobals.srt_fSunIntensity = GREAT_PYRAMID_SUN_INTENSITY_BOSS_FIGHT;
+      _srtGlobals.srt_fSkyColorMultiplier = GREAT_PYRAMID_SKY_COLOR_BOSS_FIGHT;
+    }
+    else
+    {
+      // start animation
+      if (vCameraPosition(3) < -234.0f && tmAnimatedSkyIntensityOrigin < 0)
+      {
+        tmAnimatedSkyIntensityOrigin = tmCurrent;
+      }
+
+      if (tmAnimatedSkyIntensityOrigin > 0.0f && (tmCurrent - tmAnimatedSkyIntensityOrigin < GREAT_PYRAMID_SKY_COLOR_CHANGE_LENGTH))
+      {
+        _srtGlobals.srt_fSkyColorMultiplier = Lerp(
+          GREAT_PYRAMID_SKY_COLOR_START,
+          GREAT_PYRAMID_SKY_COLOR_END,
+          Clamp((tmCurrent - tmAnimatedSkyIntensityOrigin) / GREAT_PYRAMID_SKY_COLOR_CHANGE_LENGTH, 0.0f, 1.0f)
+        );
+      }
+    }
   }
 }
 
