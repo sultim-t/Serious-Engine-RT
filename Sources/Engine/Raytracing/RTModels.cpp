@@ -216,9 +216,17 @@ static void FlushModelInfo(ULONG entityID,
   modelInfo.entityID = entityID;
   modelInfo.modelPartIndex = RT_ModelPartIndex;
 
+
   bool forceAlphaTest = RT_ShouldBeAlphaTested(to, stt, forceTranslucency, pScene);
   modelInfo.passThroughType = RT_GetPassThroughType(stt, forceAlphaTest);
   modelInfo.isRasterized = RT_ShouldBeRasterized(stt, forceAlphaTest);
+
+  if (stt == STT_TRANSLUCENT && pScene->GetCustomInfo()->IsReflectRefractForced(to))
+  {
+    modelInfo.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_REFLECT;
+    modelInfo.isRasterized = false;
+  }
+
 
   modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0;
 
@@ -243,6 +251,7 @@ static void FlushModelInfo(ULONG entityID,
     rotation = bv * rotation;
   }
 
+
   modelInfo.absPosition = rm.rm_vObjectPosition;
   modelInfo.absRotation = rotation;
  
@@ -257,6 +266,7 @@ static void FlushModelInfo(ULONG entityID,
   modelInfo.color = { modelColor.r / 255.0f, modelColor.g / 255.0f, modelColor.b / 255.0f, modelColor.a / 255.0f };
   modelInfo.isReflective = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_REFLECTIONS || pScene->GetCustomInfo()->IsReflectiveForced(to);
   modelInfo.isSpecular = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_SPECULAR;
+
 
   CTextureData *td = to != nullptr ? (CTextureData *)to->GetData() : nullptr;
 
@@ -278,7 +288,14 @@ static void FlushModelInfo(ULONG entityID,
 
   RT_SetBlend(modelInfo.blendEnable, modelInfo.blendSrc, modelInfo.blendDst, stt, forceTranslucency);
 
+
   modelInfo.invertedNormals = rm.rm_ulFlags & RMF_INVERTED;
+
+  if (modelInfo.normals != nullptr && pScene->GetCustomInfo()->IsCalcNormalsForced(to))
+  {
+    modelInfo.normals = nullptr;
+  }
+
 
   modelInfo.isEmissive = isFullBright; // rm.rm_rtRenderType & RT_SHADING_NONE;
 
@@ -287,6 +304,7 @@ static void FlushModelInfo(ULONG entityID,
     modelInfo.textures[0] = nullptr;
     modelInfo.isEmissive = true;
   }
+
 
   // ignore rasterized parts of first person viewer
   bool isRasterizedFirstPerson = modelInfo.visibilityType == RG_GEOMETRY_VISIBILITY_TYPE_FIRST_PERSON_VIEWER && modelInfo.isRasterized;

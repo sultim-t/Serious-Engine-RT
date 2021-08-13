@@ -230,6 +230,21 @@ const char *const RT_TexturePaths_ForceEmission[] =
 };
 
 
+const char *const RT_TexturePaths_ReflectRefract[] =
+{
+  "Models\\Items\\Health\\Small\\Small.tex",
+  "Models\\Items\\Health\\Medium\\Medium.tex",
+};
+
+
+const char *const RT_TexturePaths_CalcNormals[] =
+{
+  "Models\\Items\\Health\\Pill\\Pill.tex",
+  "Models\\Items\\Ammo\\Bullets\\Bullets.tex",
+  "Models\\Items\\Ammo\\Shells\\Shells.tex"
+};
+
+
 // TODO: ignore Amon model with/without reflection texture
 const char *const RT_TexturePaths_IgnoreModel[] =
 {
@@ -363,6 +378,8 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     { RT_TexturePaths_Water,            ARRAYCOUNT(RT_TexturePaths_Water),            &ptdCachedTextures.aWater },
     { RT_TexturePaths_Fire,             ARRAYCOUNT(RT_TexturePaths_Fire),             &ptdCachedTextures.aFire },
     { RT_TexturePaths_ForceEmission,    ARRAYCOUNT(RT_TexturePaths_ForceEmission),    &ptdCachedTextures.aForceEmission },
+    { RT_TexturePaths_ReflectRefract,   ARRAYCOUNT(RT_TexturePaths_ReflectRefract),   &ptdCachedTextures.aForceReflectRefract },
+    { RT_TexturePaths_CalcNormals,      ARRAYCOUNT(RT_TexturePaths_CalcNormals),      &ptdCachedTextures.aForceCalcNormals },
   };
 
   for (const auto &s : tdsToFind)
@@ -962,34 +979,39 @@ bool SSRT::CustomInfo::AreDynamicTexCoordsIgnored(CEntity *penBrush) const
   return _srtGlobals.srt_bIgnoreDynamicTexCoords;
 }
 
-bool SSRT::CustomInfo::IsReflectiveForced(CTextureObject *pTo) const
+static bool ptdCachedTextures_Check(CTextureObject *pTo, const std::vector<CTextureData *> &aVec)
 {
   if (pTo != nullptr && pTo->ao_AnimData != nullptr)
   {
-    return vector_Contains(ptdCachedTextures.aForceReflective, (CTextureData*)pTo->ao_AnimData);
+    return vector_Contains(aVec, (CTextureData *)pTo->ao_AnimData);
   }
 
   return false;
+}
+
+bool SSRT::CustomInfo::IsReflectiveForced(CTextureObject *pTo) const
+{
+  return ptdCachedTextures_Check(pTo, ptdCachedTextures.aForceReflective);
 }
 
 bool SSRT::CustomInfo::IsAlphaTestForced(CTextureObject *pTo, bool isTranslucent) const
 {
-  if (isTranslucent && pTo != nullptr && pTo->ao_AnimData != nullptr)
-  {
-    return vector_Contains(ptdCachedTextures.aForceAlphaTest, (CTextureData *)pTo->ao_AnimData);
-  }
-
-  return false;
+  return ptdCachedTextures_Check(pTo, ptdCachedTextures.aForceAlphaTest);
 }
 
 bool SSRT::CustomInfo::IsEmissionForced(CTextureObject *pTo) const
 {
-  if (pTo != nullptr && pTo->ao_AnimData != nullptr)
-  {
-    return vector_Contains(ptdCachedTextures.aForceEmission, (CTextureData *)pTo->ao_AnimData);
-  }
+  return ptdCachedTextures_Check(pTo, ptdCachedTextures.aForceEmission);
+}
 
-  return false;
+bool SSRT::CustomInfo::IsReflectRefractForced(CTextureObject *pTo) const
+{
+  return ptdCachedTextures_Check(pTo, ptdCachedTextures.aForceReflectRefract);
+}
+
+bool SSRT::CustomInfo::IsCalcNormalsForced(CTextureObject *pTo) const
+{
+  return ptdCachedTextures_Check(pTo, ptdCachedTextures.aForceCalcNormals);
 }
 
 bool SSRT::CustomInfo::HasLightEntityVertices(CEntity *pen) const

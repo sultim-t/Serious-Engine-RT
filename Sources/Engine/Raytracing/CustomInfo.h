@@ -65,6 +65,8 @@ public:
   bool IsReflectiveForced(CTextureObject *pTo) const;
   bool IsAlphaTestForced(CTextureObject *pTo, bool isTranslucent) const;
   bool IsEmissionForced(CTextureObject *pTo) const;
+  bool IsReflectRefractForced(CTextureObject *pTo) const;
+  bool IsCalcNormalsForced(CTextureObject *pTo) const;
 
   bool IsBrushIgnored(CEntity *penBrush) const;
   bool IsBrushSectorIgnored(const CBrushSector *pSector) const;
@@ -126,6 +128,8 @@ private:
     std::vector<CTextureData *> aForceAlphaTest;
     std::vector<CTextureData *> aForceReflective;
     std::vector<CTextureData *> aForceEmission;
+    std::vector<CTextureData *> aForceReflectRefract;
+    std::vector<CTextureData *> aForceCalcNormals;
     std::vector<CTextureData *> aWater;
     std::vector<CTextureData *> aFire;
 
