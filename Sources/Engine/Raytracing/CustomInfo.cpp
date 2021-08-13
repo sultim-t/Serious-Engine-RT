@@ -28,6 +28,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Templates/Stock_CtextureData.h>
 
+#include <Engine/Templates/DynamicContainer.cpp>
 
 #include <Engine/Base/ListIterator.inl>
 
@@ -96,10 +97,8 @@ RT_WorldIlluminationParams[] =
   { EWorld::Suburbs,         4.0f, 0.5f, 0.5f,  1.0f, -2.0f, 0.0f },
   { EWorld::AlleyOfSphinxes, 4.0f, 0.5f, 0.5f, 0.75f, -2.0f, 0.0f },
   { EWorld::TheGreatPyramid, 2.0f, 1.0f, 0.5f,  1.0f,  0.0f, 2.0f },
-  // Metropolis, Serious difficulty. Sky viewer pos: (3280,-96,-3280). Sun euler -125, -55
-  // { EWorld::Metropolis,      0.75f, 0.5f, 0.25f, 0.75f, -2.0f, 0.0}
-     { EWorld::Metropolis,      4.0f, 0.5f, 0.5f, 0.75f, -2.0f, 0.0f },
-  { EWorld::Karnak, 4.0f, 0.9f, 0.5f, 1.0f, -2.0f, 0.0f },
+  { EWorld::Metropolis,      4.0f, 0.5f, 0.5f, 0.75f, -2.0f, 0.0f },
+  { EWorld::Karnak,          4.0f, 0.9f, 0.5f, 1.0f, -2.0f, 0.0f },
 };
 
 
@@ -161,43 +160,64 @@ RT_DirectionalLightsToIgnore[] =
 };
 
 
-const char * const RT_WaterTextureNames[] =
+const char * const RT_TexturePaths_Water[] =
 {
-  "WaterBase",
-  "WaterFX",
-  "WaterFall01",
-  "WaterFall02",
+  "Textures\\Effects\\Water\\Water07\\WaterBase.tex",
+  "Textures\\Effects\\Water\\Water07\\WaterFX.tex",
+  "Textures\\Effects\\Water\\Water08\\WaterBase.tex",
+  "Textures\\Effects\\Water\\Water08\\WaterFX.tex",
+  "Textures\\Effects\\WaterFall\\WaterFall01.tex",
+  "Textures\\Effects\\WaterFall\\WaterFall02.tex",
 };
 
 
-const char * const RT_FireTextureNames[] =
+const char * const RT_TexturePaths_Fire[] =
 {
-  "Fire",
+  "Models\\Effects\\Fire03\\Fire.tex",
 };
 
 
-// bullet holes has small angular size, but they're important
-const char * const RT_BulletHoleTexturePaths[] =
+const char * const RT_TexturePaths_DisabledCulling[] =
 {
+  // bullet holes have small angular size, but they're important
   "Models\\Effects\\BulletOnTheWall\\Bullet.tex",
   "Models\\Effects\\BulletOnTheWall\\BulletSand.tex",
 };
 
 
-const char * const RT_TextureForcedReflectiveDirectories[] =
+const char * const RT_TexturePaths_ForcedReflective[] =
 {
-  "Models\\Effects\\BloodOnTheWall01\\",
-  "Models\\Effects\\BloodPatches01\\",
+  "Models\\Effects\\BloodOnTheWall01\\BloodSpill02.tex",
+  "Models\\Effects\\BloodOnTheWall01\\BloodSpill05.tex",
+  "Models\\Effects\\BloodOnTheWall01\\BloodSpill06.tex",
+  "Models\\Effects\\BloodOnTheWall01\\BloodStain01.tex",
+  "Models\\Effects\\BloodOnTheWall01\\BloodStain02.tex",
+  "Models\\Effects\\BloodOnTheWall01\\BloodStain03.tex",
+  "Models\\Effects\\BloodOnTheWall01\\BloodStain04.tex",
+  "Models\\Effects\\BloodPatches01\\Blood01.tex",
 };
 
 
-const char * const RT_TextureForcedAlphaTestDirectories[] =
+const char * const RT_TexturePaths_ForcedAlphaTest[] =
 {
-  "Models\\Effects\\BloodOnTheWall01\\",
-  "Models\\Effects\\BloodPatches01\\",
-  "Models\\Effects\\BulletOnTheWall\\",
-  "Models\\Plants\\Garden02\\",
+  "Models\\Effects\\BloodOnTheWall01\\BloodSpill02.tex",
+  "Models\\Effects\\BloodOnTheWall01\\BloodSpill05.tex",
+  "Models\\Effects\\BloodOnTheWall01\\BloodSpill06.tex",
+  "Models\\Effects\\BloodOnTheWall01\\BloodStain01.tex",
+  "Models\\Effects\\BloodOnTheWall01\\BloodStain02.tex",
+  "Models\\Effects\\BloodOnTheWall01\\BloodStain03.tex",
+  "Models\\Effects\\BloodOnTheWall01\\BloodStain04.tex",
+  "Models\\Effects\\BloodPatches01\\Blood01.tex",
+  "Models\\Effects\\BulletOnTheWall\\Bullet.tex",
+  "Models\\Effects\\BulletOnTheWall\\BulletSand.tex",
+  "Models\\Plants\\Garden02\\Garden06.tex",
 };
+
+
+static bool vector_Contains(const std::vector<CTextureData*> &aVec, CTextureData *pTd)
+{
+  return std::find(aVec.begin(), aVec.end(), pTd) != aVec.end();
+}
 
 
 SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
@@ -297,10 +317,29 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
 
 
 
-
-  for (const char *pTdPath : RT_BulletHoleTexturePaths)
+  const struct
   {
-     ptdCachedBulletHoleTextures.push_back(_pTextureStock->st_ntObjects.Find(pTdPath));
+    const char * const *pArray;
+    int iArrayCount;
+    std::vector<CTextureData*> *pDst;
+  } 
+  tdsToFind[] =
+  {
+    { RT_TexturePaths_DisabledCulling,  ARRAYCOUNT(RT_TexturePaths_DisabledCulling),  &ptdCachedTextures.aDisabledCulling },
+    { RT_TexturePaths_ForcedAlphaTest,  ARRAYCOUNT(RT_TexturePaths_ForcedAlphaTest),  &ptdCachedTextures.aForceAlphaTest },
+    { RT_TexturePaths_ForcedReflective, ARRAYCOUNT(RT_TexturePaths_ForcedReflective), &ptdCachedTextures.aForceReflective },
+    { RT_TexturePaths_Water,            ARRAYCOUNT(RT_TexturePaths_Water),            &ptdCachedTextures.aWater },
+    { RT_TexturePaths_Fire,             ARRAYCOUNT(RT_TexturePaths_Fire),             &ptdCachedTextures.aFire },
+  };
+
+  for (const auto &s : tdsToFind)
+  {
+    for (int i = 0; i < s.iArrayCount; i++)
+    {
+      const char *pTdPath = s.pArray[i];
+
+      s.pDst->push_back(_pTextureStock->st_ntObjects.Find(pTdPath));
+    }
   }
 
 
@@ -504,7 +543,7 @@ bool SSRT::CustomInfo::IsWaterTexture(CTextureData *ptd) const
     return true;
   }
 
-  return IsTextureNameIn(ptd, RT_WaterTextureNames, ARRAYCOUNT(RT_WaterTextureNames));
+  return vector_Contains(ptdCachedTextures.aWater, ptd);
 }
 
 bool SSRT::CustomInfo::IsFireTexture(CTextureData *ptd) const
@@ -526,7 +565,7 @@ bool SSRT::CustomInfo::IsFireTexture(CTextureData *ptd) const
     return false;
   }
 
-  return IsTextureNameIn(ptd, RT_FireTextureNames, ARRAYCOUNT(RT_FireTextureNames));
+  return vector_Contains(ptdCachedTextures.aFire, ptd);;
 }
 
 bool SSRT::CustomInfo::HasModelFireTexture(CEntity *penModel) const
@@ -576,7 +615,7 @@ bool SSRT::CustomInfo::IsAngularSizeCullingDisabled(CEntity *penModel) const
   }
 
   // if found in cache
-  return std::find(ptdCachedBulletHoleTextures.begin(), ptdCachedBulletHoleTextures.end(), ptd) != ptdCachedBulletHoleTextures.end();
+  return vector_Contains(ptdCachedTextures.aDisabledCulling, ptd);;
 }
 
 RgGeometryPrimaryVisibilityType SSRT::CustomInfo::GetBrushMaskBit(const CBrushPolygon *pPolygon) const
@@ -892,17 +931,9 @@ bool SSRT::CustomInfo::AreDynamicTexCoordsIgnored(CEntity *penBrush) const
 
 bool SSRT::CustomInfo::IsReflectiveForced(CTextureObject *pTo) const
 {
-  if (pTo != nullptr)
+  if (pTo != nullptr && pTo->ao_AnimData != nullptr)
   {
-    CTFileName dir = pTo->GetName().FileDir();
-
-    for (const char *pNm : RT_TextureForcedReflectiveDirectories)
-    {
-      if (dir == pNm)
-      {
-        return true;
-      }
-    }
+    return vector_Contains(ptdCachedTextures.aForceReflective, (CTextureData*)pTo->ao_AnimData);
   }
 
   return false;
@@ -910,35 +941,9 @@ bool SSRT::CustomInfo::IsReflectiveForced(CTextureObject *pTo) const
 
 bool SSRT::CustomInfo::IsAlphaTestForced(CTextureObject *pTo, bool isTranslucent) const
 {
-  if (isTranslucent && pTo != nullptr)
+  if (isTranslucent && pTo != nullptr && pTo->ao_AnimData != nullptr)
   {
-    CTFileName dir = pTo->GetName().FileDir();
-
-    for (const char *pNm : RT_TextureForcedAlphaTestDirectories)
-    {
-      if (dir == pNm)
-      {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
-bool SSRT::CustomInfo::IsTextureNameIn(CTextureData *ptd, const char * const pCollection[], uint32_t iCount)
-{
-  if (ptd == nullptr)
-  {
-    return false;
-  }
-
-  for (uint32_t i = 0; i < iCount; i++)
-  {
-    if (ptd->GetName().FileName() == pCollection[i])
-    {
-      return true;
-    }
+    return vector_Contains(ptdCachedTextures.aForceAlphaTest, (CTextureData *)pTo->ao_AnimData);
   }
 
   return false;

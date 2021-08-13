@@ -85,7 +85,6 @@ public:
   void OnSkyBrushAdd(const CBrushGeometry &brush);
 
 private:
-  static bool IsTextureNameIn(CTextureData *ptd, const char * const pCollection[], uint32_t iCount);
   bool HasLightEntityVertices(CEntity *pen) const;
 
   void EnableFlashlightHint();
@@ -120,7 +119,16 @@ private:
   
   std::vector<std::string> dirLightsNamesToIgnore;
 
-  std::vector<CTextureData *> ptdCachedBulletHoleTextures;
+  struct
+  {
+    std::vector<CTextureData *> aDisabledCulling;
+    std::vector<CTextureData *> aForceAlphaTest;
+    std::vector<CTextureData *> aForceReflective;
+    std::vector<CTextureData *> aWater;
+    std::vector<CTextureData *> aFire;
+
+  } ptdCachedTextures;
+
 
   bool isFlashlightHintEnabled;
   TIME tmFlashlightHintStart;
