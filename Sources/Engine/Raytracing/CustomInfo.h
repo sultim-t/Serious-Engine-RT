@@ -64,6 +64,7 @@ public:
   bool IsAngularSizeCullingDisabled(CEntity *penModel) const;
   bool IsReflectiveForced(CTextureObject *pTo) const;
   bool IsAlphaTestForced(CTextureObject *pTo, bool isTranslucent) const;
+  bool IsAlphaTestForcedForParticles(CTextureData *pTd) const;
   bool IsEmissionForced(CTextureObject *pTo) const;
   bool IsReflectRefractForced(CTextureObject *pTo) const;
   bool IsCalcNormalsForced(CTextureObject *pTo) const;
@@ -126,6 +127,7 @@ private:
   {
     std::vector<CTextureData *> aDisabledCulling;
     std::vector<CTextureData *> aForceAlphaTest;
+    std::vector<CTextureData *> aForceAlphaTestParticles;
     std::vector<CTextureData *> aForceReflective;
     std::vector<CTextureData *> aForceEmission;
     std::vector<CTextureData *> aForceReflectRefract;

@@ -51,6 +51,12 @@ static bool           RT_bBlendEnable;
 static RgBlendFactor  RT_eBlendSrc;
 static RgBlendFactor  RT_eBlendDst;
 
+// for ray traced particles
+static CStaticStackArray<GFXVertex> RT_PlainVrtBuffer;
+static CStaticStackArray<GFXTexCoord> RT_PlainTexBuffer;
+static ULONG          RT_ulCurrentEntityID = 0;
+static ULONG          RT_ulCurrentFlushIndex = 0;
+
 static CAnyProjection3D RT_pEmptyProjection = {};
 
 static SSRT::Scene *RT_sCurrentScene;
@@ -60,7 +66,7 @@ void RT_AddParticlesForEntity(CEntity *pTargetEntity, SSRT::Scene *pScene)
 {
   CEntity *pViewerEntity = pScene->GetViewerEntity();
 
-  if (!gfx_bRenderParticles || pViewerEntity == nullptr)
+  if (!gfx_bRenderParticles || pViewerEntity == nullptr || pTargetEntity == nullptr)
   {
     return;
   }
@@ -68,6 +74,10 @@ void RT_AddParticlesForEntity(CEntity *pTargetEntity, SSRT::Scene *pScene)
   ASSERT(!RT_pEmptyProjection.IsSimple() && !RT_pEmptyProjection.IsIsometric() && 
          !RT_pEmptyProjection.IsParallel() && !RT_pEmptyProjection.IsPerspective());
 
+  {
+    RT_ulCurrentEntityID = pTargetEntity->en_ulID;
+    RT_ulCurrentFlushIndex = 0;
+  }
 
   Particle_PrepareSystem(nullptr, RT_pEmptyProjection);
 
@@ -83,12 +93,17 @@ void RT_AddParticlesForEntity(CEntity *pTargetEntity, SSRT::Scene *pScene)
   _Particle_penCurrentViewer = NULL;
 
   Particle_EndSystem(FALSE);
+
+  {
+    RT_ulCurrentEntityID = 0;
+    RT_ulCurrentFlushIndex = 0;
+  }
 }
 
 
-static void RT_GenerateQuadIndices(SSRT::CParticlesGeometry *preparedInfo)
+static void RT_GenerateQuadIndices(INDEX vertexCount, INDEX *pIndexCount, const INDEX **ppIndexData)
 {
-  const INDEX ctElements = preparedInfo->vertexCount * 6 / 4;
+  const INDEX ctElements = vertexCount * 6 / 4;
   if (ctElements <= 0)
   {
     return;
@@ -114,8 +129,8 @@ static void RT_GenerateQuadIndices(SSRT::CParticlesGeometry *preparedInfo)
     }
   }
 
-  preparedInfo->pIndexData = &_aiCommonQuads[0];
-  preparedInfo->indexCount = ctElements;
+  *ppIndexData = &_aiCommonQuads[0];
+  *pIndexCount = ctElements;
 }
 
 
@@ -380,28 +395,87 @@ void RT_Particle_Flush()
     identity(2, 1) = 0; identity(2, 2) = 1; identity(2, 3) = 0;
     identity(3, 1) = 0; identity(3, 2) = 0; identity(3, 3) = 1;
 
-    SSRT::CParticlesGeometry info = {};
-    info.absPosition = { 0,0,0 };
-    info.absRotation = identity;
-    info.vertexCount = RT_Vertices.Count();
-    info.pVertexData = &RT_Vertices[0];
+    bool isRasterized = !RT_sCurrentScene->GetCustomInfo()->IsAlphaTestForcedForParticles(RT_ptd);
 
-    info.pTexture = RT_ptd;
-    info.textureFrame = RT_iFrame;
+    if (isRasterized)
+    {
+      SSRT::CParticlesGeometry info = {};
+      info.absPosition = { 0,0,0 };
+      info.absRotation = identity;
+      info.vertexCount = RT_Vertices.Count();
+      info.pVertexData = &RT_Vertices[0];
 
-    info.blendEnable = true;
-    info.blendSrc = RT_eBlendSrc;
-    info.blendDst = RT_eBlendDst;
+      info.pTexture = RT_ptd;
+      info.textureFrame = RT_iFrame;
 
-    RT_GenerateQuadIndices(&info);
+      info.blendEnable = true;
+      info.blendSrc = RT_eBlendSrc;
+      info.blendDst = RT_eBlendDst;
 
-    RT_sCurrentScene->AddParticles(info);
+      RT_GenerateQuadIndices(info.vertexCount, &info.indexCount, &info.pIndexData);
+
+      RT_sCurrentScene->AddParticles(info);
+    }
+    else
+    {
+      ASSERT(RT_ulCurrentEntityID != 0);
+
+      SSRT::CModelGeometry info = {};
+      info.entityID = RT_ulCurrentEntityID;
+      info.modelPartIndex = RT_ulCurrentFlushIndex;
+
+      info.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
+      info.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0;
+
+      info.absPosition = { 0,0,0 };
+      info.absRotation = identity;
+
+      info.vertexCount = RT_Vertices.Count();
+
+      auto *pSrc = &RT_Vertices[0];
+      auto *pVrtDst = RT_PlainVrtBuffer.Push(info.vertexCount);
+      auto *pTexDst = RT_PlainTexBuffer.Push(info.vertexCount);
+
+      // need to conver from array of struct to struct of arrays
+      for (int i = 0; i < info.vertexCount; i++)
+      {
+        memcpy(&pVrtDst[i], pSrc[i].position, sizeof(pSrc[i].position));
+        memcpy(&pTexDst[i], pSrc[i].texCoord, sizeof(pSrc[i].texCoord));
+      }
+
+      info.vertices = pVrtDst;
+      info.texCoordLayers[0] = pTexDst;
+      info.normals = nullptr;
+
+      RT_GenerateQuadIndices(info.vertexCount, &info.indexCount, &info.indices);
+
+      info.textures[0] = RT_ptd;
+      info.textureFrames[0] = RT_iFrame;
+
+      UBYTE r, g, b, a;
+      ColorToRGBA(pSrc[0].packedColor, r, g, b, a);
+      info.color = { r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f };
+
+      info.isSky = false;
+      info.isEmissive = false;
+      info.isSpecular = false;
+      info.isReflective = false;
+      info.isRasterized = false;
+      info.invertedNormals = false;
+
+      RT_sCurrentScene->AddModel(info);
+
+
+      RT_ulCurrentFlushIndex++;
+      RT_PlainVrtBuffer.PopAll();
+      RT_PlainTexBuffer.PopAll();
+    }
   }
 
   RT_ptd = nullptr;
   RT_iFrame = 0;
 
-  RT_Vertices.Clear();
+  RT_Vertices.PopAll();
 
   // all done
   gfxResetArrays();

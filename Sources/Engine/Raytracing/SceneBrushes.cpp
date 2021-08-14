@@ -70,7 +70,7 @@ void SSRT::SceneBrushes::RegisterBrush(const CBrushGeometry &brush)
       RG_GEOMETRY_TYPE_STATIC_MOVABLE :
       RG_GEOMETRY_TYPE_STATIC;
     stInfo.passThroughType = brush.passThroughType;
-    stInfo.visibilityType = brush.maskBit;
+    stInfo.visibilityType = brush.visibilityType;
     stInfo.vertexCount = brush.vertexCount;
     stInfo.pVertexData = brush.vertices;
     stInfo.pNormalData = brush.normals;

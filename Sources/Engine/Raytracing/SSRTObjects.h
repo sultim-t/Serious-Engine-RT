@@ -46,13 +46,13 @@ struct CAbstractGeometry
   // This data will become invalid after adding CModelGeometry
   // as SE will reset global arrays
   INDEX               vertexCount;
-  GFXVertex           *vertices;
-  GFXNormal           *normals;
-  GFXTexCoord         *texCoordLayers[3];
+  const GFXVertex     *vertices;
+  const GFXNormal     *normals;
+  const GFXTexCoord   *texCoordLayers[3];
 
   // each 3 indices make a triangle
   INDEX               indexCount;
-  INDEX               *indices;
+  const INDEX         *indices;
 
   CTextureData        *textures[3];
   INDEX               textureFrames[3];
@@ -66,7 +66,7 @@ struct CAbstractGeometry
   bool                isSky;
   bool                isEmissive; 
 
-  RgGeometryPrimaryVisibilityType maskBit;
+  RgGeometryPrimaryVisibilityType visibilityType;
 
 public:
   virtual ~CAbstractGeometry() = default;
@@ -90,8 +90,6 @@ struct CModelGeometry : public CAbstractGeometry
   // -1 means the end of the list
   INDEX               attchPath[SSRT_MAX_ATTACHMENT_DEPTH] = {};
   uint32_t            modelPartIndex;
-
-  RgGeometryPrimaryVisibilityType visibilityType;
 
 public:
   uint64_t GetUniqueID() const override;

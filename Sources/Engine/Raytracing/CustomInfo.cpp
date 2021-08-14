@@ -221,6 +221,12 @@ const char * const RT_TexturePaths_ForcedAlphaTest[] =
 };
 
 
+const char *const RT_TexturePaths_ForcedAlphaTest_Particles[] =
+{
+  "Textures\\Effects\\Particles\\Lightning.tex",
+};
+
+
 const char *const RT_TexturePaths_ForceEmission[] =
 {
   "Textures\\Levels\\GreatPyramid\\LiftHolders03.tex",
@@ -241,7 +247,9 @@ const char *const RT_TexturePaths_CalcNormals[] =
 {
   "Models\\Items\\Health\\Pill\\Pill.tex",
   "Models\\Items\\Ammo\\Bullets\\Bullets.tex",
-  "Models\\Items\\Ammo\\Shells\\Shells.tex"
+  "Models\\Items\\Ammo\\Shells\\Shells.tex",
+  "Models\\CutSequences\\Portal\\Base.tex",
+  "Models\\CutSequences\\Portal\\Portal.tex",
 };
 
 
@@ -372,14 +380,15 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   } 
   tdsToFind[] =
   {
-    { RT_TexturePaths_DisabledCulling,  ARRAYCOUNT(RT_TexturePaths_DisabledCulling),  &ptdCachedTextures.aDisabledCulling },
-    { RT_TexturePaths_ForcedAlphaTest,  ARRAYCOUNT(RT_TexturePaths_ForcedAlphaTest),  &ptdCachedTextures.aForceAlphaTest },
-    { RT_TexturePaths_ForcedReflective, ARRAYCOUNT(RT_TexturePaths_ForcedReflective), &ptdCachedTextures.aForceReflective },
-    { RT_TexturePaths_Water,            ARRAYCOUNT(RT_TexturePaths_Water),            &ptdCachedTextures.aWater },
-    { RT_TexturePaths_Fire,             ARRAYCOUNT(RT_TexturePaths_Fire),             &ptdCachedTextures.aFire },
-    { RT_TexturePaths_ForceEmission,    ARRAYCOUNT(RT_TexturePaths_ForceEmission),    &ptdCachedTextures.aForceEmission },
-    { RT_TexturePaths_ReflectRefract,   ARRAYCOUNT(RT_TexturePaths_ReflectRefract),   &ptdCachedTextures.aForceReflectRefract },
-    { RT_TexturePaths_CalcNormals,      ARRAYCOUNT(RT_TexturePaths_CalcNormals),      &ptdCachedTextures.aForceCalcNormals },
+    { RT_TexturePaths_DisabledCulling,            ARRAYCOUNT(RT_TexturePaths_DisabledCulling),            &ptdCachedTextures.aDisabledCulling },
+    { RT_TexturePaths_ForcedAlphaTest,            ARRAYCOUNT(RT_TexturePaths_ForcedAlphaTest),            &ptdCachedTextures.aForceAlphaTest },
+    { RT_TexturePaths_ForcedAlphaTest_Particles,  ARRAYCOUNT(RT_TexturePaths_ForcedAlphaTest_Particles),  &ptdCachedTextures.aForceAlphaTestParticles },
+    { RT_TexturePaths_ForcedReflective,           ARRAYCOUNT(RT_TexturePaths_ForcedReflective),           &ptdCachedTextures.aForceReflective },
+    { RT_TexturePaths_Water,                      ARRAYCOUNT(RT_TexturePaths_Water),                      &ptdCachedTextures.aWater },
+    { RT_TexturePaths_Fire,                       ARRAYCOUNT(RT_TexturePaths_Fire),                       &ptdCachedTextures.aFire },
+    { RT_TexturePaths_ForceEmission,              ARRAYCOUNT(RT_TexturePaths_ForceEmission),              &ptdCachedTextures.aForceEmission },
+    { RT_TexturePaths_ReflectRefract,             ARRAYCOUNT(RT_TexturePaths_ReflectRefract),             &ptdCachedTextures.aForceReflectRefract },
+    { RT_TexturePaths_CalcNormals,                ARRAYCOUNT(RT_TexturePaths_CalcNormals),                &ptdCachedTextures.aForceCalcNormals },
   };
 
   for (const auto &s : tdsToFind)
@@ -605,12 +614,6 @@ bool SSRT::CustomInfo::IsFireTexture(CTextureData *ptd) const
 
   // assume that fire texture is always an effect texture
   if (ptd->td_ptegEffect == nullptr)
-  {
-    return false;
-  }
-
-  // must not be water
-  if (ptd->td_ptegEffect->IsWater())
   {
     return false;
   }
@@ -859,18 +862,6 @@ bool SSRT::CustomInfo::IsDirectionalLightIgnored(const CLightSource *plsLight) c
 
 bool SSRT::CustomInfo::IsSphericalLightIgnored(const CLightSource *plsLight) const
 {
-  //UBYTE h, s, v;
-  //ColorToHSV(plsLight->GetLightColor(), h, s, v);
-
-  //// ignore dim lights
-  //if (h < srt_iLightSphericalHSVThresholdHLower ||
-  //    h > srt_iLightSphericalHSVThresholdHUpper ||
-  //    v < srt_iLightSphericalHSVThresholdVLower ||
-  //    v > srt_iLightSphericalHSVThresholdVUpper)
-  //{
-  //  return true;
-  //}
-
   CEntity *pen = plsLight->ls_penEntity;
 
   if (HasLightEntityVertices(pen))
@@ -878,12 +869,13 @@ bool SSRT::CustomInfo::IsSphericalLightIgnored(const CLightSource *plsLight) con
     return false;
   }
 
-  if (HasLightEntityVertices(pen->GetParent()))
+  if (HasLightEntityVertices(pen->GetParent()) 
+      && (pen->GetParent()->GetPlacement().pl_PositionVector - pen->GetPlacement().pl_PositionVector).ManhattanNorm() < 1.0f)
   {
     return false;
   }
 
-  {
+  /*{
     FOREACHINLIST(CEntity, en_lnInParent, pen->en_lhChildren, itenChild)
     {
       if (HasLightEntityVertices(itenChild))
@@ -891,7 +883,7 @@ bool SSRT::CustomInfo::IsSphericalLightIgnored(const CLightSource *plsLight) con
         return false;
       }
     }
-  }
+  }*/
 
   return true;
 }
@@ -979,6 +971,16 @@ bool SSRT::CustomInfo::AreDynamicTexCoordsIgnored(CEntity *penBrush) const
   return _srtGlobals.srt_bIgnoreDynamicTexCoords;
 }
 
+static bool ptdCachedTextures_Check(CTextureData *pTd, const std::vector<CTextureData *> &aVec)
+{
+  if (pTd != nullptr)
+  {
+    return vector_Contains(aVec, pTd);
+  }
+
+  return false;
+}
+
 static bool ptdCachedTextures_Check(CTextureObject *pTo, const std::vector<CTextureData *> &aVec)
 {
   if (pTo != nullptr && pTo->ao_AnimData != nullptr)
@@ -997,6 +999,11 @@ bool SSRT::CustomInfo::IsReflectiveForced(CTextureObject *pTo) const
 bool SSRT::CustomInfo::IsAlphaTestForced(CTextureObject *pTo, bool isTranslucent) const
 {
   return ptdCachedTextures_Check(pTo, ptdCachedTextures.aForceAlphaTest);
+}
+
+bool SSRT::CustomInfo::IsAlphaTestForcedForParticles(CTextureData *pTd) const
+{
+  return ptdCachedTextures_Check(pTd, ptdCachedTextures.aForceAlphaTestParticles);
 }
 
 bool SSRT::CustomInfo::IsEmissionForced(CTextureObject *pTo) const

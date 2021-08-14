@@ -266,7 +266,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   brushInfo.blendEnable = false;
   brushInfo.blendSrc = brushInfo.blendDst = RG_BLEND_FACTOR_ONE;
 
-  brushInfo.maskBit = maskBit;
+  brushInfo.visibilityType = maskBit;
 
   pScene->AddBrush(brushInfo);
 }
