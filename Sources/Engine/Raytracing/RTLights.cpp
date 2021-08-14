@@ -292,16 +292,16 @@ static void RT_AddModifiedSphereLightToScene(ULONG entityID,
     light.radius = _srtGlobals.srt_fMuzzleLightRadius;
     light.falloffDistance = f * _srtGlobals.srt_fMuzzleLightFalloffMultiplier;
   }
+  else if (isPotential)
+  {
+    light.radius = Max(srt_fPotentialLightSphRadiusMin, hotspotDistance * _srtGlobals.srt_fPotentialLightSphRadiusMultiplier);
+    light.falloffDistance = f * _srtGlobals.srt_fPotentialLightSphFalloffMultiplier;
+  }
   else if (isDynamic)
   {
     light.radius = _srtGlobals.srt_fDynamicLightSphRadius;
     f = Clamp(f, _srtGlobals.srt_fDynamicLightSphFalloffMin, _srtGlobals.srt_fDynamicLightSphFalloffMax);
     light.falloffDistance = f * _srtGlobals.srt_fDynamicLightSphFalloffMultiplier;
-  }
-  else if (isPotential)
-  {
-    light.radius = hotspotDistance * _srtGlobals.srt_fPotentialLightSphRadiusMultiplier;
-    light.falloffDistance = f * _srtGlobals.srt_fPotentialLightSphFalloffMultiplier;
   }
   else
   {
@@ -622,12 +622,12 @@ static void RT_TryAddPotentialLight(CEntity *pEn, SSRT::Scene *pScene)
   {
     const CLightSource *plsLight = RT_IgnoredLights[closestLtIndex];
 
-    bool isDynamic = true;
+    bool isDynamic = plsLight->ls_ulFlags & LSF_DYNAMIC;
 
     RT_AddModifiedSphereLightToScene(pEn->en_ulID,
                                      closestPos, RT_GetSphericalLightColor(plsLight) * _srtGlobals.srt_fPotentialLightSphIntensity,
-                                     plsLight->ls_rHotSpot * _srtGlobals.srt_fPotentialLightSphRadiusMultiplier,
-                                     plsLight->ls_rFallOff * _srtGlobals.srt_fPotentialLightSphFalloffMultiplier,
+                                     plsLight->ls_rHotSpot,
+                                     plsLight->ls_rFallOff,
                                      isDynamic, true, false,
                                      pScene);
   }
@@ -636,7 +636,7 @@ static void RT_TryAddPotentialLight(CEntity *pEn, SSRT::Scene *pScene)
     // just any
     const FLOAT3D color = { 1.0f, 0.7f, 0.35f };
 
-    float falloffDistance = 1.0f;
+    float falloffDistance = _srtGlobals.srt_fPotentialLightSphFalloffDefault;
 
     if (pEn->en_pmoModelObject != nullptr)
     {

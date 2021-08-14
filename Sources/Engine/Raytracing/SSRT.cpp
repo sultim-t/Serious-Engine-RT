@@ -88,8 +88,10 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fDynamicLightSphFalloffMax;", &_srtGlobals.srt_fDynamicLightSphFalloffMax);
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_fPotentialLightSphIntensity;", &_srtGlobals.srt_fPotentialLightSphIntensity);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fPotentialLightSphRadiusMin;", &_srtGlobals.srt_fPotentialLightSphRadiusMin);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fPotentialLightSphRadiusMultiplier;", &_srtGlobals.srt_fPotentialLightSphRadiusMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fPotentialLightSphFalloffMultiplier;", &_srtGlobals.srt_fPotentialLightSphFalloffMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fPotentialLightSphFalloffDefault;", &_srtGlobals.srt_fPotentialLightSphFalloffDefault);
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_fMuzzleLightIntensity;", &_srtGlobals.srt_fMuzzleLightIntensity);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fMuzzleLightRadius;", &_srtGlobals.srt_fMuzzleLightRadius);
