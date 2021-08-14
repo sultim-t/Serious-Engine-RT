@@ -191,7 +191,7 @@ static void RT_PrepareRotation(const CRenderModel &rm, const FLOAT3D &viewerPos,
 
 static void FlushModelInfo(ULONG entityID, 
                            CRenderModel &rm, 
-                           CTextureObject *to,
+                           CModelObject &mo,
                            const INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH],
                            INDEX *pIndices, INDEX indexCount, 
                            const RT_VertexData &vd,
@@ -217,16 +217,25 @@ static void FlushModelInfo(ULONG entityID,
   modelInfo.modelPartIndex = RT_ModelPartIndex;
 
 
+  CTextureObject *to = &mo.mo_toTexture;
+  CTextureObject *reflectionTo = &mo.mo_toReflection;
+
   bool forceAlphaTest = RT_ShouldBeAlphaTested(to, stt, forceTranslucency, pScene);
   modelInfo.passThroughType = RT_GetPassThroughType(stt, forceAlphaTest);
   modelInfo.isRasterized = RT_ShouldBeRasterized(stt, forceAlphaTest);
 
-  if (stt == STT_TRANSLUCENT && pScene->GetCustomInfo()->IsReflectRefractForced(to))
+  if ((stt == STT_TRANSLUCENT || stt == STT_ADD) && pScene->GetCustomInfo()->IsReflectRefractForced(to))
   {
     modelInfo.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_REFLECT;
     modelInfo.isRasterized = false;
   }
 
+  if (pScene->GetCustomInfo()->IsReflectForced(reflectionTo))
+  {
+    // TODO: only reflective + if polygon is not translucent (water texture on top of rock texture moon mountains)
+    modelInfo.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_REFLECT;
+    modelInfo.isRasterized = false;
+  }
 
   modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0;
 
@@ -264,7 +273,7 @@ static void FlushModelInfo(ULONG entityID,
   modelInfo.indices = pIndices;
 
   modelInfo.color = { modelColor.r / 255.0f, modelColor.g / 255.0f, modelColor.b / 255.0f, modelColor.a / 255.0f };
-  modelInfo.isReflective = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_REFLECTIONS || pScene->GetCustomInfo()->IsReflectiveForced(to);
+  modelInfo.isReflective = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_REFLECTIONS || pScene->GetCustomInfo()->IsFullMetallicForced(to);
   modelInfo.isSpecular = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_SPECULAR;
 
 
@@ -291,9 +300,20 @@ static void FlushModelInfo(ULONG entityID,
 
   modelInfo.invertedNormals = rm.rm_ulFlags & RMF_INVERTED;
 
-  if (modelInfo.normals != nullptr && pScene->GetCustomInfo()->IsCalcNormalsForced(to))
+  if ((rm.rm_ulFlags & RMF_WEAPON) && !_srtGlobals.srt_bWeaponUseOriginalNormals)
   {
-    modelInfo.normals = nullptr;
+    // kludge: reverse IsCalcNormalsForced for RMF_WEAPON
+    if (!pScene->GetCustomInfo()->IsCalcNormalsForced(&mo.mo_toTexture))
+    {
+      modelInfo.normals = nullptr;
+    }
+  }
+  else
+  {
+    if (modelInfo.normals != nullptr && pScene->GetCustomInfo()->IsCalcNormalsForced(&mo.mo_toTexture))
+    {
+      modelInfo.normals = nullptr;
+    }
   }
 
 
@@ -525,7 +545,7 @@ static void RT_SetupModelRendering(CModelObject &mo,
 //void RenderOneSide( CRenderModel &rm, BOOL bBackSide, ULONG ulLayerFlags)
 static void RT_RenderOneSide(ULONG entityID,
                              CRenderModel &rm,
-                             CTextureObject *to,
+                             CModelObject &mo,
                              const RT_VertexData &vd,
                              BOOL bBackSide, 
                              bool isBackground,
@@ -554,7 +574,7 @@ static void RT_RenderOneSide(ULONG entityID,
 
   bool isFullbright = false;
 
-  auto flushModel = [entityID, &rm, &to, attchPath, &mmi, &vd, scene, &sttLast, forceTranslucency, isBackground, &isFullbright] (INDEX firstIndex, INDEX indexCount)
+  auto flushModel = [entityID, &rm, &mo, attchPath, &mmi, &vd, scene, &sttLast, forceTranslucency, isBackground, &isFullbright] (INDEX firstIndex, INDEX indexCount)
   {
     ASSERT(firstIndex >= 0);
     if (indexCount <= 0)
@@ -565,7 +585,7 @@ static void RT_RenderOneSide(ULONG entityID,
     // RT: use surface color, it doesn't differ over mapping surface because of the lack of vertex lighting
     GFXColor modelColor = vd.pColors[mmi.mmpi_aiElements[firstIndex]];
 
-    FlushModelInfo(entityID, rm, to, attchPath,
+    FlushModelInfo(entityID, rm, mo, attchPath,
                    &mmi.mmpi_aiElements[firstIndex], indexCount,
                    vd, sttLast, modelColor, forceTranslucency, isBackground, isFullbright, scene);
   };
@@ -837,23 +857,9 @@ static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &
     vd.pTexCoords = &_atexSrfBase[0];
     vd.pColors = &_acolSrfBase[0];
 
-    // RT: generate new normals for weapons if needed
-    bool generateNormals = (rm.rm_ulFlags & RMF_WEAPON) && !_srtGlobals.srt_bWeaponUseOriginalNormals;
-
-    // RT: always use original normals for hand model
-    if (generateNormals && mo.mo_toTexture.GetName() == "Models\\Weapons\\Hand.tex")
-    {
-      generateNormals = false;
-    }
-    
-    if (generateNormals)
-    {
-      vd.pNormals = nullptr;
-    }
-
     // RT: everything is set, copy model data to SSRT
     //RT_RenderOneSide(rm, TRUE);
-    RT_RenderOneSide(entityID, rm, &mo.mo_toTexture, vd, FALSE, isBackground, attchPath, forceTranslucency, scene);
+    RT_RenderOneSide(entityID, rm, mo, vd, FALSE, isBackground, attchPath, forceTranslucency, scene);
   }
 
   // adjust z-buffer and blending functions

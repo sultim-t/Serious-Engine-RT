@@ -192,7 +192,7 @@ const char * const RT_TexturePaths_DisabledCulling[] =
 };
 
 
-const char * const RT_TexturePaths_ForcedReflective[] =
+const char * const RT_TexturePaths_FullyMetallic[] =
 {
   "Models\\Effects\\BloodOnTheWall01\\BloodSpill02.tex",
   "Models\\Effects\\BloodOnTheWall01\\BloodSpill05.tex",
@@ -205,7 +205,7 @@ const char * const RT_TexturePaths_ForcedReflective[] =
 };
 
 
-const char * const RT_TexturePaths_ForcedAlphaTest[] =
+const char * const RT_TexturePaths_AlphaTest[] =
 {
   "Models\\Effects\\BloodOnTheWall01\\BloodSpill02.tex",
   "Models\\Effects\\BloodOnTheWall01\\BloodSpill05.tex",
@@ -221,13 +221,13 @@ const char * const RT_TexturePaths_ForcedAlphaTest[] =
 };
 
 
-const char *const RT_TexturePaths_ForcedAlphaTest_Particles[] =
+const char *const RT_TexturePaths_AlphaTest_Particles[] =
 {
   "Textures\\Effects\\Particles\\Lightning.tex",
 };
 
 
-const char *const RT_TexturePaths_ForceEmission[] =
+const char *const RT_TexturePaths_Emission[] =
 {
   "Textures\\Levels\\GreatPyramid\\LiftHolders03.tex",
   "Models\\CutSequences\\Pyramid\\RingBaseFX.tex",
@@ -240,6 +240,25 @@ const char *const RT_TexturePaths_ReflectRefract[] =
 {
   "Models\\Items\\Health\\Small\\Small.tex",
   "Models\\Items\\Health\\Medium\\Medium.tex",
+  "Models\\Items\\Keys\\Elements\\Air.tex",
+  "Models\\Items\\Keys\\Elements\\Fire.tex",
+  "Models\\Items\\Keys\\Elements\\Texture.tex",
+  "Models\\Items\\Keys\\Elements\\Water.tex",
+};
+
+
+/*
+const char *const RT_TexturePaths_Portal[] =
+{
+  // "Textures\\Effects\\Effect01\\Effect.tex",
+  "Textures\\Ages\\Egypt\\Patterns\\Glyphs02.tex",
+};
+*/
+
+
+const char *const RT_TexturePaths_Reflect[] =
+{
+  "Models\\IHVTest\\ReflectionMap\\teapot_env.tex"
 };
 
 
@@ -250,6 +269,7 @@ const char *const RT_TexturePaths_CalcNormals[] =
   "Models\\Items\\Ammo\\Shells\\Shells.tex",
   "Models\\CutSequences\\Portal\\Base.tex",
   "Models\\CutSequences\\Portal\\Portal.tex",
+  "Models\\Weapons\\Hand.tex",
 };
 
 
@@ -381,14 +401,15 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   tdsToFind[] =
   {
     { RT_TexturePaths_DisabledCulling,            ARRAYCOUNT(RT_TexturePaths_DisabledCulling),            &ptdCachedTextures.aDisabledCulling },
-    { RT_TexturePaths_ForcedAlphaTest,            ARRAYCOUNT(RT_TexturePaths_ForcedAlphaTest),            &ptdCachedTextures.aForceAlphaTest },
-    { RT_TexturePaths_ForcedAlphaTest_Particles,  ARRAYCOUNT(RT_TexturePaths_ForcedAlphaTest_Particles),  &ptdCachedTextures.aForceAlphaTestParticles },
-    { RT_TexturePaths_ForcedReflective,           ARRAYCOUNT(RT_TexturePaths_ForcedReflective),           &ptdCachedTextures.aForceReflective },
+    { RT_TexturePaths_AlphaTest,                  ARRAYCOUNT(RT_TexturePaths_AlphaTest),                  &ptdCachedTextures.aAlphaTest },
+    { RT_TexturePaths_AlphaTest_Particles,        ARRAYCOUNT(RT_TexturePaths_AlphaTest_Particles),        &ptdCachedTextures.aAlphaTestParticles },
+    { RT_TexturePaths_FullyMetallic,              ARRAYCOUNT(RT_TexturePaths_FullyMetallic),              &ptdCachedTextures.aFullyMetallic },
     { RT_TexturePaths_Water,                      ARRAYCOUNT(RT_TexturePaths_Water),                      &ptdCachedTextures.aWater },
     { RT_TexturePaths_Fire,                       ARRAYCOUNT(RT_TexturePaths_Fire),                       &ptdCachedTextures.aFire },
-    { RT_TexturePaths_ForceEmission,              ARRAYCOUNT(RT_TexturePaths_ForceEmission),              &ptdCachedTextures.aForceEmission },
-    { RT_TexturePaths_ReflectRefract,             ARRAYCOUNT(RT_TexturePaths_ReflectRefract),             &ptdCachedTextures.aForceReflectRefract },
-    { RT_TexturePaths_CalcNormals,                ARRAYCOUNT(RT_TexturePaths_CalcNormals),                &ptdCachedTextures.aForceCalcNormals },
+    { RT_TexturePaths_Emission,                   ARRAYCOUNT(RT_TexturePaths_Emission),                   &ptdCachedTextures.aEmission },
+    { RT_TexturePaths_ReflectRefract,             ARRAYCOUNT(RT_TexturePaths_ReflectRefract),             &ptdCachedTextures.aReflectRefract },
+    { RT_TexturePaths_Reflect,                    ARRAYCOUNT(RT_TexturePaths_Reflect),                    &ptdCachedTextures.aReflect },
+    { RT_TexturePaths_CalcNormals,                ARRAYCOUNT(RT_TexturePaths_CalcNormals),                &ptdCachedTextures.aCalcNormals },
   };
 
   for (const auto &s : tdsToFind)
@@ -991,34 +1012,39 @@ static bool ptdCachedTextures_Check(CTextureObject *pTo, const std::vector<CText
   return false;
 }
 
-bool SSRT::CustomInfo::IsReflectiveForced(CTextureObject *pTo) const
+bool SSRT::CustomInfo::IsFullMetallicForced(CTextureObject *pTo) const
 {
-  return ptdCachedTextures_Check(pTo, ptdCachedTextures.aForceReflective);
+  return ptdCachedTextures_Check(pTo, ptdCachedTextures.aFullyMetallic);
 }
 
 bool SSRT::CustomInfo::IsAlphaTestForced(CTextureObject *pTo, bool isTranslucent) const
 {
-  return ptdCachedTextures_Check(pTo, ptdCachedTextures.aForceAlphaTest);
+  return ptdCachedTextures_Check(pTo, ptdCachedTextures.aAlphaTest);
 }
 
 bool SSRT::CustomInfo::IsAlphaTestForcedForParticles(CTextureData *pTd) const
 {
-  return ptdCachedTextures_Check(pTd, ptdCachedTextures.aForceAlphaTestParticles);
+  return ptdCachedTextures_Check(pTd, ptdCachedTextures.aAlphaTestParticles);
 }
 
 bool SSRT::CustomInfo::IsEmissionForced(CTextureObject *pTo) const
 {
-  return ptdCachedTextures_Check(pTo, ptdCachedTextures.aForceEmission);
+  return ptdCachedTextures_Check(pTo, ptdCachedTextures.aEmission);
 }
 
 bool SSRT::CustomInfo::IsReflectRefractForced(CTextureObject *pTo) const
 {
-  return ptdCachedTextures_Check(pTo, ptdCachedTextures.aForceReflectRefract);
+  return ptdCachedTextures_Check(pTo, ptdCachedTextures.aReflectRefract);
+}
+
+bool SSRT::CustomInfo::IsReflectForced(CTextureObject *pTo) const
+{
+  return ptdCachedTextures_Check(pTo, ptdCachedTextures.aReflect);
 }
 
 bool SSRT::CustomInfo::IsCalcNormalsForced(CTextureObject *pTo) const
 {
-  return ptdCachedTextures_Check(pTo, ptdCachedTextures.aForceCalcNormals);
+  return ptdCachedTextures_Check(pTo, ptdCachedTextures.aCalcNormals);
 }
 
 bool SSRT::CustomInfo::HasLightEntityVertices(CEntity *pen) const

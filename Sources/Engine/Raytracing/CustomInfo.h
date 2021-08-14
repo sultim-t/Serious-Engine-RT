@@ -62,11 +62,12 @@ public:
   bool HasModelFireTexture(CEntity *penModel) const;
 
   bool IsAngularSizeCullingDisabled(CEntity *penModel) const;
-  bool IsReflectiveForced(CTextureObject *pTo) const;
+  bool IsFullMetallicForced(CTextureObject *pTo) const;
   bool IsAlphaTestForced(CTextureObject *pTo, bool isTranslucent) const;
   bool IsAlphaTestForcedForParticles(CTextureData *pTd) const;
   bool IsEmissionForced(CTextureObject *pTo) const;
   bool IsReflectRefractForced(CTextureObject *pTo) const;
+  bool IsReflectForced(CTextureObject *pTo) const;
   bool IsCalcNormalsForced(CTextureObject *pTo) const;
 
   bool IsBrushIgnored(CEntity *penBrush) const;
@@ -126,12 +127,13 @@ private:
   struct
   {
     std::vector<CTextureData *> aDisabledCulling;
-    std::vector<CTextureData *> aForceAlphaTest;
-    std::vector<CTextureData *> aForceAlphaTestParticles;
-    std::vector<CTextureData *> aForceReflective;
-    std::vector<CTextureData *> aForceEmission;
-    std::vector<CTextureData *> aForceReflectRefract;
-    std::vector<CTextureData *> aForceCalcNormals;
+    std::vector<CTextureData *> aAlphaTest;
+    std::vector<CTextureData *> aAlphaTestParticles;
+    std::vector<CTextureData *> aFullyMetallic;
+    std::vector<CTextureData *> aEmission;
+    std::vector<CTextureData *> aReflectRefract;
+    std::vector<CTextureData *> aReflect;
+    std::vector<CTextureData *> aCalcNormals;
     std::vector<CTextureData *> aWater;
     std::vector<CTextureData *> aFire;
 
