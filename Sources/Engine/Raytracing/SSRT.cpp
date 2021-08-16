@@ -483,6 +483,7 @@ void SSRT::SSRTMain::EndFrame()
   RgDrawFrameInfo frameInfo = {};
   frameInfo.renderSize = { curWindowWidth, curWindowHeight };
   frameInfo.rayCullMaskWorld = currentScene == nullptr ? 0xFF : currentScene->GetCustomInfo()->GetCullMask(currentScene->GetCameraPosition());
+  frameInfo.rayLength = currentScene == nullptr ? 10000.0f : currentScene->GetCustomInfo()->GetRayLength(currentScene->GetCameraPosition());
 
   frameInfo.currentTime = _pTimer->GetLerpedCurrentTick();
   // realTime = _pTimer->GetHighPrecisionTimer().GetSeconds();

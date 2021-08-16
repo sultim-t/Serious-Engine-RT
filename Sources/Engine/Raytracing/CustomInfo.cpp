@@ -96,16 +96,18 @@ const struct
   FLOAT   fSkyColorSaturation;
   FLOAT   fTonemappingMinLogLuminance;
   FLOAT   fTonemappingMaxLogLuminance;
+  FLOAT   fPotentialLightSphFalloffDefault;
 }
 RT_WorldIlluminationParams[] =
 {
-  // defaults:               4.0f, 0.5f, 1.0f, 0.75f, -2.0f, 0.0f
-  { EWorld::SandCanyon,      3.0f, 0.5f, 1.0f, 0.75f, -2.0f, 0.0f },
-  { EWorld::Suburbs,         4.0f, 0.5f, 0.5f,  1.0f, -2.0f, 0.0f },
-  { EWorld::AlleyOfSphinxes, 4.0f, 0.5f, 0.5f, 0.75f, -2.0f, 0.0f },
-  { EWorld::TheGreatPyramid, GREAT_PYRAMID_SUN_INTENSITY_DEFAULT, 1.0f, 0.5f,  1.0f,  0.0f, 2.0f },
-  { EWorld::Metropolis,      4.0f, 0.5f, 0.5f, 0.75f, -2.0f, 0.0f },
-  { EWorld::Karnak,          4.0f, 0.9f, 0.5f,  1.0f, -2.0f, 0.0f },
+  // defaults:               4.0f, 0.5f, 1.0f, 0.75f, -2.0f, 0.0f, 1.0f
+  { EWorld::SandCanyon,      3.0f, 0.5f, 1.0f, 0.75f, -2.0f, 0.0f, 1.0f },
+  { EWorld::Suburbs,         4.0f, 0.5f, 0.5f,  1.0f, -2.0f, 0.0f, 1.0f },
+  { EWorld::AlleyOfSphinxes, 4.0f, 0.5f, 0.5f, 0.75f, -2.0f, 0.0f, 1.0f },
+  { EWorld::TheGreatPyramid, GREAT_PYRAMID_SUN_INTENSITY_DEFAULT, 1.0f, 0.5f,  1.0f,  0.0f, 2.0f, 1.0f },
+  { EWorld::Metropolis,      4.0f, 0.5f, 0.5f, 0.75f, -2.0f, 0.0f, 1.0f },
+  { EWorld::Luxor,           4.0f, 0.5f, 1.0f, 0.75f, -2.0f, 0.0f, 4.0f },
+  { EWorld::Karnak,          4.0f, 0.9f, 0.5f,  1.0f, -2.0f, 0.0f, 1.0f },
 };
 
 
@@ -354,6 +356,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     _srtGlobals.srt_fSkyColorSaturation = 0.75f;
     _srtGlobals.srt_fTonemappingMinLogLuminance = -2.0f;
     _srtGlobals.srt_fTonemappingMaxLogLuminance = 0.0f;
+    _srtGlobals.srt_fPotentialLightSphFalloffDefault = 1.0f;
   }
   for (const auto &s : RT_WorldIlluminationParams)
   {
@@ -365,20 +368,17 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       _srtGlobals.srt_fSkyColorSaturation = s.fSkyColorSaturation;
       _srtGlobals.srt_fTonemappingMinLogLuminance = s.fTonemappingMinLogLuminance;
       _srtGlobals.srt_fTonemappingMaxLogLuminance = s.fTonemappingMaxLogLuminance;
+      _srtGlobals.srt_fPotentialLightSphFalloffDefault = s.fPotentialLightSphFalloffDefault;
       break;
     }
   }
   // special case: Serious difficulty in Metropolis
   if (isMetropolisSerious)
   {    
-    // { EWorld::Metropolis,      0.75f, 0.5f, 0.25f, 0.75f, -2.0f, 0.0}
-
     _srtGlobals.srt_fSunIntensity = 0.75f;
     _srtGlobals.srt_fSunSaturation = 0.5f;
     _srtGlobals.srt_fSkyColorMultiplier = 0.25f;
     _srtGlobals.srt_fSkyColorSaturation = 0.75f;
-    _srtGlobals.srt_fTonemappingMinLogLuminance = -2.0f;
-    _srtGlobals.srt_fTonemappingMaxLogLuminance = 0.0;
   }
   // special case: Great Pyramid animated sky intensity
   {
@@ -687,6 +687,17 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       {
         { 903 },
       };
+
+      brushPolygonsToMask =
+      {
+        { 599, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 }
+      };
+      brushPolygonRangesToMask =
+      {
+        { 606, 610, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 1849, 1851, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 1865, 1870, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+      };
       break;
 
     case EWorld::SacredYards:
@@ -867,9 +878,33 @@ uint32_t SSRT::CustomInfo::GetCullMask(const FLOAT3D &vCameraPosition) const
         return 0b001;
       }
       break;
+
+    case EWorld::Luxor:
+      if (-172.0f < vCameraPosition(1) && vCameraPosition(1) < 40.0f)
+      {
+        // inside the building with a transmitter, ignore outside walls
+        return 0b001;
+      }
+      break;
   }
 
   return 0b111;
+}
+
+float SSRT::CustomInfo::GetRayLength(const FLOAT3D &vCameraPosition) const
+{
+  switch (eCurrentWorld)
+  {
+    case EWorld::Luxor:
+      if (vCameraPosition(1) > 3000.0f)
+      {
+        // draw only starship
+        return 500.0f;
+      }
+      break;
+  }
+
+  return 10000.0f;
 }
 
 bool SSRT::CustomInfo::IsBrushIgnored(CEntity *penBrush) const
