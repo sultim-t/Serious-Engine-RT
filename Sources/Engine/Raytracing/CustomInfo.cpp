@@ -544,6 +544,25 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
         { 68 },
       };
 
+      brushPolygonsToIgnore =
+      {
+        // water
+        { 1577 },
+        { 1580 },
+
+      };
+      brushPolygonRangesToIgnore =
+      {
+        // water
+        { 1500, 1504 },
+        { 1254, 1267 },
+        { 1269, 1294 },
+        { 1578, 1579 },
+        { 1561, 1572 },
+        { 672, 676 },
+        { 652, 663 },
+      };
+
       // not visible from the inside of the building
       brushPolygonsToMask =
       {
