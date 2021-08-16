@@ -502,24 +502,24 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       brushSectorsToIgnore = 
       {
         // black box outside
-        { 3, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
+        { 3 },
       };
       break;
 
     case EWorld::ValleyOfTheKings:
       brushPolygonRangesToMask =
       {
-        { 10, 817, 832, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
-        { 10, 781, 798, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
-        { 10, 744, 753, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
-        { 10, 712, 719, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 817, 832, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 781, 798, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 744, 753, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 712, 719, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
       };
       break;
 
     case EWorld::MoonMountains:
       brushPolygonRangesToIgnore =
       {
-        { 24, 1471, 1494, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 }
+        { 1471, 1494 }
       };
 
       brushSectorsToMask =
@@ -540,20 +540,20 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       brushSectorsToIgnore =
       {
         // black boxes outside
-        { 67, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 }, 
-        { 68, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
+        { 67 },
+        { 68 },
       };
 
       // not visible from the inside of the building
       brushPolygonsToMask =
       {
-        { 53, 1139, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
-        { 53, 1140, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
-        { 53, 1142, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
-        { 3, 590, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
-        { 3, 591, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
-        { 3, 592, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
-        { 3, 563, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 }
+        { 1139, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 1140, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 1142, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 590, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 591, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 592, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 563, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 }
       };
       brushSectorsToMask = 
       {
@@ -564,8 +564,8 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     case EWorld::Metropolis:
       brushPolygonsToIgnore =
       {
-        { 7, 131, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
-        { 7, 132, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
+        { 131 },
+        { 132 },
       };
       break;
 
@@ -573,34 +573,34 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       brushPolygonsToIgnore =
       {
         // start room roof
-        { 180, 3014, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
+        { 3014 },
 
         // windows all right
-        { 64, 1210, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
-        { 64, 1211, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
-        { 64, 1186, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
-        { 64, 1187, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
-        { 64, 1188, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
-        { 64, 1189, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
+        { 1210 },
+        { 1211 },
+        { 1186 },
+        { 1187 },
+        { 1188 },
+        { 1189 },
 
         // windows all left
-        { 64, 1191, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
-        { 64, 1190, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
-        { 64, 1214, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
+        { 1191 },
+        { 1190 },
+        { 1214 },
 
         // top of the building with pool and ammo
-        { 111, 1884 , RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
-        { 111, 1885 , RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
-        { 111, 1886 , RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
-        { 111, 1887 , RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0 },
+        { 1884 },
+        { 1885 },
+        { 1886 },
+        { 1887 },
       };
 
       brushPolygonsToMask =
       {
         // start room left windows
-        { 180, 3015, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 3015, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
         // start room right windows
-        { 180, 3018, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
+        { 3018, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
       };
 
       break;
@@ -696,7 +696,7 @@ RgGeometryPrimaryVisibilityType SSRT::CustomInfo::GetBrushMaskBit(const CBrushPo
 {
   ASSERT(pPolygon != nullptr && pPolygon->bpo_pbscSector != nullptr);
   
-  for (const IgnoredBrushSector &s : brushSectorsToMask)
+  for (const MaskedBrushSector &s : brushSectorsToMask)
   {
     if (pPolygon->bpo_pbscSector->bsc_iInWorld == s.iBrushSectorIndex)
     {
@@ -704,19 +704,17 @@ RgGeometryPrimaryVisibilityType SSRT::CustomInfo::GetBrushMaskBit(const CBrushPo
     }
   }
 
-  for (const IgnoredBrushPoly &p : brushPolygonsToMask)
+  for (const MaskedBrushPoly &p : brushPolygonsToMask)
   {
-    if (pPolygon->bpo_pbscSector->bsc_iInWorld == p.iBrushSectorIndex &&
-        pPolygon->bpo_iInWorld == p.iBrushPolygonIndex)
+    if (pPolygon->bpo_iInWorld == p.iBrushPolygonIndex)
     {
       return p.eMaskBit;
     }
   }
 
-  for (const IgnoredBrushPolyRange &r : brushPolygonRangesToMask)
+  for (const MaskedBrushPolyRange &r : brushPolygonRangesToMask)
   {
-    if (pPolygon->bpo_pbscSector->bsc_iInWorld == r.iBrushSectorIndex &&
-        pPolygon->bpo_iInWorld >= r.iBrushPolygonIndexStart && 
+    if (pPolygon->bpo_iInWorld >= r.iBrushPolygonIndexStart && 
         pPolygon->bpo_iInWorld <= r.iBrushPolygonIndexEnd)
     {
       return r.eMaskBit;
@@ -839,8 +837,7 @@ bool SSRT::CustomInfo::IsBrushPolygonIgnored(const CBrushPolygon *pPolygon) cons
 
   for (const IgnoredBrushPoly &p : brushPolygonsToIgnore)
   {
-    if (pPolygon->bpo_pbscSector->bsc_iInWorld == p.iBrushSectorIndex &&
-        pPolygon->bpo_iInWorld == p.iBrushPolygonIndex)
+    if (pPolygon->bpo_iInWorld == p.iBrushPolygonIndex)
     {
       return true;
     }
@@ -848,8 +845,7 @@ bool SSRT::CustomInfo::IsBrushPolygonIgnored(const CBrushPolygon *pPolygon) cons
 
   for (const IgnoredBrushPolyRange &r : brushPolygonRangesToIgnore)
   {
-    if (pPolygon->bpo_pbscSector->bsc_iInWorld == r.iBrushSectorIndex &&
-        pPolygon->bpo_iInWorld >= r.iBrushPolygonIndexStart &&
+    if (pPolygon->bpo_iInWorld >= r.iBrushPolygonIndexStart &&
         pPolygon->bpo_iInWorld <= r.iBrushPolygonIndexEnd)
     {
       return true;

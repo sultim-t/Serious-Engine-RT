@@ -100,17 +100,29 @@ private:
   struct IgnoredBrushSector
   {    
     INDEX iBrushSectorIndex;
-    RgGeometryPrimaryVisibilityType eMaskBit;
   };
   struct IgnoredBrushPoly
   {
-    INDEX iBrushSectorIndex;
     INDEX iBrushPolygonIndex;
-    RgGeometryPrimaryVisibilityType eMaskBit;
   };
   struct IgnoredBrushPolyRange
   {
+    INDEX iBrushPolygonIndexStart;
+    INDEX iBrushPolygonIndexEnd;
+  };
+
+  struct MaskedBrushSector
+  {
     INDEX iBrushSectorIndex;
+    RgGeometryPrimaryVisibilityType eMaskBit;
+  };
+  struct MaskedBrushPoly
+  {
+    INDEX iBrushPolygonIndex;
+    RgGeometryPrimaryVisibilityType eMaskBit;
+  };
+  struct MaskedBrushPolyRange
+  {
     INDEX iBrushPolygonIndexStart;
     INDEX iBrushPolygonIndexEnd;
     RgGeometryPrimaryVisibilityType eMaskBit;
@@ -158,9 +170,9 @@ private:
   std::vector<IgnoredBrushPoly> brushPolygonsToIgnore;
   std::vector<IgnoredBrushSector> brushSectorsToIgnore;
 
-  std::vector<IgnoredBrushPolyRange> brushPolygonRangesToMask;
-  std::vector<IgnoredBrushPoly> brushPolygonsToMask;
-  std::vector<IgnoredBrushSector> brushSectorsToMask;
+  std::vector<MaskedBrushPolyRange> brushPolygonRangesToMask;
+  std::vector<MaskedBrushPoly> brushPolygonsToMask;
+  std::vector<MaskedBrushSector> brushSectorsToMask;
 };
 
 }

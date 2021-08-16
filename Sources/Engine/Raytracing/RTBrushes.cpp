@@ -47,13 +47,7 @@ static CStaticStackArray<GFXTexCoord> RT_AllSectorTexCoords[MAX_BRUSH_TEXTURE_CO
 
 
 
-// water surfaces are double sided, ignore vertex duplicates
-constexpr float WATER_VERTICES_EPSILON = 0.1f;
-static CStaticStackArray<const CBrushPolygon *> RT_WaterPolygons;
-
-
-
-void RT_BrushClear()
+static void RT_BrushClear()
 {
   RT_AllSectorNormals.PopAll();
   RT_AllSectorVertices.PopAll();
@@ -68,8 +62,6 @@ void RT_BrushClear()
 void RT_BrushProcessingClear()
 {
   RT_BrushClear();
-
-  RT_WaterPolygons.PopAll();
 }
 
 
@@ -261,11 +253,11 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
     iDstIndex++;
   }
 
-  bool isWaterReflective = isWater && !(polygonFlags & BPOF_TRANSLUCENT);
-  bool isWaterReflectiveRefractive = isWater && (polygonFlags & BPOF_TRANSLUCENT);
-
   if (isWater)
   {
+    bool isWaterReflective = !(polygonFlags & BPOF_TRANSLUCENT);
+    bool isWaterReflectiveRefractive = polygonFlags & BPOF_TRANSLUCENT;
+
     brushInfo.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_REFLECT;
   }
 
@@ -357,47 +349,6 @@ static bool RT_AreBlendingsSame(const RT_TextureLayerBlending &a, const RT_Textu
   }
 
   return true;
-}
-
-
-static bool RT_HasWaterVertexDuplicates(const CBrushPolygon &waterPolygon)
-{
-  const INDEX vertCount = waterPolygon.bpo_apbvxTriangleVertices.Count();
-
-  for (INDEX k = 0; k < RT_WaterPolygons.Count(); k++)
-  {
-    const CBrushPolygon &otherWaterPolygon = *RT_WaterPolygons[k];
-    const INDEX otherVertCount = otherWaterPolygon.bpo_apbvxTriangleVertices.Count();
-
-    /*if (vertCount != otherVertCount)
-    {
-      continue;
-    }*/
-
-    int sameCount = 0;
-
-    for (INDEX i = 0; i < vertCount; i++)
-    {
-      const CBrushVertex *vert = waterPolygon.bpo_apbvxTriangleVertices[i];
-
-      for (INDEX j = 0; j < otherVertCount; j++)
-      {
-        const CBrushVertex *vertOther = otherWaterPolygon.bpo_apbvxTriangleVertices[j];
-
-        if ((vert->bvx_vAbsolute - vertOther->bvx_vAbsolute).ManhattanNorm() < WATER_VERTICES_EPSILON)
-        {
-          sameCount++;
-        }        
-      }
-    }
-
-    if (sameCount >= Min(vertCount, otherVertCount))
-    {
-      return true;
-    }
-  }
-
-  return false;
 }
 
 
@@ -783,32 +734,6 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
     {
       // flush last saved info, and start new recordings
       flushLastSavedInfo();
-    }
-
-
-    if (isWaterPolygon)
-    {
-      // don't cull water surfaces that have non-water opaque textures
-      bool hasNonWaterOpaque = false;
-
-      for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
-      {
-        if (!isWaterTexture[i] && (curBlending.layerBlendingType[i] & STXF_BLEND_MASK) == STXF_BLEND_OPAQUE)
-        {
-          hasNonWaterOpaque = true;
-          break;
-        }
-      }
-
-      if (!hasNonWaterOpaque)
-      {
-        if (RT_HasWaterVertexDuplicates(polygon))
-        {
-          continue;
-        }        
-      }
-
-      RT_WaterPolygons.Push() = &polygon;
     }
 
 
