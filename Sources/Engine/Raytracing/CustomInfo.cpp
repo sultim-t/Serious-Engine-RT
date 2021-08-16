@@ -499,6 +499,11 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   switch (eCurrentWorld)
   {
     case EWorld::Hatshepsut:
+      brushPolygonsToIgnore =
+      {
+        // water
+        { 572 },
+      };
       brushSectorsToIgnore = 
       {
         // black box outside
@@ -507,6 +512,14 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       break;
 
     case EWorld::ValleyOfTheKings:
+      brushPolygonsToIgnore =
+      {
+        // water
+        { 991 },
+        { 2764 },
+        { 2712 },
+      };
+
       brushPolygonRangesToMask =
       {
         { 817, 832, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
@@ -517,9 +530,17 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       break;
 
     case EWorld::MoonMountains:
+      brushPolygonsToIgnore =
+      {       
+        // water
+        { 970 }
+      };
+
       brushPolygonRangesToIgnore =
       {
-        { 1471, 1494 }
+        { 1471, 1494 },
+        // water
+        { 1316, 1328 }
       };
 
       brushSectorsToMask =
@@ -549,18 +570,18 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
         // water
         { 1577 },
         { 1580 },
-
       };
       brushPolygonRangesToIgnore =
       {
         // water
-        { 1500, 1504 },
+        { 652, 663 },
+        { 672, 676 },
+        { 1241, 1242 },
         { 1254, 1267 },
         { 1269, 1294 },
+        { 1500, 1504 },
         { 1578, 1579 },
         { 1561, 1572 },
-        { 672, 676 },
-        { 652, 663 },
       };
 
       // not visible from the inside of the building
@@ -577,6 +598,28 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       brushSectorsToMask = 
       {
         { 90, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 }
+      };
+      break;
+
+    case EWorld::Sewers:
+      brushPolygonsToIgnore =
+      {
+        // water
+        { 483 },
+        { 415 },
+        { 58 },
+        { 120 },
+        { 129 },
+        { 285 },
+        { 307 },
+        { 313 },
+        { 319 },
+        { 328 },
+        { 338 },
+        { 366 },
+        { 463 },
+        { 667 },
+        { 675 },
       };
       break;
 
@@ -612,6 +655,21 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
         { 1885 },
         { 1886 },
         { 1887 },
+
+        // water
+        { 1030 },
+        { 3361 },
+        { 3384 },
+        { 2307 },
+        { 2308 },
+        { 2309 },
+        { 2310 },
+        { 23 },
+        { 25 },
+        { 3175 },
+        { 3176 },
+        { 806 },
+        { 817 },
       };
 
       brushPolygonsToMask =
@@ -622,6 +680,23 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
         { 3018, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
       };
 
+      break;
+
+    case EWorld::Luxor:
+      brushPolygonsToIgnore =
+      {
+        { 903 },
+      };
+      break;
+
+    case EWorld::SacredYards:
+      brushPolygonsToIgnore =
+      {
+        { 5 },
+        { 741 },
+        { 317 },
+        { 4580 },
+      };
       break;
   }
 }

@@ -917,7 +917,16 @@ void RT_PrintBrushPolygonInfo(SSRT::Scene *pScene)
   bool bWithTranslucent = _srtGlobals.srt_bPrintBrushPolygonInfo / 100 % 10;
   bool bIsPhysical = _srtGlobals.srt_bPrintBrushPolygonInfo / 1000 % 10;
   bool bWithTerrainInvisibleTris = _srtGlobals.srt_bPrintBrushPolygonInfo / 10000 % 10;
+  
+  bool isWater = false;
 
+  if (_srtGlobals.srt_bPrintBrushPolygonInfo == 999999)
+  {
+    isWater = true;
+    bWithModels = false;
+    bIsPhysical = false;
+    bWithTranslucent = true;
+  }
 
   _srtGlobals.srt_bPrintBrushPolygonInfo = 0;
 
@@ -955,6 +964,23 @@ void RT_PrintBrushPolygonInfo(SSRT::Scene *pScene)
     {
       return;
     }
+
+    bool ok = !isWater;
+    for (uint32_t i = 0; i < 3; i++)
+    {
+      CTextureData *ptd = (CTextureData *)crRay.cr_pbpoBrushPolygon->bpo_abptTextures[i].bpt_toTexture.ao_AnimData;
+
+      if (ptd != nullptr)
+      {
+        ok |= pScene->GetCustomInfo()->IsWaterTexture(ptd);
+      }
+    }
+
+    if (!ok)
+    {
+      return;
+    }
+
 
     CPrintF("%s\n", crRay.cr_penHit->GetName());
     CPrintF("en_ulID: %i\n", crRay.cr_penHit->en_ulID);

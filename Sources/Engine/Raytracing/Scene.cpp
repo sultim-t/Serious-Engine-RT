@@ -361,7 +361,9 @@ void SSRT::Scene::ProcessBrushes()
   r = rgSubmitStaticGeometries(instance);
   RG_CHECKERROR(r);
 
+#ifndef NDEBUG
   CPrintF("SSRT scene's brushes were uploaded.\n");
+#endif // !NDEBUG
 }
 
 void SSRT::Scene::ProcessDynamicGeometry()

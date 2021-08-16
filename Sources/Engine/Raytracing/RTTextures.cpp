@@ -40,7 +40,8 @@ extern FLOAT gfx_tmProbeDecay;
 constexpr const char *RT_ForceClampUVTextureNames[] =
 {
   "Textures\\Levels\\Hatshepsut\\ColumnArtwork01.tex",
-  "Textures\\Levels\\ChambersOfHorus\\EyeOfRa02.tex"
+  "Textures\\Levels\\ChambersOfHorus\\EyeOfRa02.tex",
+  "Textures\\Levels\\AmonComplex\\EyeOfRa.tex",
 };
 
 static void TryFixWrapping(SSRT::CPreparedTextureInfo &info)
