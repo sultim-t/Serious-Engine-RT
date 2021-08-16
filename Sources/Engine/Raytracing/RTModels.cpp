@@ -226,14 +226,14 @@ static void FlushModelInfo(ULONG entityID,
 
   if ((stt == STT_TRANSLUCENT || stt == STT_ADD) && pScene->GetCustomInfo()->IsReflectRefractForced(to))
   {
-    modelInfo.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_REFLECT;
+    modelInfo.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_GLASS_REFLECT_REFRACT;
     modelInfo.isRasterized = false;
   }
 
   if (pScene->GetCustomInfo()->IsReflectForced(reflectionTo))
   {
     // TODO: only reflective + if polygon is not translucent (water texture on top of rock texture moon mountains)
-    modelInfo.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_REFLECT;
+    modelInfo.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_MIRROR;
     modelInfo.isRasterized = false;
   }
 

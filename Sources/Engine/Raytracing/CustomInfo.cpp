@@ -518,6 +518,10 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
         { 991 },
         { 2764 },
         { 2712 },
+        // bars
+        { 2072 },
+        { 2255 },
+        { 6439 },
       };
 
       brushPolygonRangesToMask =

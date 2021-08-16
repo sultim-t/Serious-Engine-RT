@@ -35,6 +35,8 @@ struct SSRTGlobals
   INDEX srt_bIgnoreDynamicTexCoords = 0;
   INDEX srt_bIgnoreWaterEffectTextureUpdates = 1;
 
+  INDEX srt_iReflMaxDepth = 2;
+
   INDEX srt_bLightFixWithModels = 1;
   INDEX srt_bLightFixWithTranslucent = 0;
 

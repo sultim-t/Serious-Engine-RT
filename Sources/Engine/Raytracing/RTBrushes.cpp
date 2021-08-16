@@ -163,7 +163,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   SSRT::CBrushGeometry brushInfo = {};
   brushInfo.entityID = penBrush->en_ulID;
   brushInfo.isMovable = isMovable;
-  brushInfo.passThroughType = isMirror ? RG_GEOMETRY_PASS_THROUGH_TYPE_REFLECT : RT_GetPassThroughType(polygonFlags);
+  brushInfo.passThroughType = isMirror ? RG_GEOMETRY_PASS_THROUGH_TYPE_MIRROR : RT_GetPassThroughType(polygonFlags);
   brushInfo.isSky = isSky;
   
   brushInfo.isRasterized = isRasterized;
@@ -255,10 +255,11 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
 
   if (isWater)
   {
-    bool isWaterReflective = !(polygonFlags & BPOF_TRANSLUCENT);
-    bool isWaterReflectiveRefractive = polygonFlags & BPOF_TRANSLUCENT;
+    bool isReflectiveAndRefractive = polygonFlags & BPOF_TRANSLUCENT;
 
-    brushInfo.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_REFLECT;
+    brushInfo.passThroughType = isReflectiveAndRefractive ? 
+      RG_GEOMETRY_PASS_THROUGH_TYPE_WATER_REFLECT_REFRACT :
+      RG_GEOMETRY_PASS_THROUGH_TYPE_WATER_ONLY_REFLECT;
   }
 
   // will be overriden
