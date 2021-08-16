@@ -47,6 +47,7 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("           user INDEX srt_bPrintBrushPolygonInfo;", &_srtGlobals.srt_bPrintBrushPolygonInfo);
   _pShell->DeclareSymbol("persistent user INDEX srt_bTexturesOriginalSRGB;", &_srtGlobals.srt_bTexturesOriginalSRGB);
   _pShell->DeclareSymbol("persistent user INDEX srt_bIgnoreDynamicTexCoords;", &_srtGlobals.srt_bIgnoreDynamicTexCoords);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bIgnoreWaterEffectTextureUpdates;", &_srtGlobals.srt_bIgnoreWaterEffectTextureUpdates);
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorMultiplier;", &_srtGlobals.srt_fSkyColorMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorSaturation;", &_srtGlobals.srt_fSkyColorSaturation);
@@ -153,6 +154,7 @@ void SSRT::SSRTMain::NormalizeShellVariables()
   _srtGlobals.srt_bReloadShaders = !!_srtGlobals.srt_bReloadShaders;
   _srtGlobals.srt_bTexturesOriginalSRGB = !!_srtGlobals.srt_bTexturesOriginalSRGB;
   _srtGlobals.srt_bIgnoreDynamicTexCoords = !!_srtGlobals.srt_bIgnoreDynamicTexCoords;
+  _srtGlobals.srt_bIgnoreWaterEffectTextureUpdates = !!_srtGlobals.srt_bIgnoreWaterEffectTextureUpdates;
 
   _srtGlobals.srt_fModelSpecularMetallicDefault = Clamp(_srtGlobals.srt_fModelSpecularMetallicDefault, 0.0f, 1.0f);
   _srtGlobals.srt_fModelSpecularRoughnessDefault = Clamp(_srtGlobals.srt_fModelSpecularRoughnessDefault, 0.0f, 1.0f);

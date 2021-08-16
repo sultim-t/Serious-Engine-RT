@@ -22,6 +22,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Raytracing/SSRTObjects.h>
 #include <Engine/Raytracing/TextureUploader.h>
+#include <Engine/Raytracing/SSRTGlobals.h>
+
+
+extern SSRT::SSRTGlobals _srtGlobals;
 
 
 extern INDEX tex_iNormalQuality;
@@ -183,8 +187,13 @@ static void ProcessEffectTexture(CTextureData &td, bool *pBNoDiscard, bool *pBNe
     bNoDiscard = false;
   }
 
+  bool bFirstUpdate = td.td_ptegEffect->teg_updTexture.LastUpdateTime() == -1;
+  bool bDisableUpdates = _srtGlobals.srt_bIgnoreWaterEffectTextureUpdates && td.td_ptegEffect->IsWater();
+
   // if not calculated for this tick (must be != to test for time rewinding)
-  if (td.td_ptegEffect->teg_updTexture.LastUpdateTime() != _pTimer->CurrentTick())
+  bool bOutdated = td.td_ptegEffect->teg_updTexture.LastUpdateTime() != _pTimer->CurrentTick();
+
+  if (bFirstUpdate || (bOutdated && !bDisableUpdates))
   {
     // discard eventual cached frame and calculate new frame
     td.MarkChanged();

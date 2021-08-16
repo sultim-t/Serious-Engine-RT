@@ -29,9 +29,11 @@ struct SSRTGlobals
   INDEX srt_bPrintBrushPolygonInfo = 0;
   INDEX srt_bTexturesOriginalSRGB = 1;
   INDEX srt_bEnableViewerShadows = 1;
-  INDEX srt_bIgnoreDynamicTexCoords = 0;
   INDEX srt_bShowGradients = 0;
   INDEX srt_bShowMotionVectors = 0;
+
+  INDEX srt_bIgnoreDynamicTexCoords = 0;
+  INDEX srt_bIgnoreWaterEffectTextureUpdates = 1;
 
   INDEX srt_bLightFixWithModels = 1;
   INDEX srt_bLightFixWithTranslucent = 0;
