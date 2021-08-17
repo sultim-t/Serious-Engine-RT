@@ -439,7 +439,11 @@ static void UpdateSize(CDrawPort *pdp)
   PIX pixSizeI = pdp->GetWidth();
   PIX pixSizeJ = pdp->GetHeight();
 
-  PIX pixCustomScale = pdp->GetHeight() > 800 ? 2 : 1;
+  PIX pixCustomScale = 
+    pixSizeJ < 800 ? 1 :
+    pixSizeJ < 1200 ? 2 :
+    pixSizeJ < 1800 ? 3 :
+    4;
 
   // remember new size
   _pixSizeI = pixSizeI;
