@@ -361,7 +361,16 @@ void SSRT::Scene::UpdateBrushTexCoords(const CUpdateTexCoordsInfo &info)
 
 void SSRT::Scene::AddWarpPortal(CEntity *penBrush, INDEX iMirrorType)
 {
-  warpPortals.push_back({ penBrush, iMirrorType });
+  if (penBrush == nullptr)
+  {
+    return;
+  }
+
+  WarpPortalState st = {};
+  st.penBrush = penBrush;
+  st.iMirrorType = iMirrorType;
+
+  warpPortals.insert(st);
 }
 
 void SSRT::Scene::ProcessFirstPersonModel(const CFirstPersonModelInfo &info, ULONG entityId)

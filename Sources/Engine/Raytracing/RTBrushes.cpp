@@ -79,9 +79,13 @@ static bool RT_ShouldBeRasterized(uint32_t bpofFlags)
 }
 
 
-static RgGeometryPassThroughType RT_GetPassThroughType(uint32_t bpofFlags, bool isMirror, bool isWater)
+static RgGeometryPassThroughType RT_GetPassThroughType(uint32_t bpofFlags, bool isMirror, bool isWarpPortal, bool isWater)
 {
-  if (isMirror)
+  if (isWarpPortal)
+  {
+    return RG_GEOMETRY_PASS_THROUGH_TYPE_PORTAL;
+  }
+  else if (isMirror)
   {
     return RG_GEOMETRY_PASS_THROUGH_TYPE_MIRROR;
   }
@@ -176,7 +180,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   SSRT::CBrushGeometry brushInfo = {};
   brushInfo.entityID = penBrush->en_ulID;
   brushInfo.isMovable = isMovable;
-  brushInfo.passThroughType = RT_GetPassThroughType(polygonFlags, isMirror, isWater);
+  brushInfo.passThroughType = RT_GetPassThroughType(polygonFlags, isMirror, isWarpPortal, isWater);
   brushInfo.isSky = isSky;
   
   brushInfo.isRasterized = isRasterized;
@@ -767,7 +771,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
     lastIsWater = isWaterPolygon;
     lastBrushMaskBit = maskBit;
     lastIsMirror = isMirror;
-    lastIsMirror = isWarpPortal;
+    lastIsWarpPortal = isWarpPortal;
     for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
     {
       pLastTextures[i] = &polygon.bpo_abptTextures[i];

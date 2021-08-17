@@ -16,6 +16,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #pragma once
 
 #include <vector>
+#include <unordered_set>
 
 #include "SSRTObjects.h"
 #include "TextureUploader.h"
@@ -82,6 +83,20 @@ private:
   {
     CEntity *penBrush;
     INDEX iMirrorType;
+
+    bool operator==(const WarpPortalState &s) const
+    {
+      ASSERT(this->penBrush != nullptr && s.penBrush != nullptr);
+      return this->penBrush->en_ulID == s.penBrush->en_ulID && this->iMirrorType == s.iMirrorType;
+    }
+  };
+
+  struct WarpPortalStateHash
+  {
+    size_t operator()(const WarpPortalState &s) const
+    {
+      return ((uint64_t)s.iMirrorType << 32ULL) | (uint64_t)s.penBrush->en_ulID;
+    }
   };
 
 private:
@@ -108,7 +123,7 @@ private:
   FlashlightState                   firstPersonFlashlight;
   FlashlightState                   thirdPersonFlashlight;
   
-  std::vector<WarpPortalState>      warpPortals;
+  std::unordered_set<WarpPortalState, WarpPortalStateHash> warpPortals;
 };
 
 }
