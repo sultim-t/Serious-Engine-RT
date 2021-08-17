@@ -159,7 +159,8 @@ struct CDirectionalLight
 
 
 struct CSphereLight
-{
+{ 
+  const CLightSource *plsLight;
   ULONG           entityID;
 
   FLOAT3D         absPosition;

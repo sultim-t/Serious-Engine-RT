@@ -270,7 +270,8 @@ static FLOAT3D RT_FindMuzzleFlashPositionForPlayerAABB(CEntity *pEn, SSRT::Scene
 }
 
 
-static void RT_AddModifiedSphereLightToScene(ULONG entityID,
+static void RT_AddModifiedSphereLightToScene(const CLightSource *plsLight,
+                                             ULONG entityID,
                                              const FLOAT3D &position,
                                              const FLOAT3D &color,
                                              float hotspotDistance,
@@ -281,6 +282,7 @@ static void RT_AddModifiedSphereLightToScene(ULONG entityID,
                                              SSRT::Scene *pScene)
 {
   SSRT::CSphereLight light = {};
+  light.plsLight = plsLight;
   light.entityID = entityID;
   light.absPosition = position;
   light.color = color;
@@ -579,7 +581,8 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *pScene)
       isDynamic ? _srtGlobals.srt_fDynamicLightSphIntensity :
       _srtGlobals.srt_fOriginalLightSphIntensity;
 
-    RT_AddModifiedSphereLightToScene(entityID,
+    RT_AddModifiedSphereLightToScene(plsLight,
+                                     entityID,
                                      position, RT_GetSphericalLightColor(plsLight) * intensity,
                                      plsLight->ls_rHotSpot, plsLight->ls_rFallOff,
                                      isDynamic, false, isMuzzleFlash,
@@ -623,7 +626,8 @@ static void RT_TryAddPotentialLight(CEntity *pEn, SSRT::Scene *pScene)
 
     bool isDynamic = plsLight->ls_ulFlags & LSF_DYNAMIC;
 
-    RT_AddModifiedSphereLightToScene(pEn->en_ulID,
+    RT_AddModifiedSphereLightToScene(nullptr,
+                                     pEn->en_ulID,
                                      closestPos, RT_GetSphericalLightColor(plsLight) * _srtGlobals.srt_fPotentialLightSphIntensity,
                                      plsLight->ls_rHotSpot,
                                      plsLight->ls_rFallOff,
@@ -650,7 +654,8 @@ static void RT_TryAddPotentialLight(CEntity *pEn, SSRT::Scene *pScene)
     // if there is no nearest light, then just use any params
     float hotspotDistance = 1.0f;
 
-    RT_AddModifiedSphereLightToScene(pEn->en_ulID,
+    RT_AddModifiedSphereLightToScene(nullptr,
+                                     pEn->en_ulID,
                                      originalPos, color * _srtGlobals.srt_fPotentialLightSphIntensity,
                                      hotspotDistance, falloffDistance,
                                      false, true, false,

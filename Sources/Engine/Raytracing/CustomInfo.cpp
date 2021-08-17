@@ -485,6 +485,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       tmFlashlightHintEnd = -1.0f;
       break;
   }
+  fFlashlightIntensityForLevel = 1.0f;
 
 
 
@@ -1337,6 +1338,8 @@ void SSRT::CustomInfo::Update(const FLOAT3D &vCameraPosition)
       }
     }
   }
+
+  fFlashlightIntensityForLevel = 1.0f;
 }
 
 void SSRT::CustomInfo::EnableFlashlightHint()
@@ -1374,4 +1377,63 @@ void SSRT::CustomInfo::OnSkyBrushAdd(const SSRT::CBrushGeometry &brush)
     // get alpha value
     fSkyCloudsOpacity = Clamp(brush.layerColors[iCloudsLayer](4), 0.0f, 1.0f);
   }
+}
+
+void SSRT::CustomInfo::OnSphereLightAdd(const CSphereLight &sphLt)
+{
+  // if a rocketeer with light is in this range, disable flashlight to show his light source
+  if (eCurrentWorld == EWorld::SandCanyon && sphLt.plsLight != nullptr)
+  {
+    const float x = sphLt.absPosition(1);
+    const float z = sphLt.absPosition(3);
+
+    const float zFlickerEnd = -165.0f;
+    const float zFlickerStart = -162.0f;
+
+    bool activateFlashlightFlicker =
+      -180.0f < z && z < zFlickerStart &&
+      55.0f < x && x < 77.0f;
+
+    if (!activateFlashlightFlicker)
+    {
+      return;
+    }
+
+    // if certainly that exact rocketeer
+    if (!IsLightForceDynamic(sphLt.plsLight))
+    {
+      return;
+    }
+
+    if (z < zFlickerEnd)
+    {
+      fFlashlightIntensityForLevel = 0.0f;
+      return;
+    }
+
+    // to [0..1]
+    const float zRelative = Abs(z - zFlickerStart) / Abs(zFlickerEnd - zFlickerStart);
+    const float firstAttenuation = 0.3f;
+
+    if (zRelative < firstAttenuation)
+    {
+      fFlashlightIntensityForLevel = Lerp(1.0f, 0.25f, zRelative / firstAttenuation);
+    }
+    else
+    {
+      fFlashlightIntensityForLevel = Lerp(0.8f, 0.0f, zRelative - firstAttenuation / 0.7f);
+    }
+  }
+}
+
+float SSRT::CustomInfo::GetFlashlightIntensityForLevel(const FLOAT3D &vCameraPosition) const
+{
+  if (eCurrentWorld == EWorld::SandCanyon &&
+      // if player in some specific place
+      vCameraPosition(1) > 70 && vCameraPosition(1) < 90)
+  {
+    return fFlashlightIntensityForLevel;
+  }
+
+  return 1.0f;
 }

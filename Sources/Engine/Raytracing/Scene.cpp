@@ -85,11 +85,11 @@ void SSRT::Scene::Update(const CWorldRenderingInfo &info)
   firstPersonFlashlight.isAdded = false;
   thirdPersonFlashlight.isAdded = false;
 
+  pCustomInfo->Update(this->cameraPosition);
+
   // upload dynamic geometry (models)
   // and scan for movable geometry
   ProcessDynamicGeometry();
-
-  pCustomInfo->Update(this->cameraPosition);
 }
 
 const CTString &SSRT::Scene::GetWorldName() const
@@ -309,6 +309,8 @@ void SSRT::Scene::AddLight(const CSphereLight &sphLt)
   RG_CHECKERROR(r);
 
   sphLights.push_back(sphLt);
+
+  pCustomInfo->OnSphereLightAdd(sphLt);
 }
 
 void SSRT::Scene::AddLight(const CDirectionalLight &dirLt)
@@ -444,20 +446,28 @@ void SSRT::Scene::OnFrameEnd(bool isCameraFirstPerson)
   // spotlights are processed, add one of them;
   // it's done here because a way to determine,
   // if the camera is first or third person, wasn't found
-  RgSpotlightUploadInfo *info = nullptr;
+  RgSpotlightUploadInfo info = {};
+  bool added = false;
 
   if (isCameraFirstPerson && firstPersonFlashlight.isAdded)
   {
-    info = &firstPersonFlashlight.spotlightInfo;
+    info = firstPersonFlashlight.spotlightInfo;
+    added = true;
   }
   else if (thirdPersonFlashlight.isAdded)
   {
-    info = &thirdPersonFlashlight.spotlightInfo;
+    info = thirdPersonFlashlight.spotlightInfo;
+    added = true;
   }
 
-  if (info != nullptr)
+  if (added)
   {
-    RgResult r = rgUploadSpotlightLight(instance, info);
+    float f = pCustomInfo->GetFlashlightIntensityForLevel(cameraPosition);
+    info.color.data[0] *= f;
+    info.color.data[1] *= f;
+    info.color.data[2] *= f;
+
+    RgResult r = rgUploadSpotlightLight(instance, &info);
     RG_CHECKERROR(r);
   }
 }

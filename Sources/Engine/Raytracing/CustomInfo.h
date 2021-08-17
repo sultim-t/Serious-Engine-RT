@@ -90,9 +90,11 @@ public:
   FLOAT GetSkyIntensity() const;
   FLOAT GetSkySaturation() const;
   RgSkyType GetLevelSkyType() const;
+  FLOAT GetFlashlightIntensityForLevel(const FLOAT3D &vCameraPosition) const;
 
   void Update(const FLOAT3D &vCameraPosition);
   void OnSkyBrushAdd(const CBrushGeometry &brush);
+  void OnSphereLightAdd(const CSphereLight &sphLt);
 
 private:
   bool HasLightEntityVertices(CEntity *pen) const;
@@ -182,6 +184,8 @@ private:
   std::vector<MaskedBrushPolyRange> brushPolygonRangesToMask;
   std::vector<MaskedBrushPoly> brushPolygonsToMask;
   std::vector<MaskedBrushSector> brushSectorsToMask;
+
+  float fFlashlightIntensityForLevel;
 };
 
 }
