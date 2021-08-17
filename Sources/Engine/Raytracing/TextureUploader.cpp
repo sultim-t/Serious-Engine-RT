@@ -118,7 +118,7 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
     stInfo.filter = info.filter;
     stInfo.addressModeU = info.wrapU;
     stInfo.addressModeV = info.wrapV;
-    stInfo.disableOverride = false;
+    stInfo.disableOverride = info.disableOverride;
     stInfo.pRelativePath = overridenPath;
 
     RgResult r = rgCreateStaticMaterial(instance, &stInfo, &material);

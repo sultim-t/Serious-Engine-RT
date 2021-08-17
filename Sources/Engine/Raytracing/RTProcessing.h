@@ -20,6 +20,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 namespace SSRT
 {
 class Scene;
+class CustomInfo;
 class TextureUploader;
 }
 
@@ -51,4 +52,5 @@ void RT_Particle_RenderLine(const FLOAT3D &vPos0, const FLOAT3D &vPos1, FLOAT fW
 void RT_Particle_RenderQuad3D(const FLOAT3D &vPos0, const FLOAT3D &vPos1, const FLOAT3D &vPos2, const FLOAT3D &vPos3, COLOR col);
 void RT_Particle_Flush();
 
+void RT_SetCustomInfoForTextures(SSRT::CustomInfo *pCustomInfo);
 unsigned RT_SetTextureAsCurrent(CTextureData *textureData, SSRT::TextureUploader *uploader);

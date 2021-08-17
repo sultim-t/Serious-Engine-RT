@@ -252,6 +252,7 @@ struct CPreparedTextureInfo
   RgSamplerFilter       filter;
   RgSamplerAddressMode  wrapU;
   RgSamplerAddressMode  wrapV;
+  bool                  disableOverride;
 };
 
 

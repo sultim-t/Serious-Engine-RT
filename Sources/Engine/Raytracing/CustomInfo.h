@@ -69,6 +69,8 @@ public:
   bool IsGlass(CTextureObject *pTo) const;
   bool IsMirror(CTextureObject *ptoReflection) const;
   bool IsCalcNormalsForced(CTextureObject *pTo) const;
+  bool IsClampWrapForced(CTextureData *pTd) const;
+  bool IsOverrideDisabled(CTextureData *pTd) const;
 
   bool IsBrushIgnored(CEntity *penBrush) const;
   bool IsBrushSectorIgnored(const CBrushSector *pSector) const;
@@ -149,6 +151,8 @@ private:
     std::vector<CTextureData *> aCalcNormals;
     std::vector<CTextureData *> aWater;
     std::vector<CTextureData *> aFire;
+    std::vector<CTextureData *> aClampWrap;
+    std::vector<CTextureData *> aDisabledOverride;
 
   } ptdCachedTextures;
 

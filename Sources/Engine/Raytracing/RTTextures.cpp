@@ -23,6 +23,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Raytracing/SSRTObjects.h>
 #include <Engine/Raytracing/TextureUploader.h>
 #include <Engine/Raytracing/SSRTGlobals.h>
+#include <Engine/Raytracing/CustomInfo.h>
 
 
 extern SSRT::SSRTGlobals _srtGlobals;
@@ -41,27 +42,35 @@ extern INDEX gap_bAllowSingleMipmap;
 extern FLOAT gfx_tmProbeDecay;
 
 
-constexpr const char *RT_ForceClampUVTextureNames[] =
-{
-  "Textures\\Levels\\Hatshepsut\\ColumnArtwork01.tex",
-  "Textures\\Levels\\ChambersOfHorus\\EyeOfRa02.tex",
-  "Textures\\Levels\\AmonComplex\\EyeOfRa.tex",
-};
+static SSRT::CustomInfo *_pCustomInfo = nullptr;
 
-static void TryFixWrapping(SSRT::CPreparedTextureInfo &info)
+void RT_SetCustomInfoForTextures(SSRT::CustomInfo *pCustomInfo)
 {
-  if (!info.isDynamic)
+  _pCustomInfo = pCustomInfo;
+}
+
+static void TryFixWrapping(SSRT::CPreparedTextureInfo &info, CTextureData *ptd)
+{
+  if (_pCustomInfo == nullptr)
   {
-    for (const auto &n : RT_ForceClampUVTextureNames)
-    {
-      if (*info.path == n)
-      {
-        info.wrapU = RG_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-        info.wrapV = RG_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-        break;
-      }
-    }
+    return;
   }
+
+  if (!info.isDynamic && _pCustomInfo->IsClampWrapForced(ptd))
+  {
+    info.wrapU = RG_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    info.wrapV = RG_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+  }
+}
+
+static bool IsOverrideDisabled(CTextureData *ptd)
+{
+  if (_pCustomInfo == nullptr)
+  {
+    return false;
+  }
+
+  return _pCustomInfo->IsOverrideDisabled(ptd);
 }
 
 
@@ -269,10 +278,11 @@ static void SetCurrentAndUpload(CTextureData &td, PIX pixWidth, PIX pixHeight, S
     info.isDynamic = td.td_ptegEffect != NULL;
     info.generateMipmaps = td.td_ptegEffect != NULL ? false : !td.td_tpLocal.tp_bSingleMipmap;
     info.path = &td.GetName();
+    info.disableOverride = IsOverrideDisabled(&td);
 
     UnpackTexParams(td.td_tpLocal, &info.filter, &info.wrapU, &info.wrapV);
 
-    TryFixWrapping(info);
+    TryFixWrapping(info, &td);
 
     // instead of gfxUploadTexture
     uploader->UploadTexture(info);

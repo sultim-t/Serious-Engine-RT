@@ -283,6 +283,20 @@ const char *const RT_TexturePaths_IgnoreModel[] =
 };
 
 
+const char *const RT_TexturePaths_ClampWrap[] =
+{
+  "Textures\\Levels\\Hatshepsut\\ColumnArtwork01.tex",
+  "Textures\\Levels\\ChambersOfHorus\\EyeOfRa02.tex",
+  "Textures\\Levels\\AmonComplex\\EyeOfRa.tex",
+};
+
+
+const char *const RT_TexturePaths_DisabledOverride[] =
+{
+  "Textures\\Levels\\GreatPyramid\\FloorPyramod01.tex",
+};
+
+
 static bool vector_Contains(const std::vector<CTextureData*> &aVec, CTextureData *pTd)
 {
   return std::find(aVec.begin(), aVec.end(), pTd) != aVec.end();
@@ -411,6 +425,8 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     { RT_TexturePaths_Glass,                      ARRAYCOUNT(RT_TexturePaths_Glass),                      &ptdCachedTextures.aGlass },
     { RT_TexturePaths_Mirror,                     ARRAYCOUNT(RT_TexturePaths_Mirror),                     &ptdCachedTextures.aMirror },
     { RT_TexturePaths_CalcNormals,                ARRAYCOUNT(RT_TexturePaths_CalcNormals),                &ptdCachedTextures.aCalcNormals },
+    { RT_TexturePaths_ClampWrap,                  ARRAYCOUNT(RT_TexturePaths_ClampWrap),                  &ptdCachedTextures.aClampWrap },
+    { RT_TexturePaths_DisabledOverride,           ARRAYCOUNT(RT_TexturePaths_DisabledOverride),           &ptdCachedTextures.aDisabledOverride },
   };
 
   for (const auto &s : tdsToFind)
@@ -1175,6 +1191,16 @@ bool SSRT::CustomInfo::IsMirror(CTextureObject *ptoReflection) const
 bool SSRT::CustomInfo::IsCalcNormalsForced(CTextureObject *pTo) const
 {
   return ptdCachedTextures_Check(pTo, ptdCachedTextures.aCalcNormals);
+}
+
+bool SSRT::CustomInfo::IsClampWrapForced(CTextureData *pTd) const
+{
+  return ptdCachedTextures_Check(pTd, ptdCachedTextures.aClampWrap);
+}
+
+bool SSRT::CustomInfo::IsOverrideDisabled(CTextureData *pTd) const
+{
+  return eCurrentWorld != EWorld::TheGreatPyramid && ptdCachedTextures_Check(pTd, ptdCachedTextures.aDisabledOverride);
 }
 
 bool SSRT::CustomInfo::HasLightEntityVertices(CEntity *pen) const

@@ -44,6 +44,7 @@ SSRT::Scene::Scene(RgInstance _instance, CWorld *_pWorld, TextureUploader *_pTex
   pViewerEntity(nullptr)
 {
   pCustomInfo = new CustomInfo(_pWorld);
+  RT_SetCustomInfoForTextures(pCustomInfo);
 
   ASSERT(pWorld != nullptr);
 #ifndef NDEBUG
@@ -59,6 +60,8 @@ SSRT::Scene::~Scene()
 #ifndef NDEBUG
   CPrintF("SSRT scene was deleted.\n");
 #endif // !NDEBUG
+
+  RT_SetCustomInfoForTextures(nullptr);
 
   delete pSceneBrushes;
   delete pCustomInfo;
