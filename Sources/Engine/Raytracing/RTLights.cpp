@@ -295,7 +295,7 @@ static void RT_AddModifiedSphereLightToScene(ULONG entityID,
   else if (isPotential)
   {
     light.radius = Max(_srtGlobals.srt_fPotentialLightSphRadiusMin, hotspotDistance * _srtGlobals.srt_fPotentialLightSphRadiusMultiplier);
-    light.falloffDistance = f * _srtGlobals.srt_fPotentialLightSphFalloffMultiplier;
+    light.falloffDistance = Max(_srtGlobals.srt_fPotentialLightSphFalloffMin, f * _srtGlobals.srt_fPotentialLightSphFalloffMultiplier);
   }
   else if (isDynamic)
   {

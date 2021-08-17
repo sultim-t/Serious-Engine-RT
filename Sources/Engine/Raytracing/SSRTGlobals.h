@@ -66,6 +66,7 @@ struct SSRTGlobals
   FLOAT srt_fPotentialLightSphRadiusMultiplier = 0.5f;
   FLOAT srt_fPotentialLightSphFalloffMultiplier = 0.25f;
   FLOAT srt_fPotentialLightSphFalloffDefault = 1.0f;
+  FLOAT srt_fPotentialLightSphFalloffMin = 2.0f;
 
   FLOAT srt_fMuzzleLightIntensity = 1.0f;
   FLOAT srt_fMuzzleLightRadius = 0.25f;

@@ -95,6 +95,7 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fPotentialLightSphRadiusMultiplier;", &_srtGlobals.srt_fPotentialLightSphRadiusMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fPotentialLightSphFalloffMultiplier;", &_srtGlobals.srt_fPotentialLightSphFalloffMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fPotentialLightSphFalloffDefault;", &_srtGlobals.srt_fPotentialLightSphFalloffDefault);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fPotentialLightSphFalloffMin;", &_srtGlobals.srt_fPotentialLightSphFalloffMin);
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_fMuzzleLightIntensity;", &_srtGlobals.srt_fMuzzleLightIntensity);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fMuzzleLightRadius;", &_srtGlobals.srt_fMuzzleLightRadius);
@@ -185,6 +186,8 @@ void SSRT::SSRTMain::NormalizeShellVariables()
   _srtGlobals.srt_fPotentialLightSphIntensity = Max(_srtGlobals.srt_fPotentialLightSphIntensity, 0.0f);
   _srtGlobals.srt_fPotentialLightSphRadiusMultiplier = Max(_srtGlobals.srt_fPotentialLightSphRadiusMultiplier, 0.0f);
   _srtGlobals.srt_fPotentialLightSphFalloffMultiplier = Max(_srtGlobals.srt_fPotentialLightSphFalloffMultiplier, 0.0f);
+  _srtGlobals.srt_fPotentialLightSphFalloffDefault = Max(_srtGlobals.srt_fPotentialLightSphFalloffDefault, 0.0f);
+  _srtGlobals.srt_fPotentialLightSphFalloffMin = Max(_srtGlobals.srt_fPotentialLightSphFalloffMin, 0.0f);
 
   _srtGlobals.srt_fMuzzleLightIntensity = Max(_srtGlobals.srt_fMuzzleLightIntensity, 0.0f);
   _srtGlobals.srt_fMuzzleLightRadius = Max(_srtGlobals.srt_fMuzzleLightRadius, 0.0f);
@@ -489,7 +492,7 @@ void SSRT::SSRTMain::EndFrame()
   RgDrawFrameReflectRefractParams rflParams = {};
   rflParams.maxReflectRefractDepth = _srtGlobals.srt_iReflMaxDepth;
   FLOAT3D vPortalDiff = currentScene == nullptr ? FLOAT3D(0, 0, 0) : currentScene->GetNearestToCameraPortalDiff();
-  rflParams.portalOutputOffsetFromCamera = { vPortalDiff(1), vPortalDiff(2), vPortalDiff(3) };
+  rflParams.portalInputToOutputDiff = { vPortalDiff(1), vPortalDiff(2), vPortalDiff(3) };
   // TODO: camera media
   rflParams.typeOfMediaAroundCamera = RG_MEDIA_TYPE_VACUUM;
 
