@@ -224,13 +224,13 @@ static void FlushModelInfo(ULONG entityID,
   modelInfo.passThroughType = RT_GetPassThroughType(stt, forceAlphaTest);
   modelInfo.isRasterized = RT_ShouldBeRasterized(stt, forceAlphaTest);
 
-  if ((stt == STT_TRANSLUCENT || stt == STT_ADD) && pScene->GetCustomInfo()->IsReflectRefractForced(to))
+  if ((stt == STT_TRANSLUCENT || stt == STT_ADD) && pScene->GetCustomInfo()->IsGlass(to))
   {
     modelInfo.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_GLASS_REFLECT_REFRACT;
     modelInfo.isRasterized = false;
   }
 
-  if (pScene->GetCustomInfo()->IsReflectForced(reflectionTo))
+  if (pScene->GetCustomInfo()->IsMirror(reflectionTo))
   {
     // TODO: only reflective + if polygon is not translucent (water texture on top of rock texture moon mountains)
     modelInfo.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_MIRROR;

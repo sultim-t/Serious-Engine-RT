@@ -79,9 +79,21 @@ static bool RT_ShouldBeRasterized(uint32_t bpofFlags)
 }
 
 
-static RgGeometryPassThroughType RT_GetPassThroughType(uint32_t bpofFlags)
+static RgGeometryPassThroughType RT_GetPassThroughType(uint32_t bpofFlags, bool isMirror, bool isWater)
 {
-  if  (bpofFlags & BPOF_TRANSPARENT)
+  if (isMirror)
+  {
+    return RG_GEOMETRY_PASS_THROUGH_TYPE_MIRROR;
+  }
+  else if (isWater)
+  {
+    bool isReflectiveAndRefractive = bpofFlags & BPOF_TRANSLUCENT;
+
+    return isReflectiveAndRefractive ?
+      RG_GEOMETRY_PASS_THROUGH_TYPE_WATER_REFLECT_REFRACT :
+      RG_GEOMETRY_PASS_THROUGH_TYPE_WATER_ONLY_REFLECT;
+  }
+  else if  (bpofFlags & BPOF_TRANSPARENT)
   {
     return RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
   }
@@ -125,6 +137,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
                               RgGeometryPrimaryVisibilityType maskBit,
                               bool onlyRasterized,
                               bool isMirror,
+                              bool isWarpPortal,
                               SSRT::Scene *pScene)
 {
   if (RT_AllSectorVertices.Count() == 0 || RT_AllSectorIndices.Count() == 0)
@@ -163,7 +176,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   SSRT::CBrushGeometry brushInfo = {};
   brushInfo.entityID = penBrush->en_ulID;
   brushInfo.isMovable = isMovable;
-  brushInfo.passThroughType = isMirror ? RG_GEOMETRY_PASS_THROUGH_TYPE_MIRROR : RT_GetPassThroughType(polygonFlags);
+  brushInfo.passThroughType = RT_GetPassThroughType(polygonFlags, isMirror, isWater);
   brushInfo.isSky = isSky;
   
   brushInfo.isRasterized = isRasterized;
@@ -251,15 +264,6 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
     brushInfo.isEmissive |= pScene->GetCustomInfo()->IsEmissionForced(&to);
 
     iDstIndex++;
-  }
-
-  if (isWater)
-  {
-    bool isReflectiveAndRefractive = polygonFlags & BPOF_TRANSLUCENT;
-
-    brushInfo.passThroughType = isReflectiveAndRefractive ? 
-      RG_GEOMETRY_PASS_THROUGH_TYPE_WATER_REFLECT_REFRACT :
-      RG_GEOMETRY_PASS_THROUGH_TYPE_WATER_ONLY_REFLECT;
   }
 
   // will be overriden
@@ -560,13 +564,14 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
   }
   RgGeometryPrimaryVisibilityType lastBrushMaskBit = RgGeometryPrimaryVisibilityType::RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0;
   bool lastIsMirror = false;
+  bool lastIsWarpPortal = false;
 
 
-  auto flushLastSavedInfo = [onlyTexCoords, onlyRasterized, penBrush, &pLastTextures, &lastFlags, &lastBlending, &lastHasSrollingTextures, &lastIsWater, &lastBrushMaskBit, &lastIsMirror, pScene] ()
+  auto flushLastSavedInfo = [&] ()
   {
     if (!onlyTexCoords)
     {
-      RT_FlushBrushInfo(penBrush, RT_BrushPartIndex, pLastTextures, lastFlags, lastBlending, lastHasSrollingTextures, lastIsWater, lastBrushMaskBit, onlyRasterized, lastIsMirror, pScene);
+      RT_FlushBrushInfo(penBrush, RT_BrushPartIndex, pLastTextures, lastFlags, lastBlending, lastHasSrollingTextures, lastIsWater, lastBrushMaskBit, onlyRasterized, lastIsMirror, lastIsWarpPortal, pScene);
     }
     // update tex coords only for scrolling textures
     else if (lastHasSrollingTextures)
@@ -603,6 +608,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
 
   #pragma region Warp/mirror polygon
     bool isMirror = false;
+    bool isWarpPortal = false;
     INDEX iMirrorType = polygon.bpo_bppProperties.bpp_ubMirrorType;
     // if mirror
     if (iMirrorType != 0)
@@ -613,12 +619,9 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
       // warp portal
       if (mirrorParams.mp_ulFlags & MPF_WARP)
       {
-        CEntity *re_penViewer = mirrorParams.mp_penWarpViewer;
-        re_penViewer->GetPlacement().pl_PositionVector;
-        re_penViewer->GetPlacement().pl_OrientationAngle;
+        isWarpPortal = true;
 
-        // TODO: not mirror but warp portal, need to save info about warp viewer
-        isMirror = true;
+        pScene->AddWarpPortal(penBrush, iMirrorType);
       }
       // mirror
       else
@@ -729,7 +732,8 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
       lastFlags != polygonFlags ||
       lastHasSrollingTextures != hasScrollingTextures ||
       lastBrushMaskBit != maskBit ||
-      lastIsMirror != isMirror;
+      lastIsMirror != isMirror ||
+      lastIsWarpPortal != isWarpPortal;
 
     if (mustBeFlushed)
     {
@@ -763,6 +767,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
     lastIsWater = isWaterPolygon;
     lastBrushMaskBit = maskBit;
     lastIsMirror = isMirror;
+    lastIsMirror = isWarpPortal;
     for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
     {
       pLastTextures[i] = &polygon.bpo_abptTextures[i];

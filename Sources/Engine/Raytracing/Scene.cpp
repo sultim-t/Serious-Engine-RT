@@ -20,6 +20,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Base/Shell.h>
 #include <Engine/World/World.h>
+#include <Engine/World/WorldSettings.h>
 #include <Engine/Light/LightSource.h>
 
 #include <Engine/Templates/DynamicContainer.cpp>
@@ -121,6 +122,30 @@ ANGLE3D SSRT::Scene::GetBackgroundViewerOrientationAngle() const
   }
 
   return pWorld->GetBackgroundViewer()->GetLerpedPlacement().pl_OrientationAngle;
+}
+
+FLOAT3D SSRT::Scene::GetNearestToCameraPortalDiff() const
+{
+  FLOAT3D vWarpPortalDiff = FLOAT3D(0, 0, 0);
+  float fNearestSqDist = FLT_MAX;
+
+  for (const auto &w : warpPortals)
+  {
+    CMirrorParameters m;
+    if (w.penBrush->GetMirror(w.iMirrorType, m))
+    {
+      FLOAT3D vD = m.mp_plWarpIn.pl_PositionVector - cameraPosition;
+      float fSqDist = vD % vD;
+
+      if (fNearestSqDist > fSqDist)
+      {
+        vWarpPortalDiff = m.mp_plWarpOut.pl_PositionVector - m.mp_plWarpIn.pl_PositionVector;
+        fNearestSqDist = fSqDist;
+      }
+    }
+  }
+
+  return vWarpPortalDiff;
 }
 
 const SSRT::CustomInfo *SSRT::Scene::GetCustomInfo() const
@@ -329,6 +354,11 @@ void SSRT::Scene::UpdateBrushNonStaticTexture(CTextureData *pTexture, uint32_t t
 void SSRT::Scene::UpdateBrushTexCoords(const CUpdateTexCoordsInfo &info)
 {
   pSceneBrushes->UpdateBrushTexCoords(info);
+}
+
+void SSRT::Scene::AddWarpPortal(CEntity *penBrush, INDEX iMirrorType)
+{
+  warpPortals.push_back({ penBrush, iMirrorType });
 }
 
 void SSRT::Scene::ProcessFirstPersonModel(const CFirstPersonModelInfo &info, ULONG entityId)

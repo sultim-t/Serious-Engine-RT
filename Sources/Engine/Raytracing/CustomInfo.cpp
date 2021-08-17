@@ -238,7 +238,7 @@ const char *const RT_TexturePaths_Emission[] =
 };
 
 
-const char *const RT_TexturePaths_ReflectRefract[] =
+const char *const RT_TexturePaths_Glass[] =
 {
   "Models\\Items\\Health\\Small\\Small.tex",
   "Models\\Items\\Health\\Medium\\Medium.tex",
@@ -258,9 +258,10 @@ const char *const RT_TexturePaths_Portal[] =
 */
 
 
-const char *const RT_TexturePaths_Reflect[] =
+const char *const RT_TexturePaths_Mirror[] =
 {
-  "Models\\IHVTest\\ReflectionMap\\teapot_env.tex"
+  "Models\\IHVTest\\ReflectionMap\\teapot_env.tex",
+  "Models\\IHVTest\\KarnakDemoReflectionMap01\\ItemRoomGravitySecret.tex"
 };
 
 
@@ -407,8 +408,8 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     { RT_TexturePaths_Water,                      ARRAYCOUNT(RT_TexturePaths_Water),                      &ptdCachedTextures.aWater },
     { RT_TexturePaths_Fire,                       ARRAYCOUNT(RT_TexturePaths_Fire),                       &ptdCachedTextures.aFire },
     { RT_TexturePaths_Emission,                   ARRAYCOUNT(RT_TexturePaths_Emission),                   &ptdCachedTextures.aEmission },
-    { RT_TexturePaths_ReflectRefract,             ARRAYCOUNT(RT_TexturePaths_ReflectRefract),             &ptdCachedTextures.aReflectRefract },
-    { RT_TexturePaths_Reflect,                    ARRAYCOUNT(RT_TexturePaths_Reflect),                    &ptdCachedTextures.aReflect },
+    { RT_TexturePaths_Glass,                      ARRAYCOUNT(RT_TexturePaths_Glass),                      &ptdCachedTextures.aGlass },
+    { RT_TexturePaths_Mirror,                     ARRAYCOUNT(RT_TexturePaths_Mirror),                     &ptdCachedTextures.aMirror },
     { RT_TexturePaths_CalcNormals,                ARRAYCOUNT(RT_TexturePaths_CalcNormals),                &ptdCachedTextures.aCalcNormals },
   };
 
@@ -1161,14 +1162,14 @@ bool SSRT::CustomInfo::IsEmissionForced(CTextureObject *pTo) const
   return ptdCachedTextures_Check(pTo, ptdCachedTextures.aEmission);
 }
 
-bool SSRT::CustomInfo::IsReflectRefractForced(CTextureObject *pTo) const
+bool SSRT::CustomInfo::IsGlass(CTextureObject *pTo) const
 {
-  return ptdCachedTextures_Check(pTo, ptdCachedTextures.aReflectRefract);
+  return ptdCachedTextures_Check(pTo, ptdCachedTextures.aGlass);
 }
 
-bool SSRT::CustomInfo::IsReflectForced(CTextureObject *pTo) const
+bool SSRT::CustomInfo::IsMirror(CTextureObject *ptoReflection) const
 {
-  return ptdCachedTextures_Check(pTo, ptdCachedTextures.aReflect);
+  return ptdCachedTextures_Check(ptoReflection, ptdCachedTextures.aMirror);
 }
 
 bool SSRT::CustomInfo::IsCalcNormalsForced(CTextureObject *pTo) const

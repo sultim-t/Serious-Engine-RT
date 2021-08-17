@@ -45,6 +45,7 @@ public:
   void UpdateBrush(CEntity *pEntity);
   void UpdateBrushNonStaticTexture(CTextureData *pTexture, uint32_t textureFrameIndex);
   void UpdateBrushTexCoords(const CUpdateTexCoordsInfo &info);
+  void AddWarpPortal(CEntity *penBrush, INDEX iMirrorType);
 
   CEntity *GetViewerEntity() const;
   ULONG GetViewerEntityID() const;
@@ -59,6 +60,7 @@ public:
   CWorld *GetWorld();
   FLOAT3D GetBackgroundViewerPosition() const;
   ANGLE3D GetBackgroundViewerOrientationAngle() const;
+  FLOAT3D GetNearestToCameraPortalDiff() const;
 
   const CustomInfo *GetCustomInfo() const;
   CustomInfo *GetCustomInfo();
@@ -74,6 +76,12 @@ private:
   {
     bool isAdded;
     RgSpotlightUploadInfo spotlightInfo;
+  };
+
+  struct WarpPortalState
+  {
+    CEntity *penBrush;
+    INDEX iMirrorType;
   };
 
 private:
@@ -100,6 +108,7 @@ private:
   FlashlightState                   firstPersonFlashlight;
   FlashlightState                   thirdPersonFlashlight;
   
+  std::vector<WarpPortalState>      warpPortals;
 };
 
 }
