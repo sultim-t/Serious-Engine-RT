@@ -97,7 +97,10 @@ Controls/*
 Levels/*
 Temp/*
 *.gro
-OverridenTextures/*
+OverridenTextures/CreateKTX2Cache.txt
+OverridenTextures/OverridenTextures.zip
+OverridenTextures/Raw/*
+OverridenTextures/Compressed/*
 Demos/*
 ScreenShots/*
 
