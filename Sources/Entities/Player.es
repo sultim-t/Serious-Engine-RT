@@ -1413,7 +1413,7 @@ functions:
       ASSERT(csType==CST_DETAIL);
 
       strStats = "\n";
-      _ctAlignWidth = Min(ctCharsPerRow, INDEX(60));
+      _ctAlignWidth = Min(ctCharsPerRow, INDEX(100));
 
       if (GetSP()->sp_bCooperative) {
         if (GetSP()->sp_bSinglePlayer) {

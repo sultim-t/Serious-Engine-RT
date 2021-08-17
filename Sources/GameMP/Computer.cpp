@@ -439,13 +439,15 @@ static void UpdateSize(CDrawPort *pdp)
   PIX pixSizeI = pdp->GetWidth();
   PIX pixSizeJ = pdp->GetHeight();
 
+  PIX pixCustomScale = pdp->GetHeight() > 800 ? 2 : 1;
+
   // remember new size
   _pixSizeI = pixSizeI;
   _pixSizeJ = pixSizeJ;
 
   // determine scaling
-  _fScaling = 1.0f;
-  _fScaling2 = 1.0f;
+  _fScaling = pixCustomScale;
+  _fScaling2 = pixCustomScale;
   if (pixSizeJ<384) {
     _fScaling = 1.0f;
     _fScaling2 = pixSizeJ/480.0f;
@@ -475,8 +477,8 @@ static void UpdateSize(CDrawPort *pdp)
   PIX pixI0Rt = pixBoxMarginI;
   PIX pixI1Lt = pixI0Rt+_pixCharSize2I*20+pixBoxMarginI;
   PIX pixI1Rt = pixI1Lt+pixBoxMarginI;
-  PIX pixI2Lt = _pixSizeI/2-pixBoxMarginI/2;
-  PIX pixI2Rt = _pixSizeI/2+pixBoxMarginI/2;
+  PIX pixI2Lt = pixI0Rt + pixJ3Up - pixJ2Dn;//_pixSizeI/2-pixBoxMarginI/2;
+  PIX pixI2Rt = pixI2Lt + pixBoxMarginI;//_pixSizeI/2+pixBoxMarginI/2;
   PIX pixI4Lt = _pixSizeI-pixBoxMarginI;
   PIX pixI3Rt = pixI4Lt-pixBoxMarginI*2-_pixCharSize2I*10;
   PIX pixI3Lt = pixI3Rt-pixBoxMarginI;
@@ -516,7 +518,7 @@ static void UpdateSize(CDrawPort *pdp)
   _boxMsgText += PIX2D(fGroup0, 0);
   _boxMsgImage+= PIX2D(0, fGroup0);
   _ctMessagesOnScreen  = (_boxMsgList.Size()(2) - _pixMarginJ*2)                 / _pixCharSizeJ;
-  _ctTextCharsPerRow   = (_boxMsgText.Size()(1) - _pixMarginI*4)                 / _pixCharSizeI;
+  _ctTextCharsPerRow   = (_boxMsgText.Size()(1) - _pixMarginI*6*pixCustomScale)  / _pixCharSizeI;
   _ctTextLinesOnScreen = (_boxMsgText.Size()(2) - _pixMarginJ*2 - _pixMarginJ*4) / _pixCharSizeJ;
 }
 
