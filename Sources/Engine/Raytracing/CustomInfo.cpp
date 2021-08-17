@@ -101,7 +101,7 @@ const struct
 RT_WorldIlluminationParams[] =
 {
   // defaults:               4.0f, 0.5f, 1.0f, 0.75f, -2.0f, 0.0f, 1.0f
-  { EWorld::SandCanyon,      3.0f, 0.5f, 1.0f, 0.75f, -2.0f, 0.0f, 1.0f },
+  { EWorld::SandCanyon,      3.0f, 0.5f, 1.0f, 0.75f, -2.0f, 0.0f, 8.0f },
   { EWorld::Suburbs,         4.0f, 0.5f, 0.5f,  1.0f, -2.0f, 0.0f, 1.0f },
   { EWorld::AlleyOfSphinxes, 4.0f, 0.5f, 0.5f, 0.75f, -2.0f, 0.0f, 1.0f },
   { EWorld::TheGreatPyramid, GREAT_PYRAMID_SUN_INTENSITY_DEFAULT, 1.0f, 0.5f,  1.0f,  0.0f, 2.0f, 1.0f },
@@ -220,6 +220,7 @@ const char * const RT_TexturePaths_AlphaTest[] =
   "Models\\Effects\\BulletOnTheWall\\Bullet.tex",
   "Models\\Effects\\BulletOnTheWall\\BulletSand.tex",
   "Models\\Plants\\Garden02\\Garden06.tex",
+  "Models\\Ages\\Egypt\\Gods\\TothMonkey\\TothMonkey.tex",
 };
 
 
@@ -294,6 +295,22 @@ const char *const RT_TexturePaths_ClampWrap[] =
 const char *const RT_TexturePaths_DisabledOverride[] =
 {
   "Textures\\Levels\\GreatPyramid\\FloorPyramod01.tex",
+};
+
+
+const char *const RT_TexturePaths_LightOffsetFix[] =
+{
+  "Models\\Effects\\ExplosionGrenade\\Texture.tex",
+  "Models\\Effects\\ExplosionParticles\\Texture.tex",
+  "Models\\Effects\\ExplosionRocket\\Texture.tex",
+  "Models\\Weapons\\GrenadeLauncher\\Grenade\\Grenade.tex",
+};
+
+
+const char *const RT_TexturePaths_LightForceDynamic[] =
+{
+  // for the rocketman with light in Sand Canyon
+  "Models\\Enemies\\Headman\\Rocketman.tex",
 };
 
 
@@ -427,6 +444,8 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     { RT_TexturePaths_CalcNormals,                ARRAYCOUNT(RT_TexturePaths_CalcNormals),                &ptdCachedTextures.aCalcNormals },
     { RT_TexturePaths_ClampWrap,                  ARRAYCOUNT(RT_TexturePaths_ClampWrap),                  &ptdCachedTextures.aClampWrap },
     { RT_TexturePaths_DisabledOverride,           ARRAYCOUNT(RT_TexturePaths_DisabledOverride),           &ptdCachedTextures.aDisabledOverride },
+    { RT_TexturePaths_LightOffsetFix,             ARRAYCOUNT(RT_TexturePaths_LightOffsetFix),             &ptdCachedTextures.aLightOffsetFix },
+    { RT_TexturePaths_LightForceDynamic,          ARRAYCOUNT(RT_TexturePaths_LightForceDynamic),          &ptdCachedTextures.aLightForceDynamic },
   };
 
   for (const auto &s : tdsToFind)
@@ -1201,6 +1220,41 @@ bool SSRT::CustomInfo::IsClampWrapForced(CTextureData *pTd) const
 bool SSRT::CustomInfo::IsOverrideDisabled(CTextureData *pTd) const
 {
   return eCurrentWorld != EWorld::TheGreatPyramid && ptdCachedTextures_Check(pTd, ptdCachedTextures.aDisabledOverride);
+}
+
+bool SSRT::CustomInfo::IsLightOffsetFixEnabled(const CLightSource *plsLight) const
+{
+  if (plsLight == nullptr ||
+      plsLight->ls_penEntity == nullptr ||
+      plsLight->ls_penEntity->GetRenderType() != CEntity::RenderType::RT_MODEL)
+  {
+    return false;
+  }
+
+  return ptdCachedTextures_Check(&plsLight->ls_penEntity->GetModelObject()->mo_toTexture, ptdCachedTextures.aLightOffsetFix);
+}
+
+bool SSRT::CustomInfo::IsLightForceDynamic(const CLightSource *plsLight) const
+{
+  // we need to check only very specific case: rocketeer in Sand canyon
+
+  if (eCurrentWorld != EWorld::SandCanyon)
+  {
+    return false;
+  }
+
+  if (plsLight == nullptr ||
+      plsLight->ls_penEntity == nullptr ||
+      plsLight->ls_penEntity->en_penParent == nullptr ||
+      plsLight->ls_penEntity->en_penParent->GetRenderType() != CEntity::RenderType::RT_MODEL)
+  {
+    return false;
+  }
+
+  // check only parent: the light source has that rocketeer as a parent
+  CEntity *penParent = plsLight->ls_penEntity->en_penParent;
+
+  return ptdCachedTextures_Check(&penParent->GetModelObject()->mo_toTexture, ptdCachedTextures.aLightForceDynamic);
 }
 
 bool SSRT::CustomInfo::HasLightEntityVertices(CEntity *pen) const

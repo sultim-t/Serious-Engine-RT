@@ -71,6 +71,8 @@ public:
   bool IsCalcNormalsForced(CTextureObject *pTo) const;
   bool IsClampWrapForced(CTextureData *pTd) const;
   bool IsOverrideDisabled(CTextureData *pTd) const;
+  bool IsLightOffsetFixEnabled(const CLightSource *plsLight) const;
+  bool IsLightForceDynamic(const CLightSource *plsLight) const;
 
   bool IsBrushIgnored(CEntity *penBrush) const;
   bool IsBrushSectorIgnored(const CBrushSector *pSector) const;
@@ -153,6 +155,8 @@ private:
     std::vector<CTextureData *> aFire;
     std::vector<CTextureData *> aClampWrap;
     std::vector<CTextureData *> aDisabledOverride;
+    std::vector<CTextureData *> aLightOffsetFix;
+    std::vector<CTextureData *> aLightForceDynamic;
 
   } ptdCachedTextures;
 

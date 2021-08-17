@@ -538,7 +538,9 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *pScene)
   }
   else
   {
-    if (pScene->GetCustomInfo()->IsSphericalLightIgnored(plsLight))
+    bool isDynamic = (plsLight->ls_ulFlags & LSF_DYNAMIC) || pScene->GetCustomInfo()->IsLightForceDynamic(plsLight);
+
+    if (!isDynamic && pScene->GetCustomInfo()->IsSphericalLightIgnored(plsLight))
     {
       // add it to the list of ignored lights, it will be used
       // to match light sources from fire textures;
@@ -549,10 +551,7 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *pScene)
       return;
     }
 
-    bool isDynamic = plsLight->ls_ulFlags & LSF_DYNAMIC;
     bool isMuzzleFlash = false;
-
-
     FLOAT3D position;
 
     if (entityID == pScene->GetViewerEntityID())
@@ -569,7 +568,7 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *pScene)
     {
       position = pEn->GetLerpedPlacement().pl_PositionVector;
 
-      if (isDynamic)
+      if (isDynamic && pScene->GetCustomInfo()->IsLightOffsetFixEnabled(plsLight))
       {
         position = RT_FixSphericalLightPosition(pEn, position, _srtGlobals.srt_fLightSphPolygonOffset, pScene->GetWorld());
       }
