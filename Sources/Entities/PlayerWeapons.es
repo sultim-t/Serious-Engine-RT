@@ -184,9 +184,9 @@ static FLOAT afDoubleShotgunPellets[] =
 // crosshair console variables
 static INDEX hud_bCrosshairFixed    = FALSE;
 static INDEX hud_bCrosshairColoring = TRUE;
-static FLOAT hud_fCrosshairScale    = 1.0f;
+static FLOAT hud_fCrosshairScale    = 0.75f;
 static FLOAT hud_fCrosshairOpacity  = 1.0f;
-static FLOAT hud_fCrosshairRatio    = 0.5f;  // max distance size ratio
+static FLOAT hud_fCrosshairRatio    = 0.9f;  // max distance size ratio
 // misc HUD vars
 static INDEX hud_bShowPlayerName = TRUE;
 static INDEX hud_bShowCoords     = FALSE;

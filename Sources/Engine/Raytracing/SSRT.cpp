@@ -147,14 +147,6 @@ void SSRT::SSRTMain::InitShellVariables()
 
   // user controls
   _pShell->DeclareSymbol("user INDEX ctl_bFlashlight;", &_srtGlobals.srt_bFlashlightEnable);
-
-  // kludge for default
-  if (_pShell->GetINDEX("sam_bFirstStarted") != 0)
-  {
-    _pShell->SetFLOAT("hud_fCrosshairScale", 0.75f);
-    _pShell->SetFLOAT("hud_fCrosshairRatio", 0.9f);
-    _pShell->SetFLOAT("plr_fFOV", 75.0f);
-  }
 }
 
 void SSRT::SSRTMain::NormalizeShellVariables()

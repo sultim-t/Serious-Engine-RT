@@ -11,17 +11,18 @@ SPECIAL THANKS:
 Croteam
 (for the great game)
 
-Linux and x64 port of SE
-(github.com/icculus/Serious-Engine)
-
 Dreamy Cecil
-(for additional help with SE)
-
-zcaliptium 
-(for additional x64 compatibility)
-
+zcaliptium
 and other members
 of Serious Sam modding community
+(for additional help with SE1)
+
+Graphics Programming Discord server
+(for the help with Vulkan and ray tracing)
+(graphics-programming.org)
+
+Linux and x64 port of SE1
+(github.com/icculus/Serious-Engine)
 
 
 

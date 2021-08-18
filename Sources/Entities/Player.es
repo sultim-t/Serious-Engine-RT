@@ -314,7 +314,7 @@ INDEX hud_bShowLatency = FALSE;
 INDEX hud_iShowPlayers = -1;   // auto
 INDEX hud_iSortPlayers = -1;   // auto
 FLOAT hud_fOpacity     = 0.9f;
-FLOAT hud_fScaling     = 1.0f;
+FLOAT hud_fScaling     = 0.5f;
 FLOAT hud_tmWeaponsOnScreen = 3.0f;
 FLOAT hud_tmLatencySnapshot = 1.0f;
 
@@ -350,7 +350,7 @@ FLOAT plr_fViewDampLimitGroundUp = 0.1f;
 FLOAT plr_fViewDampLimitGroundDn = 0.4f;
 FLOAT plr_fViewDampLimitWater    = 0.1f;
 static FLOAT plr_fFrontClipDistance = 0.25f;
-static FLOAT plr_fFOV = 90.0f;
+static FLOAT plr_fFOV = 75.0f;
 static FLOAT net_tmLatencyAvg;
 INDEX plr_bRenderPicked = FALSE;
 INDEX plr_bRenderPickedParticles = FALSE;

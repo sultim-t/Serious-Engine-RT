@@ -727,6 +727,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       brushPolygonsToIgnore =
       {
         { 903 },
+        { 1906 },
       };
 
       brushPolygonsToMask =
