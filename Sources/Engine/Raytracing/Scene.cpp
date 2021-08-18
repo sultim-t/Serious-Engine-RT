@@ -79,6 +79,8 @@ void SSRT::Scene::Update(const CWorldRenderingInfo &info)
   this->cameraPosition = info.cameraPosition;
   this->cameraRotation = info.cameraRotation;
 
+  isCameraInHaze = false;
+
   // clear previous data
   sphLights.clear();
   dirLights.clear();
@@ -149,6 +151,11 @@ FLOAT3D SSRT::Scene::GetNearestToCameraPortalDiff() const
   }
 
   return vWarpPortalDiff;
+}
+
+bool SSRT::Scene::IsCameraInHaze() const
+{
+  return isCameraInHaze && pCustomInfo->CanHazeBeApplied();
 }
 
 const SSRT::CustomInfo *SSRT::Scene::GetCustomInfo() const
@@ -373,6 +380,11 @@ void SSRT::Scene::AddWarpPortal(CEntity *penBrush, INDEX iMirrorType)
   st.iMirrorType = iMirrorType;
 
   warpPortals.insert(st);
+}
+
+void SSRT::Scene::SetCameraIsInHaze()
+{
+  isCameraInHaze = true;
 }
 
 void SSRT::Scene::ProcessFirstPersonModel(const CFirstPersonModelInfo &info, ULONG entityId)

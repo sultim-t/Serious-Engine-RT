@@ -47,6 +47,7 @@ public:
   void UpdateBrushNonStaticTexture(CTextureData *pTexture, uint32_t textureFrameIndex);
   void UpdateBrushTexCoords(const CUpdateTexCoordsInfo &info);
   void AddWarpPortal(CEntity *penBrush, INDEX iMirrorType);
+  void SetCameraIsInHaze();
 
   CEntity *GetViewerEntity() const;
   ULONG GetViewerEntityID() const;
@@ -62,6 +63,7 @@ public:
   FLOAT3D GetBackgroundViewerPosition() const;
   ANGLE3D GetBackgroundViewerOrientationAngle() const;
   FLOAT3D GetNearestToCameraPortalDiff() const;
+  bool IsCameraInHaze() const;
 
   const CustomInfo *GetCustomInfo() const;
   CustomInfo *GetCustomInfo();
@@ -116,6 +118,8 @@ private:
   CEntity           *pViewerEntity;
   FLOAT3D           cameraPosition;
   FLOATmatrix3D     cameraRotation;
+
+  bool              isCameraInHaze;
 
   // Scene light sources, cleaned up by the end of a frame
   std::vector<CSphereLight>         sphLights;

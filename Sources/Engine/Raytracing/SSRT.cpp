@@ -493,8 +493,7 @@ void SSRT::SSRTMain::EndFrame()
   rflParams.maxReflectRefractDepth = _srtGlobals.srt_iReflMaxDepth;
   FLOAT3D vPortalDiff = currentScene == nullptr ? FLOAT3D(0, 0, 0) : currentScene->GetNearestToCameraPortalDiff();
   rflParams.portalInputToOutputDiff = { vPortalDiff(1), vPortalDiff(2), vPortalDiff(3) };
-  // TODO: camera media
-  rflParams.typeOfMediaAroundCamera = RG_MEDIA_TYPE_VACUUM;
+  rflParams.typeOfMediaAroundCamera = currentScene != nullptr && currentScene->IsCameraInHaze() ? RG_MEDIA_TYPE_WATER : RG_MEDIA_TYPE_VACUUM;
 
 
   RgDrawFrameInfo frameInfo = {};

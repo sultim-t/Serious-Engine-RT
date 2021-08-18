@@ -22,6 +22,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Brushes/Brush.h>
 #include <Engine/Entities/Entity.h>
 #include <Engine/Light/LightSource.h>
+#include <Engine/Graphics/Fog.h>
 #include <Engine/Models/ModelData.h>
 #include <Engine/Models/ModelObject.h>
 #include <Engine/World/World.h>
@@ -251,6 +252,36 @@ static void RT_AddGivenZoningSector(CBrushSector *pbsc, INDEX iSectorDepth, SSRT
 }
 
 
+// RT: from RenCache.cpp::void CRenderer::SetupFogAndHaze(void)
+static void RT_CheckViewerInHaze(CBrushSector &bsc, SSRT::Scene *pScene)
+{
+  if (pScene->IsCameraInHaze())
+  {
+    return;
+  }
+
+  const auto &vCameraPos = FLOATtoDOUBLE(pScene->GetCameraPosition());
+
+  const auto &mRot = pScene->GetCameraRotation();
+  auto vCameraDir = -FLOAT3D(mRot(1, 3), mRot(2, 3), mRot(3, 3));
+
+  CHazeParameters hpDummy;
+  CFogParameters fpDummy;
+  if (bsc.bsc_pbmBrushMip->bm_pbrBrush->br_penEntity->GetHaze(bsc.GetHazeType(), hpDummy, vCameraDir)
+      || bsc.bsc_pbmBrushMip->bm_pbrBrush->br_penEntity->GetFog(bsc.GetFogType(), fpDummy))
+  {
+    // if viewer is in this sector
+    if (bsc.bsc_bspBSPTree.TestSphere(vCameraPos, 0.01) >= 0)
+    {
+      // mark that viewer is in haze
+      pScene->SetCameraIsInHaze();
+
+      return;
+    }
+  }
+}
+
+
 static bool RT_IsZoningSectorThin(const CBrushSector &bsc)
 {
   FLOAT3D vSize = bsc.bsc_boxRelative.Size();
@@ -283,6 +314,10 @@ static void RT_AddZoningSectorsAroundEntity(CEntity *pen, SSRT::Scene *pScene)
 
         // RT: zero depth for viewer sectors
         RT_umBrushSectorDepth[pbsc] = 0;
+
+
+        // RT: while iterating for sectors viewer is in, check if it's in haze
+        RT_CheckViewerInHaze(*pbsc, pScene);
       }
     ENDFOR
   }

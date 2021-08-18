@@ -1258,6 +1258,23 @@ bool SSRT::CustomInfo::IsLightForceDynamic(const CLightSource *plsLight) const
   return ptdCachedTextures_Check(&penParent->GetModelObject()->mo_toTexture, ptdCachedTextures.aLightForceDynamic);
 }
 
+bool SSRT::CustomInfo::CanHazeBeApplied() const
+{
+  switch (eCurrentWorld)
+  {
+    case EWorld::Dunes:
+    case EWorld::AlleyOfSphinxes:
+    case EWorld::SandCanyon:
+    case EWorld::TombOfRamses:
+    case EWorld::TheGreatPyramid:
+    case EWorld::Suburbs:
+    case EWorld::Metropolis:
+      return false;
+    default:
+      return true;
+  }
+}
+
 bool SSRT::CustomInfo::HasLightEntityVertices(CEntity *pen) const
 {
   if (pen == nullptr)

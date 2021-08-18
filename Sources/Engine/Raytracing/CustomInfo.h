@@ -73,6 +73,7 @@ public:
   bool IsOverrideDisabled(CTextureData *pTd) const;
   bool IsLightOffsetFixEnabled(const CLightSource *plsLight) const;
   bool IsLightForceDynamic(const CLightSource *plsLight) const;
+  bool CanHazeBeApplied() const;
 
   bool IsBrushIgnored(CEntity *penBrush) const;
   bool IsBrushSectorIgnored(const CBrushSector *pSector) const;
