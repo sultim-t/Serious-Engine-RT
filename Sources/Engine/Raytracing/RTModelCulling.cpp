@@ -268,7 +268,8 @@ static void RT_CheckViewerInHaze(CBrushSector &bsc, SSRT::Scene *pScene)
   CHazeParameters hpDummy;
   CFogParameters fpDummy;
   if (bsc.bsc_pbmBrushMip->bm_pbrBrush->br_penEntity->GetHaze(bsc.GetHazeType(), hpDummy, vCameraDir)
-      || bsc.bsc_pbmBrushMip->bm_pbrBrush->br_penEntity->GetFog(bsc.GetFogType(), fpDummy))
+      || bsc.bsc_pbmBrushMip->bm_pbrBrush->br_penEntity->GetFog(bsc.GetFogType(), fpDummy) 
+      /* oasis inside cave fix? || bsc.bsc_iInWorld == 64*/)
   {
     // if viewer is in this sector
     if (bsc.bsc_bspBSPTree.TestSphere(vCameraPos, 0.01) >= 0)

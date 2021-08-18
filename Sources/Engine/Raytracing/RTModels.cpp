@@ -218,6 +218,7 @@ static void FlushModelInfo(ULONG entityID,
 
 
   CTextureObject *to = &mo.mo_toTexture;
+  CTextureData *td = to != nullptr ? (CTextureData *)to->GetData() : nullptr;
   CTextureObject *reflectionTo = &mo.mo_toReflection;
 
   bool forceAlphaTest = RT_ShouldBeAlphaTested(to, stt, forceTranslucency, pScene);
@@ -235,6 +236,8 @@ static void FlushModelInfo(ULONG entityID,
     // TODO: only reflective + if polygon is not translucent (water texture on top of rock texture moon mountains)
     modelInfo.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_MIRROR;
     modelInfo.isRasterized = false;
+
+    td = nullptr;
   }
 
   modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0;
@@ -277,7 +280,6 @@ static void FlushModelInfo(ULONG entityID,
   modelInfo.isSpecular = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_SPECULAR;
 
 
-  CTextureData *td = to != nullptr ? (CTextureData *)to->GetData() : nullptr;
 
   if (td != nullptr)
   {

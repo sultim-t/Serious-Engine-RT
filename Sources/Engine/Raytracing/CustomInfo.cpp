@@ -1275,6 +1275,18 @@ bool SSRT::CustomInfo::CanHazeBeApplied() const
   }
 }
 
+bool SSRT::CustomInfo::IsOnlyReflectWaterAllowed() const
+{
+  switch (eCurrentWorld)
+  {
+    // waterfall in oasis
+    case EWorld::Oasis:
+      return false;
+    default:
+      return true;
+  }
+}
+
 bool SSRT::CustomInfo::HasLightEntityVertices(CEntity *pen) const
 {
   if (pen == nullptr)

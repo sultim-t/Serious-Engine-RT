@@ -79,7 +79,7 @@ static bool RT_ShouldBeRasterized(uint32_t bpofFlags)
 }
 
 
-static RgGeometryPassThroughType RT_GetPassThroughType(uint32_t bpofFlags, bool isMirror, bool isWarpPortal, bool isWater)
+static RgGeometryPassThroughType RT_GetPassThroughType(uint32_t bpofFlags, bool isMirror, bool isWarpPortal, bool isWater, SSRT::Scene *pScene)
 {
   if (isWarpPortal)
   {
@@ -92,6 +92,11 @@ static RgGeometryPassThroughType RT_GetPassThroughType(uint32_t bpofFlags, bool 
   else if (isWater)
   {
     bool isReflectiveAndRefractive = bpofFlags & BPOF_TRANSLUCENT;
+
+    if (!isReflectiveAndRefractive && !pScene->GetCustomInfo()->IsOnlyReflectWaterAllowed())
+    {
+      isReflectiveAndRefractive = true;
+    }
 
     return isReflectiveAndRefractive ?
       RG_GEOMETRY_PASS_THROUGH_TYPE_WATER_REFLECT_REFRACT :
@@ -180,7 +185,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   SSRT::CBrushGeometry brushInfo = {};
   brushInfo.entityID = penBrush->en_ulID;
   brushInfo.isMovable = isMovable;
-  brushInfo.passThroughType = RT_GetPassThroughType(polygonFlags, isMirror, isWarpPortal, isWater);
+  brushInfo.passThroughType = RT_GetPassThroughType(polygonFlags, isMirror, isWarpPortal, isWater, pScene);
   brushInfo.isSky = isSky;
   
   brushInfo.isRasterized = isRasterized;
