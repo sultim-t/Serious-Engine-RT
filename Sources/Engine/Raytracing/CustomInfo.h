@@ -75,6 +75,8 @@ public:
   bool IsLightForceDynamic(const CLightSource *plsLight) const;
   bool CanHazeBeApplied() const;
   bool IsOnlyReflectWaterAllowed() const;
+  bool IsBrushSectorHazeIgnored(const CBrushSector *pSector) const;
+  bool IsBrushSectorHazeForced(const CBrushSector *pSector) const;
 
   bool IsBrushIgnored(CEntity *penBrush) const;
   bool IsBrushSectorIgnored(const CBrushSector *pSector) const;

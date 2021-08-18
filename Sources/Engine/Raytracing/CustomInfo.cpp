@@ -1287,6 +1287,34 @@ bool SSRT::CustomInfo::IsOnlyReflectWaterAllowed() const
   }
 }
 
+bool SSRT::CustomInfo::IsBrushSectorHazeIgnored(const CBrushSector *pSector) const
+{
+  const INDEX aValleyIgnoredSectors[] =
+  {
+    92, 96, 98, 114, 225, 187, 188, 292, 110, 291, 89, 543
+  };
+
+  switch (eCurrentWorld)
+  {
+    case EWorld::ValleyOfTheKings:
+      for (INDEX i : aValleyIgnoredSectors)
+      {
+        if (i == pSector->bsc_iInWorld)
+        {
+          return true;
+        }
+      }
+      return false;
+    default:
+      return false;
+  }
+}
+
+bool SSRT::CustomInfo::IsBrushSectorHazeForced(const CBrushSector *pSector) const
+{
+  return eCurrentWorld == EWorld::Oasis && pSector->bsc_iInWorld == 64;
+}
+
 bool SSRT::CustomInfo::HasLightEntityVertices(CEntity *pen) const
 {
   if (pen == nullptr)

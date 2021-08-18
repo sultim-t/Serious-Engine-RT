@@ -260,6 +260,11 @@ static void RT_CheckViewerInHaze(CBrushSector &bsc, SSRT::Scene *pScene)
     return;
   }
 
+  if (pScene->GetCustomInfo()->IsBrushSectorHazeIgnored(&bsc))
+  {
+    return;
+  }
+
   const auto &vCameraPos = FLOATtoDOUBLE(pScene->GetCameraPosition());
 
   const auto &mRot = pScene->GetCameraRotation();
@@ -267,9 +272,9 @@ static void RT_CheckViewerInHaze(CBrushSector &bsc, SSRT::Scene *pScene)
 
   CHazeParameters hpDummy;
   CFogParameters fpDummy;
-  if (bsc.bsc_pbmBrushMip->bm_pbrBrush->br_penEntity->GetHaze(bsc.GetHazeType(), hpDummy, vCameraDir)
-      || bsc.bsc_pbmBrushMip->bm_pbrBrush->br_penEntity->GetFog(bsc.GetFogType(), fpDummy) 
-      /* oasis inside cave fix? || bsc.bsc_iInWorld == 64*/)
+  if (pScene->GetCustomInfo()->IsBrushSectorHazeForced(&bsc) ||
+      bsc.bsc_pbmBrushMip->bm_pbrBrush->br_penEntity->GetHaze(bsc.GetHazeType(), hpDummy, vCameraDir) || 
+      bsc.bsc_pbmBrushMip->bm_pbrBrush->br_penEntity->GetFog(bsc.GetFogType(), fpDummy))
   {
     // if viewer is in this sector
     if (bsc.bsc_bspBSPTree.TestSphere(vCameraPos, 0.01) >= 0)
