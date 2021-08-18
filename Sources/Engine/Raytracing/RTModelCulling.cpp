@@ -115,7 +115,7 @@ static bool RT_TestModel(CEntity *pEn, SSRT::Scene *pScene)
     
     // adjust for the current resolution
     float fRenderArea = _srtGlobals.srt_fRenderSize(1) * _srtGlobals.srt_fRenderSize(2);
-    fAngularSize *= (1920.0f * 1080.0f) / Max(fRenderArea, 1.0f);
+    fAngularSize *= Max(1.0f, fRenderArea / (1920.0f * 1080.0f));
 
     // if model's angular size is too small, ignore it
     if (fAngularSize < _srtGlobals.srt_fCullingMinAngularSize)

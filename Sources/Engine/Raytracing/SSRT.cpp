@@ -37,6 +37,7 @@ void SSRT::SSRTMain::InitShellVariables()
 {
   _pShell->DeclareSymbol("persistent user INDEX srt_bDebugValidation;", &_srtGlobals.srt_bDebugValidation);
   _pShell->DeclareSymbol("persistent user INDEX srt_bVSync;", &_srtGlobals.srt_bVSync);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fRenderScale;", &_srtGlobals.srt_fRenderScale);
   _pShell->DeclareSymbol("persistent user INDEX srt_bTonemappingUseDefault;", &_srtGlobals.srt_bTonemappingUseDefault);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingWhitePoint;", &_srtGlobals.srt_fTonemappingWhitePoint);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMinLogLuminance;", &_srtGlobals.srt_fTonemappingMinLogLuminance);
@@ -146,6 +147,14 @@ void SSRT::SSRTMain::InitShellVariables()
 
   // user controls
   _pShell->DeclareSymbol("user INDEX ctl_bFlashlight;", &_srtGlobals.srt_bFlashlightEnable);
+
+  // kludge for default
+  if (_pShell->GetINDEX("sam_bFirstStarted") != 0)
+  {
+    _pShell->SetFLOAT("hud_fCrosshairScale", 0.75f);
+    _pShell->SetFLOAT("hud_fCrosshairRatio", 0.9f);
+    _pShell->SetFLOAT("plr_fFOV", 75.0f);
+  }
 }
 
 void SSRT::SSRTMain::NormalizeShellVariables()
@@ -158,6 +167,8 @@ void SSRT::SSRTMain::NormalizeShellVariables()
   _srtGlobals.srt_bTexturesOriginalSRGB = !!_srtGlobals.srt_bTexturesOriginalSRGB;
   _srtGlobals.srt_bIgnoreDynamicTexCoords = !!_srtGlobals.srt_bIgnoreDynamicTexCoords;
   _srtGlobals.srt_bIgnoreWaterEffectTextureUpdates = !!_srtGlobals.srt_bIgnoreWaterEffectTextureUpdates;
+
+  _srtGlobals.srt_fRenderScale = Clamp(_srtGlobals.srt_fRenderScale, 0.25f, 2.0f);
 
   _srtGlobals.srt_iReflMaxDepth = Clamp(_srtGlobals.srt_iReflMaxDepth, (INDEX)0, (INDEX)4);
 
@@ -334,7 +345,7 @@ void SSRT::SSRTMain::StartFrame(CViewPort *pvp)
   curWindowWidth = pvp->vp_Raster.ra_Width;
   curWindowHeight = pvp->vp_Raster.ra_Height;
 
-  _srtGlobals.srt_fRenderSize = { (float)curWindowWidth, (float)curWindowHeight };
+  _srtGlobals.srt_fRenderSize = { (float)curWindowWidth * _srtGlobals.srt_fRenderScale, (float)curWindowHeight * _srtGlobals.srt_fRenderScale };
 }
 
 void SSRT::SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
@@ -497,7 +508,7 @@ void SSRT::SSRTMain::EndFrame()
 
 
   RgDrawFrameInfo frameInfo = {};
-  frameInfo.renderSize = { curWindowWidth, curWindowHeight };
+  frameInfo.renderSize = { (uint32_t)(curWindowWidth * _srtGlobals.srt_fRenderScale), (uint32_t)(curWindowHeight * _srtGlobals.srt_fRenderScale) };
   frameInfo.rayCullMaskWorld = currentScene == nullptr ? 0xFF : currentScene->GetCustomInfo()->GetCullMask(currentScene->GetCameraPosition());
   frameInfo.rayLength = currentScene == nullptr ? 10000.0f : currentScene->GetCustomInfo()->GetRayLength(currentScene->GetCameraPosition());
 

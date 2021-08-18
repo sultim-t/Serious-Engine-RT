@@ -25,6 +25,8 @@ struct SSRTGlobals
 {
   INDEX srt_bDebugValidation = 0;
   INDEX srt_bVSync = 1;
+  FLOAT srt_fRenderScale = 1.0;
+
   INDEX srt_bReloadShaders = 0;
   INDEX srt_bPrintBrushPolygonInfo = 0;
   INDEX srt_bTexturesOriginalSRGB = 1;
@@ -33,7 +35,7 @@ struct SSRTGlobals
   INDEX srt_bShowMotionVectors = 0;
 
   INDEX srt_bIgnoreDynamicTexCoords = 0;
-  INDEX srt_bIgnoreWaterEffectTextureUpdates = 1;
+  INDEX srt_bIgnoreWaterEffectTextureUpdates = 0;
 
   INDEX srt_iReflMaxDepth = 2;
 
@@ -49,7 +51,7 @@ struct SSRTGlobals
   FLOAT srt_fLightSphSaturation = 0.75f;
   FLOAT srt_fLightSphColorPow = 2.2f;
   FLOAT srt_fLightSphPolygonOffset = 1.0f;
-  INDEX srt_bLightSphIgnoreEditorModels = 0;
+  INDEX srt_bLightSphIgnoreEditorModels = 1;
 
   FLOAT srt_fOriginalLightSphIntensity = 1.0f;
   FLOAT srt_fOriginalLightSphRadiusMultiplier = 0.05f;
@@ -57,28 +59,28 @@ struct SSRTGlobals
 
   FLOAT srt_fDynamicLightSphIntensity = 1.0f;
   FLOAT srt_fDynamicLightSphRadius = 0.25f;
-  FLOAT srt_fDynamicLightSphFalloffMultiplier = 3.0f;
+  FLOAT srt_fDynamicLightSphFalloffMultiplier = 5.0f;
   FLOAT srt_fDynamicLightSphFalloffMin = 3.0f;
   FLOAT srt_fDynamicLightSphFalloffMax = 128.0f;
  
   FLOAT srt_fPotentialLightSphIntensity = 1.0f;
   FLOAT srt_fPotentialLightSphRadiusMin = 0.1f;
-  FLOAT srt_fPotentialLightSphRadiusMultiplier = 0.5f;
-  FLOAT srt_fPotentialLightSphFalloffMultiplier = 0.25f;
+  FLOAT srt_fPotentialLightSphRadiusMultiplier = 0.1f;
+  FLOAT srt_fPotentialLightSphFalloffMultiplier = 1.0f;
   FLOAT srt_fPotentialLightSphFalloffDefault = 1.0f;
-  FLOAT srt_fPotentialLightSphFalloffMin = 2.0f;
+  FLOAT srt_fPotentialLightSphFalloffMin = 5.0f;
 
-  FLOAT srt_fMuzzleLightIntensity = 1.0f;
-  FLOAT srt_fMuzzleLightRadius = 0.25f;
-  FLOAT srt_fMuzzleLightFalloffMultiplier = 2.0f;
-  FLOAT srt_fMuzzleLightOffset = 3.0f;
+  FLOAT srt_fMuzzleLightIntensity = 0.25f;
+  FLOAT srt_fMuzzleLightRadius = 0.02f;
+  FLOAT srt_fMuzzleLightFalloffMultiplier = 10.0f;
+  FLOAT srt_fMuzzleLightOffset = 5.0f;
 
   FLOAT srt_fModelSpecularMetallicDefault = 0.85f;
   FLOAT srt_fModelSpecularRoughnessDefault = 0.025f;
   FLOAT srt_fModelReflectiveMetallicDefault = 1.0f;
   FLOAT srt_fModelReflectiveRoughnessDefault = 0.0001f;
-  FLOAT srt_fBrushMetallicDefault = 0.04f;
-  FLOAT srt_fBrushRoughnessDefault = 0.5f;
+  FLOAT srt_fBrushMetallicDefault = 0.1f;
+  FLOAT srt_fBrushRoughnessDefault = 0.75f;
 
   INDEX srt_bWeaponUseOriginalNormals = 0;
   FLOAT srt_fNormalMapStrength = 1.0f;
@@ -90,7 +92,7 @@ struct SSRTGlobals
   FLOAT srt_fParticlesAlphaMultiplier = 1.0f;
 
   FLOAT srt_fSkyColorMultiplier = 1.0f;
-  FLOAT srt_fSkyColorSaturation = 0.7f;
+  FLOAT srt_fSkyColorSaturation = 0.75f;
 
   INDEX srt_bTonemappingUseDefault = 0;
   FLOAT srt_fTonemappingWhitePoint = 1.0f;
