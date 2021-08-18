@@ -1026,15 +1026,16 @@ void RT_AddModelEntity(CEntity *penModel, SSRT::Scene *pScene)
     return;
   }
 
+
+  // add light source there is one
+  RT_ProcessModelLights(penModel, pScene);
+
+
   // if it's a viewer and there should be no shadows from it
   if (!_srtGlobals.srt_bEnableViewerShadows && pScene->GetViewerEntityID() == penModel->en_ulID)
   {
     return;
   }
-
-
-  // add light source there is one
-  RT_ProcessModelLights(penModel, pScene);
 
 
   // RT: ignore editor model's geometry, but not its light source
