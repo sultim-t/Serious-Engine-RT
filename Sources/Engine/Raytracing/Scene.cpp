@@ -158,6 +158,21 @@ bool SSRT::Scene::IsCameraInHaze() const
   return isCameraInHaze && pCustomInfo->CanHazeBeApplied();
 }
 
+bool SSRT::Scene::IsBrushMovable(CEntity *penBrush)
+{
+  ASSERT(penBrush->GetRenderType() == CEntity::RenderType::RT_BRUSH);
+
+  // from Entities/Common/Flags.h
+  constexpr ULONG EPF_BRUSH_MOVING =
+    EPF_ONBLOCK_PUSH | EPF_RT_SYNCHRONIZED |
+    EPF_ABSOLUTETRANSLATE | EPF_NOACCELERATION | EPF_MOVABLE;
+
+  return 
+    (penBrush->en_ulPhysicsFlags & EPF_BRUSH_MOVING) || 
+    (penBrush->en_penParent != nullptr && penBrush->en_penParent->en_ulPhysicsFlags & EPF_BRUSH_MOVING) ||
+    (penBrush->en_penParent != nullptr && penBrush->en_penParent->en_penParent != nullptr && penBrush->en_penParent->en_penParent->en_ulPhysicsFlags & EPF_BRUSH_MOVING);
+}
+
 const SSRT::CustomInfo *SSRT::Scene::GetCustomInfo() const
 {
   ASSERT(pCustomInfo != nullptr);

@@ -154,7 +154,8 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
     return;
   }
 
-  const bool isMovable = penBrush->en_ulPhysicsFlags & EPF_MOVABLE;
+
+  const bool isMovable = pScene->IsBrushMovable(penBrush);
   const bool isSky = penBrush->en_ulFlags & ENF_BACKGROUND;
 
   // assuming that sky type is always RG_SKY_TYPE_RASTERIZED_GEOMETRY

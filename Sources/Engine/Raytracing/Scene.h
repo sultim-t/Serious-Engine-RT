@@ -64,6 +64,7 @@ public:
   ANGLE3D GetBackgroundViewerOrientationAngle() const;
   FLOAT3D GetNearestToCameraPortalDiff() const;
   bool IsCameraInHaze() const;
+  static bool IsBrushMovable(CEntity *penBrush);
 
   const CustomInfo *GetCustomInfo() const;
   CustomInfo *GetCustomInfo();
