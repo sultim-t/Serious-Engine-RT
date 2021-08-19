@@ -3202,6 +3202,17 @@ functions:
     } else {
       DeathActions(paAction);
     }
+    
+    if ((GetFlags() & ENF_ALIVE) && m_penActionMarker==NULL)
+    {
+      // RT: flashlight enable/disable, only if alive and not in cutscene
+      _pShell->SetINDEX("srt_bFlashlightEnable", ctl_bFlashlight);
+    }
+    else
+    {
+      // RT: flashlight must be disabled when died
+      _pShell->SetINDEX("srt_bFlashlightEnable", 0);
+    }
 
     if (Abs(_pTimer->CurrentTick()-m_tmAnalyseEnd)<_pTimer->TickQuantum*2) {
       m_tmAnalyseEnd = 0;
@@ -3341,9 +3352,6 @@ functions:
       // reset damage ammount
       m_fDamageAmmount = 0.0f;
     }
-
-    // RT: flashlight enable/disable, only if alive
-    _pShell->SetINDEX("srt_bFlashlightEnable", ctl_bFlashlight);
   }
 
   // Auto-actions

@@ -146,6 +146,7 @@ private:
   std::vector<FLOAT3D> worldBasePositionsToIgnore;
   
   std::vector<std::string> dirLightsNamesToIgnore;
+  std::vector<FLOAT3D> cutsceneLightPositions;
 
   struct
   {

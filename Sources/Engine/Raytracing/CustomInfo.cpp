@@ -90,24 +90,26 @@ constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_BOSS_FIGHT = 1.0;
 const struct
 {
   EWorld  eWorld;
-  FLOAT   fSunIntensity;
-  FLOAT   fSunSaturation;
-  FLOAT   fSkyColorMultiplier;
-  FLOAT   fSkyColorSaturation;
-  FLOAT   fTonemappingMinLogLuminance;
-  FLOAT   fTonemappingMaxLogLuminance;
-  FLOAT   fPotentialLightSphFalloffDefault;
+  FLOAT                     fSunIntensity;
+  FLOAT                             fSunSaturation;
+  FLOAT                                   fSkyColorMultiplier;
+  FLOAT                                         fSkyColorSaturation;
+  FLOAT                                                 fTonemappingMinLogLuminance;
+  FLOAT                                                         fTonemappingMaxLogLuminance;
+  FLOAT                                                               fPotentialLightSphFalloffDefault;
+  FLOAT                                                                     fOriginalLightSphFalloffMultiplier;
 }
 RT_WorldIlluminationParams[] =
 {
-  // defaults:               4.0f, 0.5f, 1.0f, 0.75f, -2.0f, 0.0f, 1.0f
-  { EWorld::SandCanyon,      3.0f, 0.5f, 1.0f, 0.75f, -2.0f, 0.0f, 8.0f },
-  { EWorld::Suburbs,         4.0f, 0.5f, 0.5f,  1.0f, -2.0f, 0.0f, 1.0f },
-  { EWorld::AlleyOfSphinxes, 4.0f, 0.5f, 0.5f, 0.75f, -2.0f, 0.0f, 1.0f },
-  { EWorld::TheGreatPyramid, GREAT_PYRAMID_SUN_INTENSITY_DEFAULT, 1.0f, 0.5f,  1.0f,  0.0f, 2.0f, 1.0f },
-  { EWorld::Metropolis,      4.0f, 0.5f, 0.5f, 0.75f, -2.0f, 0.0f, 1.0f },
-  { EWorld::Luxor,           4.0f, 0.5f, 1.0f, 0.75f, -2.0f, 0.0f, 4.0f },
-  { EWorld::Karnak,          4.0f, 0.9f, 0.5f,  1.0f, -2.0f, 0.0f, 1.0f },
+  // defaults:                4,    0.5f, 1,    0.75f,  -2,     0,    1,    1
+  { EWorld::SandCanyon,       3,    0.5f, 1,    0.75f,  -2,     0,    8,    1    },
+  { EWorld::ValleyOfTheKings, 3,    0.5f, 1,    0.75f,  -2,     0,    8,    2    },
+  { EWorld::Suburbs,          4,    0.5f, 0.5f, 1,      -2,     0,    1,    1    },
+  { EWorld::AlleyOfSphinxes,  4,    0.5f, 0.5f, 0.75f,  -2,     0,    1,    1    },
+  { EWorld::Metropolis,       4,    0.5f, 0.5f, 0.75f,  -2,     0,    1,    1    },
+  { EWorld::Luxor,            4,    0.5f, 1,    0.75f,  -2,     0,    4,    1    },
+  { EWorld::Karnak,           4,    0.9f, 0.5f, 1,      -2,     0,    1,    1    },
+  { EWorld::TheGreatPyramid,  GREAT_PYRAMID_SUN_INTENSITY_DEFAULT, 1,    0.5f,  1,     0,    2,    1,    1.0f },
 };
 
 
@@ -389,6 +391,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     _srtGlobals.srt_fTonemappingMinLogLuminance = -2.0f;
     _srtGlobals.srt_fTonemappingMaxLogLuminance = 0.0f;
     _srtGlobals.srt_fPotentialLightSphFalloffDefault = 1.0f;
+    _srtGlobals.srt_fOriginalLightSphFalloffMultiplier = 1.0f;
   }
   for (const auto &s : RT_WorldIlluminationParams)
   {
@@ -401,6 +404,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       _srtGlobals.srt_fTonemappingMinLogLuminance = s.fTonemappingMinLogLuminance;
       _srtGlobals.srt_fTonemappingMaxLogLuminance = s.fTonemappingMaxLogLuminance;
       _srtGlobals.srt_fPotentialLightSphFalloffDefault = s.fPotentialLightSphFalloffDefault;
+      _srtGlobals.srt_fOriginalLightSphFalloffMultiplier = s.fOriginalLightSphFalloffMultiplier;
       break;
     }
   }
@@ -462,6 +466,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
 
   // always disable flashlight on level start
   _srtGlobals.srt_bFlashlightEnable = false;
+  _srtGlobals.srt_fFlashlightAngleOuter = 15;
 
   isFlashlightHintEnabled = true;
   DisableFlashlightHint();
@@ -479,6 +484,9 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       tmFlashlightHintStart = tmWorldCreation + 1.0f;
       // a bit longer, because of cutscene
       tmFlashlightHintEnd = tmFlashlightHintStart + 10.0f;
+
+      // and a lot wider angle, because the level is too dark
+      _srtGlobals.srt_fFlashlightAngleOuter = 35;
       break;
     default:
       tmFlashlightHintStart = -1.0f;
@@ -749,6 +757,54 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
         { 741 },
         { 317 },
         { 4580 },
+      };
+      break;
+  }
+
+
+  switch (eCurrentWorld)
+  {
+    case EWorld::SandCanyon:
+      cutsceneLightPositions =
+      {
+        { 45, -22.75f, 90 }
+      };
+      break;
+
+    case EWorld::TombOfRamses:
+      cutsceneLightPositions =
+      {
+        { 146, 85.25f, -537 }
+      };
+      break;
+
+    case EWorld::ValleyOfTheKings:
+      cutsceneLightPositions =
+      {
+        { -292.75f, -101, -586.25f },
+        { -259.25f, -98.25f, -589 },
+        { -267.75f, -106.75f, -576.75f },
+      };
+      break;
+
+    case EWorld::MoonMountains:
+      cutsceneLightPositions =
+      {
+        { 24.375f, -133.188, -174.188 },
+      };
+      break;
+
+    case EWorld::Oasis:
+      cutsceneLightPositions =
+      {
+        { 52, 13.5f, -434 }
+      };
+      break;
+
+    case EWorld::Sewers:
+      cutsceneLightPositions =
+      {
+        { -8, -14.75f, -287.25f }
       };
       break;
   }
@@ -1057,10 +1113,21 @@ bool SSRT::CustomInfo::IsSphericalLightIgnored(const CLightSource *plsLight) con
     return false;
   }
 
+  const FLOAT3D &vPosition = pen->GetPlacement().pl_PositionVector;
+
   if (HasLightEntityVertices(pen->GetParent()) 
-      && (pen->GetParent()->GetPlacement().pl_PositionVector - pen->GetPlacement().pl_PositionVector).ManhattanNorm() < 1.0f)
+      && (pen->GetParent()->GetPlacement().pl_PositionVector - vPosition).ManhattanNorm() < 1.0f)
   {
     return false;
+  }
+
+  // check if it's a cutscene light
+  for (const FLOAT3D &v : cutsceneLightPositions)
+  {
+    if ((v - vPosition).ManhattanNorm() < 0.5f)
+    {
+      return false;
+    }
   }
 
   /*{
