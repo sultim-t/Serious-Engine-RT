@@ -383,6 +383,9 @@ static FLOAT ctl_fButtonRotationSpeedB = 150.0f;
 // modifier for axis strafing
 static FLOAT ctl_fAxisStrafingModifier = 1.0f;
 
+// RT: flashlight
+static INDEX ctl_bFlashlight = 0;
+
 // !=NULL if some player wants to call computer
 DECL_DLL class CPlayer *cmp_ppenPlayer = NULL;
 // !=NULL for rendering computer on secondary display in dualhead
@@ -642,6 +645,9 @@ void CPlayer_OnInitClass(void)
   _pShell->DeclareSymbol("persistent user FLOAT ctl_fButtonRotationSpeedP;", &ctl_fButtonRotationSpeedP);
   _pShell->DeclareSymbol("persistent user FLOAT ctl_fButtonRotationSpeedB;", &ctl_fButtonRotationSpeedB);
   _pShell->DeclareSymbol("persistent user FLOAT ctl_fAxisStrafingModifier;", &ctl_fAxisStrafingModifier);
+
+  // RT: flashlight
+  _pShell->DeclareSymbol("user INDEX ctl_bFlashlight;", &ctl_bFlashlight);
 
   _pShell->DeclareSymbol("user FLOAT plr_fSwimSoundDelay;", &plr_fSwimSoundDelay);
   _pShell->DeclareSymbol("user FLOAT plr_fDiveSoundDelay;", &plr_fDiveSoundDelay);
@@ -3335,6 +3341,9 @@ functions:
       // reset damage ammount
       m_fDamageAmmount = 0.0f;
     }
+
+    // RT: flashlight enable/disable, only if alive
+    _pShell->SetINDEX("srt_bFlashlightEnable", ctl_bFlashlight);
   }
 
   // Auto-actions

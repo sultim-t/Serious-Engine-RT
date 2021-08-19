@@ -146,7 +146,7 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fBloomSkyMultiplier;", &_srtGlobals.srt_fBloomSkyMultiplier);
 
   // user controls
-  _pShell->DeclareSymbol("user INDEX ctl_bFlashlight;", &_srtGlobals.srt_bFlashlightEnable);
+  _pShell->DeclareSymbol("user INDEX srt_bFlashlightEnable;", &_srtGlobals.srt_bFlashlightEnable);
 }
 
 void SSRT::SSRTMain::NormalizeShellVariables()

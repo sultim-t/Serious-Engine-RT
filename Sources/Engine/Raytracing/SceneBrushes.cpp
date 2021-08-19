@@ -403,7 +403,7 @@ void SSRT::SceneBrushes::Update(CEntity *pBrushEntity, Scene *pScene)
 
 
   // process movable
-  if (pBrushEntity->en_ulPhysicsFlags & EPF_MOVABLE)
+  if (pScene->IsBrushMovable(pBrushEntity))
   {
     UpdateMovableBrush(pBrushEntity);
   }
