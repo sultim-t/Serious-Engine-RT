@@ -307,6 +307,7 @@ const char *const RT_TexturePaths_LightOffsetFix[] =
   "Models\\Effects\\ExplosionParticles\\Texture.tex",
   "Models\\Effects\\ExplosionRocket\\Texture.tex",
   "Models\\Weapons\\GrenadeLauncher\\Grenade\\Grenade.tex",
+  "Models\\Effects\\ShockWaveGreen\\ShockWaveGreen.tex",
 };
 
 

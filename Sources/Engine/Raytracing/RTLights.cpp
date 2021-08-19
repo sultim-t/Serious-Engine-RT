@@ -16,6 +16,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "StdH.h"
 
 #include <Engine/Entities/Entity.h>
+#include <Engine/Entities/EntityCollision.h>
 #include <Engine/Math/Quaternion.h>
 #include <Engine/Models/RenderModel.h>
 #include <Engine/Models/ModelObject.h>
@@ -315,121 +316,105 @@ static void RT_AddModifiedSphereLightToScene(const CLightSource *plsLight,
 }
 
 
-// A dirty way to determine player's torso attachment to position a flashlight.
-static void RT_FixFlashlightWithPlayerTorso(CEntity *pEn, FLOAT3D &playerPos, FLOAT3D &playerRight, FLOAT3D &playerUp, FLOAT3D &playerForward)
+// https://www.scratchapixel.com/code.php?id=10&origin=&src=1
+static bool RT_RayBoxIntersection(const FLOATaabbox3D &box, const FLOAT3D &vRayOrigin, const FLOAT3D &vRayDir, float *pResult)
 {
-  // this define is from "Models/Player/SeriousSam/Player.h"
-#define PLAYER_ATTACHMENT_TORSO 0
-
-  if (CModelObject *pmoParent = pEn->GetModelObject())
+  struct vec3_t
   {
-    if (CAttachmentModelObject *pamo = pmoParent->GetAttachmentModel(PLAYER_ATTACHMENT_TORSO))
-    {
-      // get the position
-      const CAttachedModelPosition &amp = pmoParent->GetData()->md_aampAttachedPosition[pamo->amo_iAttachedPosition];
+    float x, y, z;
+  };
 
-      // unpack the reference vertices
-      FLOAT3D vCenter, vFront, vUp;
-      const INDEX iCenter = amp.amp_iCenterVertex;
-      const INDEX iFront = amp.amp_iFrontVertex;
-      const INDEX iUp = amp.amp_iUpVertex;
+  struct ray_t
+  {
+    vec3_t orig, dir;
+    vec3_t invdir;
+    int sign[3];
+  };
 
-      CRenderModel rmMain;
-      rmMain.rm_pmdModelData = pmoParent->GetData();
-      rmMain.rm_fDistanceFactor = 0;
-      rmMain.SetObjectPlacement(pEn->GetLerpedPlacement());
-      pmoParent->GetFrame(rmMain.rm_iFrame0, rmMain.rm_iFrame1, rmMain.rm_fRatio);
-      const INDEX ctVertices = rmMain.rm_pmdModelData->md_VerticesCt;
-      if (rmMain.rm_pmdModelData->md_Flags & MF_COMPRESSED_16BIT)
-      {
-        // set pFrame to point to last and next frames' vertices
-        rmMain.rm_pFrame16_0 = &rmMain.rm_pmdModelData->md_FrameVertices16[rmMain.rm_iFrame0 * ctVertices];
-        rmMain.rm_pFrame16_1 = &rmMain.rm_pmdModelData->md_FrameVertices16[rmMain.rm_iFrame1 * ctVertices];
-      }
-      else
-      {
-        // set pFrame to point to last and next frames' vertices
-        rmMain.rm_pFrame8_0 = &rmMain.rm_pmdModelData->md_FrameVertices8[rmMain.rm_iFrame0 * ctVertices];
-        rmMain.rm_pFrame8_1 = &rmMain.rm_pmdModelData->md_FrameVertices8[rmMain.rm_iFrame1 * ctVertices];
-      }
-      FLOAT3D &vDataStretch = rmMain.rm_pmdModelData->md_Stretch;
-      rmMain.rm_vStretch(1) = vDataStretch(1) * pmoParent->mo_Stretch(1);
-      rmMain.rm_vStretch(2) = vDataStretch(2) * pmoParent->mo_Stretch(2);
-      rmMain.rm_vStretch(3) = vDataStretch(3) * pmoParent->mo_Stretch(3);
-      rmMain.rm_vOffset = rmMain.rm_pmdModelData->md_vCompressedCenter;
+  ray_t r = {};
+  r.orig = { vRayOrigin(1), vRayOrigin(2), vRayOrigin(3) };
+  r.invdir = { 1.0f / vRayDir(1), 1.0f / vRayDir(2), 1.0f / vRayDir(3) };
+  r.sign[0] = r.invdir.x < 0;
+  r.sign[1] = r.invdir.y < 0;
+  r.sign[2] = r.invdir.z < 0;
 
+  vec3_t bounds[2];
+  bounds[0] = { box.minvect(1), box.minvect(2), box.minvect(3) };
+  bounds[1] = { box.maxvect(1), box.maxvect(2), box.maxvect(3) };
 
-      auto unpackVertex = [pmoParent, &rmMain] (INDEX iVertex, FLOAT3D &vVertex)
-      {
-        // GetData()
-        const CModelData *data = pmoParent->GetData();
+  float tmin, tmax, tymin, tymax, tzmin, tzmax;
 
-        if (data->md_Flags & MF_COMPRESSED_16BIT)
-        {
-          // get 16 bit packed vertices
-          const SWPOINT3D &vsw0 = rmMain.rm_pFrame16_0[iVertex].mfv_SWPoint;
-          const SWPOINT3D &vsw1 = rmMain.rm_pFrame16_1[iVertex].mfv_SWPoint;
-          // convert them to float and lerp between them
-          vVertex(1) = (Lerp((FLOAT)vsw0(1), (FLOAT)vsw1(1), rmMain.rm_fRatio) - rmMain.rm_vOffset(1)) * rmMain.rm_vStretch(1);
-          vVertex(2) = (Lerp((FLOAT)vsw0(2), (FLOAT)vsw1(2), rmMain.rm_fRatio) - rmMain.rm_vOffset(2)) * rmMain.rm_vStretch(2);
-          vVertex(3) = (Lerp((FLOAT)vsw0(3), (FLOAT)vsw1(3), rmMain.rm_fRatio) - rmMain.rm_vOffset(3)) * rmMain.rm_vStretch(3);
-        }
-        else
-        {
-          // get 8 bit packed vertices
-          const SBPOINT3D &vsb0 = rmMain.rm_pFrame8_0[iVertex].mfv_SBPoint;
-          const SBPOINT3D &vsb1 = rmMain.rm_pFrame8_1[iVertex].mfv_SBPoint;
-          // convert them to float and lerp between them
-          vVertex(1) = (Lerp((FLOAT)vsb0(1), (FLOAT)vsb1(1), rmMain.rm_fRatio) - rmMain.rm_vOffset(1)) * rmMain.rm_vStretch(1);
-          vVertex(2) = (Lerp((FLOAT)vsb0(2), (FLOAT)vsb1(2), rmMain.rm_fRatio) - rmMain.rm_vOffset(2)) * rmMain.rm_vStretch(2);
-          vVertex(3) = (Lerp((FLOAT)vsb0(3), (FLOAT)vsb1(3), rmMain.rm_fRatio) - rmMain.rm_vOffset(3)) * rmMain.rm_vStretch(3);
-        }
-      };
+  tmin = (bounds[r.sign[0]].x - r.orig.x) * r.invdir.x;
+  tmax = (bounds[1 - r.sign[0]].x - r.orig.x) * r.invdir.x;
+  tymin = (bounds[r.sign[1]].y - r.orig.y) * r.invdir.y;
+  tymax = (bounds[1 - r.sign[1]].y - r.orig.y) * r.invdir.y;
 
-      unpackVertex(iCenter, vCenter);
-      unpackVertex(iFront, vFront);
-      unpackVertex(iUp, vUp);
+  if ((tmin > tymax) || (tymin > tmax))
+    return false;
 
-      // create front and up direction vectors
-      FLOAT3D vY = vUp - vCenter;
-      FLOAT3D vZ = vCenter - vFront;
-      // project center and directions from object to absolute space
-      const FLOATmatrix3D &mO2A = rmMain.rm_mObjectRotation;
-      const FLOAT3D &vO2A = rmMain.rm_vObjectPosition;
-      vCenter = vCenter * mO2A + vO2A;
-      vY = vY * mO2A;
-      vZ = vZ * mO2A;
+  if (tymin > tmin)
+    tmin = tymin;
+  if (tymax < tmax)
+    tmax = tymax;
 
-      // make a rotation matrix from the direction vectors
-      FLOAT3D vX = vY * vZ;
-      vY = vZ * vX;
-      vX.Normalize();
-      vY.Normalize();
-      vZ.Normalize();
-      FLOATmatrix3D mOrientation;
-      mOrientation(1, 1) = vX(1);  mOrientation(1, 2) = vY(1);  mOrientation(1, 3) = vZ(1);
-      mOrientation(2, 1) = vX(2);  mOrientation(2, 2) = vY(2);  mOrientation(2, 3) = vZ(2);
-      mOrientation(3, 1) = vX(3);  mOrientation(3, 2) = vY(3);  mOrientation(3, 3) = vZ(3);
+  tzmin = (bounds[r.sign[2]].z - r.orig.z) * r.invdir.z;
+  tzmax = (bounds[1 - r.sign[2]].z - r.orig.z) * r.invdir.z;
 
-      FLOAT3D vOffset;
-      FLOATmatrix3D mRelative;
-      MakeRotationMatrix(mRelative, pamo->amo_plRelative.pl_OrientationAngle);
-      vOffset(1) = pamo->amo_plRelative.pl_PositionVector(1) * pmoParent->mo_Stretch(1);
-      vOffset(2) = pamo->amo_plRelative.pl_PositionVector(2) * pmoParent->mo_Stretch(2);
-      vOffset(3) = pamo->amo_plRelative.pl_PositionVector(3) * pmoParent->mo_Stretch(3);
-      FLOAT3D vO = vCenter + vOffset * mOrientation;
-      mOrientation *= mRelative; 
-      // rmAttached.SetObjectPlacement(vO, mOrientation);
+  if ((tmin > tzmax) || (tzmin > tmax))
+    return false;
 
+  if (tzmin > tmin)
+    tmin = tzmin;
+  if (tzmax < tmax)
+    tmax = tzmax;
 
+  float &t = *pResult;
+  t = tmin;
 
-      playerPos = vO;
-
-      playerRight = FLOAT3D(mOrientation(1, 1), mOrientation(2, 1), mOrientation(3, 1));
-      playerUp = FLOAT3D(mOrientation(1, 2), mOrientation(2, 2), mOrientation(3, 2));
-      playerForward = FLOAT3D(mOrientation(1, 3), mOrientation(2, 3), mOrientation(3, 3)) * -1;
-    }
+  if (t < 0)
+  {
+    t = tmax;
+    if (t < 0) return false;
   }
+
+  return true;
+}
+
+
+static FLOAT3D RT_FixFlashlightThirdPerson(CEntity *pEn, const FLOAT3D &vCameraForward)
+{
+  CCollisionInfo *pci = pEn->en_pciCollisionInfo;
+
+  if (pci == nullptr)
+  {
+    return pEn->GetLerpedPlacement().pl_PositionVector;
+  }
+
+  FLOATaabbox3D bbLocalBox = FLOATaabbox3D();
+
+  // MakeBoxAtPlacement, but local
+  {
+    CMovingSphere &ms0 = pci->ci_absSpheres[0];
+    CMovingSphere &ms1 = pci->ci_absSpheres[pci->ci_absSpheres.Count() - 1];
+    bbLocalBox = FLOATaabbox3D(ms0.ms_vCenter, ms0.ms_fR);
+    bbLocalBox |= FLOATaabbox3D(ms1.ms_vCenter, ms1.ms_fR);
+  }
+
+  // AABB center, but with Y a bit higher
+  FLOAT3D vLocalOrigin;
+  vLocalOrigin(1) = (bbLocalBox.minvect(1) + bbLocalBox.maxvect(1)) * 0.5f;
+  vLocalOrigin(2) = (bbLocalBox.minvect(2) + bbLocalBox.maxvect(2)) * 0.8f;
+  vLocalOrigin(3) = (bbLocalBox.minvect(3) + bbLocalBox.maxvect(3)) * 0.5f;
+
+  float tFinal = 0.0f;
+  float t;
+
+  if (RT_RayBoxIntersection(bbLocalBox, vLocalOrigin, vCameraForward, &t))
+  {
+    tFinal = t + 0.2f;
+  }
+
+  return pEn->GetLerpedPlacement().pl_PositionVector + vLocalOrigin + vCameraForward * tFinal;
 }
 
 
@@ -467,7 +452,7 @@ static void RT_AddSpotlight(CEntity *pEn, SSRT::Scene *pScene)
   else if (_pNetwork->IsPlayerLocal(pEn))
   {
     // default rotation
-    FLOATmatrix3D playerRot;
+    /*FLOATmatrix3D playerRot;
     MakeRotationMatrix(playerRot, pEn->GetPlacement().pl_OrientationAngle);
 
     auto playerRight   = FLOAT3D(playerRot(1, 1), playerRot(2, 1), playerRot(3, 1));
@@ -475,22 +460,21 @@ static void RT_AddSpotlight(CEntity *pEn, SSRT::Scene *pScene)
     auto playerForward = FLOAT3D(playerRot(1, 3), playerRot(2, 3), playerRot(3, 3)) * -1;
    
     // default position
-    auto playerPos = pEn->GetLerpedPlacement().pl_PositionVector + playerUp * 1.0f;
+    auto playerPos = pEn->GetLerpedPlacement().pl_PositionVector + playerUp * 1.0f;*/
+
+    FLOAT3D playerPos = RT_FixFlashlightThirdPerson(pEn, camForward);
 
 
-    RT_FixFlashlightWithPlayerTorso(pEn, playerPos, playerRight, playerUp, playerForward);
-
-
-    playerPos += 
+    /*playerPos += 
       playerRight   * _srtGlobals.srt_vFlashlightOffsetThirdPerson(1) +
       playerUp      * _srtGlobals.srt_vFlashlightOffsetThirdPerson(2) +
-      playerForward * _srtGlobals.srt_vFlashlightOffsetThirdPerson(3);
+      playerForward * _srtGlobals.srt_vFlashlightOffsetThirdPerson(3);*/
 
 
     SSRT::CSpotLight light = {};
     light.absPosition = playerPos;
-    light.direction = playerForward;
-    light.upVector = playerUp;
+    light.direction = camForward;
+    light.upVector = camUp;
     light.isFirstPerson = false;
 
     pScene->AddLight(light);
