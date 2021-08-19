@@ -105,6 +105,7 @@ RT_WorldIlluminationParams[] =
   { EWorld::SandCanyon,       3,    0.5f, 1,    0.75f,  -2,     0,    8,    1    },
   { EWorld::ValleyOfTheKings, 3,    0.5f, 1,    0.75f,  -2,     0,    8,    2    },
   { EWorld::Suburbs,          4,    0.5f, 0.5f, 1,      -2,     0,    1,    1    },
+  { EWorld::Sewers,           4,    0.5f, 1,    0.75f,  -2,     0,    1,    2    },
   { EWorld::AlleyOfSphinxes,  4,    0.5f, 0.5f, 0.75f,  -2,     0,    1,    1    },
   { EWorld::Metropolis,       4,    0.5f, 0.5f, 0.75f,  -2,     0,    1,    1    },
   { EWorld::Luxor,            4,    0.5f, 1,    0.75f,  -2,     0,    4,    1    },
@@ -790,7 +791,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     case EWorld::MoonMountains:
       cutsceneLightPositions =
       {
-        { 24.375f, -133.188, -174.188 },
+        { 24.375f, -133.188f, -174.188f },
       };
       break;
 
@@ -804,7 +805,8 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     case EWorld::Sewers:
       cutsceneLightPositions =
       {
-        { -8, -14.75f, -287.25f }
+        { -32.5f, -30, -288 },
+        { 71.5f, 25.5f, -288.5f },
       };
       break;
   }
@@ -1362,6 +1364,11 @@ bool SSRT::CustomInfo::IsBrushSectorHazeIgnored(const CBrushSector *pSector) con
     92, 96, 98, 114, 225, 187, 188, 292, 110, 291, 89, 543
   };
 
+  const INDEX aSewersIgnoredSectors[] =
+  {
+    144, 36, 42, 43
+  };
+
   switch (eCurrentWorld)
   {
     case EWorld::ValleyOfTheKings:
@@ -1373,6 +1380,17 @@ bool SSRT::CustomInfo::IsBrushSectorHazeIgnored(const CBrushSector *pSector) con
         }
       }
       return false;
+
+    case EWorld::Sewers:
+      for (INDEX i : aSewersIgnoredSectors)
+      {
+        if (i == pSector->bsc_iInWorld)
+        {
+          return true;
+        }
+      }
+      return false;
+
     default:
       return false;
   }
