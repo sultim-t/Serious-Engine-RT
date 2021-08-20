@@ -119,25 +119,26 @@ const struct
 {
   EWorld  eWorld;
   INDEX   iCullingMaxSectorDepth;
+  FLOAT   fCullingThinSectorSize;
   bool    bIgnoreDynamicTexCoords;
 } 
 RT_WorldParams[] =
 {
-  { EWorld::Hatshepsut,        4, false },
-  { EWorld::SandCanyon,        8, false },
-  { EWorld::TombOfRamses,      7, false },
-  { EWorld::ValleyOfTheKings,  5, false },
-  { EWorld::MoonMountains,     4, false },
-  { EWorld::Oasis,             4, false },
-  { EWorld::Dunes,             8, false },
-  { EWorld::Suburbs,           2, false },
-  { EWorld::Sewers,            4, false },
-  { EWorld::Metropolis,        5, false },
-  { EWorld::AlleyOfSphinxes,   3, false },
-  { EWorld::Karnak,            5, true  },
-  { EWorld::Luxor,             4, false },
-  { EWorld::SacredYards,       4, false },
-  { EWorld::TheGreatPyramid,   5, false },
+  { EWorld::Hatshepsut,        4, 1.1f, false },
+  { EWorld::SandCanyon,        8, 1.1f, false },
+  { EWorld::TombOfRamses,      7, 1.1f, false },
+  { EWorld::ValleyOfTheKings,  4, 3,    false },
+  { EWorld::MoonMountains,     4, 1.1f, false },
+  { EWorld::Oasis,             4, 1.1f, false },
+  { EWorld::Dunes,             8, 1.1f, false },
+  { EWorld::Suburbs,           2, 1.1f, false },
+  { EWorld::Sewers,            4, 1.1f, false },
+  { EWorld::Metropolis,        5, 1.1f, false },
+  { EWorld::AlleyOfSphinxes,   3, 1.1f, false },
+  { EWorld::Karnak,            5, 1.1f,  true },
+  { EWorld::Luxor,             4, 1.1f, false },
+  { EWorld::SacredYards,       4, 1.1f, false },
+  { EWorld::TheGreatPyramid,   5, 1.1f, false },
 };
 
 
@@ -363,6 +364,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   }
 
   _srtGlobals.srt_iCullingMaxSectorDepth = 8;
+  _srtGlobals.srt_fCullingThinSectorSize = 1.1f;
   _srtGlobals.srt_bIgnoreDynamicTexCoords = false;
 
   for (const auto &s : RT_WorldParams)
@@ -370,6 +372,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     if (s.eWorld == eCurrentWorld)
     {
       _srtGlobals.srt_iCullingMaxSectorDepth = s.iCullingMaxSectorDepth;
+      _srtGlobals.srt_fCullingThinSectorSize = s.fCullingThinSectorSize;
       _srtGlobals.srt_bIgnoreDynamicTexCoords = s.bIgnoreDynamicTexCoords;
     }
   }
@@ -581,6 +584,12 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
         { 744, 753, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
         { 712, 719, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_1 },
       };
+
+      brushSectorsToMask =
+      {
+        // hide terrain part when inside (in the area with pool and tower)
+        { 34, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_2 }
+      };
       break;
 
     case EWorld::MoonMountains:
@@ -772,7 +781,8 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     case EWorld::SandCanyon:
       cutsceneLightPositions =
       {
-        { 45, -22.75f, 90 }
+        { 45, -22.75f, 90 },
+        { -18.875f, -15.25f, 92.5f },
       };
       break;
 
@@ -945,9 +955,20 @@ uint32_t SSRT::CustomInfo::GetCullMask(const FLOAT3D &vCameraPosition) const
       break;
 
     case EWorld::ValleyOfTheKings:
-      if (vCameraPosition(3) > 242.0f)
+      // after terrain
+      if (vCameraPosition(3) < -265)
       {
-        return 0b001;
+        return 0b011;
+      }
+      // before terrain
+      else if (vCameraPosition(3) > 242.0f)
+      {
+        return 0b101;
+      }
+      // on terrain
+      else
+      {
+        return 0b111;
       }
       break;
 
