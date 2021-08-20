@@ -3207,11 +3207,14 @@ functions:
     {
       // RT: flashlight enable/disable, only if alive and not in cutscene
       _pShell->SetINDEX("srt_bFlashlightEnable", ctl_bFlashlight);
+      
+      CPlayerAnimator &plan = (CPlayerAnimator&)*m_penAnimator;
+      plan.BodyRemoveItem();
     }
     else
     {
-      // RT: flashlight must be disabled when died
-      _pShell->SetINDEX("srt_bFlashlightEnable", 0);
+      // RT: flashlight must be disabled otherwise
+      ctl_bFlashlight = 0;
     }
 
     if (Abs(_pTimer->CurrentTick()-m_tmAnalyseEnd)<_pTimer->TickQuantum*2) {
