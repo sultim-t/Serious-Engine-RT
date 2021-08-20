@@ -1050,6 +1050,24 @@ float SSRT::CustomInfo::GetRayLength(const FLOAT3D &vCameraPosition) const
   return 10000.0f;
 }
 
+int SSRT::CustomInfo::GetCullingMaxSectorDepth() const
+{
+  switch (_srtGlobals.srt_iCullingMaxSectorDepthQualityLevel)
+  {
+    // less
+    case 1:
+      return Max<INDEX>(roundf(_srtGlobals.srt_iCullingMaxSectorDepth * 0.75f), Min<INDEX>(_srtGlobals.srt_iCullingMaxSectorDepth, 3));
+    // reduced
+    case 2:
+      return Max<INDEX>(roundf(_srtGlobals.srt_iCullingMaxSectorDepth * 0.4f), 2);
+    // min
+    case 3:
+      return 2;
+  }
+
+  return _srtGlobals.srt_iCullingMaxSectorDepth;
+}
+
 bool SSRT::CustomInfo::IsBrushIgnored(CEntity *penBrush) const
 { 
   bool isZoning = penBrush->en_ulFlags & ENF_ZONING; 

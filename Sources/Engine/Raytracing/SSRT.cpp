@@ -123,6 +123,7 @@ void SSRT::SSRTMain::InitShellVariables()
 
   _pShell->DeclareSymbol("persistent user INDEX srt_bModelChangeableTranslucentToAlphaTested;", &_srtGlobals.srt_bModelChangeableTranslucentToAlphaTested);
   _pShell->DeclareSymbol("persistent user INDEX srt_iCullingMaxSectorDepth;", &_srtGlobals.srt_iCullingMaxSectorDepth);
+  _pShell->DeclareSymbol("persistent user INDEX srt_iCullingMaxSectorDepthQualityLevel;", &_srtGlobals.srt_iCullingMaxSectorDepthQualityLevel);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fCullingMinAngularSize;", &_srtGlobals.srt_fCullingMinAngularSize);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fCullingThinSectorSize;", &_srtGlobals.srt_fCullingThinSectorSize);
 
@@ -209,6 +210,7 @@ void SSRT::SSRTMain::NormalizeShellVariables()
 
   _srtGlobals.srt_bModelChangeableTranslucentToAlphaTested = !!_srtGlobals.srt_bModelChangeableTranslucentToAlphaTested;
 
+  _srtGlobals.srt_iCullingMaxSectorDepthQualityLevel = Clamp(_srtGlobals.srt_iCullingMaxSectorDepthQualityLevel, 0l, 3l);
   _srtGlobals.srt_fCullingMinAngularSize = Clamp(_srtGlobals.srt_fCullingMinAngularSize, -1.0f, 89.9f);
 
   _srtGlobals.srt_bAnimatedSunRestart = !!_srtGlobals.srt_bAnimatedSunRestart;

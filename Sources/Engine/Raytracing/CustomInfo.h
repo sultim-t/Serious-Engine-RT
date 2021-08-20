@@ -82,6 +82,7 @@ public:
   // colLight, colAmbient, hasShadows are returned by CEntity::AdjustShadingParameters
   bool IsInvisibleEnemy(CEntity *pEntity, COLOR colLight, COLOR colAmbient, bool hasShadows) const;
 
+  int GetCullingMaxSectorDepth() const;
   bool IsBrushIgnored(CEntity *penBrush) const;
   bool IsBrushSectorIgnored(const CBrushSector *pSector) const;
   bool IsBrushPolygonIgnored(const CBrushPolygon *pPolygon) const;

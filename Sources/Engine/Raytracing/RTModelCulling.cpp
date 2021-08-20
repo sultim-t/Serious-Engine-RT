@@ -218,7 +218,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::Scene *pScene)
 static void RT_AddGivenZoningSector(CBrushSector *pbsc, INDEX iSectorDepth, SSRT::Scene *pScene)
 {
   // RT: if should be culled
-  if (iSectorDepth >= _srtGlobals.srt_iCullingMaxSectorDepth)
+  if (iSectorDepth >= pScene->GetCustomInfo()->GetCullingMaxSectorDepth())
   {
     return;
   }

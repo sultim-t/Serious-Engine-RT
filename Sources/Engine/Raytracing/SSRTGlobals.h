@@ -121,6 +121,8 @@ struct SSRTGlobals
   INDEX srt_bModelChangeableTranslucentToAlphaTested = 1;
 
   INDEX srt_iCullingMaxSectorDepth = 6;
+  // for settings menu: 0 - default, 1 - less, 1 - reduced, 2 - min
+  INDEX srt_iCullingMaxSectorDepthQualityLevel = 0;
   FLOAT srt_fCullingMinAngularSize = 1.5f;
   FLOAT srt_fCullingThinSectorSize = 1.1f;
 
