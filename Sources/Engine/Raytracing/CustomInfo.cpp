@@ -84,9 +84,9 @@ static EWorld GetWorldEnum(CWorld *pWorld)
 constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_START = 0.75f;
 constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_END = 0.25f;
 constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_CHANGE_LENGTH = 30.0f;
-constexpr FLOAT GREAT_PYRAMID_SUN_INTENSITY_DEFAULT = 2.0;
-constexpr FLOAT GREAT_PYRAMID_SUN_INTENSITY_BOSS_FIGHT = 0.0;
-constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_BOSS_FIGHT = 1.0;
+constexpr FLOAT GREAT_PYRAMID_SUN_INTENSITY_DEFAULT = 2.0f;
+constexpr FLOAT GREAT_PYRAMID_SUN_INTENSITY_BOSS_FIGHT = 0.0f;
+constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_BOSS_FIGHT = 7.0f;
 
 const struct
 {
@@ -225,7 +225,6 @@ const char * const RT_TexturePaths_AlphaTest[] =
   "Models\\Effects\\BulletOnTheWall\\BulletSand.tex",
   "Models\\Plants\\Garden02\\Garden06.tex",
   "Models\\Ages\\Egypt\\Gods\\TothMonkey\\TothMonkey.tex",
-  "Models\\CutSequences\\SpaceShip\\LightBeam.tex",
 };
 
 
