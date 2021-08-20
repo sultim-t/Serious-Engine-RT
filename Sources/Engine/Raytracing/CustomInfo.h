@@ -79,6 +79,8 @@ public:
   bool IsBrushSectorHazeForced(const CBrushSector *pSector) const;
   // False, if position says it's not a ring model. Otherwise, *pOutState is: 0.0 - disabled, 1.0 - enable
   bool GetActivatePlateState(const FLOAT3D &vPosition, float *pOutState) const;
+  // colLight, colAmbient, hasShadows are returned by CEntity::AdjustShadingParameters
+  bool IsInvisibleEnemy(CEntity *pEntity, COLOR colLight, COLOR colAmbient, bool hasShadows) const;
 
   bool IsBrushIgnored(CEntity *penBrush) const;
   bool IsBrushSectorIgnored(const CBrushSector *pSector) const;
@@ -168,6 +170,7 @@ private:
     std::vector<CTextureData *> aDisabledOverride;
     std::vector<CTextureData *> aLightOffsetFix;
     std::vector<CTextureData *> aLightForceDynamic;
+    std::vector<CTextureData *> aInvisibleEnemy;
 
   } ptdCachedTextures;
 

@@ -140,7 +140,8 @@ functions:
     // no shadows for invisibles
     if (m_bInvisible) {
       colAmbient = C_WHITE;
-      return FALSE;
+      // RT: when died, don't be invisible
+      return GetHealth()>0 ? FALSE : TRUE;
     } else {
       return CEnemyBase::AdjustShadingParameters(vLightDirection, colLight, colAmbient);
     }

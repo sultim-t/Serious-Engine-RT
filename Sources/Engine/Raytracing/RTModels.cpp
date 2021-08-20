@@ -40,6 +40,8 @@ extern INDEX gfx_bRenderPredicted;
 
 static uint32_t RT_ModelPartIndex = 0;
 
+static bool RT_IsInvisibleEnemy = false;
+
 
 
 struct RT_VertexData
@@ -244,7 +246,7 @@ static void FlushModelInfo(ULONG entityID,
     }
   }
 
-  if ((stt == STT_TRANSLUCENT || stt == STT_ADD) && pScene->GetCustomInfo()->IsGlass(to))
+  if (((stt == STT_TRANSLUCENT || stt == STT_ADD) && pScene->GetCustomInfo()->IsGlass(to)) || RT_IsInvisibleEnemy)
   {
     modelInfo.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_GLASS_REFLECT_REFRACT;
     modelInfo.isRasterized = false;
@@ -977,7 +979,9 @@ static void RT_RenderOneModel(CEntity &en,
   COLOR colLight   = C_GRAY;
   COLOR colAmbient = C_dGRAY;
   FLOAT3D vTotalLightDirection( 1.0f, -1.0f, 1.0f);
-  en.AdjustShadingParameters( vTotalLightDirection, colLight, colAmbient);
+  bool hasShadows = en.AdjustShadingParameters( vTotalLightDirection, colLight, colAmbient);
+
+  RT_IsInvisibleEnemy = scene->GetCustomInfo()->IsInvisibleEnemy(&en, colLight, colAmbient, hasShadows);
 
   // prepare render model structure
   CRenderModel rm;
@@ -1039,6 +1043,7 @@ static void RT_Post_RenderModels(CEntity &en,
 void RT_AddModelEntity(CEntity *penModel, SSRT::Scene *pScene)
 {        
   RT_ModelPartIndex = 0;
+  RT_IsInvisibleEnemy = false;
 
   // if the entity is currently active or hidden, don't add it again
   if (penModel->en_ulFlags & ENF_HIDDEN)
@@ -1129,6 +1134,7 @@ void RT_AddModelEntity(CEntity *penModel, SSRT::Scene *pScene)
 void RT_AddFirstPersonModel(CModelObject *mo, CRenderModel *rm, ULONG entityId, SSRT::Scene *scene)
 {
   RT_ModelPartIndex = 0;
+  RT_IsInvisibleEnemy = false;
 
   auto &v = rm->rm_vObjectPosition;
   auto &m = rm->rm_mObjectRotation;

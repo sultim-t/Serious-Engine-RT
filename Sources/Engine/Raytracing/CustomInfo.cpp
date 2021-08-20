@@ -251,7 +251,7 @@ const char *const RT_TexturePaths_Glass[] =
   "Models\\Items\\Keys\\Elements\\Air.tex",
   "Models\\Items\\Keys\\Elements\\Fire.tex",
   "Models\\Items\\Keys\\Elements\\Texture.tex",
-  "Models\\Items\\Keys\\Elements\\Water.tex",
+  "Models\\Items\\Keys\\Elements\\Water.tex"
 };
 
 
@@ -317,6 +317,13 @@ const char *const RT_TexturePaths_LightForceDynamic[] =
 {
   // for the rocketman with light in Sand Canyon
   "Models\\Enemies\\Headman\\Rocketman.tex",
+};
+
+
+const char *const RT_TexturePaths_InvisibleEnemy[] =
+{
+  "Models\\Enemies\\Eyeman\\Eyeman4.tex",
+  "Models\\Enemies\\Eyeman\\Eyeman5.tex",
 };
 
 
@@ -455,6 +462,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     { RT_TexturePaths_DisabledOverride,           ARRAYCOUNT(RT_TexturePaths_DisabledOverride),           &ptdCachedTextures.aDisabledOverride },
     { RT_TexturePaths_LightOffsetFix,             ARRAYCOUNT(RT_TexturePaths_LightOffsetFix),             &ptdCachedTextures.aLightOffsetFix },
     { RT_TexturePaths_LightForceDynamic,          ARRAYCOUNT(RT_TexturePaths_LightForceDynamic),          &ptdCachedTextures.aLightForceDynamic },
+    { RT_TexturePaths_InvisibleEnemy,             ARRAYCOUNT(RT_TexturePaths_InvisibleEnemy),             &ptdCachedTextures.aInvisibleEnemy },
   };
 
   for (const auto &s : tdsToFind)
@@ -1404,6 +1412,11 @@ bool SSRT::CustomInfo::IsBrushSectorHazeIgnored(const CBrushSector *pSector) con
     144, 36, 42, 43
   };
 
+  const INDEX aKarnakIgnoredSectors[] =
+  {
+    44
+  };
+
   switch (eCurrentWorld)
   {
     case EWorld::ValleyOfTheKings:
@@ -1418,6 +1431,16 @@ bool SSRT::CustomInfo::IsBrushSectorHazeIgnored(const CBrushSector *pSector) con
 
     case EWorld::Sewers:
       for (INDEX i : aSewersIgnoredSectors)
+      {
+        if (i == pSector->bsc_iInWorld)
+        {
+          return true;
+        }
+      }
+      return false;
+
+    case EWorld::Karnak:
+      for (INDEX i : aKarnakIgnoredSectors)
       {
         if (i == pSector->bsc_iInWorld)
         {
@@ -1484,6 +1507,19 @@ bool SSRT::CustomInfo::GetActivatePlateState(const FLOAT3D &vPosition, float *pO
 
   *pOutState = 0.0f;
   return true;
+}
+
+bool SSRT::CustomInfo::IsInvisibleEnemy(CEntity *pEntity, COLOR colLight, COLOR colAmbient, bool hasShadows) const
+{
+  if (pEntity->GetRenderType() != CEntity::RenderType::RT_MODEL)
+  {
+    return false;
+  }
+
+  auto *mo = pEntity->GetModelObject();
+  bool isTextureForInvisible = ptdCachedTextures_Check(&mo->mo_toTexture, ptdCachedTextures.aInvisibleEnemy);
+
+  return !hasShadows && isTextureForInvisible && colAmbient == C_WHITE && mo->mo_colBlendColor;
 }
 
 bool SSRT::CustomInfo::HasLightEntityVertices(CEntity *pen) const
