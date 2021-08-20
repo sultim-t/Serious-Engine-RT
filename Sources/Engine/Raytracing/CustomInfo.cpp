@@ -225,12 +225,14 @@ const char * const RT_TexturePaths_AlphaTest[] =
   "Models\\Effects\\BulletOnTheWall\\BulletSand.tex",
   "Models\\Plants\\Garden02\\Garden06.tex",
   "Models\\Ages\\Egypt\\Gods\\TothMonkey\\TothMonkey.tex",
+  "Models\\CutSequences\\SpaceShip\\LightBeam.tex",
 };
 
 
 const char *const RT_TexturePaths_AlphaTest_Particles[] =
 {
   "Textures\\Effects\\Particles\\Lightning.tex",
+  "Models\\Weapons\\GhostBuster\\Projectile\\Ray.tex",
 };
 
 
@@ -1256,7 +1258,7 @@ bool SSRT::CustomInfo::IsFullMetallicForced(CTextureObject *pTo) const
   return ptdCachedTextures_Check(pTo, ptdCachedTextures.aFullyMetallic);
 }
 
-bool SSRT::CustomInfo::IsAlphaTestForced(CTextureObject *pTo, bool isTranslucent) const
+bool SSRT::CustomInfo::IsAlphaTestForced(CTextureObject *pTo) const
 {
   return ptdCachedTextures_Check(pTo, ptdCachedTextures.aAlphaTest);
 }

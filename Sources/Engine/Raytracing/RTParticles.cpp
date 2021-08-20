@@ -55,7 +55,9 @@ static RgBlendFactor  RT_eBlendDst;
 static CStaticStackArray<GFXVertex> RT_PlainVrtBuffer;
 static CStaticStackArray<GFXTexCoord> RT_PlainTexBuffer;
 static ULONG          RT_ulCurrentEntityID = 0;
-static ULONG          RT_ulCurrentFlushIndex = 0;
+// to prevent particles and models to be uploaded with the same 64-bit ID
+constexpr ULONG       RT_FLUSH_INDEX_BASE = 100000;
+static ULONG          RT_ulCurrentFlushIndex = RT_FLUSH_INDEX_BASE;
 
 static CAnyProjection3D RT_pEmptyProjection = {};
 
@@ -76,7 +78,7 @@ void RT_AddParticlesForEntity(CEntity *pTargetEntity, SSRT::Scene *pScene)
 
   {
     RT_ulCurrentEntityID = pTargetEntity->en_ulID;
-    RT_ulCurrentFlushIndex = 0;
+    RT_ulCurrentFlushIndex = RT_FLUSH_INDEX_BASE;
   }
 
   Particle_PrepareSystem(nullptr, RT_pEmptyProjection);
@@ -96,7 +98,7 @@ void RT_AddParticlesForEntity(CEntity *pTargetEntity, SSRT::Scene *pScene)
 
   {
     RT_ulCurrentEntityID = 0;
-    RT_ulCurrentFlushIndex = 0;
+    RT_ulCurrentFlushIndex = RT_FLUSH_INDEX_BASE;
   }
 }
 

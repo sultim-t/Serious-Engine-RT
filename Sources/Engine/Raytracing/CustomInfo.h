@@ -63,7 +63,7 @@ public:
 
   bool IsAngularSizeCullingDisabled(CEntity *penModel) const;
   bool IsFullMetallicForced(CTextureObject *pTo) const;
-  bool IsAlphaTestForced(CTextureObject *pTo, bool isTranslucent) const;
+  bool IsAlphaTestForced(CTextureObject *pTo) const;
   bool IsAlphaTestForcedForParticles(CTextureData *pTd) const;
   bool IsEmissionForced(CTextureObject *pTo) const;
   bool IsGlass(CTextureObject *pTo) const;

@@ -59,10 +59,8 @@ static bool RT_ShouldBeAlphaTested(CTextureObject *to, SurfaceTranslucencyType s
   bool changesDynamically = forceTranslucency && ((stt == STT_OPAQUE) || (stt == STT_TRANSPARENT));
 
 
-  // if model changes (like disappering gibs, body parts) or must be detected as alpha-tested
-  return 
-    _srtGlobals.srt_bModelChangeableTranslucentToAlphaTested
-    && (changesDynamically || pScene->GetCustomInfo()->IsAlphaTestForced(to, stt == STT_TRANSLUCENT));
+  // if model changes (like disappering gibs, body parts) 
+  return _srtGlobals.srt_bModelChangeableTranslucentToAlphaTested && changesDynamically;
 }
 
 
@@ -135,7 +133,7 @@ static void RT_PrepareRotation(const CRenderModel &rm, const FLOAT3D &viewerPos,
   ULONG flags = rm.rm_pmdModelData->md_Flags;
 
   // RT: do nothing if normal
-  if ((flags & MF_FACE_FORWARD) == 0 && 
+  if ((flags & MF_FACE_FORWARD) == 0 &&
       (flags & MF_HALF_FACE_FORWARD) == 0)
   {
     m = rm.rm_mObjectRotation;
@@ -189,11 +187,11 @@ static void RT_PrepareRotation(const CRenderModel &rm, const FLOAT3D &viewerPos,
 }
 
 
-static void FlushModelInfo(ULONG entityID, 
-                           CRenderModel &rm, 
+static void FlushModelInfo(ULONG entityID,
+                           CRenderModel &rm,
                            CModelObject &mo,
                            const INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH],
-                           INDEX *pIndices, INDEX indexCount, 
+                           INDEX *pIndices, INDEX indexCount,
                            const RT_VertexData &vd,
                            SurfaceTranslucencyType stt,
                            GFXColor modelColor,
@@ -221,9 +219,19 @@ static void FlushModelInfo(ULONG entityID,
   CTextureData *td = to != nullptr ? (CTextureData *)to->GetData() : nullptr;
   CTextureObject *reflectionTo = &mo.mo_toReflection;
 
-  bool forceAlphaTest = RT_ShouldBeAlphaTested(to, stt, forceTranslucency, pScene);
-  modelInfo.passThroughType = RT_GetPassThroughType(stt, forceAlphaTest);
-  modelInfo.isRasterized = RT_ShouldBeRasterized(stt, forceAlphaTest);
+  bool forceAlphaTestOriginally = RT_ShouldBeAlphaTested(to, stt, forceTranslucency, pScene);
+  modelInfo.passThroughType = RT_GetPassThroughType(stt, forceAlphaTestOriginally);
+  modelInfo.isRasterized = RT_ShouldBeRasterized(stt, forceAlphaTestOriginally);
+
+  // if alpha test forced by the texture
+  if (modelInfo.passThroughType != RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED || modelInfo.isRasterized)
+  {
+    if (pScene->GetCustomInfo()->IsAlphaTestForced(to))
+    {
+      modelInfo.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED;
+      modelInfo.isRasterized = false;
+    }
+  }
 
   if ((stt == STT_TRANSLUCENT || stt == STT_ADD) && pScene->GetCustomInfo()->IsGlass(to))
   {
