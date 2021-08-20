@@ -85,6 +85,7 @@ public:
   bool IsBrushPolygonIgnored(const CBrushPolygon *pPolygon) const;
   bool AreDynamicTexCoordsIgnored(CEntity *penBrush) const;
   
+  RgGeometryPrimaryVisibilityType GetModelMaskBit(const FLOAT3D &vPosition) const;
   RgGeometryPrimaryVisibilityType GetBrushMaskBit(const CBrushPolygon *pPolygon) const;
   uint32_t GetCullMask(const FLOAT3D &vCameraPosition) const;
   float GetRayLength(const FLOAT3D &vCameraPosition) const;

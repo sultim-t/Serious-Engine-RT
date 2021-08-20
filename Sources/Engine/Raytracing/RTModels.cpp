@@ -214,6 +214,17 @@ static void FlushModelInfo(ULONG entityID,
   modelInfo.entityID = entityID;
   modelInfo.modelPartIndex = RT_ModelPartIndex;
 
+  modelInfo.absPosition = rm.rm_vObjectPosition;
+  modelInfo.absRotation = rotation;
+
+  modelInfo.vertexCount = vd.vertexCount;
+  modelInfo.vertices = vd.pPositons;
+  modelInfo.normals = vd.pNormals;
+  modelInfo.texCoordLayers[0] = vd.pTexCoords;
+
+  modelInfo.indexCount = indexCount;
+  modelInfo.indices = pIndices;
+
 
   CTextureObject *to = &mo.mo_toTexture;
   CTextureData *td = to != nullptr ? (CTextureData *)to->GetData() : nullptr;
@@ -247,7 +258,7 @@ static void FlushModelInfo(ULONG entityID,
     td = nullptr;
   }
 
-  modelInfo.visibilityType = RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0;
+  modelInfo.visibilityType = pScene->GetCustomInfo()->GetModelMaskBit(modelInfo.absPosition);
 
   if (isFirstPersonWeapon)
   {
@@ -270,18 +281,7 @@ static void FlushModelInfo(ULONG entityID,
     rotation = bv * rotation;
   }
 
-
-  modelInfo.absPosition = rm.rm_vObjectPosition;
-  modelInfo.absRotation = rotation;
  
-  modelInfo.vertexCount = vd.vertexCount;
-  modelInfo.vertices = vd.pPositons;
-  modelInfo.normals = vd.pNormals;
-  modelInfo.texCoordLayers[0] = vd.pTexCoords;
- 
-  modelInfo.indexCount = indexCount;
-  modelInfo.indices = pIndices;
-
   modelInfo.color = Vector<FLOAT, 4>(modelColor.r, modelColor.g, modelColor.b, modelColor.a);
   modelInfo.color /= 255.0f;
  

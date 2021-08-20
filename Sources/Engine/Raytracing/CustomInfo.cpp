@@ -119,26 +119,25 @@ const struct
 {
   EWorld  eWorld;
   INDEX   iCullingMaxSectorDepth;
-  FLOAT   fCullingThinSectorSize;
   bool    bIgnoreDynamicTexCoords;
 } 
 RT_WorldParams[] =
 {
-  { EWorld::Hatshepsut,        4, 1.1f, false },
-  { EWorld::SandCanyon,        8, 1.1f, false },
-  { EWorld::TombOfRamses,      7, 1.1f, false },
-  { EWorld::ValleyOfTheKings,  4, 3,    false },
-  { EWorld::MoonMountains,     4, 1.1f, false },
-  { EWorld::Oasis,             4, 1.1f, false },
-  { EWorld::Dunes,             8, 1.1f, false },
-  { EWorld::Suburbs,           2, 1.1f, false },
-  { EWorld::Sewers,            4, 1.1f, false },
-  { EWorld::Metropolis,        5, 1.1f, false },
-  { EWorld::AlleyOfSphinxes,   3, 1.1f, false },
-  { EWorld::Karnak,            5, 1.1f,  true },
-  { EWorld::Luxor,             4, 1.1f, false },
-  { EWorld::SacredYards,       4, 1.1f, false },
-  { EWorld::TheGreatPyramid,   5, 1.1f, false },
+  { EWorld::Hatshepsut,        4, false },
+  { EWorld::SandCanyon,        8, false },
+  { EWorld::TombOfRamses,      7, false },
+  { EWorld::ValleyOfTheKings,  5, false },
+  { EWorld::MoonMountains,     4, false },
+  { EWorld::Oasis,             4, false },
+  { EWorld::Dunes,             8, false },
+  { EWorld::Suburbs,           2, false },
+  { EWorld::Sewers,            4, false },
+  { EWorld::Metropolis,        5, false },
+  { EWorld::AlleyOfSphinxes,   3, false },
+  { EWorld::Karnak,            5,  true  },
+  { EWorld::Luxor,             4, false },
+  { EWorld::SacredYards,       4, false },
+  { EWorld::TheGreatPyramid,   5, false },
 };
 
 
@@ -364,7 +363,6 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   }
 
   _srtGlobals.srt_iCullingMaxSectorDepth = 8;
-  _srtGlobals.srt_fCullingThinSectorSize = 1.1f;
   _srtGlobals.srt_bIgnoreDynamicTexCoords = false;
 
   for (const auto &s : RT_WorldParams)
@@ -372,7 +370,6 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     if (s.eWorld == eCurrentWorld)
     {
       _srtGlobals.srt_iCullingMaxSectorDepth = s.iCullingMaxSectorDepth;
-      _srtGlobals.srt_fCullingThinSectorSize = s.fCullingThinSectorSize;
       _srtGlobals.srt_bIgnoreDynamicTexCoords = s.bIgnoreDynamicTexCoords;
     }
   }
@@ -799,6 +796,8 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
         { -292.75f, -101, -586.25f },
         { -259.25f, -98.25f, -589 },
         { -267.75f, -106.75f, -576.75f },
+        // before the elemental
+        { -175.5f, -114.5f, -575 },
       };
       break;
 
@@ -909,6 +908,17 @@ bool SSRT::CustomInfo::IsAngularSizeCullingDisabled(CEntity *penModel) const
 
   // if found in cache
   return vector_Contains(ptdCachedTextures.aDisabledCulling, ptd);;
+}
+
+RgGeometryPrimaryVisibilityType SSRT::CustomInfo::GetModelMaskBit(const FLOAT3D &vPosition) const
+{
+  // a tree that must not be visible from the area with a pool and tower
+  if (eCurrentWorld == EWorld::ValleyOfTheKings && (vPosition - FLOAT3D(34, -41, -210.5f)).ManhattanNorm() < 10.0f)
+  {
+    return RgGeometryPrimaryVisibilityType::RG_GEOMETRY_VISIBILITY_TYPE_WORLD_2;
+  }
+
+  return RgGeometryPrimaryVisibilityType::RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0;
 }
 
 RgGeometryPrimaryVisibilityType SSRT::CustomInfo::GetBrushMaskBit(const CBrushPolygon *pPolygon) const
