@@ -77,6 +77,8 @@ public:
   bool IsOnlyReflectWaterAllowed() const;
   bool IsBrushSectorHazeIgnored(const CBrushSector *pSector) const;
   bool IsBrushSectorHazeForced(const CBrushSector *pSector) const;
+  // False, if position says it's not a ring model. Otherwise, *pOutState is: 0.0 - disabled, 1.0 - enable
+  bool GetActivatePlateState(const FLOAT3D &vPosition, float *pOutState) const;
 
   bool IsBrushIgnored(CEntity *penBrush) const;
   bool IsBrushSectorIgnored(const CBrushSector *pSector) const;
@@ -140,6 +142,7 @@ private:
   };
 
 private:
+  CWorld *pWorld;
   EWorld eCurrentWorld;
 
   bool bCheckOnlyZoningForBrushIgnored;

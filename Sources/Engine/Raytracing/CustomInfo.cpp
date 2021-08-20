@@ -25,6 +25,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Graphics/TextureEffects.h>
 #include <Engine/Raytracing/SSRTGlobals.h>
 #include <Engine/Raytracing/Scene.h>
+#include <Engine/World/WorldSettings.h>
 
 #include <Engine/Templates/Stock_CtextureData.h>
 
@@ -328,6 +329,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
 {
   ASSERT(pWorld != nullptr);
 
+  this->pWorld = pWorld;
   eCurrentWorld = GetWorldEnum(pWorld);
   
   // It's not the actual world start time, it's 
@@ -1402,6 +1404,56 @@ bool SSRT::CustomInfo::IsBrushSectorHazeForced(const CBrushSector *pSector) cons
   return eCurrentWorld == EWorld::Oasis && pSector->bsc_iInWorld == 64;
 }
 
+bool SSRT::CustomInfo::GetActivatePlateState(const FLOAT3D &vPosition, float *pOutState) const
+{
+  if (eCurrentWorld != EWorld::TheGreatPyramid)
+  {
+    return false;
+  }
+
+  const struct
+  {
+    FLOAT3D vRingModelPosition;
+    // look WorldBase::SetPyramidPlateActivateAlpha
+    INDEX iTextureBlendingID;
+  }
+  aActivationPlates[] =
+  {
+    // ring 1
+    { FLOAT3D(0, 216, -1264),   11 },
+    // ring 2
+    { FLOAT3D(144, 216, -1408), 12 },
+    // ring 3
+    { FLOAT3D(0, 216, -1552),   13 },
+    // ring 4
+    { FLOAT3D(-144, 216, -1408), 14 },
+  };
+
+  for (const auto &p : aActivationPlates)
+  {
+    if ((vPosition - p.vRingModelPosition).ManhattanNorm() < 1.0f)
+    {
+      CTextureBlending &tb = pWorld->wo_atbTextureBlendings[p.iTextureBlendingID];
+      
+      ASSERT(
+        tb.tb_strName == "Activated plate 1" ||
+        tb.tb_strName == "Activated plate 2" ||
+        tb.tb_strName == "Activated plate 3" ||
+        tb.tb_strName == "Activated plate 4"
+      );
+
+      UBYTE r, g, b;
+      ColorToRGB(tb.tb_colMultiply, r, g, b);
+      
+      *pOutState = r / 255.0f;
+      return true;
+    }
+  }
+
+  *pOutState = 0.0f;
+  return true;
+}
+
 bool SSRT::CustomInfo::HasLightEntityVertices(CEntity *pen) const
 {
   if (pen == nullptr)
@@ -1520,6 +1572,7 @@ void SSRT::CustomInfo::OnSkyBrushAdd(const SSRT::CBrushGeometry &brush)
   {
     // get alpha value
     fSkyCloudsOpacity = Clamp(brush.layerColors[iCloudsLayer](4), 0.0f, 1.0f);
+    fSkyCloudsOpacity = pow(fSkyCloudsOpacity, 0.5f);
   }
 }
 

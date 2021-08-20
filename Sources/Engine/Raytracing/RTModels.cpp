@@ -233,7 +233,6 @@ static void FlushModelInfo(ULONG entityID,
 
   if (pScene->GetCustomInfo()->IsMirror(reflectionTo))
   {
-    // TODO: only reflective + if polygon is not translucent (water texture on top of rock texture moon mountains)
     modelInfo.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_MIRROR;
     modelInfo.isRasterized = false;
 
@@ -275,7 +274,10 @@ static void FlushModelInfo(ULONG entityID,
   modelInfo.indexCount = indexCount;
   modelInfo.indices = pIndices;
 
-  modelInfo.color = { modelColor.r / 255.0f, modelColor.g / 255.0f, modelColor.b / 255.0f, modelColor.a / 255.0f };
+  modelInfo.color = Vector<FLOAT, 4>(modelColor.r, modelColor.g, modelColor.b, modelColor.a);
+  modelInfo.color /= 255.0f;
+ 
+  
   modelInfo.isReflective = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_REFLECTIONS || pScene->GetCustomInfo()->IsFullMetallicForced(to);
   modelInfo.isSpecular = rm.rm_pmmiMip->mmpi_ulLayerFlags & SRF_SPECULAR;
 
@@ -325,6 +327,22 @@ static void FlushModelInfo(ULONG entityID,
   {
     modelInfo.textures[0] = nullptr;
     modelInfo.isEmissive = true;
+
+    // for ring models IsEmissionForced is true
+    float fPlateActive;
+    if (pScene->GetCustomInfo()->GetActivatePlateState(modelInfo.absPosition, &fPlateActive))
+    {
+      // set emission colors
+      float hue = Lerp(0.02f, 0.33f, fPlateActive);
+
+      UBYTE r, g, b;
+      ColorToRGB(
+        HSVToColor((UBYTE)(Clamp<int>(hue * 255, 0, 255)), 255, 255),
+        r, g, b);
+
+      modelInfo.color = Vector<FLOAT, 4>(r, g, b , 255);
+      modelInfo.color /= 255.0f;
+    }
   }
 
 
