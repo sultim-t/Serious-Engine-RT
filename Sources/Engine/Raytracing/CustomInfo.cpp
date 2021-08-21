@@ -696,6 +696,8 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       {
         { 131 },
         { 132 },
+        { 1206 },
+        { 973 },
       };
       break;
 
@@ -828,6 +830,15 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       {
         { -32.5f, -30, -288 },
         { 71.5f, 25.5f, -288.5f },
+        { 4, -43.75f, -87.7813f },
+        { 0, -7.75f, -4 },
+        { -32.25f, -6.375f, -69.25f }
+      };
+      break;
+
+    case EWorld::Metropolis:
+      cutsceneLightPositions =
+      {
       };
       break;
   }
