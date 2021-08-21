@@ -821,6 +821,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       cutsceneLightPositions =
       {
         { 24.375f, -133.188f, -174.188f },
+        { 27, -119.5f, -410.5f }
       };
       break;
 
@@ -1067,6 +1068,17 @@ float SSRT::CustomInfo::GetRayLength(const FLOAT3D &vCameraPosition) const
   return 10000.0f;
 }
 
+bool SSRT::CustomInfo::IsNoWaterRefractionForced(const FLOAT3D &vCameraPosition) const
+{
+  // if in the first area of moon mountains, the waterfall should look like fully reflective
+  if (eCurrentWorld == EWorld::MoonMountains && vCameraPosition(3) > -154)
+  {
+    return true;
+  }
+
+  return false;
+}
+
 int SSRT::CustomInfo::GetCullingMaxSectorDepth() const
 {
   switch (_srtGlobals.srt_iCullingMaxSectorDepthQualityLevel)
@@ -1306,6 +1318,42 @@ bool SSRT::CustomInfo::AreDynamicTexCoordsIgnored(CEntity *penBrush) const
   return _srtGlobals.srt_bIgnoreDynamicTexCoords;
 }
 
+template<std::size_t S>
+static bool IsIndexInArray(const INDEX(&refArr)[S], INDEX iValue)
+{
+  for (INDEX a : refArr)
+  {
+    if (a == iValue)
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool SSRT::CustomInfo::DoesPolygonPreserveTheSameMedia(const CBrushPolygon *pPolygon) const
+{
+  const INDEX iPoly = pPolygon->bpo_iInWorld;
+
+  switch (eCurrentWorld)
+  {
+    case EWorld::MoonMountains:
+      return 
+        // flat waterfall in the first area
+        iPoly == 25 ||
+        // part of the second waterfall which is visible from cave area
+        (iPoly >= 2113 && iPoly <= 2125);
+
+    case EWorld::Oasis:
+      return 
+        // waterfall
+        iPoly >= 664 && iPoly <= 671;
+  }
+
+  return false;
+}
+
 static bool ptdCachedTextures_Check(CTextureData *pTd, const std::vector<CTextureData *> &aVec)
 {
   if (pTd != nullptr)
@@ -1437,61 +1485,35 @@ bool SSRT::CustomInfo::IsOnlyReflectWaterAllowed() const
 
 bool SSRT::CustomInfo::IsBrushSectorHazeIgnored(const CBrushSector *pSector) const
 {
-  const INDEX aValleyIgnoredSectors[] =
-  {
-    92, 96, 98, 114, 225, 187, 188, 292, 110, 291, 89, 543
-  };
-
-  const INDEX aSewersIgnoredSectors[] =
-  {
-    144, 36, 42, 43
-  };
-
-  const INDEX aKarnakIgnoredSectors[] =
-  {
-    44
-  };
+  // haze inside building
+  const INDEX aValleyIgnoredSectors[] = { 92, 96, 98, 114, 225, 187, 188, 292, 110, 291, 89, 543 };
+  // waterfall
+  const INDEX aOasisIgnoredSectors[] = { 62, 64 };
+  const INDEX aSewersIgnoredSectors[] = { 144, 36, 42, 43 };
+  // room with a heart
+  const INDEX aKarnakIgnoredSectors[] = { 44 };
 
   switch (eCurrentWorld)
   {
     case EWorld::ValleyOfTheKings:
-      for (INDEX i : aValleyIgnoredSectors)
-      {
-        if (i == pSector->bsc_iInWorld)
-        {
-          return true;
-        }
-      }
-      return false;
+      return IsIndexInArray(aValleyIgnoredSectors, pSector->bsc_iInWorld);
+
+    case EWorld::Oasis:
+      return IsIndexInArray(aOasisIgnoredSectors, pSector->bsc_iInWorld);
 
     case EWorld::Sewers:
-      for (INDEX i : aSewersIgnoredSectors)
-      {
-        if (i == pSector->bsc_iInWorld)
-        {
-          return true;
-        }
-      }
-      return false;
+      return IsIndexInArray(aSewersIgnoredSectors, pSector->bsc_iInWorld);
 
     case EWorld::Karnak:
-      for (INDEX i : aKarnakIgnoredSectors)
-      {
-        if (i == pSector->bsc_iInWorld)
-        {
-          return true;
-        }
-      }
-      return false;
-
-    default:
-      return false;
+      return IsIndexInArray(aKarnakIgnoredSectors, pSector->bsc_iInWorld);
   }
+  
+  return false;
 }
 
 bool SSRT::CustomInfo::IsBrushSectorHazeForced(const CBrushSector *pSector) const
 {
-  return eCurrentWorld == EWorld::Oasis && pSector->bsc_iInWorld == 64;
+  return false; // eCurrentWorld == EWorld::Oasis && pSector->bsc_iInWorld == 64; // inside cave
 }
 
 bool SSRT::CustomInfo::GetActivatePlateState(const FLOAT3D &vPosition, float *pOutState) const

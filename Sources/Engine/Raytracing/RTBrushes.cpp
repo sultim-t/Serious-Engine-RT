@@ -136,18 +136,41 @@ static RgGeometryMaterialBlendType RT_GetMaterialBlendType(UBYTE layerBlendingTy
 #define IGNORE_BRUSH_COLOR 1
 
 
-static void RT_FlushBrushInfo(CEntity *penBrush,
-                              uint32_t brushPartIndex,
-                              CBrushPolygonTexture *const textures[MAX_BRUSH_TEXTURE_COUNT],
-                              uint32_t polygonFlags,
-                              const RT_TextureLayerBlending &blending,
-                              bool hasScrollingTextures,
-                              bool isWater,
-                              RgGeometryPrimaryVisibilityType maskBit,
-                              bool onlyRasterized,
-                              bool isMirror,
-                              bool isWarpPortal,
-                              SSRT::Scene *pScene)
+struct BrushFlushInfo
+{
+  CBrushPolygonTexture *textures[MAX_BRUSH_TEXTURE_COUNT];
+  uint32_t polygonFlags;
+  RT_TextureLayerBlending blending;
+  bool hasScrollingTextures;
+  RgGeometryPrimaryVisibilityType maskBit;
+  bool isWater;
+  bool isMirror;
+  bool isWarpPortal;
+  bool noMediaChangeOnRefraction;
+  COLOR lastColor;
+
+  explicit BrushFlushInfo()
+  {
+    blending = {};
+    for (INDEX i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
+    {
+      textures[i] = nullptr;
+      blending.layerColor[i] = C_WHITE | CT_OPAQUE;
+      blending.layerBlendingType[i] = STXF_BLEND_OPAQUE;
+    }
+    polygonFlags = UINT32_MAX;
+    hasScrollingTextures = false;
+    maskBit = RgGeometryPrimaryVisibilityType::RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0;
+    isWater = false;
+    isMirror = false;
+    isWarpPortal = false;
+    noMediaChangeOnRefraction = false;
+    lastColor = C_WHITE | CT_OPAQUE;
+  }
+};
+
+
+static void RT_FlushBrushInfo(CEntity *penBrush, uint32_t brushPartIndex, const BrushFlushInfo &f, bool onlyRasterized, SSRT::Scene *pScene)
 {
   if (RT_AllSectorVertices.Count() == 0 || RT_AllSectorIndices.Count() == 0)
   {
@@ -162,10 +185,10 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   bool isRasterizedSky = isSky;
 
   bool isRasterized =
-    (!isWater && RT_ShouldBeRasterized(polygonFlags)) ||
+    (!f.isWater && RT_ShouldBeRasterized(f.polygonFlags)) ||
     isRasterizedSky;
 
-  if (isMirror)
+  if (f.isMirror)
   {
     isRasterized = false;
   }
@@ -186,7 +209,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   SSRT::CBrushGeometry brushInfo = {};
   brushInfo.entityID = penBrush->en_ulID;
   brushInfo.isMovable = isMovable;
-  brushInfo.passThroughType = RT_GetPassThroughType(polygonFlags, isMirror, isWarpPortal, isWater, pScene);
+  brushInfo.passThroughType = RT_GetPassThroughType(f.polygonFlags, f.isMirror, f.isWarpPortal, f.isWater, pScene);
   brushInfo.isSky = isSky;
   
   brushInfo.isRasterized = isRasterized;
@@ -212,7 +235,7 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   brushInfo.indices = &RT_AllSectorIndices[0];
 
   brushInfo.brushPartIndex = brushPartIndex;
-  brushInfo.hasScrollingTextures = hasScrollingTextures;
+  brushInfo.hasScrollingTextures = f.hasScrollingTextures;
 
   brushInfo.isEmissive = false;
 
@@ -222,12 +245,12 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   {
     ASSERT(RT_AllSectorTexCoords[iSrcIndex].Count() == RT_AllSectorVertices.Count());
 
-    if (textures[iSrcIndex] == nullptr)
+    if (f.textures[iSrcIndex] == nullptr)
     {
       continue;
     }
 
-    CTextureObject &to = textures[iSrcIndex]->bpt_toTexture;
+    CTextureObject &to = f.textures[iSrcIndex]->bpt_toTexture;
     CTextureData *td = (CTextureData *)to.GetData();
 
     if (td == nullptr)
@@ -243,10 +266,10 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
     brushInfo.textureFrames[iDstIndex] = to.GetFrame();
       
     // layer blending
-    auto blendType = RT_GetMaterialBlendType(blending.layerBlendingType[iSrcIndex]);
+    auto blendType = RT_GetMaterialBlendType(f.blending.layerBlendingType[iSrcIndex]);
 
     // layer color
-    GFXColor gcolor = GFXColor(blending.layerColor[iSrcIndex]);
+    GFXColor gcolor = GFXColor(f.blending.layerColor[iSrcIndex]);
     Vector<FLOAT, 4> fcolor = { (float)gcolor.r, (float)gcolor.g , (float)gcolor.b, (float)gcolor.a };
     fcolor /= 255.0f;
 
@@ -280,7 +303,9 @@ static void RT_FlushBrushInfo(CEntity *penBrush,
   brushInfo.blendEnable = false;
   brushInfo.blendSrc = brushInfo.blendDst = RG_BLEND_FACTOR_ONE;
 
-  brushInfo.visibilityType = maskBit;
+  brushInfo.visibilityType = f.maskBit;
+
+  brushInfo.noMediaChangeOnRefraction = f.noMediaChangeOnRefraction;
 
   pScene->AddBrush(brushInfo);
 }
@@ -309,7 +334,7 @@ static void RT_UpdateBrushTexCoords(CEntity *penBrush, uint32_t brushPartIndex, 
 }
 
 
-static bool RT_AreTexturesSame(CBrushPolygonTexture *const pPrevTextures[MAX_BRUSH_TEXTURE_COUNT],
+static bool RT_AreTexturesSame(CBrushPolygonTexture *pPrevTextures[MAX_BRUSH_TEXTURE_COUNT],
                                CBrushPolygonTexture curTextures[MAX_BRUSH_TEXTURE_COUNT])
 {
   CTextureData *cur[MAX_BRUSH_TEXTURE_COUNT];
@@ -383,10 +408,10 @@ static void RT_ProcessPositions(const CBrushPolygon &polygon, GFXVertex *vertice
 static void RT_ProcessNormals(const CBrushPolygon &polygon, uint32_t vertCount)
 {
   GFXNormal *normals = RT_AllSectorNormals.Push(vertCount);
+  float *planeNormal = polygon.bpo_pbplPlane->bpl_plRelative.vector;
 
   for (INDEX i = 0; i < vertCount; i++)
   {
-    float *planeNormal = polygon.bpo_pbplPlane->bpl_plRelative.vector;
     normals[i].nx = planeNormal[0];
     normals[i].ny = planeNormal[1];
     normals[i].nz = planeNormal[2];
@@ -561,30 +586,17 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
 
 
   // keep last rendered info, to batch geometry
-  CBrushPolygonTexture *pLastTextures[MAX_BRUSH_TEXTURE_COUNT] = {};
-  COLOR lastColor = C_WHITE | CT_OPAQUE;
-  uint32_t lastFlags = UINT32_MAX;
-  bool lastHasSrollingTextures = false;
-  bool lastIsWater = false;
-  RT_TextureLayerBlending lastBlending = {};
-  for (INDEX i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
-  {
-    lastBlending.layerColor[i] = C_WHITE | CT_OPAQUE;
-    lastBlending.layerBlendingType[i] = STXF_BLEND_OPAQUE;
-  }
-  RgGeometryPrimaryVisibilityType lastBrushMaskBit = RgGeometryPrimaryVisibilityType::RG_GEOMETRY_VISIBILITY_TYPE_WORLD_0;
-  bool lastIsMirror = false;
-  bool lastIsWarpPortal = false;
+  BrushFlushInfo lastInfo = BrushFlushInfo();
 
 
   auto flushLastSavedInfo = [&] ()
   {
     if (!onlyTexCoords)
     {
-      RT_FlushBrushInfo(penBrush, RT_BrushPartIndex, pLastTextures, lastFlags, lastBlending, lastHasSrollingTextures, lastIsWater, lastBrushMaskBit, onlyRasterized, lastIsMirror, lastIsWarpPortal, pScene);
+      RT_FlushBrushInfo(penBrush, RT_BrushPartIndex, lastInfo, onlyRasterized, pScene);
     }
     // update tex coords only for scrolling textures
-    else if (lastHasSrollingTextures)
+    else if (lastInfo.hasScrollingTextures)
     {
       RT_UpdateBrushTexCoords(penBrush, RT_BrushPartIndex, pScene);
     }
@@ -736,15 +748,19 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
   #pragma endregion
 
 
+    bool noMediaChange = pScene->GetCustomInfo()->DoesPolygonPreserveTheSameMedia(&polygon);
+
+
     // if settings are different
     bool mustBeFlushed =
-      !RT_AreTexturesSame(pLastTextures, polygon.bpo_abptTextures) ||
-      !RT_AreBlendingsSame(lastBlending, curBlending) ||
-      lastFlags != polygonFlags ||
-      lastHasSrollingTextures != hasScrollingTextures ||
-      lastBrushMaskBit != maskBit ||
-      lastIsMirror != isMirror ||
-      lastIsWarpPortal != isWarpPortal;
+      !RT_AreTexturesSame(lastInfo.textures, polygon.bpo_abptTextures) ||
+      !RT_AreBlendingsSame(lastInfo.blending, curBlending) ||
+      lastInfo.polygonFlags != polygonFlags ||
+      lastInfo.hasScrollingTextures != hasScrollingTextures ||
+      lastInfo.maskBit != maskBit ||
+      lastInfo.isMirror != isMirror ||
+      lastInfo.isWarpPortal != isWarpPortal ||
+      lastInfo.noMediaChangeOnRefraction != noMediaChange;
 
     if (mustBeFlushed)
     {
@@ -771,25 +787,27 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
       RT_ProcessIndices(polygon, firstVertexId);
     }
 
+
     // rewrite last info
-    lastFlags = polygonFlags;
-    lastBlending = curBlending;
-    lastHasSrollingTextures = hasScrollingTextures;
-    lastIsWater = isWaterPolygon;
-    lastBrushMaskBit = maskBit;
-    lastIsMirror = isMirror;
-    lastIsWarpPortal = isWarpPortal;
+    lastInfo.polygonFlags = polygonFlags;
+    lastInfo.blending = curBlending;
+    lastInfo.hasScrollingTextures = hasScrollingTextures;
+    lastInfo.isWater = isWaterPolygon;
+    lastInfo.maskBit = maskBit;
+    lastInfo.isMirror = isMirror;
+    lastInfo.isWarpPortal = isWarpPortal;
+    lastInfo.noMediaChangeOnRefraction = noMediaChange;
     for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
     {
-      pLastTextures[i] = &polygon.bpo_abptTextures[i];
+      lastInfo.textures[i] = &polygon.bpo_abptTextures[i];
 
-      auto *td = (CTextureData *)pLastTextures[i]->bpt_toTexture.GetData();
+      auto *td = (CTextureData *)lastInfo.textures[i]->bpt_toTexture.GetData();
 
       if (td != nullptr)
       {
         // set new local params for the texture
-        td->td_tpLocal.tp_eWrapU = pLastTextures[i]->s.bpt_ubFlags & BPTF_CLAMPU ? GFX_CLAMP : GFX_REPEAT;
-        td->td_tpLocal.tp_eWrapV = pLastTextures[i]->s.bpt_ubFlags & BPTF_CLAMPV ? GFX_CLAMP : GFX_REPEAT;
+        td->td_tpLocal.tp_eWrapU = lastInfo.textures[i]->s.bpt_ubFlags & BPTF_CLAMPU ? GFX_CLAMP : GFX_REPEAT;
+        td->td_tpLocal.tp_eWrapV = lastInfo.textures[i]->s.bpt_ubFlags & BPTF_CLAMPV ? GFX_CLAMP : GFX_REPEAT;
       }
     }
   }

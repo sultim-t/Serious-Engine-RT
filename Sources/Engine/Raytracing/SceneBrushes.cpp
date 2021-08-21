@@ -94,6 +94,8 @@ void SSRT::SceneBrushes::RegisterBrush(const CBrushGeometry &brush)
       pTextureUploader->GetMaterial(brush.textures[2], brush.textureFrames[2]),
     };
 
+    stInfo.flags = brush.noMediaChangeOnRefraction ? RG_GEOMETRY_UPLOAD_NO_MEDIA_CHANGE_ON_REFRACT_BIT : 0;
+
     Utils::CopyTransform(stInfo.transform, brush);
 
     RgResult r = rgUploadGeometry(instance, &stInfo);

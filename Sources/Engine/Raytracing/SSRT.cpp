@@ -51,6 +51,11 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user INDEX srt_bIgnoreWaterEffectTextureUpdates;", &_srtGlobals.srt_bIgnoreWaterEffectTextureUpdates);
 
   _pShell->DeclareSymbol("persistent user INDEX srt_iReflMaxDepth;", &_srtGlobals.srt_iReflMaxDepth);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bReflRefrShadows;", &_srtGlobals.srt_bReflRefrShadows);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bReflRefrToIndirect;", &_srtGlobals.srt_bReflRefrToIndirect);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fReflRefrIndexOfRefractionGlass;", &_srtGlobals.srt_fReflRefrIndexOfRefractionGlass);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fReflRefrIndexOfRefractionWater;", &_srtGlobals.srt_fReflRefrIndexOfRefractionWater);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fReflRefrWaterDensityMultiplier;", &_srtGlobals.srt_fReflRefrWaterDensityMultiplier);
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorMultiplier;", &_srtGlobals.srt_fSkyColorMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorSaturation;", &_srtGlobals.srt_fSkyColorSaturation);
@@ -498,7 +503,13 @@ void SSRT::SSRTMain::EndFrame()
   rflParams.maxReflectRefractDepth = _srtGlobals.srt_iReflMaxDepth;
   FLOAT3D vPortalDiff = currentScene == nullptr ? FLOAT3D(0, 0, 0) : currentScene->GetNearestToCameraPortalDiff();
   rflParams.portalInputToOutputDiff = { vPortalDiff(1), vPortalDiff(2), vPortalDiff(3) };
-  rflParams.typeOfMediaAroundCamera = currentScene != nullptr && currentScene->IsCameraInHaze() ? RG_MEDIA_TYPE_WATER : RG_MEDIA_TYPE_VACUUM;
+  rflParams.typeOfMediaAroundCamera = (currentScene != nullptr && currentScene->IsCameraInHaze()) ? RG_MEDIA_TYPE_WATER : RG_MEDIA_TYPE_VACUUM;
+  rflParams.reflectRefractCastShadows = _srtGlobals.srt_bReflRefrShadows;
+  rflParams.reflectRefractToIndirect = _srtGlobals.srt_bReflRefrToIndirect;
+  rflParams.indexOfRefractionGlass = _srtGlobals.srt_fReflRefrIndexOfRefractionGlass;
+  rflParams.indexOfRefractionWater = _srtGlobals.srt_fReflRefrIndexOfRefractionWater;
+  rflParams.waterDensityMultiplier = _srtGlobals.srt_fReflRefrWaterDensityMultiplier;
+  rflParams.forceNoWaterRefraction = currentScene == nullptr ? false : currentScene->GetCustomInfo()->IsNoWaterRefractionForced(currentScene->GetCameraPosition());
 
 
   RgDrawFrameInfo frameInfo = {};

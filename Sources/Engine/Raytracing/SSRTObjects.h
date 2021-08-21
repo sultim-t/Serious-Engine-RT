@@ -112,6 +112,8 @@ struct CBrushGeometry : public CAbstractGeometry
 
   bool                isRasterized;
 
+  bool                noMediaChangeOnRefraction;
+
 public:
   static uint64_t GetBrushUniqueID(ULONG entityID, uint32_t brushPartIndex);
   uint64_t GetUniqueID() const override;

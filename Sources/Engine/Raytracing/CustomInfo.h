@@ -87,11 +87,13 @@ public:
   bool IsBrushSectorIgnored(const CBrushSector *pSector) const;
   bool IsBrushPolygonIgnored(const CBrushPolygon *pPolygon) const;
   bool AreDynamicTexCoordsIgnored(CEntity *penBrush) const;
+  bool DoesPolygonPreserveTheSameMedia(const CBrushPolygon *pPolygon) const;
   
   RgGeometryPrimaryVisibilityType GetModelMaskBit(const FLOAT3D &vPosition) const;
   RgGeometryPrimaryVisibilityType GetBrushMaskBit(const CBrushPolygon *pPolygon) const;
   uint32_t GetCullMask(const FLOAT3D &vCameraPosition) const;
   float GetRayLength(const FLOAT3D &vCameraPosition) const;
+  bool IsNoWaterRefractionForced(const FLOAT3D &vCameraPosition) const;
 
   bool IsDirectionalLightIgnored(const CLightSource *plsLight) const;
   bool IsSphericalLightIgnored(const CLightSource *plsLight) const;

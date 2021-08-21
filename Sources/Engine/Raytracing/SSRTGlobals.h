@@ -38,6 +38,11 @@ struct SSRTGlobals
   INDEX srt_bIgnoreWaterEffectTextureUpdates = 0;
 
   INDEX srt_iReflMaxDepth = 2;
+  bool  srt_bReflRefrShadows = 0;
+  bool  srt_bReflRefrToIndirect = 0;
+  FLOAT srt_fReflRefrIndexOfRefractionGlass = 1.1f;
+  FLOAT srt_fReflRefrIndexOfRefractionWater = 1.33f;
+  FLOAT srt_fReflRefrWaterDensityMultiplier = 2.0f;
 
   INDEX srt_bLightFixWithModels = 1;
   INDEX srt_bLightFixWithTranslucent = 0;
