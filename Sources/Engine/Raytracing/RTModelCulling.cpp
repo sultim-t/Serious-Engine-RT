@@ -364,7 +364,7 @@ static void RT_AddZoningSectorsAroundEntity(CEntity *pen, SSRT::Scene *pScene)
       {
         FOREACHDSTOFSRC(pbpo->bpo_rsOtherSideSectors, CBrushSector, bsc_rdOtherSidePortals, pbscRelated)
           // if the sector is not active
-          if (!pbscRelated->bsc_lnInActiveSectors.IsLinked())
+          if (!pbscRelated->bsc_lnInActiveSectors.IsLinked() && RT_umBrushSectorDepth.find(pbscRelated) == RT_umBrushSectorDepth.end())
           {
             // if the view sphere is in the sector
             // if (pbscRelated->bsc_bspBSPTree.TestSphere(re_vdViewSphere, re_dViewSphereR) >= 0)
@@ -373,7 +373,6 @@ static void RT_AddZoningSectorsAroundEntity(CEntity *pen, SSRT::Scene *pScene)
               lhToAdd.AddTail(pbscRelated->bsc_lnInActiveSectors);
 
               // RT: increase depth for the related sector, if it's not too thin
-              ASSERT(RT_umBrushSectorDepth.find(pbscRelated) == RT_umBrushSectorDepth.end());
               RT_umBrushSectorDepth[pbscRelated] = isThin ? iDepth : iDepth + 1;
             }
           }

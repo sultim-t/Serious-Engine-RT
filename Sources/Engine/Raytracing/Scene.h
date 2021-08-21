@@ -56,6 +56,7 @@ public:
 
   void ProcessFirstPersonModel(const CFirstPersonModelInfo &info, ULONG entityId);
   void Update(const CWorldRenderingInfo &info);
+  void ResetOnGameStop();
 
   const CTString &GetWorldName() const;
   const CWorld *GetWorld() const;

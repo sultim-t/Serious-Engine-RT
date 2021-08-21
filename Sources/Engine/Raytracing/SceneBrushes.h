@@ -45,6 +45,8 @@ public:
   // Called each frame
   void Update(CEntity *pBrushEntity, Scene *pScene);
 
+  void ResetOnGameStop();
+
 private:
   void RegisterBrushTextures(const CBrushGeometry &brush);
 
@@ -78,6 +80,7 @@ private:
   std::map<ULONG, std::vector<uint64_t>>  entityToMovableBrush;
   // Used to check if movable brush actually moved
   std::map<ULONG, MovableState>           entityToMovableBrushPlacement;
+  bool                                    bRefreshMovableStates;
 
   // True, if entity with that ID (key) has effect or aniamated texture.
   // Used for updating it every frame, as brushes are processed only once.

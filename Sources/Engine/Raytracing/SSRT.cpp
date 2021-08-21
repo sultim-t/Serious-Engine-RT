@@ -531,6 +531,16 @@ void SSRT::SSRTMain::EndFrame()
   isFrameStarted = false;
 }
 
+void SSRT::SSRTMain::NotifyGameStopped()
+{
+  if (currentScene != nullptr)
+  {
+    currentScene->ResetOnGameStop();
+  }
+
+  wasWorldProcessed = false;
+}
+
 void SSRT::SSRTMain::SetProjectionMatrix(const float *pMatrix)
 {
   memcpy(projMatrix, pMatrix, 16 * sizeof(float));

@@ -31,7 +31,7 @@ extern SSRT::SSRTGlobals _srtGlobals;
 
 
 SSRT::SceneBrushes::SceneBrushes(RgInstance _instance, CWorld *_pWorld, TextureUploader *_pTextureUploader)
-  : instance(_instance), pTextureUploader(_pTextureUploader)
+  : instance(_instance), pTextureUploader(_pTextureUploader), bRefreshMovableStates(false)
 {
 }
 
@@ -308,40 +308,43 @@ void SSRT::SceneBrushes::UpdateMovableBrush(CEntity *pBrushEntity)
   const auto f = entityToMovableBrushPlacement.find(entityId);
   MovableState *movableState = nullptr;
 
-  if (f != entityToMovableBrushPlacement.end())
+  if (!bRefreshMovableStates)
   {
-    movableState = &f->second;
-
-    // if should be and was hidden
-    if (isHidden && movableState->isHidden)
+    if (f != entityToMovableBrushPlacement.end())
     {
-      return;
-    }
+      movableState = &f->second;
 
-    // if shouldn't be and wasn't hidden, check the placements
-    if (!isHidden && !movableState->isHidden)
-    {
-      if (ArePlacementsSame(movableState->placement, pl))
+      // if should be and was hidden
+      if (isHidden && movableState->isHidden)
       {
-        // if it wasn't moving in prev frame, skip it
-        if (!movableState->wasMoving)
+        return;
+      }
+
+      // if shouldn't be and wasn't hidden, check the placements
+      if (!isHidden && !movableState->isHidden)
+      {
+        if (ArePlacementsSame(movableState->placement, pl))
         {
-          return;
-        }
+          // if it wasn't moving in prev frame, skip it
+          if (!movableState->wasMoving)
+          {
+            return;
+          }
 
-        // if it was, then mark it
-        movableState->wasMoving = false;
-      }
-      else
-      {
-        movableState->wasMoving = true;
+          // if it was, then mark it
+          movableState->wasMoving = false;
+        }
+        else
+        {
+          movableState->wasMoving = true;
+        }
       }
     }
-  }
-  else
-  {
-    // create and get pointer
-    movableState = &entityToMovableBrushPlacement[entityId];
+    else
+    {
+      // create and get pointer
+      movableState = &entityToMovableBrushPlacement[entityId];
+    }
   }
 
   if (!isHidden)
@@ -407,4 +410,12 @@ void SSRT::SceneBrushes::Update(CEntity *pBrushEntity, Scene *pScene)
   {
     UpdateMovableBrush(pBrushEntity);
   }
+
+
+  bRefreshMovableStates = false;
+}
+
+void SSRT::SceneBrushes::ResetOnGameStop()
+{
+  bRefreshMovableStates = true;
 }

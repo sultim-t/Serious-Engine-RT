@@ -626,17 +626,18 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
       CMirrorParameters mirrorParams;
       BOOL bSuccess = penBrush->GetMirror(iMirrorType, mirrorParams);
 
-      // warp portal
-      if (mirrorParams.mp_ulFlags & MPF_WARP)
+      if (bSuccess)
       {
-        isWarpPortal = true;
-
-        pScene->AddWarpPortal(penBrush, iMirrorType);
-      }
-      // mirror
-      else
-      {
-        isMirror = true;
+        // warp portal
+        if (mirrorParams.mp_ulFlags & MPF_WARP)
+        {
+          isWarpPortal = true;
+        }
+        // mirror
+        else
+        {
+          isMirror = true;
+        }
       }
     }
   #pragma endregion
@@ -901,6 +902,23 @@ void RT_UpdateBrushNonStaticTexture(CEntity *penBrush, SSRT::Scene *scene)
         for (uint32_t iPoly = 0; iPoly < bscSector.bsc_abpoPolygons.Count(); iPoly++)
         {
           CBrushPolygon &poly = bscSector.bsc_abpoPolygons[iPoly];
+
+          // TODO: rename RT_UpdateBrushNonStaticTexture function
+          {
+            INDEX iMirrorType = poly.bpo_bppProperties.bpp_ubMirrorType;
+            // if mirror
+            if (iMirrorType != 0)
+            {
+              CMirrorParameters mirrorParams;
+              BOOL bSuccess = penBrush->GetMirror(iMirrorType, mirrorParams);
+
+              // warp portal
+              if (bSuccess && mirrorParams.mp_ulFlags & MPF_WARP)
+              {
+                scene->AddWarpPortal(penBrush, iMirrorType);
+              }
+            }
+          }
 
           for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
           {

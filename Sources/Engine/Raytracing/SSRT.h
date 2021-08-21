@@ -50,6 +50,7 @@ public:
   void ProcessHudElement(const CHudElementInfo &hud);
 
   void EndFrame();
+  void NotifyGameStopped();
 
   // Functions for GFX wrapper
   void SetProjectionMatrix(const float *pMatrix);

@@ -1578,6 +1578,9 @@ void CNetworkLibrary::StopGame(void)
   ga_World.DeletePredictors();
   ga_World.Clear();
 
+  // bad way to notify RT about loading save
+  _pGfx->NotifyGameStoppedSafe_RayTracing();
+
   // free default state if existing
   if (ga_pubDefaultState!=NULL) {
     FreeMemory(ga_pubDefaultState);

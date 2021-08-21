@@ -87,11 +87,19 @@ void SSRT::Scene::Update(const CWorldRenderingInfo &info)
   firstPersonFlashlight.isAdded = false;
   thirdPersonFlashlight.isAdded = false;
 
+  warpPortals.clear();
+
   pCustomInfo->Update(this->cameraPosition);
 
   // upload dynamic geometry (models)
   // and scan for movable geometry
   ProcessDynamicGeometry();
+}
+
+void SSRT::Scene::ResetOnGameStop()
+{
+  warpPortals.clear();
+  pSceneBrushes->ResetOnGameStop();
 }
 
 const CTString &SSRT::Scene::GetWorldName() const

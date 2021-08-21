@@ -595,6 +595,12 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
         // hide terrain part when inside (in the area with pool and tower)
         { 34, RG_GEOMETRY_VISIBILITY_TYPE_WORLD_2 }
       };
+
+      brushSectorsToIgnore =
+      {
+        { 566 }
+      };
+
       break;
 
     case EWorld::MoonMountains:

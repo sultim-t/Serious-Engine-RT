@@ -268,3 +268,11 @@ void CGfxLibrary::SetViewport_RayTracing(float leftUpperX, float leftUpperY, flo
 
   gl_SSRT->SetViewport(leftUpperX, leftUpperY, width, height, minDepth, maxDepth);
 }
+
+void CGfxLibrary::NotifyGameStoppedSafe_RayTracing()
+{
+  if (gl_eCurrentAPI == GAT_RT && gl_SSRT != nullptr)
+  {
+    gl_SSRT->NotifyGameStopped();
+  }
+}
