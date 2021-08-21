@@ -2511,12 +2511,12 @@ CTString CGame::GetDefaultGameDescription(BOOL bWithInfo)
   time(&long_time);
   newtime = localtime(&long_time);
 
-  setlocale(LC_ALL, "");
+  //setlocale(LC_ALL, "");
   CTString strTimeline;
   char achTimeLine[256]; 
   strftime( achTimeLine, sizeof(achTimeLine)-1, "%a %x %H:%M", newtime);
   strTimeline = achTimeLine;
-  setlocale(LC_ALL, "C");
+  //setlocale(LC_ALL, "C");
 
   strDescription.PrintF( "%s - %s", TranslateConst(_pNetwork->ga_World.GetName(), 0), strTimeline);
 

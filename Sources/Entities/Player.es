@@ -3214,6 +3214,7 @@ functions:
     else
     {
       // RT: flashlight must be disabled otherwise
+      _pShell->SetINDEX("srt_bFlashlightEnable", 0);
       ctl_bFlashlight = 0;
     }
 
