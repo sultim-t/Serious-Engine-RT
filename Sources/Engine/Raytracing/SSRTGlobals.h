@@ -42,7 +42,9 @@ struct SSRTGlobals
   bool  srt_bReflRefrToIndirect = 0;
   FLOAT srt_fReflRefrIndexOfRefractionGlass = 1.1f;
   FLOAT srt_fReflRefrIndexOfRefractionWater = 1.33f;
-  FLOAT srt_fReflRefrWaterDensityMultiplier = 2.0f;
+  FLOAT srt_fWaterDensityMultiplier = 6.0f;
+  FLOAT srt_fWaterSpeed = 1.0f;
+  FLOAT srt_fWaterNormalStrength = 1.0f;
 
   INDEX srt_bLightFixWithModels = 1;
   INDEX srt_bLightFixWithTranslucent = 0;

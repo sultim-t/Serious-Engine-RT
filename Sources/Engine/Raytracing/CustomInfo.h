@@ -94,6 +94,7 @@ public:
   uint32_t GetCullMask(const FLOAT3D &vCameraPosition) const;
   float GetRayLength(const FLOAT3D &vCameraPosition) const;
   bool IsNoWaterRefractionForced(const FLOAT3D &vCameraPosition) const;
+  bool IsNoBackfaceReflForNoMediaChange(const FLOAT3D &vCameraPosition) const;
 
   bool IsDirectionalLightIgnored(const CLightSource *plsLight) const;
   bool IsSphericalLightIgnored(const CLightSource *plsLight) const;

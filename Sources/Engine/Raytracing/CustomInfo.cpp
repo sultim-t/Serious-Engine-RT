@@ -1079,6 +1079,21 @@ bool SSRT::CustomInfo::IsNoWaterRefractionForced(const FLOAT3D &vCameraPosition)
   return false;
 }
 
+bool SSRT::CustomInfo::IsNoBackfaceReflForNoMediaChange(const FLOAT3D &vCameraPosition) const
+{
+  switch (eCurrentWorld)
+  {
+    case EWorld::MoonMountains:
+      // TODO
+      return false;
+
+    case EWorld::Oasis:
+      return true;
+  }
+
+  return false;
+}
+
 int SSRT::CustomInfo::GetCullingMaxSectorDepth() const
 {
   switch (_srtGlobals.srt_iCullingMaxSectorDepthQualityLevel)

@@ -55,7 +55,9 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user INDEX srt_bReflRefrToIndirect;", &_srtGlobals.srt_bReflRefrToIndirect);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fReflRefrIndexOfRefractionGlass;", &_srtGlobals.srt_fReflRefrIndexOfRefractionGlass);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fReflRefrIndexOfRefractionWater;", &_srtGlobals.srt_fReflRefrIndexOfRefractionWater);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fReflRefrWaterDensityMultiplier;", &_srtGlobals.srt_fReflRefrWaterDensityMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fWaterDensityMultiplier;", &_srtGlobals.srt_fWaterDensityMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fWaterSpeed;", &_srtGlobals.srt_fWaterSpeed);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fWaterNormalStrength;", &_srtGlobals.srt_fWaterNormalStrength);
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorMultiplier;", &_srtGlobals.srt_fSkyColorMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorSaturation;", &_srtGlobals.srt_fSkyColorSaturation);
@@ -238,8 +240,9 @@ SSRT::SSRTMain::SSRTMain() :
 {
   extern CTFileName _fnmApplicationPath;
   const CTFileName overridenTexturesPath = _fnmApplicationPath + "OverridenTextures\\Compressed\\";
-  const CTFileName blueNoiseFilePath = _fnmApplicationPath + "OverridenTextures\\BlueNoise_LDR_RGBA_128.ktx2";
   const CTFileName shadersPath = _fnmApplicationPath + "Sources\\RTGL1\\Build\\";
+  const CTFileName blueNoiseFilePath = _fnmApplicationPath + "OverridenTextures\\BlueNoise_LDR_RGBA_128.ktx2";
+  const CTFileName waterNormalPath = _fnmApplicationPath + "OverridenTextures\\WaterNormal_n.ktx2";
 
   extern HWND _hwndMain;
 
@@ -278,6 +281,8 @@ SSRT::SSRTMain::SSRTMain() :
   info.overridenAlbedoAlphaTextureIsSRGB = RG_TRUE;
   info.overridenRoughnessMetallicEmissionTextureIsSRGB = RG_FALSE;
   info.overridenNormalTextureIsSRGB = RG_FALSE;
+
+  info.pWaterNormalTexturePath = waterNormalPath;
 
   info.pWin32SurfaceInfo = &win32SurfaceInfo;
 
@@ -508,8 +513,11 @@ void SSRT::SSRTMain::EndFrame()
   rflParams.reflectRefractToIndirect = _srtGlobals.srt_bReflRefrToIndirect;
   rflParams.indexOfRefractionGlass = _srtGlobals.srt_fReflRefrIndexOfRefractionGlass;
   rflParams.indexOfRefractionWater = _srtGlobals.srt_fReflRefrIndexOfRefractionWater;
-  rflParams.waterDensityMultiplier = _srtGlobals.srt_fReflRefrWaterDensityMultiplier;
+  rflParams.waterDensityMultiplier = _srtGlobals.srt_fWaterDensityMultiplier;
+  rflParams.waterWaveSpeed = _srtGlobals.srt_fWaterSpeed;
+  rflParams.waterWaveNormalStrength = _srtGlobals.srt_fWaterNormalStrength;
   rflParams.forceNoWaterRefraction = currentScene == nullptr ? false : currentScene->GetCustomInfo()->IsNoWaterRefractionForced(currentScene->GetCameraPosition());
+  rflParams.disableBackfaceReflectionsForNoMediaChange = currentScene == nullptr ? false : currentScene->GetCustomInfo()->IsNoBackfaceReflForNoMediaChange(currentScene->GetCameraPosition());
 
 
   RgDrawFrameInfo frameInfo = {};
