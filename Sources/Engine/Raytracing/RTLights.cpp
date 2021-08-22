@@ -526,6 +526,11 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *pScene)
   {
     bool isDynamic = (plsLight->ls_ulFlags & LSF_DYNAMIC) || pScene->GetCustomInfo()->IsLightForceDynamic(plsLight);
 
+    if (isDynamic && pScene->GetCustomInfo()->IsDynamicSphericalLightIgnored(plsLight))
+    {
+      return;
+    }
+
     if (!isDynamic && pScene->GetCustomInfo()->IsSphericalLightIgnored(plsLight))
     {
       // add it to the list of ignored lights, it will be used

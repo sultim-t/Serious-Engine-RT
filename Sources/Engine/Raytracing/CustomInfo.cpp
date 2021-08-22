@@ -761,8 +761,16 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     case EWorld::Luxor:
       brushPolygonsToIgnore =
       {
+        // left area secret
         { 903 },
         { 1906 },
+        // right area secret
+        { 854 },
+        { 878 },
+        { 856 },
+        { 857 },
+        // secret ammo
+        { 1374 },
       };
 
       brushPolygonsToMask =
@@ -843,9 +851,11 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       };
       break;
 
-    case EWorld::Metropolis:
+    case EWorld::Luxor:
       cutsceneLightPositions =
       {
+        { -3.13968f, 22.5902f, 11.6911f },
+        { -2.96487f, 22.0902f, -12.2622f },
       };
       break;
   }
@@ -1248,6 +1258,31 @@ bool SSRT::CustomInfo::IsSphericalLightIgnored(const CLightSource *plsLight) con
   }*/
 
   return true;
+}
+
+bool SSRT::CustomInfo::IsDynamicSphericalLightIgnored(const CLightSource *plsLight) const
+{
+  // check for very specific light in karnak in secret area
+  if (eCurrentWorld == EWorld::Luxor)
+  {
+    if (plsLight->ls_paoLightAnimation == nullptr)
+    {
+      return false;
+    }
+
+    if (plsLight->ls_paoLightAnimation->ao_AnimData == nullptr)
+    {
+      return false;
+    }
+
+    if (plsLight->ls_penEntity != nullptr &&
+       (plsLight->ls_penEntity->GetLerpedPlacement().pl_PositionVector - FLOAT3D(160, 5, -103.25f)).ManhattanNorm() < 1.0f)
+    {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 template<class Type>

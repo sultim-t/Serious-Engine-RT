@@ -98,6 +98,7 @@ public:
 
   bool IsDirectionalLightIgnored(const CLightSource *plsLight) const;
   bool IsSphericalLightIgnored(const CLightSource *plsLight) const;
+  bool IsDynamicSphericalLightIgnored(const CLightSource *plsLight) const;
   FLOAT3D GetAnimatedSunDirection(const FLOAT3D &vOriginalEuler) const;
   FLOAT GetCloudsOpacity() const;
   FLOAT GetSkyIntensity() const;
