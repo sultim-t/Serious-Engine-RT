@@ -99,19 +99,21 @@ const struct
   FLOAT                                                         fTonemappingMaxLogLuminance;
   FLOAT                                                               fPotentialLightSphFalloffDefault;
   FLOAT                                                                     fOriginalLightSphFalloffMultiplier;
+  FLOAT                                                                         fPotentialLightSphFalloffMin;
 }
 RT_WorldIlluminationParams[] =
 {
-  // defaults:                4,    0.5f, 1,    0.75f,  -2,     0,    1,    1
-  { EWorld::SandCanyon,       3,    0.5f, 1,    0.75f,  -2,     0,    8,    1    },
-  { EWorld::ValleyOfTheKings, 3,    0.5f, 1,    0.75f,  -2,     0,    8,    2    },
-  { EWorld::Suburbs,          4,    0.5f, 0.5f, 1,      -2,     0,    1,    1    },
-  { EWorld::Sewers,           4,    0.5f, 1,    0.75f,  -2,     0,    1,    2    },
-  { EWorld::AlleyOfSphinxes,  4,    0.5f, 0.5f, 0.75f,  -2,     0,    1,    1    },
-  { EWorld::Metropolis,       4,    0.5f, 0.5f, 0.75f,  -2,     0,    1,    1    },
-  { EWorld::Luxor,            4,    0.5f, 1,    0.75f,  -2,     0,    4,    1    },
-  { EWorld::Karnak,           4,    0.9f, 0.5f, 1,      -2,     0,    1,    1    },
-  { EWorld::TheGreatPyramid,  GREAT_PYRAMID_SUN_INTENSITY_DEFAULT, 1,    0.5f,  1,     0,    2,    1,    1.0f },
+  // defaults:                4,    0.5f, 1,    0.75f,  -2,     0,    1,    1,  5 
+  { EWorld::SandCanyon,       3,    0.5f, 1,    0.75f,  -2,     0,    8,    1,  5 },
+  { EWorld::ValleyOfTheKings, 3,    0.5f, 1,    0.75f,  -2,     0,    8,    2,  5 },
+  { EWorld::Suburbs,          4,    0.5f, 0.5f, 1,      -2,     0,    1,    1,  5 },
+  { EWorld::Sewers,           4,    0.5f, 1,    0.75f,  -2,     0,    1,    2,  5 },
+  { EWorld::AlleyOfSphinxes,  4,    0.5f, 0.5f, 0.75f,  -2,     0,    1,    1,  5 },
+  { EWorld::Metropolis,       4,    0.5f, 0.5f, 0.75f,  -2,     0,    1,    1,  5 },
+  { EWorld::Luxor,            4,    0.5f, 1,    0.75f,  -2,     0,    4,    1,  5 },
+  { EWorld::Karnak,           4,    0.9f, 0.5f, 1,      -2,     0,    1,    1,  7 },
+  { EWorld::TheGreatPyramid,  GREAT_PYRAMID_SUN_INTENSITY_DEFAULT, 
+                                       1, 0.5f, 1,       0,     2,    1,    1,  5 },
 };
 
 
@@ -225,6 +227,13 @@ const char * const RT_TexturePaths_AlphaTest[] =
   "Models\\Effects\\BulletOnTheWall\\BulletSand.tex",
   "Models\\Plants\\Garden02\\Garden06.tex",
   "Models\\Ages\\Egypt\\Gods\\TothMonkey\\TothMonkey.tex",
+  "Models\\Items\\Ammo\\Electricity\\Effect.tex",
+};
+
+
+const char *const RT_TexturePaths_NoEffectOnTexture[] =
+{
+  "Models\\Items\\Ammo\\Electricity\\Effect.tex",
 };
 
 
@@ -251,7 +260,8 @@ const char *const RT_TexturePaths_Glass[] =
   "Models\\Items\\Keys\\Elements\\Air.tex",
   "Models\\Items\\Keys\\Elements\\Fire.tex",
   "Models\\Items\\Keys\\Elements\\Texture.tex",
-  "Models\\Items\\Keys\\Elements\\Water.tex"
+  "Models\\Items\\Keys\\Elements\\Water.tex",
+  "Models\\Items\\Ammo\\Electricity\\Electricity.tex",
 };
 
 
@@ -404,6 +414,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     _srtGlobals.srt_fTonemappingMaxLogLuminance = 0.0f;
     _srtGlobals.srt_fPotentialLightSphFalloffDefault = 1.0f;
     _srtGlobals.srt_fOriginalLightSphFalloffMultiplier = 1.0f;
+    _srtGlobals.srt_fPotentialLightSphFalloffMin = 5.0f;
   }
   for (const auto &s : RT_WorldIlluminationParams)
   {
@@ -417,6 +428,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       _srtGlobals.srt_fTonemappingMaxLogLuminance = s.fTonemappingMaxLogLuminance;
       _srtGlobals.srt_fPotentialLightSphFalloffDefault = s.fPotentialLightSphFalloffDefault;
       _srtGlobals.srt_fOriginalLightSphFalloffMultiplier = s.fOriginalLightSphFalloffMultiplier;
+      _srtGlobals.srt_fPotentialLightSphFalloffMin = s.fPotentialLightSphFalloffMin;
       break;
     }
   }
@@ -848,6 +860,24 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
         { 4, -43.75f, -87.7813f },
         { 0, -7.75f, -4 },
         { -32.25f, -6.375f, -69.25f }
+      };
+      break;
+
+    case EWorld::Metropolis:
+      cutsceneLightPositions =
+      {
+        { 1336, -58.75f, -32 },
+        { 1300.25f, -62.75f, -32.25f }
+      };
+      break;
+
+    case EWorld::Karnak:
+      cutsceneLightPositions =
+      {
+        // final cutscene
+        { -167, 5.25f, 2048 },
+        // scorpion room
+        { 480.75f, -0.75f, 2048 }
       };
       break;
 
