@@ -919,7 +919,15 @@ static void RT_RenderModel_View(ULONG entityID, CModelObject &mo, CRenderModel &
 static void RT_RenderModel(ULONG entityID, CModelObject &mo, CRenderModel &rm, bool isBackground, INDEX attchPath[SSRT_MAX_ATTACHMENT_DEPTH], INDEX attchCount, SSRT::Scene *scene)
 {
   // skip invisible models
-  if (mo.mo_Stretch == FLOAT3D(0, 0, 0)) return;
+  if (mo.mo_Stretch == FLOAT3D(0, 0, 0))
+  {
+    return;
+  }
+
+  if (scene->GetCustomInfo()->IsModelWithTextureIgnored(&rm, &mo.mo_toTexture))
+  {
+    return;
+  }
 
   // RT: _iRenderingType is 1 for not shadows
 

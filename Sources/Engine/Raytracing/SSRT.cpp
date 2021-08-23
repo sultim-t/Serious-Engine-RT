@@ -83,6 +83,7 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fSunAngularDiameter;", &_srtGlobals.srt_fSunAngularDiameter);
 
   _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphMaxCount;", &_srtGlobals.srt_iLightSphMaxCount);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphGlobalIntensityMultiplier;", &_srtGlobals.srt_fLightSphGlobalIntensityMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphSaturation;", &_srtGlobals.srt_fLightSphSaturation);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphColorPow;", &_srtGlobals.srt_fLightSphColorPow);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphPolygonOffset;", &_srtGlobals.srt_fLightSphPolygonOffset);
@@ -98,6 +99,7 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fDynamicLightSphFalloffMin;", &_srtGlobals.srt_fDynamicLightSphFalloffMin);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fDynamicLightSphFalloffMax;", &_srtGlobals.srt_fDynamicLightSphFalloffMax);
 
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fPotentialLightSphDistanceThreshold;", &_srtGlobals.srt_fPotentialLightSphDistanceThreshold);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fPotentialLightSphIntensity;", &_srtGlobals.srt_fPotentialLightSphIntensity);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fPotentialLightSphRadiusMin;", &_srtGlobals.srt_fPotentialLightSphRadiusMin);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fPotentialLightSphRadiusMultiplier;", &_srtGlobals.srt_fPotentialLightSphRadiusMultiplier);
@@ -184,6 +186,8 @@ void SSRT::SSRTMain::NormalizeShellVariables()
   _srtGlobals.srt_fSunColorPow = Max(_srtGlobals.srt_fSunColorPow, 0.0f);
   _srtGlobals.srt_fSunAngularDiameter = Max(_srtGlobals.srt_fSunAngularDiameter, 0.0f);
 
+  _srtGlobals.srt_fLightSphGlobalIntensityMultiplier = Max(_srtGlobals.srt_fLightSphGlobalIntensityMultiplier, 0.0f);
+
   _srtGlobals.srt_fOriginalLightSphIntensity = Max(_srtGlobals.srt_fOriginalLightSphIntensity, 0.0f);
   _srtGlobals.srt_fOriginalLightSphRadiusMultiplier = Max(_srtGlobals.srt_fOriginalLightSphRadiusMultiplier, 0.0f);
   _srtGlobals.srt_fOriginalLightSphFalloffMultiplier = Max(_srtGlobals.srt_fOriginalLightSphFalloffMultiplier, 0.0f);
@@ -194,6 +198,7 @@ void SSRT::SSRTMain::NormalizeShellVariables()
   _srtGlobals.srt_fDynamicLightSphFalloffMin = Max(_srtGlobals.srt_fDynamicLightSphFalloffMin, 0.0f);
   _srtGlobals.srt_fDynamicLightSphFalloffMax = Max(_srtGlobals.srt_fDynamicLightSphFalloffMax, 0.0f);
 
+  _srtGlobals.srt_fPotentialLightSphDistanceThreshold = Max(_srtGlobals.srt_fPotentialLightSphDistanceThreshold, 0.0f);
   _srtGlobals.srt_fPotentialLightSphIntensity = Max(_srtGlobals.srt_fPotentialLightSphIntensity, 0.0f);
   _srtGlobals.srt_fPotentialLightSphRadiusMultiplier = Max(_srtGlobals.srt_fPotentialLightSphRadiusMultiplier, 0.0f);
   _srtGlobals.srt_fPotentialLightSphFalloffMultiplier = Max(_srtGlobals.srt_fPotentialLightSphFalloffMultiplier, 0.0f);

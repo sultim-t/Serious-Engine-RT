@@ -531,7 +531,7 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *pScene)
       return;
     }
 
-    if (!isDynamic && pScene->GetCustomInfo()->IsSphericalLightIgnored(plsLight))
+    if (!isDynamic && pScene->GetCustomInfo()->IsSphericalLightIgnored(plsLight, _srtGlobals.srt_fPotentialLightSphDistanceThreshold))
     {
       // add it to the list of ignored lights, it will be used
       // to match light sources from fire textures;
@@ -582,11 +582,10 @@ static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *pScene)
 
 static void RT_TryAddPotentialLight(CEntity *pEn, SSRT::Scene *pScene)
 {
-  const float threshold = 1.0f;
   FLOAT3D originalPos = pEn->GetLerpedPlacement().pl_PositionVector;
 
   INDEX closestLtIndex = -1;
-  float closestDist = threshold;
+  float closestDist = _srtGlobals.srt_fPotentialLightSphDistanceThreshold;
   FLOAT3D closestPos;
   FLOAT3D pos;
 
@@ -625,6 +624,12 @@ static void RT_TryAddPotentialLight(CEntity *pEn, SSRT::Scene *pScene)
   }
   else
   {
+	// ignore such lights at all
+    return;
+
+
+
+
     // just any
     const FLOAT3D color = { 1.0f, 0.7f, 0.35f };
 

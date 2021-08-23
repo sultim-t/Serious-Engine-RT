@@ -21,6 +21,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Entities/Entity.h>
 #include <Engine/Models/ModelObject.h>
 #include <Engine/Models/ModelData.h>
+#include <Engine/Models/RenderModel.h>
 #include <Engine/Light/LightSource.h>
 #include <Engine/Graphics/TextureEffects.h>
 #include <Engine/Raytracing/SSRTGlobals.h>
@@ -81,12 +82,13 @@ static EWorld GetWorldEnum(CWorld *pWorld)
 }
 
 
-constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_START = 0.75f;
+constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_START = 1.0f;
 constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_END = 0.25f;
 constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_CHANGE_LENGTH = 30.0f;
 constexpr FLOAT GREAT_PYRAMID_SUN_INTENSITY_DEFAULT = 2.0f;
 constexpr FLOAT GREAT_PYRAMID_SUN_INTENSITY_BOSS_FIGHT = 0.0f;
-constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_BOSS_FIGHT = 7.0f;
+constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_BOSS_FIGHT = 5.0f;
+constexpr FLOAT GREAT_PYRAMID_CUTSCENE_AND_FIGHT_TONEMAPPING_MIN_LOG = -2;
 
 const struct
 {
@@ -112,6 +114,7 @@ RT_WorldIlluminationParams[] =
   { EWorld::Metropolis,       4,    0.5f, 0.5f, 0.75f,  -2,     0,    1,    1,  5 },
   { EWorld::Luxor,            4,    0.5f, 1,    0.75f,  -2,     0,    4,    1,  5 },
   { EWorld::Karnak,           4,    0.9f, 0.5f, 1,      -2,     0,    1,    1,  7 },
+  { EWorld::SacredYards,      4,    0.5f, 0.5f, 0.75f,  -2,     0,    1,    1,  5  },
   { EWorld::TheGreatPyramid,  GREAT_PYRAMID_SUN_INTENSITY_DEFAULT, 
                                        1, 0.5f, 1,       0,     2,    1,    1,  5 },
 };
@@ -337,6 +340,13 @@ const char *const RT_TexturePaths_InvisibleEnemy[] =
 };
 
 
+// Ignore models with such reflection texture. It's ONLY for Great Pyramid, chrome Amon models
+const char *const RT_TexturePaths_IgnoredModels[] =
+{
+  "Models\\Ages\\Egypt\\Gods\\Amon\\Amon.tex"
+};
+
+
 static bool vector_Contains(const std::vector<CTextureData*> &aVec, const CTextureData *pTd)
 {
   return std::find(aVec.begin(), aVec.end(), pTd) != aVec.end();
@@ -476,6 +486,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     { RT_TexturePaths_LightForceDynamic,          ARRAYCOUNT(RT_TexturePaths_LightForceDynamic),          &ptdCachedTextures.aLightForceDynamic },
     { RT_TexturePaths_InvisibleEnemy,             ARRAYCOUNT(RT_TexturePaths_InvisibleEnemy),             &ptdCachedTextures.aInvisibleEnemy },
     { RT_TexturePaths_NoEffectOnTexture,          ARRAYCOUNT(RT_TexturePaths_NoEffectOnTexture),          &ptdCachedTextures.aNoEffectOnTexture },
+    { RT_TexturePaths_IgnoredModels,              ARRAYCOUNT(RT_TexturePaths_IgnoredModels),              &ptdCachedTextures.aIgnoreModel },
   };
 
   for (const auto &s : tdsToFind)
@@ -493,6 +504,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   // always disable flashlight on level start
   _srtGlobals.srt_bFlashlightEnable = false;
   _srtGlobals.srt_fFlashlightAngleOuter = 15;
+  _srtGlobals.srt_fFlashlightFalloffDistance = 50;
 
   isFlashlightHintEnabled = true;
   DisableFlashlightHint();
@@ -510,9 +522,6 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       tmFlashlightHintStart = tmWorldCreation + 1.0f;
       // a bit longer, because of cutscene
       tmFlashlightHintEnd = tmFlashlightHintStart + 10.0f;
-
-      // and a lot wider angle, because the level is too dark
-      _srtGlobals.srt_fFlashlightAngleOuter = 35;
       break;
     default:
       tmFlashlightHintStart = -1.0f;
@@ -520,6 +529,18 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       break;
   }
   fFlashlightIntensityForLevel = 1.0f;
+
+  if (eCurrentWorld == EWorld::Sewers)
+  {
+    // a lot wider angle, because the level is too dark
+    _srtGlobals.srt_fFlashlightAngleOuter = 35;
+  }
+  else if (eCurrentWorld == EWorld::TheGreatPyramid)
+  {
+    // too dark during spaceship's shadow
+    _srtGlobals.srt_fFlashlightAngleOuter = 30;
+    _srtGlobals.srt_fFlashlightFalloffDistance = 150;
+  }
 
 
 
@@ -784,6 +805,9 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
         { 857 },
         // secret ammo
         { 1374 },
+        // middle section roof, but sky must be visible
+        { 613 },
+        { 614 }
       };
 
       brushPolygonsToMask =
@@ -805,6 +829,10 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
         { 741 },
         { 317 },
         { 4580 },
+        // roof
+        { 25 },
+        { 1183 },
+        { 1190 },
       };
       break;
   }
@@ -823,7 +851,9 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     case EWorld::TombOfRamses:
       cutsceneLightPositions =
       {
-        { 146, 85.25f, -537 }
+        { 146, 85.25f, -537 },
+        //{ 146.75f, 65.75f, -327.75f },
+        { 145.5f, 65.25f, -344.25f }
       };
       break;
 
@@ -850,6 +880,13 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       cutsceneLightPositions =
       {
         { 52, 13.5f, -434 }
+      };
+      break;
+
+    case EWorld::Suburbs:
+      cutsceneLightPositions =
+      {
+        { -2, -28.75f, 636 }
       };
       break;
 
@@ -890,6 +927,22 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       };
       break;
   }
+
+  
+  float fPotentialLightThreshold = 2.0f;
+  switch (eCurrentWorld)
+  {
+    case EWorld::TombOfRamses:
+    case EWorld::Metropolis:
+    case EWorld::Karnak:
+    case EWorld::Luxor:
+      fPotentialLightThreshold = 4.0f;
+      break;
+    case EWorld::TheGreatPyramid:
+      fPotentialLightThreshold = 4.0f; // 8.0f; -- if large fire is needed on towers' top
+      break;
+  }
+  _srtGlobals.srt_fPotentialLightSphDistanceThreshold = fPotentialLightThreshold;
 }
 
 SSRT::CustomInfo::~CustomInfo()
@@ -1252,7 +1305,7 @@ bool SSRT::CustomInfo::IsDirectionalLightIgnored(const CLightSource *plsLight) c
   return false;
 }
 
-bool SSRT::CustomInfo::IsSphericalLightIgnored(const CLightSource *plsLight) const
+bool SSRT::CustomInfo::IsSphericalLightIgnored(const CLightSource *plsLight, float fPotentialLightThreshold) const
 {
   CEntity *pen = plsLight->ls_penEntity;
 
@@ -1264,7 +1317,7 @@ bool SSRT::CustomInfo::IsSphericalLightIgnored(const CLightSource *plsLight) con
   const FLOAT3D &vPosition = pen->GetPlacement().pl_PositionVector;
 
   if (HasLightEntityVertices(pen->GetParent()) 
-      && (pen->GetParent()->GetPlacement().pl_PositionVector - vPosition).ManhattanNorm() < 1.0f)
+      && (pen->GetParent()->GetPlacement().pl_PositionVector - vPosition).ManhattanNorm() < fPotentialLightThreshold)
   {
     return false;
   }
@@ -1500,6 +1553,14 @@ bool SSRT::CustomInfo::IsOverrideDisabled(CTextureData *pTd) const
   return eCurrentWorld != EWorld::TheGreatPyramid && ptdCachedTextures_Check(pTd, ptdCachedTextures.aDisabledOverride);
 }
 
+bool SSRT::CustomInfo::IsModelWithTextureIgnored(CRenderModel *prm, CTextureObject *pTo) const
+{
+  return 
+    eCurrentWorld == EWorld::TheGreatPyramid && 
+    prm != nullptr && (prm->rm_pmmiMip->mmpi_ulLayerFlags & SRF_REFLECTIONS) &&
+    ptdCachedTextures_Check(pTo, ptdCachedTextures.aIgnoreModel);
+}
+
 bool SSRT::CustomInfo::IsNoEffectOnTexture(const CTextureData *pTd) const
 {
   return ptdCachedTextures_Check(pTd, ptdCachedTextures.aNoEffectOnTexture);
@@ -1577,7 +1638,7 @@ bool SSRT::CustomInfo::IsBrushSectorHazeIgnored(const CBrushSector *pSector) con
   const INDEX aOasisIgnoredSectors[] = { 62, 64 };
   const INDEX aSewersIgnoredSectors[] = { 144, 36, 42, 43 };
   // room with a heart
-  const INDEX aKarnakIgnoredSectors[] = { 44 };
+  const INDEX aKarnakIgnoredSectors[] = { 44, 129, 225, 194, 68, 298, 195, 189, 196, 352 };
 
   switch (eCurrentWorld)
   {
@@ -1721,11 +1782,13 @@ void SSRT::CustomInfo::Update(const FLOAT3D &vCameraPosition)
 
   if (eCurrentWorld == EWorld::TheGreatPyramid)
   {
-    // if on boss fight arena
-    if (vCameraPosition(2) > 175.0f)
+    // if on boss fight arena or in cutscene
+    if (vCameraPosition(2) > 175.0f || vCameraPosition(2) < -100)
     {
       _srtGlobals.srt_fSunIntensity = GREAT_PYRAMID_SUN_INTENSITY_BOSS_FIGHT;
       _srtGlobals.srt_fSkyColorMultiplier = GREAT_PYRAMID_SKY_COLOR_BOSS_FIGHT;
+
+      _srtGlobals.srt_fTonemappingMinLogLuminance = GREAT_PYRAMID_CUTSCENE_AND_FIGHT_TONEMAPPING_MIN_LOG;
     }
     else
     {

@@ -328,9 +328,11 @@ void SSRT::Scene::AddLight(const CSphereLight &sphLt)
     return;
   }
 
+  FLOAT3D c = sphLt.color * _srtGlobals.srt_fLightSphGlobalIntensityMultiplier;
+
   RgSphericalLightUploadInfo info = {};
   info.uniqueID = sphLt.entityID;
-  info.color = { sphLt.color(1), sphLt.color(2), sphLt.color(3) };
+  info.color = { c(1), c(2), c(3) };
   info.position = { sphLt.absPosition(1), sphLt.absPosition(2), sphLt.absPosition(3) };
   info.radius = sphLt.radius;
   info.falloffDistance = sphLt.falloffDistance;

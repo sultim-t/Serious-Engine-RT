@@ -70,7 +70,8 @@ public:
   bool IsMirror(CTextureObject *ptoReflection) const;
   bool IsCalcNormalsForced(CTextureObject *pTo) const;
   bool IsClampWrapForced(CTextureData *pTd) const;
-  bool IsOverrideDisabled(CTextureData *pTd) const;
+  bool IsOverrideDisabled(CTextureData *pTd) const; 
+  bool IsModelWithTextureIgnored(CRenderModel *prm, CTextureObject *pTo) const;
   bool IsNoEffectOnTexture(const CTextureData *pTd) const;
   bool IsLightOffsetFixEnabled(const CLightSource *plsLight) const;
   bool IsLightForceDynamic(const CLightSource *plsLight) const;
@@ -98,7 +99,7 @@ public:
   bool IsNoBackfaceReflForNoMediaChange(const FLOAT3D &vCameraPosition) const;
 
   bool IsDirectionalLightIgnored(const CLightSource *plsLight) const;
-  bool IsSphericalLightIgnored(const CLightSource *plsLight) const;
+  bool IsSphericalLightIgnored(const CLightSource *plsLight, float fPotentialLightThreshold) const;
   bool IsDynamicSphericalLightIgnored(const CLightSource *plsLight) const;
   FLOAT3D GetAnimatedSunDirection(const FLOAT3D &vOriginalEuler) const;
   FLOAT GetCloudsOpacity() const;
@@ -178,6 +179,7 @@ private:
     std::vector<CTextureData *> aLightForceDynamic;
     std::vector<CTextureData *> aInvisibleEnemy;
     std::vector<CTextureData *> aNoEffectOnTexture;
+    std::vector<CTextureData *> aIgnoreModel;
 
   } ptdCachedTextures;
 

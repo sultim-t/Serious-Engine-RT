@@ -55,10 +55,11 @@ struct SSRTGlobals
   FLOAT srt_fSunAngularDiameter = 0.5f;
 
   INDEX srt_iLightSphMaxCount = 1024;
+  FLOAT srt_fLightSphGlobalIntensityMultiplier = 0.4f;
   FLOAT srt_fLightSphSaturation = 0.75f;
   FLOAT srt_fLightSphColorPow = 2.2f;
-  FLOAT srt_fLightSphPolygonOffset = 1.0f;
   INDEX srt_bLightSphIgnoreEditorModels = 1;
+  FLOAT srt_fLightSphPolygonOffset = 1.0f;
 
   FLOAT srt_fOriginalLightSphIntensity = 1.0f;
   FLOAT srt_fOriginalLightSphRadiusMultiplier = 0.05f;
@@ -70,6 +71,7 @@ struct SSRTGlobals
   FLOAT srt_fDynamicLightSphFalloffMin = 3.0f;
   FLOAT srt_fDynamicLightSphFalloffMax = 128.0f;
  
+  FLOAT srt_fPotentialLightSphDistanceThreshold = 1.0f;
   FLOAT srt_fPotentialLightSphIntensity = 1.0f;
   FLOAT srt_fPotentialLightSphRadiusMin = 0.1f;
   FLOAT srt_fPotentialLightSphRadiusMultiplier = 0.1f;
