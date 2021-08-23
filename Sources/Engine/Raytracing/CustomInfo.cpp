@@ -231,6 +231,9 @@ const char * const RT_TexturePaths_AlphaTest[] =
   "Models\\Plants\\Garden02\\Garden06.tex",
   "Models\\Ages\\Egypt\\Gods\\TothMonkey\\TothMonkey.tex",
   "Models\\Items\\Ammo\\Electricity\\Effect.tex",
+  "Models\\CutSequences\\Screens\\Screen1.tex",
+  "Models\\CutSequences\\Screens\\Screen2.tex",
+  "Models\\CutSequences\\Screens\\Screen3 .tex",
 };
 
 

@@ -246,7 +246,7 @@ static void FlushModelInfo(ULONG entityID,
     }
   }
 
-  if (((stt == STT_TRANSLUCENT || stt == STT_ADD) && pScene->GetCustomInfo()->IsGlass(to)) || RT_IsInvisibleEnemy)
+  if (((stt == STT_TRANSLUCENT || stt == STT_ADD || stt == STT_TRANSPARENT || stt == STT_MULTIPLY) && pScene->GetCustomInfo()->IsGlass(to)) || RT_IsInvisibleEnemy)
   {
     modelInfo.passThroughType = RG_GEOMETRY_PASS_THROUGH_TYPE_GLASS_REFLECT_REFRACT;
     modelInfo.isRasterized = false;
