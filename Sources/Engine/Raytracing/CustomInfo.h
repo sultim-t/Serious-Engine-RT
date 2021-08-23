@@ -71,6 +71,7 @@ public:
   bool IsCalcNormalsForced(CTextureObject *pTo) const;
   bool IsClampWrapForced(CTextureData *pTd) const;
   bool IsOverrideDisabled(CTextureData *pTd) const;
+  bool IsNoEffectOnTexture(const CTextureData *pTd) const;
   bool IsLightOffsetFixEnabled(const CLightSource *plsLight) const;
   bool IsLightForceDynamic(const CLightSource *plsLight) const;
   bool CanHazeBeApplied() const;
@@ -176,6 +177,7 @@ private:
     std::vector<CTextureData *> aLightOffsetFix;
     std::vector<CTextureData *> aLightForceDynamic;
     std::vector<CTextureData *> aInvisibleEnemy;
+    std::vector<CTextureData *> aNoEffectOnTexture;
 
   } ptdCachedTextures;
 

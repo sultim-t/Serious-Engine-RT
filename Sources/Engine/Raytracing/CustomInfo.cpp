@@ -337,7 +337,7 @@ const char *const RT_TexturePaths_InvisibleEnemy[] =
 };
 
 
-static bool vector_Contains(const std::vector<CTextureData*> &aVec, CTextureData *pTd)
+static bool vector_Contains(const std::vector<CTextureData*> &aVec, const CTextureData *pTd)
 {
   return std::find(aVec.begin(), aVec.end(), pTd) != aVec.end();
 }
@@ -475,6 +475,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     { RT_TexturePaths_LightOffsetFix,             ARRAYCOUNT(RT_TexturePaths_LightOffsetFix),             &ptdCachedTextures.aLightOffsetFix },
     { RT_TexturePaths_LightForceDynamic,          ARRAYCOUNT(RT_TexturePaths_LightForceDynamic),          &ptdCachedTextures.aLightForceDynamic },
     { RT_TexturePaths_InvisibleEnemy,             ARRAYCOUNT(RT_TexturePaths_InvisibleEnemy),             &ptdCachedTextures.aInvisibleEnemy },
+    { RT_TexturePaths_NoEffectOnTexture,          ARRAYCOUNT(RT_TexturePaths_NoEffectOnTexture),          &ptdCachedTextures.aNoEffectOnTexture },
   };
 
   for (const auto &s : tdsToFind)
@@ -1434,7 +1435,7 @@ bool SSRT::CustomInfo::DoesPolygonPreserveTheSameMedia(const CBrushPolygon *pPol
   return false;
 }
 
-static bool ptdCachedTextures_Check(CTextureData *pTd, const std::vector<CTextureData *> &aVec)
+static bool ptdCachedTextures_Check(const CTextureData *pTd, const std::vector<CTextureData *> &aVec)
 {
   if (pTd != nullptr)
   {
@@ -1444,7 +1445,7 @@ static bool ptdCachedTextures_Check(CTextureData *pTd, const std::vector<CTextur
   return false;
 }
 
-static bool ptdCachedTextures_Check(CTextureObject *pTo, const std::vector<CTextureData *> &aVec)
+static bool ptdCachedTextures_Check(const CTextureObject *pTo, const std::vector<CTextureData *> &aVec)
 {
   if (pTo != nullptr && pTo->ao_AnimData != nullptr)
   {
@@ -1497,6 +1498,11 @@ bool SSRT::CustomInfo::IsClampWrapForced(CTextureData *pTd) const
 bool SSRT::CustomInfo::IsOverrideDisabled(CTextureData *pTd) const
 {
   return eCurrentWorld != EWorld::TheGreatPyramid && ptdCachedTextures_Check(pTd, ptdCachedTextures.aDisabledOverride);
+}
+
+bool SSRT::CustomInfo::IsNoEffectOnTexture(const CTextureData *pTd) const
+{
+  return ptdCachedTextures_Check(pTd, ptdCachedTextures.aNoEffectOnTexture);
 }
 
 bool SSRT::CustomInfo::IsLightOffsetFixEnabled(const CLightSource *plsLight) const

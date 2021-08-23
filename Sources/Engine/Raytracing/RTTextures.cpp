@@ -74,6 +74,22 @@ static bool IsOverrideDisabled(CTextureData *ptd)
 }
 
 
+static bool IsEffectTexture(const CTextureData *ptd)
+{
+  if (ptd->td_ptegEffect == nullptr)
+  {
+    return false;
+  }
+
+  if (_pCustomInfo != nullptr && _pCustomInfo->IsNoEffectOnTexture(ptd))
+  {
+    return false;
+  }
+
+  return true;
+}
+
+
 static void UnpackTexParams(const CTexParams &tpLocal, RgSamplerFilter *filter, RgSamplerAddressMode *wrapU, RgSamplerAddressMode *wrapV)
 {
   switch (tpLocal.tp_iFilter)
@@ -151,7 +167,7 @@ static bool IsSingleMipmap(const CTextureData &td)
   if (gap_bAllowSingleMipmap)
   {
     // effect textures are treated differently
-    if (td.td_ptegEffect != NULL)
+    if (IsEffectTexture(&td))
     {
       return !tex_bDynamicMipmaps;
     }
@@ -170,7 +186,7 @@ static bool IsSingleMipmap(const CTextureData &td)
 
 static void ProcessEffectTexture(CTextureData &td, bool *pBNoDiscard, bool *pBNeedUpload, PIX *pPixWidth, PIX *pPixHeight)
 {
-  ASSERT(td.td_ptegEffect != NULL);
+  ASSERT(IsEffectTexture(&td));
 
   bool &bNoDiscard = *pBNoDiscard;
   bool &bNeedUpload = *pBNeedUpload;
@@ -275,8 +291,8 @@ static void SetCurrentAndUpload(CTextureData &td, PIX pixWidth, PIX pixHeight, S
     info.width = pixWidth;
     info.height = pixHeight;
     info.imageData = td.td_pulFrames;
-    info.isDynamic = td.td_ptegEffect != NULL;
-    info.generateMipmaps = td.td_ptegEffect != NULL ? false : !td.td_tpLocal.tp_bSingleMipmap;
+    info.isDynamic = IsEffectTexture(&td);
+    info.generateMipmaps = info.isDynamic ? false : !td.td_tpLocal.tp_bSingleMipmap;
     info.path = &td.GetName();
     info.disableOverride = IsOverrideDisabled(&td);
 
@@ -333,7 +349,7 @@ unsigned RT_SetTextureAsCurrent(CTextureData *textureData, SSRT::TextureUploader
   td.td_ulProbeObject = NONE;
 
   // if we have an effect texture
-  if (td.td_ptegEffect != NULL)
+  if (IsEffectTexture(&td))
   {
     // effect texture must have only one frame
     // ASSERT(frameIndex == 0);
