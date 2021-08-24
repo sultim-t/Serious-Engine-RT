@@ -56,6 +56,7 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fReflRefrIndexOfRefractionGlass;", &_srtGlobals.srt_fReflRefrIndexOfRefractionGlass);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fReflRefrIndexOfRefractionWater;", &_srtGlobals.srt_fReflRefrIndexOfRefractionWater);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fWaterDensityMultiplier;", &_srtGlobals.srt_fWaterDensityMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_vWaterExtinction[3];", &_srtGlobals.srt_vWaterExtinction);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fWaterSpeed;", &_srtGlobals.srt_fWaterSpeed);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fWaterNormalStrength;", &_srtGlobals.srt_fWaterNormalStrength);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fWaterNormalSharpness;", &_srtGlobals.srt_fWaterNormalSharpness);
@@ -517,7 +518,9 @@ void SSRT::SSRTMain::EndFrame()
   rflParams.reflectRefractToIndirect = _srtGlobals.srt_bReflRefrToIndirect;
   rflParams.indexOfRefractionGlass = _srtGlobals.srt_fReflRefrIndexOfRefractionGlass;
   rflParams.indexOfRefractionWater = _srtGlobals.srt_fReflRefrIndexOfRefractionWater;
-  rflParams.waterDensityMultiplier = _srtGlobals.srt_fWaterDensityMultiplier;
+  rflParams.waterExtinction = { _srtGlobals.srt_vWaterExtinction(1) * _srtGlobals.srt_fWaterDensityMultiplier,
+                                _srtGlobals.srt_vWaterExtinction(2) * _srtGlobals.srt_fWaterDensityMultiplier,
+                                _srtGlobals.srt_vWaterExtinction(3) * _srtGlobals.srt_fWaterDensityMultiplier };
   rflParams.waterWaveSpeed = _srtGlobals.srt_fWaterSpeed;
   rflParams.waterWaveNormalStrength = _srtGlobals.srt_fWaterNormalStrength;
   rflParams.waterWaveTextureDerivativesMultiplier = _srtGlobals.srt_fWaterNormalSharpness;

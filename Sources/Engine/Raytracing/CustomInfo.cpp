@@ -958,6 +958,19 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       break;
   }
   _srtGlobals.srt_fPotentialLightSphDistanceThreshold = fPotentialLightThreshold;
+
+
+
+  _srtGlobals.srt_fWaterDensityMultiplier = 5.0f;
+  switch (eCurrentWorld)
+  {
+    case EWorld::Sewers:
+      _srtGlobals.srt_vWaterExtinction = { 0.014f, 0.010f, 0.080f };
+      break;
+    default:
+      _srtGlobals.srt_vWaterExtinction = { 0.025f, 0.016f, 0.011f };
+      break;
+  }
 }
 
 SSRT::CustomInfo::~CustomInfo()
