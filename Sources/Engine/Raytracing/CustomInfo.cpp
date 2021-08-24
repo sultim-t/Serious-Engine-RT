@@ -88,7 +88,7 @@ constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_CHANGE_LENGTH = 30.0f;
 constexpr FLOAT GREAT_PYRAMID_SUN_INTENSITY_DEFAULT = 2.0f;
 constexpr FLOAT GREAT_PYRAMID_SUN_INTENSITY_BOSS_FIGHT = 0.0f;
 constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_BOSS_FIGHT = 5.0f;
-constexpr FLOAT GREAT_PYRAMID_CUTSCENE_AND_FIGHT_TONEMAPPING_MIN_LOG = -2;
+constexpr FLOAT GREAT_PYRAMID_FIGHT_TONEMAPPING_MIN_LOG = -2;
 
 const struct
 {
@@ -117,7 +117,7 @@ RT_WorldIlluminationParams[] =
   { EWorld::Karnak,           4,    0.9f, 0.5f, 1,      -2,     0,    1, 0.5f,  1,  7 },
   { EWorld::SacredYards,      4,    0.5f, 0.5f, 0.75f,  -2,     0,    1,    1,  1,  5  },
   { EWorld::TheGreatPyramid,  GREAT_PYRAMID_SUN_INTENSITY_DEFAULT, 
-                                       1, 0.5f, 1,       0,     2,    1,    1,  5 },
+                                       1, 0.5f, 1,       0,     2,    1,    1,  1,  5 },
 };
 
 
@@ -1797,13 +1797,13 @@ void SSRT::CustomInfo::Update(const FLOAT3D &vCameraPosition)
 
   if (eCurrentWorld == EWorld::TheGreatPyramid)
   {
-    // if on boss fight arena or in cutscene
-    if (vCameraPosition(2) > 175.0f || vCameraPosition(2) < -100)
+    // if on boss fight arena
+    if (vCameraPosition(2) > 175.0f )
     {
       _srtGlobals.srt_fSunIntensity = GREAT_PYRAMID_SUN_INTENSITY_BOSS_FIGHT;
       _srtGlobals.srt_fSkyColorMultiplier = GREAT_PYRAMID_SKY_COLOR_BOSS_FIGHT;
 
-      _srtGlobals.srt_fTonemappingMinLogLuminance = GREAT_PYRAMID_CUTSCENE_AND_FIGHT_TONEMAPPING_MIN_LOG;
+      _srtGlobals.srt_fTonemappingMinLogLuminance = GREAT_PYRAMID_FIGHT_TONEMAPPING_MIN_LOG;
     }
     else
     {
