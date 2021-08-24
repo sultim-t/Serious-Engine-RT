@@ -100,21 +100,22 @@ const struct
   FLOAT                                                 fTonemappingMinLogLuminance;
   FLOAT                                                         fTonemappingMaxLogLuminance;
   FLOAT                                                               fPotentialLightSphFalloffDefault;
-  FLOAT                                                                     fOriginalLightSphFalloffMultiplier;
-  FLOAT                                                                         fPotentialLightSphFalloffMin;
+  FLOAT                                                                     fPotentialLightSphFalloffMultiplier;
+  FLOAT                                                                         fOriginalLightSphFalloffMultiplier;
+  FLOAT                                                                             fPotentialLightSphFalloffMin;
 }
 RT_WorldIlluminationParams[] =
 {
-  // defaults:                4,    0.5f, 1,    0.75f,  -2,     0,    1,    1,  5 
-  { EWorld::SandCanyon,       3,    0.5f, 1,    0.75f,  -2,     0,    8,    1,  5 },
-  { EWorld::ValleyOfTheKings, 3,    0.5f, 1,    0.75f,  -2,     0,    8,    2,  5 },
-  { EWorld::Suburbs,          4,    0.5f, 0.5f, 1,      -2,     0,    1,    1,  5 },
-  { EWorld::Sewers,           4,    0.5f, 1,    0.75f,  -2,     0,    1,    2,  5 },
-  { EWorld::AlleyOfSphinxes,  4,    0.5f, 0.5f, 0.75f,  -2,     0,    1,    1,  5 },
-  { EWorld::Metropolis,       4,    0.5f, 0.5f, 0.75f,  -2,     0,    1,    1,  5 },
-  { EWorld::Luxor,            4,    0.5f, 1,    0.75f,  -2,     0,    4,    1,  5 },
-  { EWorld::Karnak,           4,    0.9f, 0.5f, 1,      -2,     0,    1,    1,  7 },
-  { EWorld::SacredYards,      4,    0.5f, 0.5f, 0.75f,  -2,     0,    1,    1,  5  },
+  // defaults:                4,    0.5f, 1,    0.75f,  -2,     0,    1,    1,  1,  5 
+  { EWorld::SandCanyon,       3,    0.5f, 1,    0.75f,  -2,     0,    8,    1,  1,  5 },
+  { EWorld::ValleyOfTheKings, 3,    0.5f, 1,    0.75f,  -2,     0,    8,    1,  2,  5 },
+  { EWorld::Suburbs,          4,    0.5f, 0.5f, 1,      -2,     0,    1,    1,  1,  5 },
+  { EWorld::Sewers,           4,    0.5f, 1,    0.75f,  -2,     0,    1,    1,  2,  5 },
+  { EWorld::AlleyOfSphinxes,  4,    0.5f, 0.5f, 0.75f,  -2,     0,    1,    1,  1,  5 },
+  { EWorld::Metropolis,       4,    0.5f, 0.5f, 0.75f,  -2,     0,    1,    1,  1,  5 },
+  { EWorld::Luxor,            4,    0.5f, 1,    0.75f,  -2,     0,    4,    1,  1,  5 },
+  { EWorld::Karnak,           4,    0.9f, 0.5f, 1,      -2,     0,    1, 0.5f,  1,  7 },
+  { EWorld::SacredYards,      4,    0.5f, 0.5f, 0.75f,  -2,     0,    1,    1,  1,  5  },
   { EWorld::TheGreatPyramid,  GREAT_PYRAMID_SUN_INTENSITY_DEFAULT, 
                                        1, 0.5f, 1,       0,     2,    1,    1,  5 },
 };
@@ -426,6 +427,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
     _srtGlobals.srt_fTonemappingMinLogLuminance = -2.0f;
     _srtGlobals.srt_fTonemappingMaxLogLuminance = 0.0f;
     _srtGlobals.srt_fPotentialLightSphFalloffDefault = 1.0f;
+    _srtGlobals.srt_fPotentialLightSphFalloffMultiplier = 1.0f;
     _srtGlobals.srt_fOriginalLightSphFalloffMultiplier = 1.0f;
     _srtGlobals.srt_fPotentialLightSphFalloffMin = 5.0f;
   }
@@ -440,6 +442,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       _srtGlobals.srt_fTonemappingMinLogLuminance = s.fTonemappingMinLogLuminance;
       _srtGlobals.srt_fTonemappingMaxLogLuminance = s.fTonemappingMaxLogLuminance;
       _srtGlobals.srt_fPotentialLightSphFalloffDefault = s.fPotentialLightSphFalloffDefault;
+      _srtGlobals.srt_fPotentialLightSphFalloffMultiplier = s.fPotentialLightSphFalloffMultiplier;
       _srtGlobals.srt_fOriginalLightSphFalloffMultiplier = s.fOriginalLightSphFalloffMultiplier;
       _srtGlobals.srt_fPotentialLightSphFalloffMin = s.fPotentialLightSphFalloffMin;
       break;
