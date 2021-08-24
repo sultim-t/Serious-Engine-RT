@@ -712,6 +712,15 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       };
       break;
 
+    case EWorld::Suburbs:
+      brushPolygonsToIgnore =
+      {
+        { 976 },
+        { 969 },
+        { 968 },
+      };
+      break;
+
     case EWorld::Sewers:
       brushPolygonsToIgnore =
       {
