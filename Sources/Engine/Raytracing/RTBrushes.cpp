@@ -18,6 +18,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Entities/Entity.h>
 #include <Engine/Brushes/Brush.h>
 #include <Engine/Brushes/BrushTransformed.h>
+#include <Engine/Models/ModelObject.h>
 #include <Engine/Graphics/RenderScene.h>
 #include <Engine/Raytracing/SSRT.h>
 #include <Engine/World/World.h>
@@ -26,6 +27,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <Engine/Templates/DynamicArray.h>
 #include <Engine/Templates/DynamicArray.cpp>
+
+#include <Engine/Base/ListIterator.inl>
 
 
 #include "RTProcessing.h"
@@ -865,25 +868,25 @@ static void RT_ProcessBrushEntity(CEntity *penBrush, bool onlyTexCoords, bool on
 }
 
 
-void RT_AddBrushEntity(CEntity *penBrush, SSRT::Scene *scene)
+void RT_AddBrushEntity(CEntity *penBrush, SSRT::Scene *pScene)
 {
-  RT_ProcessBrushEntity(penBrush, false, false, scene);
+  RT_ProcessBrushEntity(penBrush, false, false, pScene);
 }
 
 
-void RT_UpdateBrushTexCoords(CEntity *penBrush, SSRT::Scene *scene)
+void RT_UpdateBrushTexCoords(CEntity *penBrush, SSRT::Scene *pScene)
 {
-  RT_ProcessBrushEntity(penBrush, true, false, scene);
+  RT_ProcessBrushEntity(penBrush, true, false, pScene);
 }
 
 
-void RT_AddRasterizedBrushEntity(CEntity *penBrush, SSRT::Scene *scene)
+void RT_AddRasterizedBrushEntity(CEntity *penBrush, SSRT::Scene *pScene)
 {
-  RT_ProcessBrushEntity(penBrush, false, true, scene);
+  RT_ProcessBrushEntity(penBrush, false, true, pScene);
 }
 
 
-void RT_UpdateBrushNonStaticTexture(CEntity *penBrush, SSRT::Scene *scene)
+void RT_UpdateBrushNonStaticTexture(CEntity *penBrush, SSRT::Scene *pScene)
 {
   ASSERT(penBrush != NULL);
   // get its brush
@@ -921,23 +924,6 @@ void RT_UpdateBrushNonStaticTexture(CEntity *penBrush, SSRT::Scene *scene)
         {
           CBrushPolygon &poly = bscSector.bsc_abpoPolygons[iPoly];
 
-          // TODO: rename RT_UpdateBrushNonStaticTexture function
-          {
-            INDEX iMirrorType = poly.bpo_bppProperties.bpp_ubMirrorType;
-            // if mirror
-            if (iMirrorType != 0)
-            {
-              CMirrorParameters mirrorParams;
-              BOOL bSuccess = penBrush->GetMirror(iMirrorType, mirrorParams);
-
-              // warp portal
-              if (bSuccess && mirrorParams.mp_ulFlags & MPF_WARP)
-              {
-                scene->AddWarpPortal(penBrush, iMirrorType);
-              }
-            }
-          }
-
           for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
           {
             auto &to = poly.bpo_abptTextures[i].bpt_toTexture;
@@ -948,7 +934,65 @@ void RT_UpdateBrushNonStaticTexture(CEntity *penBrush, SSRT::Scene *scene)
             if (td != nullptr && (td->td_ptegEffect != nullptr || td->td_ctFrames > 1))
             {
               uint32_t tdFrame = to.GetFrame();
-              scene->UpdateBrushNonStaticTexture(td, tdFrame);
+              pScene->UpdateBrushNonStaticTexture(td, tdFrame);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+
+void RT_CheckWarpPortalsAndMirrors(CEntity *penBrush, SSRT::Scene *scene)
+{
+  ASSERT(penBrush != NULL);
+  // get its brush
+  CBrush3D &brBrush = *penBrush->en_pbrBrush;
+
+  // if hidden
+  if (penBrush->en_ulFlags & ENF_HIDDEN || penBrush->en_ulFlags & ENF_INVISIBLE)
+  {
+    // skip it
+    return;
+  }
+
+  // RT: ignored brushes are not passed to this function
+
+  // RT: get highest mip
+  CBrushMip *pbm = brBrush.GetFirstMip();
+
+  // if brush mip exists for that mip factor
+  if (pbm != NULL)
+  {
+    FOREACHINDYNAMICARRAY(pbm->bm_abscSectors, CBrushSector, itbsc)
+    {
+      // if the sector is not hidden
+      if (!(itbsc->bsc_ulFlags & BSCF_HIDDEN))
+      {
+        CBrushSector &bscSector = *itbsc;
+
+        CBrush3D *brush = bscSector.bsc_pbmBrushMip->bm_pbrBrush;
+        if (brush->br_pfsFieldSettings != NULL)
+        {
+          continue;
+        }
+
+        for (uint32_t iPoly = 0; iPoly < bscSector.bsc_abpoPolygons.Count(); iPoly++)
+        {
+          CBrushPolygon &poly = bscSector.bsc_abpoPolygons[iPoly];
+
+          INDEX iMirrorType = poly.bpo_bppProperties.bpp_ubMirrorType;
+          // if mirror
+          if (iMirrorType != 0)
+          {
+            CMirrorParameters mirrorParams;
+            BOOL bSuccess = penBrush->GetMirror(iMirrorType, mirrorParams);
+
+            // warp portal
+            if (bSuccess && (mirrorParams.mp_ulFlags & MPF_WARP))
+            {
+              scene->AddWarpPortal(penBrush, iMirrorType);
             }
           }
         }
@@ -1008,6 +1052,30 @@ void RT_PrintBrushPolygonInfo(SSRT::Scene *pScene)
       CPrintF("%s\n", crRay.cr_penHit->GetName());
       CPrintF("en_ulID: %i\n", crRay.cr_penHit->en_ulID);
       CPrintF("cr_fHitDistance: %fm\n", crRay.cr_fHitDistance);
+
+      auto *pmo = crRay.cr_penHit->en_pmoModelObject;
+
+      if (pmo->mo_toTexture.ao_AnimData != nullptr)
+      {
+        CPrintF("mo_toTexture: %s\n", pmo->mo_toTexture.ao_AnimData->GetName());
+      }
+
+      FOREACHINLIST(CAttachmentModelObject, amo_lnInMain, pmo->mo_lhAttachments, itamo)
+      {
+        CAttachmentModelObject &amo = *itamo;
+
+        CPrintF("Attachment %i: %s\n    Subattachments count: %i", amo.amo_iAttachedPosition, amo.amo_moModelObject.mo_lhAttachments.Count());
+
+        if (amo.amo_moModelObject.mo_toTexture.ao_AnimData != nullptr)
+        {
+          CPrintF("    mo_toTexture: %s", amo.amo_moModelObject.mo_toTexture.ao_AnimData->GetName());
+        }
+      }
+
+      if (pmo->mo_toReflection.ao_AnimData != nullptr)
+      {
+        CPrintF("mo_toReflection: %s\n", pmo->mo_toReflection.ao_AnimData->GetName());
+      }
 
       return;
     }

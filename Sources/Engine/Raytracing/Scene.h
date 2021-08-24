@@ -64,6 +64,7 @@ public:
   FLOAT3D GetBackgroundViewerPosition() const;
   ANGLE3D GetBackgroundViewerOrientationAngle() const;
   void GetNearestToCameraPortalInfo(FLOAT3D &vRefPortalInputPos, FLOAT3D &vRefPortalOutputPos, FLOATmatrix3D &mRefPortalRelativeRotation) const;
+  bool HasBrushWarpPortal(CEntity *penBrush) const;
   bool IsCameraInHaze() const;
   static bool IsBrushMovable(CEntity *penBrush);
 

@@ -26,11 +26,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Models/ModelData.h>
 #include <Engine/Models/ModelObject.h>
 #include <Engine/World/World.h>
+#include <Engine/World/WorldSettings.h>
 #include <Engine/Templates/BSP.h>
 #include <Engine/Raytracing/Scene.h>
+#include <Engine/Templates/StaticStackArray.h>
 
 #include <Engine/Base/ListIterator.inl>
-#include <Engine/Templates/StaticStackArray.h>
+#include <Engine/Templates/DynamicArray.cpp>
 
 #include "RTProcessing.h"
 #include "SSRTGlobals.h"
@@ -128,7 +130,7 @@ static bool RT_TestModel(CEntity *pEn, SSRT::Scene *pScene)
 }
 
 /* Add to rendering all entities that are inside an zoning brush sector. */
-static void RT_AddEntitiesInSector(CBrushSector *pbscSectorInside, SSRT::Scene *pScene)
+static void RT_AddEntitiesInSector(CBrushSector *pbscSectorInside, CEntity **penBrushWarpPortal, SSRT::Scene *pScene)
 {
   // if we don't have a relevant sector to test with 
   if (pbscSectorInside == NULL || pbscSectorInside->bsc_bspBSPTree.bt_pbnRoot == NULL)
@@ -143,6 +145,11 @@ static void RT_AddEntitiesInSector(CBrushSector *pbscSectorInside, SSRT::Scene *
     CEntity *penSectorEntity = pbscSectorInside->bsc_pbmBrushMip->bm_pbrBrush->br_penEntity;
 
     pScene->UpdateBrush(penSectorEntity);
+
+    if (pScene->HasBrushWarpPortal(penSectorEntity))
+    {
+      *penBrushWarpPortal = penSectorEntity;
+    }
   }
 
   // for all entities in the sector
@@ -151,6 +158,11 @@ static void RT_AddEntitiesInSector(CBrushSector *pbscSectorInside, SSRT::Scene *
       if (pen->en_RenderType == CEntity::RT_BRUSH)
       {
         pScene->UpdateBrush(pen);
+        
+        if (pScene->HasBrushWarpPortal(pen))
+        {
+          *penBrushWarpPortal = pen;
+        }
       }
       else if (pen->en_RenderType == CEntity::RT_MODEL || pen->en_RenderType == CEntity::RT_EDITORMODEL)
       {
@@ -174,7 +186,7 @@ static void RT_AddEntitiesInSector(CBrushSector *pbscSectorInside, SSRT::Scene *
 }
 
 
-static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::Scene *pScene)
+static void RT_AddActiveSector(CBrushSector &bscSector, CEntity **penBrushWarpPortal, SSRT::Scene *pScene)
 {
   // if already active
   if (bscSector.bsc_lnInActiveSectors.IsLinked())
@@ -209,13 +221,13 @@ static void RT_AddActiveSector(CBrushSector &bscSector, SSRT::Scene *pScene)
   if (penSectorEntity != NULL)
   {
     // add all other entities near the sector
-    RT_AddEntitiesInSector(&bscSector, pScene);
+    RT_AddEntitiesInSector(&bscSector, penBrushWarpPortal, pScene);
   }
 }
 
 
 /* Add to rendering one particular zoning brush sector. */
-static void RT_AddGivenZoningSector(CBrushSector *pbsc, INDEX iSectorDepth, SSRT::Scene *pScene)
+static void RT_AddGivenZoningSector(CBrushSector *pbsc, INDEX iSectorDepth, CEntity **penBrushWarpPortal, SSRT::Scene *pScene)
 {
   // RT: if should be culled
   if (iSectorDepth >= pScene->GetCustomInfo()->GetCullingMaxSectorDepth())
@@ -247,7 +259,7 @@ static void RT_AddGivenZoningSector(CBrushSector *pbsc, INDEX iSectorDepth, SSRT
   */
   {
     // add that sector to active sectors
-    RT_AddActiveSector(*pbsc, pScene);
+    RT_AddActiveSector(*pbsc, penBrushWarpPortal, pScene);
   }
 }
 
@@ -338,13 +350,18 @@ static void RT_AddZoningSectorsAroundEntity(CEntity *pen, SSRT::Scene *pScene)
     // remove it from list of sectors to add
     pbsc->bsc_lnInActiveSectors.Remove();
 
+
     ASSERT(RT_umBrushSectorDepth.find(pbsc) != RT_umBrushSectorDepth.end());
     INDEX iDepth = RT_umBrushSectorDepth[pbsc];
 
     bool isThin = RT_IsZoningSectorThin(*pbsc);
 
+    // RT: try to find warp portal to add sectors inside it
+    CEntity *penBrushWarpPortal = nullptr;
+
+
     // add it to final list
-    RT_AddGivenZoningSector(pbsc, iDepth, pScene);
+    RT_AddGivenZoningSector(pbsc, iDepth, &penBrushWarpPortal, pScene);
     // if isn't really added (wrong mip)
     if (!pbsc->bsc_lnInActiveSectors.IsLinked())
     {
@@ -352,30 +369,85 @@ static void RT_AddZoningSectorsAroundEntity(CEntity *pen, SSRT::Scene *pScene)
       continue;
     }
 
+
+    auto tryAddRelatedSector = [isThin, iDepth, &lhToAdd] (CBrushSector *pbscRelated)
+    {
+      // if the sector is not active
+      if (!pbscRelated->bsc_lnInActiveSectors.IsLinked() && RT_umBrushSectorDepth.find(pbscRelated) == RT_umBrushSectorDepth.end())
+      {
+        // if the view sphere is in the sector
+        // if (pbscRelated->bsc_bspBSPTree.TestSphere(re_vdViewSphere, re_dViewSphereR) >= 0)
+        {
+          // add it to list to add
+          lhToAdd.AddTail(pbscRelated->bsc_lnInActiveSectors);
+
+          // RT: increase depth for the related sector, if it's not too thin
+          RT_umBrushSectorDepth[pbscRelated] = isThin ? iDepth : iDepth + 1;
+        }
+      }
+    };
+
+
+
+    // RT: if there's warp portal
+    if (penBrushWarpPortal != nullptr && penBrushWarpPortal->GetRenderType() == CEntity::RenderType::RT_BRUSH)
+    {
+      CBrush3D *pbd = penBrushWarpPortal->en_pbrBrush;
+      CBrushMip *pbm = pbd->GetFirstMip();
+
+      if (pbm != nullptr && pbd->br_pfsFieldSettings == nullptr)
+      {
+        FOREACHINDYNAMICARRAY(pbm->bm_abscSectors, CBrushSector, itbscWP)
+        {
+          // if the sector is not hidden
+          if (itbscWP->bsc_ulFlags & BSCF_HIDDEN)
+          {
+            continue;
+          }
+
+          FOREACHINSTATICARRAY(itbscWP->bsc_abpoPolygons, CBrushPolygon, itbpoWP)
+          {
+            INDEX iMirrorType = itbpoWP->bpo_bppProperties.bpp_ubMirrorType;
+            CMirrorParameters mpMirror;
+
+            // if mirror/warp portal
+            if (iMirrorType == 0)
+            {
+              continue;
+            }
+
+            if (penBrushWarpPortal->GetMirror(iMirrorType, mpMirror))
+            {
+              // if warp portal
+              if ((mpMirror.mp_ulFlags & MPF_WARP) && mpMirror.mp_penWarpViewer != nullptr)
+              {
+                // for each related sector to that warp portal
+                FOREACHSRCOFDST(mpMirror.mp_penWarpViewer->en_rdSectors, CBrushSector, bsc_rsEntities, pbscRelatedToWarpPortal)
+                  tryAddRelatedSector(pbscRelatedToWarpPortal);
+                ENDFOR
+              }
+            }
+          }
+        }
+      }
+    }
+
+
+
     // for each portal in the sector
     FOREACHINSTATICARRAY(pbsc->bsc_abpoPolygons, CBrushPolygon, itbpo)
     {
       CBrushPolygon *pbpo = itbpo;
+
       if (!(pbpo->bpo_ulFlags & BPOF_PORTAL))
       {
         continue;
       }
+
       // for each sector related to the portal
       {
         FOREACHDSTOFSRC(pbpo->bpo_rsOtherSideSectors, CBrushSector, bsc_rdOtherSidePortals, pbscRelated)
-          // if the sector is not active
-          if (!pbscRelated->bsc_lnInActiveSectors.IsLinked() && RT_umBrushSectorDepth.find(pbscRelated) == RT_umBrushSectorDepth.end())
-          {
-            // if the view sphere is in the sector
-            // if (pbscRelated->bsc_bspBSPTree.TestSphere(re_vdViewSphere, re_dViewSphereR) >= 0)
-            {
-              // add it to list to add
-              lhToAdd.AddTail(pbscRelated->bsc_lnInActiveSectors);
-
-              // RT: increase depth for the related sector, if it's not too thin
-              RT_umBrushSectorDepth[pbscRelated] = isThin ? iDepth : iDepth + 1;
-            }
-          }
+          tryAddRelatedSector(pbscRelated);
         ENDFOR
       }
     }

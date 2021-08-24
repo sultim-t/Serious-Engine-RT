@@ -414,6 +414,9 @@ void SSRT::SceneBrushes::Update(CEntity *pBrushEntity, Scene *pScene)
   }
 
 
+  RT_CheckWarpPortalsAndMirrors(pBrushEntity, pScene);
+
+
   bRefreshMovableStates = false;
 }
 

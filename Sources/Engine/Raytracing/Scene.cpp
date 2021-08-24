@@ -170,6 +170,24 @@ void SSRT::Scene::GetNearestToCameraPortalInfo(FLOAT3D &vRefPortalInputPos, FLOA
   }
 }
 
+bool SSRT::Scene::HasBrushWarpPortal(CEntity *penBrush) const
+{
+  if (penBrush == nullptr)
+  {
+    return false;
+  }
+
+  for (const auto &p : warpPortals)
+  {
+    if (p.penBrush->en_ulID == penBrush->en_ulID)
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 bool SSRT::Scene::IsCameraInHaze() const
 {
   return isCameraInHaze && pCustomInfo->CanHazeBeApplied();
