@@ -58,6 +58,7 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fWaterDensityMultiplier;", &_srtGlobals.srt_fWaterDensityMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fWaterSpeed;", &_srtGlobals.srt_fWaterSpeed);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fWaterNormalStrength;", &_srtGlobals.srt_fWaterNormalStrength);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fWaterNormalSharpness;", &_srtGlobals.srt_fWaterNormalSharpness);
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorMultiplier;", &_srtGlobals.srt_fSkyColorMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fSkyColorSaturation;", &_srtGlobals.srt_fSkyColorSaturation);
@@ -511,8 +512,6 @@ void SSRT::SSRTMain::EndFrame()
 
   RgDrawFrameReflectRefractParams rflParams = {};
   rflParams.maxReflectRefractDepth = _srtGlobals.srt_iReflMaxDepth;
-  FLOAT3D vPortalDiff = currentScene == nullptr ? FLOAT3D(0, 0, 0) : currentScene->GetNearestToCameraPortalDiff();
-  rflParams.portalInputToOutputDiff = { vPortalDiff(1), vPortalDiff(2), vPortalDiff(3) };
   rflParams.typeOfMediaAroundCamera = (currentScene != nullptr && currentScene->IsCameraInHaze()) ? RG_MEDIA_TYPE_WATER : RG_MEDIA_TYPE_VACUUM;
   rflParams.reflectRefractCastShadows = _srtGlobals.srt_bReflRefrShadows;
   rflParams.reflectRefractToIndirect = _srtGlobals.srt_bReflRefrToIndirect;
@@ -521,9 +520,18 @@ void SSRT::SSRTMain::EndFrame()
   rflParams.waterDensityMultiplier = _srtGlobals.srt_fWaterDensityMultiplier;
   rflParams.waterWaveSpeed = _srtGlobals.srt_fWaterSpeed;
   rflParams.waterWaveNormalStrength = _srtGlobals.srt_fWaterNormalStrength;
+  rflParams.waterWaveTextureDerivativesMultiplier = _srtGlobals.srt_fWaterNormalSharpness;
   rflParams.forceNoWaterRefraction = currentScene == nullptr ? false : currentScene->GetCustomInfo()->IsNoWaterRefractionForced(currentScene->GetCameraPosition());
   rflParams.disableBackfaceReflectionsForNoMediaChange = currentScene == nullptr ? false : currentScene->GetCustomInfo()->IsNoBackfaceReflForNoMediaChange(currentScene->GetCameraPosition());
-
+  FLOAT3D vPortalIn = FLOAT3D(0, 0, 0), vPortalOut = FLOAT3D(0, 0, 0);
+  FLOATmatrix3D mPortalRelativeRot(0.0f); mPortalRelativeRot(1, 1) = 1.0f; mPortalRelativeRot(2, 2) = 1.0f; mPortalRelativeRot(2, 2) = 1.0f;
+  if (currentScene != nullptr)
+  {
+    currentScene->GetNearestToCameraPortalInfo(vPortalIn, vPortalOut, mPortalRelativeRot);
+  }
+  memcpy(rflParams.portalInputPosition.data, vPortalIn.vector, sizeof(float) * 3);
+  memcpy(rflParams.portalOutputPosition.data, vPortalOut.vector, sizeof(float) * 3);
+  memcpy(rflParams.portalRelativeRotation.matrix, mPortalRelativeRot.matrix, sizeof(float) * 9);
 
   RgDrawFrameInfo frameInfo = {};
   frameInfo.renderSize = { (uint32_t)(curWindowWidth * _srtGlobals.srt_fRenderScale), (uint32_t)(curWindowHeight * _srtGlobals.srt_fRenderScale) };
@@ -546,6 +554,7 @@ void SSRT::SSRTMain::EndFrame()
   
   memcpy(frameInfo.view,        worldRenderInfo.viewMatrix,       16 * sizeof(float));
   memcpy(frameInfo.projection,  worldRenderInfo.projectionMatrix, 16 * sizeof(float));
+  frameInfo.fovYRadians = RadAngle(worldRenderInfo.fovH);
 
   RgResult r = rgDrawFrame(instance, &frameInfo);
   RG_CHECKERROR(r);

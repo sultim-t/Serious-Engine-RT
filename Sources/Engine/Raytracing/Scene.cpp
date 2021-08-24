@@ -137,10 +137,12 @@ ANGLE3D SSRT::Scene::GetBackgroundViewerOrientationAngle() const
   return pWorld->GetBackgroundViewer()->GetLerpedPlacement().pl_OrientationAngle;
 }
 
-FLOAT3D SSRT::Scene::GetNearestToCameraPortalDiff() const
+void SSRT::Scene::GetNearestToCameraPortalInfo(FLOAT3D &vRefPortalInputPos, FLOAT3D &vRefPortalOutputPos, FLOATmatrix3D &mRefPortalRelativeRotation) const
 {
-  FLOAT3D vWarpPortalDiff = FLOAT3D(0, 0, 0);
   float fNearestSqDist = FLT_MAX;
+
+  bool bFound = false;
+  CMirrorParameters mFound = {};
 
   for (const auto &w : warpPortals)
   {
@@ -152,13 +154,20 @@ FLOAT3D SSRT::Scene::GetNearestToCameraPortalDiff() const
 
       if (fNearestSqDist > fSqDist)
       {
-        vWarpPortalDiff = m.mp_plWarpOut.pl_PositionVector - m.mp_plWarpIn.pl_PositionVector;
         fNearestSqDist = fSqDist;
+
+        bFound = true;
+        mFound = m;
       }
     }
   }
 
-  return vWarpPortalDiff;
+  if (bFound)
+  {
+    vRefPortalInputPos = mFound.mp_plWarpIn.pl_PositionVector;
+    vRefPortalOutputPos = mFound.mp_plWarpOut.pl_PositionVector;
+    MakeRotationMatrix(mRefPortalRelativeRotation, mFound.mp_plWarpOut.pl_OrientationAngle - mFound.mp_plWarpIn.pl_OrientationAngle);
+  }
 }
 
 bool SSRT::Scene::IsCameraInHaze() const

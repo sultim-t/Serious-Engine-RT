@@ -45,6 +45,7 @@ struct SSRTGlobals
   FLOAT srt_fWaterDensityMultiplier = 6.0f;
   FLOAT srt_fWaterSpeed = 1.0f;
   FLOAT srt_fWaterNormalStrength = 1.0f;
+  FLOAT srt_fWaterNormalSharpness = 1.0f;
 
   INDEX srt_bLightFixWithModels = 1;
   INDEX srt_bLightFixWithTranslucent = 0;

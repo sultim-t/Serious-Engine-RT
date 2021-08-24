@@ -63,7 +63,7 @@ public:
   CWorld *GetWorld();
   FLOAT3D GetBackgroundViewerPosition() const;
   ANGLE3D GetBackgroundViewerOrientationAngle() const;
-  FLOAT3D GetNearestToCameraPortalDiff() const;
+  void GetNearestToCameraPortalInfo(FLOAT3D &vRefPortalInputPos, FLOAT3D &vRefPortalOutputPos, FLOATmatrix3D &mRefPortalRelativeRotation) const;
   bool IsCameraInHaze() const;
   static bool IsBrushMovable(CEntity *penBrush);
 
