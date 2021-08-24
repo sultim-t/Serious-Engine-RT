@@ -155,31 +155,14 @@ static INDEX GetWantedMipmapLevel(const CTextureData &td, PIX *pPixWidth, PIX *p
 
 static bool IsSingleMipmap(const CTextureData &td)
 {
-  // prepare effect cvars
-  extern INDEX tex_bDynamicMipmaps;
-
-  if (tex_bDynamicMipmaps)
+  // effect textures are treated differently
+  if (IsEffectTexture(&td))
   {
-    tex_bDynamicMipmaps = 1;
-  }
-
-  // determine whether texture has single mipmap
-  if (gap_bAllowSingleMipmap)
-  {
-    // effect textures are treated differently
-    if (IsEffectTexture(&td))
-    {
-      return !tex_bDynamicMipmaps;
-    }
-    else
-    {
-      return (td.td_ctFineMipLevels < 2);
-    }
+    return true;
   }
   else
   {
-    // single mipmap is not allowed
-    return false;
+    return (td.td_ctFineMipLevels < 2);
   }
 }
 
@@ -243,6 +226,21 @@ static void ProcessEffectTexture(CTextureData &td, bool *pBNoDiscard, bool *pBNe
     {
       td.td_ulInternalFormat = ulNewFormat;
       bNoDiscard = false;
+    }
+  }
+
+  if (bNeedUpload)
+  {
+    extern INDEX tex_iEffectFiltering;
+
+    const INDEX iTexFilter = td.td_ptegEffect->IsWater() ? NONE : tex_iEffectFiltering;  // don't filter water textures
+    if (td.td_tpLocal.tp_bSingleMipmap)
+    {
+      // no mipmaps?
+      if (iTexFilter != NONE)
+      {
+        FilterBitmap(iTexFilter, td.td_pulFrames, td.td_pulFrames, pixWidth, pixHeight);
+      }
     }
   }
 }
@@ -348,6 +346,9 @@ unsigned RT_SetTextureAsCurrent(CTextureData *textureData, SSRT::TextureUploader
   // RT: no probes
   td.td_ulProbeObject = NONE;
 
+  // determine whether texture has single mipmap
+  td.td_tpLocal.tp_bSingleMipmap = IsSingleMipmap(td);
+
   // if we have an effect texture
   if (IsEffectTexture(&td))
   {
@@ -355,9 +356,6 @@ unsigned RT_SetTextureAsCurrent(CTextureData *textureData, SSRT::TextureUploader
     // ASSERT(frameIndex == 0);
     ProcessEffectTexture(td, &bNoDiscard, &bNeedUpload, &pixWidth, &pixHeight);
   }
-
-  // determine whether texture has single mipmap
-  td.td_tpLocal.tp_bSingleMipmap = IsSingleMipmap(td);
 
   // RT: no filtering/mipmaps for effect textures
   // RT: even with td_ctFrames > 1, td_pulObjects are not used,
