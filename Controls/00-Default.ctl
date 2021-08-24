@@ -62,7 +62,7 @@ Button
  Released: ;
 
 Button
- Name: TTRS Use/Sniper Zoom
+ Name: TTRS Use
  Key1: E
  Key2: Mouse Button 2
  Pressed:  ctl_bUse = 1;
@@ -104,7 +104,7 @@ Button
  Released: ctl_bWeaponNext = 0;
 
 Button
- Name: TTRS Knife/Chainsaw
+ Name: TTRS Knife
  Key1: 1
  Key2: None
  Pressed:  ctl_bSelectWeapon[1] = 1;
@@ -132,14 +132,14 @@ Button
  Released: ctl_bSelectWeapon[4] = 0;
 
 Button
- Name: TTRS Rocket Launcher/Grenade Launcher
+ Name: TTRS Rocket Launcher
  Key1: 5
  Key2: None
  Pressed:  ctl_bSelectWeapon[5] = 1;
  Released: ctl_bSelectWeapon[5] = 0;
 
 Button
- Name: TTRS Flamethrower/Sniper
+ Name: TTRS Grenade Launcher
  Key1: 6
  Key2: None
  Pressed:  ctl_bSelectWeapon[6] = 1;
@@ -149,36 +149,15 @@ Button
  Name: TTRS Laser
  Key1: 7
  Key2: None
- Pressed:  ctl_bSelectWeapon[7] = 1;
- Released: ctl_bSelectWeapon[7] = 0;
+ Pressed:  ctl_bSelectWeapon[8] = 1;
+ Released: ctl_bSelectWeapon[8] = 0;
 
 Button
  Name: TTRS Cannon
  Key1: 8
  Key2: None
- Pressed:  ctl_bSelectWeapon[8] = 1;
- Released: ctl_bSelectWeapon[8] = 0;
-
-Button
- Name: TTRS Serious Bomb
- Key1: 0
- Key2: None
- Pressed:  ctl_bFireBomb = 1;
- Released: ctl_bFireBomb = 0;
-
-Button
- Name: TTRS Sniper Zoom +
- Key1: X
- Key2: None
- Pressed:  ctl_bSniperZoomIn = 1;
- Released: ctl_bSniperZoomIn = 0;
-
-Button
- Name: TTRS Sniper Zoom -
- Key1: Z
- Key2: None
- Pressed:  ctl_bSniperZoomOut = 1;
- Released: ctl_bSniperZoomOut = 0;
+ Pressed:  ctl_bSelectWeapon[9] = 1;
+ Released: ctl_bSelectWeapon[9] = 0;
 
 Button
  Name: TTRS Flip Weapon
@@ -188,25 +167,11 @@ Button
  Released: ctl_bWeaponFlip = 0;
 
 Button
- Name: TTRS Use/Invoke NETRICSA/Sniper Zoom
+ Name: TTRS Use/Invoke NETRICSA
  Key1: None
  Key2: None
  Pressed:  ctl_bUseOrComputer = 1;
  Released: ctl_bUseOrComputer = 0;
-
-Button
- Name: TTRS Strafe Left
- Key1: None
- Key2: None
- Pressed:  ctl_bMoveLeft = 1;
- Released: ctl_bMoveLeft = 0;
-
-Button
- Name: TTRS Strafe Right
- Key1: None
- Key2: None
- Pressed:  ctl_bMoveRight = 1;
- Released: ctl_bMoveRight = 0;
 
 Button
  Name: TTRS Turn Left
