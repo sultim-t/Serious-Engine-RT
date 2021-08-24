@@ -1,0 +1,1 @@
+Place `CreateKTX2.py` script in this directory from RTGL1 repository. PNG image files from `Raw` directory will be compressed and placed to `Compressed` directory by running this script.

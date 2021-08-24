@@ -98,6 +98,7 @@ Levels/*
 Temp/*
 *.gro
 OverridenTextures/CreateKTX2Cache.txt
+OverridenTextures/CreateKTX2.py
 OverridenTextures/OverridenTextures.zip
 OverridenTextures/Raw/*
 OverridenTextures/Compressed/*
