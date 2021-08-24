@@ -971,6 +971,11 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       _srtGlobals.srt_vWaterExtinction = { 0.025f, 0.016f, 0.011f };
       break;
   }
+
+
+
+  _srtGlobals.srt_bReflRefrShadows = false;
+  _srtGlobals.srt_bReflRefrToIndirect = false;
 }
 
 SSRT::CustomInfo::~CustomInfo()
@@ -1833,6 +1838,28 @@ void SSRT::CustomInfo::Update(const FLOAT3D &vCameraPosition)
           GREAT_PYRAMID_SKY_COLOR_END,
           Clamp((tmCurrent - tmAnimatedSkyIntensityOrigin) / GREAT_PYRAMID_SKY_COLOR_CHANGE_LENGTH, 0.0f, 1.0f)
         );
+      }
+    }
+  }
+
+  if (eCurrentWorld == EWorld::MoonMountains)
+  {
+    _srtGlobals.srt_bReflRefrShadows = true;
+    _srtGlobals.srt_bReflRefrToIndirect = true;
+
+    if (vCameraPosition(2) < -65)
+    {
+      if (vCameraPosition(1) > 0 && vCameraPosition(3) < -350)
+      {
+        // inside cave with water
+        _srtGlobals.srt_bReflRefrShadows = false;
+        _srtGlobals.srt_bReflRefrToIndirect = false;
+      }
+      else if (vCameraPosition(2) < -105)
+      {
+        // behind the second waterfall, last section
+        _srtGlobals.srt_bReflRefrShadows = true;
+        _srtGlobals.srt_bReflRefrToIndirect = false;
       }
     }
   }
