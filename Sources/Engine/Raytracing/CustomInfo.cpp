@@ -596,7 +596,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   fSkyCloudsOpacity = 0.0f;
   // lower sky intensity while it's cloudy
   bSkyboxIntensityDependsOnSkyClouds = eCurrentWorld == EWorld::Hatshepsut;
-  fSkyboxCloudyIntensity = 0.1f;
+  fSkyboxCloudyIntensity = 0.05f;
 
 
   switch (eCurrentWorld)
