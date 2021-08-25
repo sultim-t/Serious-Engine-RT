@@ -275,8 +275,8 @@ SSRT::SSRTMain::SSRTMain() :
 
   info.rasterizedMaxVertexCount = 1 << 16;
   info.rasterizedMaxIndexCount = info.rasterizedMaxVertexCount * 3 / 2;
-  info.rasterizedSkyMaxVertexCount = 4096;
-  info.rasterizedSkyMaxIndexCount = 4096;
+  info.rasterizedSkyMaxVertexCount = 1 << 16;
+  info.rasterizedSkyMaxIndexCount = info.rasterizedSkyMaxVertexCount * 3 / 2;
   info.rasterizedSkyCubemapSize = 256;
   info.rasterizedVertexColorGamma = RG_TRUE;
 

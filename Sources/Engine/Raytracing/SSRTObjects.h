@@ -148,6 +148,8 @@ struct CParticlesGeometry
   bool                blendEnable;
   RgBlendFactor       blendSrc;
   RgBlendFactor       blendDst;
+
+  bool                isSky;
 };
 
 

@@ -328,9 +328,19 @@ void SSRT::Scene::AddParticles(const CParticlesGeometry &particles)
   info.blendFuncSrc = particles.blendSrc;
   info.blendFuncDst = particles.blendDst;
   info.depthTest = RG_TRUE;
-  info.renderType = RG_RASTERIZED_GEOMETRY_RENDER_TYPE_DEFAULT;
+  info.renderType = particles.isSky ? RG_RASTERIZED_GEOMETRY_RENDER_TYPE_SKY : RG_RASTERIZED_GEOMETRY_RENDER_TYPE_DEFAULT;
 
-  Utils::CopyTransform(info.transform, particles.absPosition, particles.absRotation);
+  if (particles.isSky)
+  {
+    FLOATmatrix3D bv;
+    MakeInverseRotationMatrix(bv, GetBackgroundViewerOrientationAngle());
+
+    Utils::CopyTransform(info.transform, { 0, 0, 0 }, bv);
+  }
+  else
+  {
+    Utils::CopyTransform(info.transform, particles.absPosition, particles.absRotation);
+  }
 
   RgResult r = rgUploadRasterizedGeometry(instance, &info, nullptr, nullptr);
   RG_CHECKERROR(r);
@@ -484,9 +494,21 @@ void SSRT::Scene::ProcessDynamicGeometry()
   FOREACHINDYNAMICCONTAINER(pWorld->wo_cenEntities, CEntity, iten)
   {
     // always update background
-    if (iten->en_RenderType == CEntity::RT_BRUSH && (iten->en_ulFlags & ENF_BACKGROUND))
+    if (iten->en_ulFlags & ENF_BACKGROUND)
     {
-      UpdateBrush(iten);
+      if (iten->en_RenderType == CEntity::RT_BRUSH)
+      {
+        UpdateBrush(iten);
+      }
+      else if (iten->en_RenderType == CEntity::RT_MODEL)
+      {
+        RT_AddModelEntity(iten, this);
+        RT_AddParticlesForEntity(iten, this);
+      }
+      else if (iten->en_RenderType == CEntity::RT_EDITORMODEL)
+      {
+        RT_AddParticlesForEntity(iten, this);
+      }
     }
 
     // always add directional light source

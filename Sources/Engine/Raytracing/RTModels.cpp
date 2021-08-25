@@ -228,13 +228,17 @@ static void FlushModelInfo(ULONG entityID,
   modelInfo.indices = pIndices;
 
 
+  // assuming that sky type is always RG_SKY_TYPE_RASTERIZED_GEOMETRY
+  const bool isRasterizedSky = isBackground;
+
+
   CTextureObject *to = &mo.mo_toTexture;
   CTextureData *td = to != nullptr ? (CTextureData *)to->GetData() : nullptr;
   CTextureObject *reflectionTo = &mo.mo_toReflection;
 
   bool forceAlphaTestOriginally = RT_ShouldBeAlphaTested(to, stt, forceTranslucency, pScene);
   modelInfo.passThroughType = RT_GetPassThroughType(stt, forceAlphaTestOriginally);
-  modelInfo.isRasterized = RT_ShouldBeRasterized(stt, forceAlphaTestOriginally);
+  modelInfo.isRasterized = RT_ShouldBeRasterized(stt, forceAlphaTestOriginally) || isRasterizedSky;
 
   // if alpha test forced by the texture
   if (modelInfo.passThroughType != RG_GEOMETRY_PASS_THROUGH_TYPE_ALPHA_TESTED || modelInfo.isRasterized)

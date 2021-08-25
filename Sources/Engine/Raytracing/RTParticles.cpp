@@ -58,6 +58,7 @@ static ULONG          RT_ulCurrentEntityID = 0;
 // to prevent particles and models to be uploaded with the same 64-bit ID
 constexpr ULONG       RT_FLUSH_INDEX_BASE = 100000;
 static ULONG          RT_ulCurrentFlushIndex = RT_FLUSH_INDEX_BASE;
+static bool           RT_bCurrentIsBackground = false;
 
 static CAnyProjection3D RT_pEmptyProjection = {};
 
@@ -79,6 +80,7 @@ void RT_AddParticlesForEntity(CEntity *pTargetEntity, SSRT::Scene *pScene)
   {
     RT_ulCurrentEntityID = pTargetEntity->en_ulID;
     RT_ulCurrentFlushIndex = RT_FLUSH_INDEX_BASE;
+    RT_bCurrentIsBackground = pTargetEntity->en_ulFlags & ENF_BACKGROUND;
   }
 
   Particle_PrepareSystem(nullptr, RT_pEmptyProjection);
@@ -99,6 +101,7 @@ void RT_AddParticlesForEntity(CEntity *pTargetEntity, SSRT::Scene *pScene)
   {
     RT_ulCurrentEntityID = 0;
     RT_ulCurrentFlushIndex = RT_FLUSH_INDEX_BASE;
+    RT_bCurrentIsBackground = false;
   }
 }
 
@@ -397,7 +400,11 @@ void RT_Particle_Flush()
     identity(2, 1) = 0; identity(2, 2) = 1; identity(2, 3) = 0;
     identity(3, 1) = 0; identity(3, 2) = 0; identity(3, 3) = 1;
 
-    bool isRasterized = !RT_sCurrentScene->GetCustomInfo()->IsAlphaTestForcedForParticles(RT_ptd);
+    bool isSky = RT_bCurrentIsBackground;
+
+    bool isRasterized = 
+      isSky ||
+      !RT_sCurrentScene->GetCustomInfo()->IsAlphaTestForcedForParticles(RT_ptd);
 
     if (isRasterized)
     {
@@ -413,6 +420,8 @@ void RT_Particle_Flush()
       info.blendEnable = true;
       info.blendSrc = RT_eBlendSrc;
       info.blendDst = RT_eBlendDst;
+
+      info.isSky = isSky;
 
       RT_GenerateQuadIndices(info.vertexCount, &info.indexCount, &info.pIndexData);
 
