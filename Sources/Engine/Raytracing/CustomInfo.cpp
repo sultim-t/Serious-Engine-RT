@@ -565,6 +565,11 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       _srtGlobals.srt_fAnimatedSunTimeLength = 2 * 60;
       _srtGlobals.srt_vAnimatedSunTargetEuler = { 35, -45, 0 };
       break;
+    case EWorld::AlleyOfSphinxes:
+      _srtGlobals.srt_fAnimatedSunTimeOffsetStart = 0;
+      _srtGlobals.srt_fAnimatedSunTimeLength = 0;
+      _srtGlobals.srt_vAnimatedSunTargetEuler = { 45, -15, 0 };
+      break;
     case EWorld::Oasis:
       _srtGlobals.srt_fAnimatedSunTimeOffsetStart = 60;
       _srtGlobals.srt_fAnimatedSunTimeLength = 4 * 60;
