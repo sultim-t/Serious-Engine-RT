@@ -20,6 +20,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <Engine/Graphics/GfxLibrary.h>
 #include <Engine/Base/Translation.h>
 #include <Engine/Base/Console.h>
+#include <Engine/Base/ErrorReporting.h>
 
 #ifdef SE1_VULKAN
 #include <Engine/Graphics/Vulkan/VulkanInclude.h>
@@ -179,8 +180,12 @@ void CGfxLibrary::InitAPIs(void)
   uint32_t ctMaxPhysDevices = 0;
   vkEnumeratePhysicalDevices(tempVkInstance, &ctMaxPhysDevices, nullptr);
 
-  ASSERT(ctMaxPhysDevices < 8);
-  VkPhysicalDevice physDevices[8];
+  if (ctMaxPhysDevices == 0)
+  {
+    FatalError("GPU wasn't found");
+  }
+
+  VkPhysicalDevice physDevices[64];
   vkEnumeratePhysicalDevices(tempVkInstance, &ctMaxPhysDevices, physDevices);
 
   // TODO: Vulkan: add only suitable devices, i.e. with:
@@ -247,8 +252,44 @@ void CGfxLibrary::InitAPIs(void)
   gl_gaAPI[GAT_VK].ga_ctAdapters = ctMaxPhysDevices;
   gl_gaAPI[GAT_VK].ga_iCurrentAdapter = 0;
 
-  // fill the same info for Vulkan ray tracing
-  gl_gaAPI[GAT_RT] = gl_gaAPI[GAT_VK];
+
+#if 1 // RT
+  int iRTGPU = 0;
+  bool bHasGPUWithRT = false;
+
+  for (INDEX iAdapter = 0; iAdapter < ctMaxPhysDevices; iAdapter++)
+  {
+    // check RT
+    {
+      VkPhysicalDeviceRayTracingPipelineFeaturesKHR rtFeatures = {};
+      rtFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
+
+      VkPhysicalDeviceFeatures2 deviceFeatures2 = {};
+      deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+      deviceFeatures2.pNext = &rtFeatures;
+      vkGetPhysicalDeviceFeatures2(physDevices[iAdapter], &deviceFeatures2);
+
+      if (rtFeatures.rayTracingPipeline)
+      {
+        bHasGPUWithRT = true;
+
+        // if has RT support, then assign info from VK
+
+        gl_gaAPI[GAT_RT].ga_adaAdapter[iRTGPU] =  gl_gaAPI[GAT_RT].ga_adaAdapter[iAdapter];
+        iRTGPU++;
+      }
+    }
+  }
+
+  gl_gaAPI[GAT_RT].ga_ctAdapters = iRTGPU;
+  gl_gaAPI[GAT_RT].ga_iCurrentAdapter = 0;
+
+  if (!bHasGPUWithRT)
+  {
+    FatalError("Can't find ray tracing feature on your GPU. Check if your GPU has it or try to update drivers.");
+  }
+#endif // RT
+
 
   // destroy temporary instance
   vkDestroyInstance(tempVkInstance, nullptr);

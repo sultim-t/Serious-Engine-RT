@@ -1852,7 +1852,12 @@ void SSRT::CustomInfo::Update(const FLOAT3D &vCameraPosition)
     _srtGlobals.srt_bReflRefrShadows = true;
     _srtGlobals.srt_bReflRefrToIndirect = true;
 
-    if (vCameraPosition(2) < -65)
+    // first section or end cutscene
+    if (vCameraPosition(3) > -195)
+    {
+      _srtGlobals.srt_bReflRefrShadows = false;
+    }
+    else if (vCameraPosition(2) < -65)
     {
       if (vCameraPosition(1) > 0 && vCameraPosition(3) < -350)
       {

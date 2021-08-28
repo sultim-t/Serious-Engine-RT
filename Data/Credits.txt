@@ -24,6 +24,12 @@ Graphics Programming Discord server
 Linux and x64 port of SE1
 (github.com/icculus/Serious-Engine)
 
+TESTERS
+BeyondNecroDome
+puddingtopf
+Thanadrax|Cream
+
+
 
 
 
