@@ -296,6 +296,7 @@ SSRT::SSRTMain::SSRTMain() :
   info.pfnPrint = [] (const char *pMessage, void *pUserData)
   {
     CPrintF(pMessage);
+    CPrintF("\n");
   };
 
   RgResult r = rgCreateInstance(&info, &instance);
@@ -537,7 +538,7 @@ void SSRT::SSRTMain::EndFrame()
   memcpy(rflParams.portalRelativeRotation.matrix, mPortalRelativeRot.matrix, sizeof(float) * 9);
 
   RgDrawFrameInfo frameInfo = {};
-  frameInfo.renderSize = { (uint32_t)(curWindowWidth * _srtGlobals.srt_fRenderScale), (uint32_t)(curWindowHeight * _srtGlobals.srt_fRenderScale) };
+  frameInfo.renderSize = { (uint32_t)(roundf(curWindowWidth * _srtGlobals.srt_fRenderScale)), (uint32_t)(roundf(curWindowHeight * _srtGlobals.srt_fRenderScale)) };
   frameInfo.rayCullMaskWorld = currentScene == nullptr ? 0xFF : currentScene->GetCustomInfo()->GetCullMask(currentScene->GetCameraPosition());
   frameInfo.rayLength = currentScene == nullptr ? 10000.0f : currentScene->GetCustomInfo()->GetRayLength(currentScene->GetCameraPosition());
 
