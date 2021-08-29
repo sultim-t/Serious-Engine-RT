@@ -1507,6 +1507,7 @@ BOOL TryToSetDisplayMode(enum GfxAPIType eGfxAPI, INDEX iAdapter, PIX pixSizeI, 
 // list of possible display modes for recovery 
 const INDEX aDefaultModes[][3] =
 { // color, API, adapter
+#ifndef SE1_RAYTRACING
   { DD_DEFAULT, GAT_OGL, 0},
   { DD_16BIT,   GAT_OGL, 0},
   { DD_16BIT,   GAT_OGL, 1}, // 3dfx Voodoo2
@@ -1515,6 +1516,10 @@ const INDEX aDefaultModes[][3] =
   { DD_16BIT,   GAT_D3D, 0},
   { DD_16BIT,   GAT_D3D, 1},
 #endif // SE1_D3D
+#else
+  // recover to Vulkan, not OpenGL
+  { DD_DEFAULT, GAT_VK, 0},
+#endif // SE1_RAYTRACING
 };
 const INDEX ctDefaultModes = ARRAYCOUNT(aDefaultModes);
 
@@ -1551,7 +1556,7 @@ void StartNewMode( enum GfxAPIType eGfxAPI, INDEX iAdapter, PIX pixSizeI, PIX pi
         "Cannot set display mode!\n"
         "Serious Sam was unable to find display mode with hardware acceleration.\n"
         "Make sure you install proper drivers for your video card as recommended\n"
-        "in documentation and set your desktop to 16 bit (65536 colors).\n"
+        "in documentation.\n"
         "Please see ReadMe file for troubleshooting information.\n"));
     }
 

@@ -274,8 +274,8 @@ void CGfxLibrary::InitAPIs(void)
         bHasGPUWithRT = true;
 
         // if has RT support, then assign info from VK
+        gl_gaAPI[GAT_RT].ga_adaAdapter[iRTGPU] =  gl_gaAPI[GAT_VK].ga_adaAdapter[iAdapter];
 
-        gl_gaAPI[GAT_RT].ga_adaAdapter[iRTGPU] =  gl_gaAPI[GAT_RT].ga_adaAdapter[iAdapter];
         iRTGPU++;
       }
     }
