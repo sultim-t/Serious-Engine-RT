@@ -65,6 +65,13 @@ extern CTString astrRenderScalePercentsTexts[] = {
 static_assert(ARRAYCOUNT(aindRenderScalePercents) == 9, "Change size in the header file");
 static_assert(ARRAYCOUNT(aindRenderScalePercents) == ARRAYCOUNT(astrRenderScalePercentsTexts), "Must have same counts");
 
+extern CTString astrCPUPerformancePresetTexts[] = {
+  "Default",
+  "Lower",
+  "Low",
+  "Min",
+};
+
 extern PIX apixWidths[][2] = {
   640, 480,
   960, 720,

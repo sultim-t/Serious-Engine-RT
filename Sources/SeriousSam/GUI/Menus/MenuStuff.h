@@ -53,6 +53,7 @@ extern PIX apixWidths[20][2];
 
 extern INDEX aindRenderScalePercents[9];
 extern CTString astrRenderScalePercentsTexts[9];
+extern CTString astrCPUPerformancePresetTexts[4];
 
 ULONG GetSpawnFlagsForGameType(INDEX iGameType);
 BOOL IsMenuEnabled(const CTString &strMenuName);

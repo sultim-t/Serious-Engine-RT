@@ -767,15 +767,21 @@ static FLOAT SwitchToRenderScale(INDEX iSwitch)
 }
 
 // Separate function to not touch _bVideoOptionsChanged variable
-static void UpdateRenderScaleOption(INDEX iSelected)
+static void UpdateSSRTOptions(INDEX iSelected)
 {
   CVideoOptionsMenu &gmCurrent = _pGUIM->gmVideoOptionsMenu;
   gmCurrent.gm_mgRenderScaleTrigger.mg_bEnabled = ((GfxAPIType)sam_iGfxAPI) == GfxAPIType::GAT_RT;
+  gmCurrent.gm_mgCPUPerformanceTrigger.mg_bEnabled = ((GfxAPIType)sam_iGfxAPI) == GfxAPIType::GAT_RT;
 
-  // apply immediately, as it just changes the shell variable
+  // apply immediately, as only shell variables are being changed
   if (_pShell->GetSymbol("srt_fRenderScale", TRUE) != NULL)
   {
     _pShell->SetFLOAT("srt_fRenderScale", SwitchToRenderScale(gmCurrent.gm_mgRenderScaleTrigger.mg_iSelected));
+  } 
+  
+  if (_pShell->GetSymbol("srt_iCullingMaxSectorDepthQualityLevel", TRUE) != NULL)
+  {
+    _pShell->SetINDEX("srt_iCullingMaxSectorDepthQualityLevel", gmCurrent.gm_mgCPUPerformanceTrigger.mg_iSelected);
   }
 }
 #endif // SE1_RAYTRACING
@@ -853,7 +859,7 @@ extern void UpdateVideoOptionsButtons(INDEX iSelected)
   gmCurrent.gm_mgBitsPerPixelTrigger.mg_iSelected = DepthToSwitch(DD_DEFAULT);
   gmCurrent.gm_mgDisplayPrefsTrigger.mg_bEnabled = FALSE;
 
-  UpdateRenderScaleOption(iSelected);
+  UpdateSSRTOptions(iSelected);
 #endif // !SE1_RAYTRACING
 
   // remember current selected resolution
@@ -914,6 +920,7 @@ extern void InitVideoOptionsButtons(void)
   gmCurrent.gm_mgResolutionsTrigger.ApplyCurrentSelection();
 #ifdef SE1_RAYTRACING
   gmCurrent.gm_mgRenderScaleTrigger.ApplyCurrentSelection();
+  gmCurrent.gm_mgCPUPerformanceTrigger.ApplyCurrentSelection();
 #endif
   gmCurrent.gm_mgBitsPerPixelTrigger.ApplyCurrentSelection();
 }
@@ -991,7 +998,8 @@ void InitActionsForVideoOptionsMenu()
   gmCurrent.gm_mgFullScreenTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
   gmCurrent.gm_mgResolutionsTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
 #ifdef SE1_RAYTRACING
-  gmCurrent.gm_mgRenderScaleTrigger.mg_pOnTriggerChange = &UpdateRenderScaleOption;
+  gmCurrent.gm_mgRenderScaleTrigger.mg_pOnTriggerChange = &UpdateSSRTOptions;
+  gmCurrent.gm_mgCPUPerformanceTrigger.mg_pOnTriggerChange = &UpdateSSRTOptions;
 #endif
   gmCurrent.gm_mgBitsPerPixelTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
   gmCurrent.gm_mgVideoRendering.mg_pActivatedFunction = &StartRenderingOptionsMenu;

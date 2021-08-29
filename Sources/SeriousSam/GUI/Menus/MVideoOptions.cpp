@@ -62,8 +62,11 @@ void CVideoOptionsMenu::Initialize_t(void)
 
   // new
   TRIGGER_MG(gm_mgRenderScaleTrigger, 3,
-    gm_mgResolutionsTrigger, gm_mgVideoRendering, TRANS("RENDER SCALE"), astrRenderScalePercentsTexts);
-  gm_mgRenderScaleTrigger.mg_strTip = TRANS("set multiplier at which world is being rendered");
+    gm_mgResolutionsTrigger, gm_mgCPUPerformanceTrigger, TRANS("RENDER SCALE"), astrRenderScalePercentsTexts);
+  gm_mgRenderScaleTrigger.mg_strTip = TRANS("set multiplier at which world is being rendered");  
+  TRIGGER_MG(gm_mgCPUPerformanceTrigger, 4,
+    gm_mgRenderScaleTrigger, gm_mgVideoRendering, TRANS("CPU PRESET"), astrCPUPerformancePresetTexts);
+  gm_mgCPUPerformanceTrigger.mg_strTip = TRANS("set CPU performance preset");
 
   // ignored
   const int iOutOfScreenRow = 128;
@@ -85,7 +88,10 @@ void CVideoOptionsMenu::Initialize_t(void)
   gm_mgDisplayAdaptersTrigger.mg_pOnTriggerChange = NULL;
   gm_mgFullScreenTrigger.mg_pOnTriggerChange = NULL;
   gm_mgResolutionsTrigger.mg_pOnTriggerChange = NULL;
+#ifdef SE1_RAYTRACING
   gm_mgRenderScaleTrigger.mg_pOnTriggerChange = NULL;
+  gm_mgCPUPerformanceTrigger.mg_pOnTriggerChange = NULL;
+#endif // SE1_RAYTRACING
   gm_mgBitsPerPixelTrigger.mg_pOnTriggerChange = NULL;
 
   gm_mgVideoRendering.mg_bfsFontSize = BFS_MEDIUM;
@@ -93,8 +99,8 @@ void CVideoOptionsMenu::Initialize_t(void)
   gm_mgVideoRendering.mg_boxOnScreen = BoxMediumRow(7.0f);
   gm_mgVideoRendering.mg_pmgUp = &gm_mgBitsPerPixelTrigger;
 #else
-  gm_mgVideoRendering.mg_boxOnScreen = BoxMediumRow(4.0f);
-  gm_mgVideoRendering.mg_pmgUp = &gm_mgRenderScaleTrigger;
+  gm_mgVideoRendering.mg_boxOnScreen = BoxMediumRow(6.0f);
+  gm_mgVideoRendering.mg_pmgUp = &gm_mgCPUPerformanceTrigger;
 #endif // !SE1_RAYTRACING
   gm_mgVideoRendering.mg_pmgDown = &gm_mgApply;
   gm_mgVideoRendering.mg_strText = TRANS("RENDERING OPTIONS");

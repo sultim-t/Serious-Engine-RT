@@ -31,6 +31,7 @@ public:
   CMGTrigger gm_mgResolutionsTrigger;
 #ifdef SE1_RAYTRACING
   CMGTrigger gm_mgRenderScaleTrigger;
+  CMGTrigger gm_mgCPUPerformanceTrigger;
 #endif
   CMGTrigger gm_mgDisplayPrefsTrigger;
   CMGButton gm_mgVideoRendering;
