@@ -34,6 +34,8 @@ static INDEX         _ctAdapters = 0;
 static CTString     * _astrAdapterTexts = NULL;
 static INDEX         _ctResolutions = 0;
 static CTString     * _astrResolutionTexts = NULL;
+static INDEX         _ctRenderScales = 0;
+static CTString     *_astrRenderScaleTexts = NULL;
 static CDisplayMode *_admResolutionModes = NULL;
 
 #define VOLUME_STEPS  50
@@ -729,6 +731,55 @@ static void FillAdaptersList(void)
   gmCurrent.gm_mgDisplayAdaptersTrigger.mg_ctTexts = _ctAdapters;
 }
 
+#ifdef SE1_RAYTRACING
+static INDEX RenderScaleToSwitch()
+{
+  FLOAT fRenderScale = 1.0f;
+
+  if (_pShell->GetSymbol("srt_fRenderScale", TRUE) != NULL)
+  {
+    fRenderScale = _pShell->GetFLOAT("srt_fRenderScale");
+  }
+
+  INDEX iPercentage = fRenderScale * 100.0f;
+
+  INDEX iNearestSwitch = 0;
+  INDEX iNearestDistance = 1000;
+
+  for (INDEX i = 0; i < ARRAYCOUNT(aindRenderScalePercents); i++)
+  {
+    INDEX iDist = Abs(aindRenderScalePercents[i] - iPercentage);
+
+    if (iDist <= iNearestDistance)
+    {
+      iNearestSwitch = i;
+      iNearestDistance = iDist;
+    }
+  }
+
+  return iNearestSwitch;
+}
+
+static FLOAT SwitchToRenderScale(INDEX iSwitch)
+{
+  iSwitch = Clamp<INDEX>(iSwitch, 0, ARRAYCOUNT(aindRenderScalePercents));
+  return 0.01f * aindRenderScalePercents[iSwitch];
+}
+
+// Separate function to not touch _bVideoOptionsChanged variable
+static void UpdateRenderScaleOption(INDEX iSelected)
+{
+  CVideoOptionsMenu &gmCurrent = _pGUIM->gmVideoOptionsMenu;
+  gmCurrent.gm_mgRenderScaleTrigger.mg_bEnabled = ((GfxAPIType)sam_iGfxAPI) == GfxAPIType::GAT_RT;
+
+  // apply immediately, as it just changes the shell variable
+  if (_pShell->GetSymbol("srt_fRenderScale", TRUE) != NULL)
+  {
+    _pShell->SetFLOAT("srt_fRenderScale", SwitchToRenderScale(gmCurrent.gm_mgRenderScaleTrigger.mg_iSelected));
+  }
+}
+#endif // SE1_RAYTRACING
+
 extern void UpdateVideoOptionsButtons(INDEX iSelected)
 {
   CVideoOptionsMenu &gmCurrent = _pGUIM->gmVideoOptionsMenu;
@@ -801,6 +852,8 @@ extern void UpdateVideoOptionsButtons(INDEX iSelected)
   gmCurrent.gm_mgBitsPerPixelTrigger.mg_bEnabled = FALSE;
   gmCurrent.gm_mgBitsPerPixelTrigger.mg_iSelected = DepthToSwitch(DD_DEFAULT);
   gmCurrent.gm_mgDisplayPrefsTrigger.mg_bEnabled = FALSE;
+
+  UpdateRenderScaleOption(iSelected);
 #endif // !SE1_RAYTRACING
 
   // remember current selected resolution
@@ -850,11 +903,18 @@ extern void InitVideoOptionsButtons(void)
   SizeToResolution(sam_iScreenSizeI, sam_iScreenSizeJ, gmCurrent.gm_mgResolutionsTrigger.mg_iSelected);
   gmCurrent.gm_mgDisplayPrefsTrigger.mg_iSelected = Clamp(int(sam_iVideoSetup), 0, 3);
 
+#ifdef SE1_RAYTRACING
+  gmCurrent.gm_mgRenderScaleTrigger.mg_iSelected = RenderScaleToSwitch();
+#endif
+
   gmCurrent.gm_mgFullScreenTrigger.ApplyCurrentSelection();
   gmCurrent.gm_mgDisplayPrefsTrigger.ApplyCurrentSelection();
   gmCurrent.gm_mgDisplayAPITrigger.ApplyCurrentSelection();
   gmCurrent.gm_mgDisplayAdaptersTrigger.ApplyCurrentSelection();
   gmCurrent.gm_mgResolutionsTrigger.ApplyCurrentSelection();
+#ifdef SE1_RAYTRACING
+  gmCurrent.gm_mgRenderScaleTrigger.ApplyCurrentSelection();
+#endif
   gmCurrent.gm_mgBitsPerPixelTrigger.ApplyCurrentSelection();
 }
 
@@ -930,6 +990,9 @@ void InitActionsForVideoOptionsMenu()
   gmCurrent.gm_mgDisplayAdaptersTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
   gmCurrent.gm_mgFullScreenTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
   gmCurrent.gm_mgResolutionsTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
+#ifdef SE1_RAYTRACING
+  gmCurrent.gm_mgRenderScaleTrigger.mg_pOnTriggerChange = &UpdateRenderScaleOption;
+#endif
   gmCurrent.gm_mgBitsPerPixelTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
   gmCurrent.gm_mgVideoRendering.mg_pActivatedFunction = &StartRenderingOptionsMenu;
   gmCurrent.gm_mgApply.mg_pActivatedFunction = &ApplyVideoOptions;

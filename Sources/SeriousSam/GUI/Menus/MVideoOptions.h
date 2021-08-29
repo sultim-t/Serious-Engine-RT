@@ -29,6 +29,9 @@ public:
   CMGTrigger gm_mgDisplayAdaptersTrigger;
   CMGTrigger gm_mgFullScreenTrigger;
   CMGTrigger gm_mgResolutionsTrigger;
+#ifdef SE1_RAYTRACING
+  CMGTrigger gm_mgRenderScaleTrigger;
+#endif
   CMGTrigger gm_mgDisplayPrefsTrigger;
   CMGButton gm_mgVideoRendering;
   CMGTrigger gm_mgBitsPerPixelTrigger;

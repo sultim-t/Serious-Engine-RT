@@ -38,6 +38,33 @@ extern CTString astrWeapon[] = {
   RADIOTRANS("Only if stronger"),
 };
 
+extern INDEX aindRenderScalePercents[] = {
+  30,
+  50,
+  75,
+  90,
+  100,
+  125,
+  150,
+  175,
+  200
+};
+
+extern CTString astrRenderScalePercentsTexts[] = {
+  "30%",
+  "50%",
+  "75%",
+  "90%",
+  "100%",
+  "125%",
+  "150%",
+  "175%",
+  "200%",
+};
+
+static_assert(ARRAYCOUNT(aindRenderScalePercents) == 9, "Change size in the header file");
+static_assert(ARRAYCOUNT(aindRenderScalePercents) == ARRAYCOUNT(astrRenderScalePercentsTexts), "Must have same counts");
+
 extern PIX apixWidths[][2] = {
   640, 480,
   960, 720,

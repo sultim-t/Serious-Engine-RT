@@ -51,6 +51,9 @@ extern CTString astrSoundAPIRadioTexts[3];
 
 extern PIX apixWidths[20][2];
 
+extern INDEX aindRenderScalePercents[9];
+extern CTString astrRenderScalePercentsTexts[9];
+
 ULONG GetSpawnFlagsForGameType(INDEX iGameType);
 BOOL IsMenuEnabled(const CTString &strMenuName);
 void InitGameTypes(void);

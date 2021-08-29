@@ -57,8 +57,13 @@ void CVideoOptionsMenu::Initialize_t(void)
     gm_mgDisplayAPITrigger, gm_mgResolutionsTrigger, TRANS("DISPLAY ADAPTER"), astrNoYes);
   gm_mgDisplayAdaptersTrigger.mg_strTip = TRANS("choose display adapter to be used");
   TRIGGER_MG(gm_mgResolutionsTrigger, 2,
-    gm_mgDisplayAdaptersTrigger, gm_mgVideoRendering, TRANS("WINDOW SIZE"), astrNoYes);
+    gm_mgDisplayAdaptersTrigger, gm_mgRenderScaleTrigger, TRANS("WINDOW SIZE"), astrNoYes);
   gm_mgResolutionsTrigger.mg_strTip = TRANS("select size of the presentation window");
+
+  // new
+  TRIGGER_MG(gm_mgRenderScaleTrigger, 3,
+    gm_mgResolutionsTrigger, gm_mgVideoRendering, TRANS("RENDER SCALE"), astrRenderScalePercentsTexts);
+  gm_mgRenderScaleTrigger.mg_strTip = TRANS("set multiplier at which world is being rendered");
 
   // ignored
   const int iOutOfScreenRow = 128;
@@ -80,6 +85,7 @@ void CVideoOptionsMenu::Initialize_t(void)
   gm_mgDisplayAdaptersTrigger.mg_pOnTriggerChange = NULL;
   gm_mgFullScreenTrigger.mg_pOnTriggerChange = NULL;
   gm_mgResolutionsTrigger.mg_pOnTriggerChange = NULL;
+  gm_mgRenderScaleTrigger.mg_pOnTriggerChange = NULL;
   gm_mgBitsPerPixelTrigger.mg_pOnTriggerChange = NULL;
 
   gm_mgVideoRendering.mg_bfsFontSize = BFS_MEDIUM;
@@ -88,7 +94,7 @@ void CVideoOptionsMenu::Initialize_t(void)
   gm_mgVideoRendering.mg_pmgUp = &gm_mgBitsPerPixelTrigger;
 #else
   gm_mgVideoRendering.mg_boxOnScreen = BoxMediumRow(4.0f);
-  gm_mgVideoRendering.mg_pmgUp = &gm_mgResolutionsTrigger;
+  gm_mgVideoRendering.mg_pmgUp = &gm_mgRenderScaleTrigger;
 #endif // !SE1_RAYTRACING
   gm_mgVideoRendering.mg_pmgDown = &gm_mgApply;
   gm_mgVideoRendering.mg_strText = TRANS("RENDERING OPTIONS");
