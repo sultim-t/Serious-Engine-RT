@@ -308,7 +308,7 @@ static void RT_AddModifiedSphereLightToScene(const CLightSource *plsLight,
   }
   else
   {
-    light.radius = hotspotDistance * _srtGlobals.srt_fOriginalLightSphRadiusMultiplier;
+    light.radius = Max(_srtGlobals.srt_fOriginalLightSphRadiusMin, hotspotDistance * _srtGlobals.srt_fOriginalLightSphRadiusMultiplier);
     light.falloffDistance = f * _srtGlobals.srt_fOriginalLightSphFalloffMultiplier;
   }
 
@@ -589,47 +589,11 @@ static void RT_TryAddPotentialLight(CEntity *pEn, SSRT::Scene *pScene)
   FLOAT3D closestPos;
   FLOAT3D pos;
 
-  // scan ignored lights, and try to find 
-  for (INDEX i = 0; i < RT_IgnoredLights.Count(); i++)
+
+  bool bForced = pScene->GetCustomInfo()->IsPotentialForcedAdd(originalPos);
+
+  if (bForced)
   {
-    ASSERT(RT_IgnoredLights[i] && RT_IgnoredLights[i]->ls_penEntity);
-
-    pos = RT_IgnoredLights[i]->ls_penEntity->GetLerpedPlacement().pl_PositionVector;
-
-    float d = (originalPos - pos).ManhattanNorm();
-
-    if (d < closestDist)
-    {
-      closestLtIndex = i;
-      closestPos = pos;
-      closestDist = d;
-    }
-  }
-
-
-  // if found
-  if (closestLtIndex != -1)
-  {
-    const CLightSource *plsLight = RT_IgnoredLights[closestLtIndex];
-
-    bool isDynamic = plsLight->ls_ulFlags & LSF_DYNAMIC;
-
-    RT_AddModifiedSphereLightToScene(nullptr,
-                                     pEn->en_ulID,
-                                     closestPos, RT_GetSphericalLightColor(plsLight) * _srtGlobals.srt_fPotentialLightSphIntensity,
-                                     plsLight->ls_rHotSpot,
-                                     plsLight->ls_rFallOff,
-                                     isDynamic, true, false,
-                                     pScene);
-  }
-  else
-  {
-	// ignore such lights at all
-    return;
-
-
-
-
     // just any
     const FLOAT3D color = { 1.0f, 0.7f, 0.35f };
 
@@ -653,6 +617,42 @@ static void RT_TryAddPotentialLight(CEntity *pEn, SSRT::Scene *pScene)
                                      originalPos, color * _srtGlobals.srt_fPotentialLightSphIntensity,
                                      hotspotDistance, falloffDistance,
                                      false, true, false,
+                                     pScene);
+
+    return;
+  }
+
+
+  // scan ignored lights, and try to find 
+  for (INDEX i = 0; i < RT_IgnoredLights.Count(); i++)
+  {
+    ASSERT(RT_IgnoredLights[i] && RT_IgnoredLights[i]->ls_penEntity);
+
+    pos = RT_IgnoredLights[i]->ls_penEntity->GetLerpedPlacement().pl_PositionVector;
+
+    float d = (originalPos - pos).ManhattanNorm();
+
+    if (d < closestDist)
+    {
+      closestLtIndex = i;
+      closestPos = pos;
+      closestDist = d;
+    }
+  }
+
+  // if found
+  if (closestLtIndex != -1 && !bForced)
+  {
+    const CLightSource *plsLight = RT_IgnoredLights[closestLtIndex];
+
+    bool isDynamic = plsLight->ls_ulFlags & LSF_DYNAMIC;
+
+    RT_AddModifiedSphereLightToScene(nullptr,
+                                     pEn->en_ulID,
+                                     closestPos, RT_GetSphericalLightColor(plsLight) * _srtGlobals.srt_fPotentialLightSphIntensity,
+                                     plsLight->ls_rHotSpot,
+                                     plsLight->ls_rFallOff,
+                                     isDynamic, true, false,
                                      pScene);
   }
 }

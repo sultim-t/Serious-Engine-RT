@@ -1973,3 +1973,9 @@ float SSRT::CustomInfo::GetFlashlightIntensityForLevel(const FLOAT3D &vCameraPos
 
   return 1.0f;
 }
+
+bool SSRT::CustomInfo::IsPotentialForcedAdd(const FLOAT3D &vPos) const
+{
+  // very specific light in sand canyon
+  return eCurrentWorld == EWorld::SandCanyon && (vPos - FLOAT3D(8.5f, -22.125f, -193.5f)).ManhattanNorm() < 1.0f;
+}

@@ -64,6 +64,7 @@ struct SSRTGlobals
   FLOAT srt_fLightSphPolygonOffset = 1.0f;
 
   FLOAT srt_fOriginalLightSphIntensity = 1.0f;
+  FLOAT srt_fOriginalLightSphRadiusMin = 0.01f;
   FLOAT srt_fOriginalLightSphRadiusMultiplier = 0.05f;
   FLOAT srt_fOriginalLightSphFalloffMultiplier = 1.0f;
 

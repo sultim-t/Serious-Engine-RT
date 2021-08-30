@@ -92,6 +92,7 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user INDEX srt_bLightSphIgnoreEditorModels;", &_srtGlobals.srt_bLightSphIgnoreEditorModels);
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_fOriginalLightSphIntensity;", &_srtGlobals.srt_fOriginalLightSphIntensity);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fOriginalLightSphRadiusMin;", &_srtGlobals.srt_fOriginalLightSphRadiusMin);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fOriginalLightSphRadiusMultiplier;", &_srtGlobals.srt_fOriginalLightSphRadiusMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fOriginalLightSphFalloffMultiplier;", &_srtGlobals.srt_fOriginalLightSphFalloffMultiplier);
 
@@ -191,6 +192,7 @@ void SSRT::SSRTMain::NormalizeShellVariables()
   _srtGlobals.srt_fLightSphGlobalIntensityMultiplier = Max(_srtGlobals.srt_fLightSphGlobalIntensityMultiplier, 0.0f);
 
   _srtGlobals.srt_fOriginalLightSphIntensity = Max(_srtGlobals.srt_fOriginalLightSphIntensity, 0.0f);
+  _srtGlobals.srt_fOriginalLightSphRadiusMin = Max(_srtGlobals.srt_fOriginalLightSphRadiusMin, 0.0f);
   _srtGlobals.srt_fOriginalLightSphRadiusMultiplier = Max(_srtGlobals.srt_fOriginalLightSphRadiusMultiplier, 0.0f);
   _srtGlobals.srt_fOriginalLightSphFalloffMultiplier = Max(_srtGlobals.srt_fOriginalLightSphFalloffMultiplier, 0.0f);
 

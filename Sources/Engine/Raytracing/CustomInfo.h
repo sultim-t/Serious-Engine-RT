@@ -107,6 +107,8 @@ public:
   FLOAT GetSkySaturation() const;
   RgSkyType GetLevelSkyType() const;
   FLOAT GetFlashlightIntensityForLevel(const FLOAT3D &vCameraPosition) const;
+  bool IsPotentialForcedAdd(const FLOAT3D &vPos) const;
+
 
   void Update(const FLOAT3D &vCameraPosition);
   void OnSkyBrushAdd(const CBrushGeometry &brush);
