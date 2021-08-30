@@ -70,7 +70,7 @@ extern INDEX sam_iGfxAPI = 0;         // 0==OpenGL
 static INDEX sam_bShowRayTracingOptions = 0;    // for rendering options menu
 static INDEX sam_bShowRasterizationOptions = 0; // for rendering options menu
 #endif
-extern INDEX sam_bFirstStarted = FALSE;
+extern INDEX sam_bFirstStarted = TRUE;
 extern FLOAT sam_tmDisplayModeReport = 5.0f;
 extern INDEX sam_bShowAllLevels = FALSE;
 extern INDEX sam_bMentalActivated = FALSE;
@@ -514,9 +514,14 @@ BOOL Init( HINSTANCE hInstance, int nCmdShow, CTString strCmdLine)
 
   if( sam_bFirstStarted) {
     InfoMessage("%s", TRANS(
-      "SeriousSam is starting for the first time.\n"
-      "If you experience any problems, please consult\n"
-      "ReadMe file for troubleshooting information."));
+      "SS: RT is starting for the first time.\n"
+      "If you experience any problems, please\n"
+      "check ray tracing features on your GPU\n"
+      "and update drivers to the latest version.\n"));
+
+    // RT: set fullscreen borderless on the first launch
+    sam_iScreenSizeI = ::GetSystemMetrics(SM_CXSCREEN);
+    sam_iScreenSizeJ = ::GetSystemMetrics(SM_CYSCREEN);
   }
 
   // initialize sound library
