@@ -109,8 +109,13 @@ void CSinglePlayerMenu::Initialize_t(void)
 
 void CSinglePlayerMenu::StartMenu(void)
 {
+#ifndef SE1_RAYTRACING
   gm_mgTraining.mg_bEnabled = IsMenuEnabled("Training");
   gm_mgTechTest.mg_bEnabled = IsMenuEnabled("Technology Test");
+#else
+  gm_mgTraining.mg_bEnabled = FALSE;
+  gm_mgTechTest.mg_bEnabled = FALSE;
+#endif // !SE1_RAYTRACING
 
   if (gm_mgTraining.mg_bEnabled) {
     if (!gm_mgTraining.mg_lnNode.IsLinked()) {
