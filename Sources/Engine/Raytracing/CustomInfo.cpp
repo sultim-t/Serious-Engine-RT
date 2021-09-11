@@ -363,6 +363,19 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
 
   this->pWorld = pWorld;
   eCurrentWorld = GetWorldEnum(pWorld);
+
+
+  if (eCurrentWorld == EWorld::Other)
+  {
+    CPrintF("*************\n");
+    CPrintF("***WARNING***\n");
+    CPrintF("*************\n");
+    CPrintF("LOADING THE LEVEL THAT **WAS NOT** MODIFIED FOR RAY TRACING RENDERER.\n");
+    CPrintF("EXPECT - INCONSISTENT LIGHTING\n");
+    CPrintF("       - WORSE PERFORMANCE\n");
+    CPrintF("       - INCORRECT GEOMETRY BEING RENDERED\n");
+  }
+
   
   // It's not the actual world start time, it's 
   // the time SSRT scene was initialized. So 
