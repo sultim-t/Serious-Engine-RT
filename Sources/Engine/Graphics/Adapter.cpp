@@ -167,9 +167,18 @@ void CGfxLibrary::InitAPIs(void)
 
 
 #ifdef SE1_VULKAN
+  VkApplicationInfo tempAppInfo = {};
+  tempAppInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+  tempAppInfo.pApplicationName = "Temp VK to get GPU list";
+  tempAppInfo.applicationVersion = 0;
+  tempAppInfo.pEngineName = "Serious Engine 1";
+  tempAppInfo.engineVersion = 0;
+  tempAppInfo.apiVersion = VK_API_VERSION_1_2;
+
   VkInstance tempVkInstance;  
   VkInstanceCreateInfo instanceInfo = {};
   instanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+  instanceInfo.pApplicationInfo = &tempAppInfo;
   VkResult r = vkCreateInstance(&instanceInfo, nullptr, &tempVkInstance);
   if (r != VK_SUCCESS)
   {
