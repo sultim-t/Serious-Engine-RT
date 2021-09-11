@@ -129,6 +129,8 @@ private:
   std::vector<CDirectionalLight>    dirLights;
   FlashlightState                   firstPersonFlashlight;
   FlashlightState                   thirdPersonFlashlight;
+  // Used to correct flashlight outer angle
+  float                             currentFOV;
   
   std::unordered_set<WarpPortalState, WarpPortalStateHash> warpPortals;
 };

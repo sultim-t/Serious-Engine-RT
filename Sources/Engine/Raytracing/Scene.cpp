@@ -78,6 +78,7 @@ void SSRT::Scene::Update(const CWorldRenderingInfo &info)
   this->pViewerEntity = info.pViewerEntity;
   this->cameraPosition = info.cameraPosition;
   this->cameraRotation = info.cameraRotation;
+  this->currentFOV = info.fovH;
 
   isCameraInHaze = false;
 
@@ -552,6 +553,9 @@ void SSRT::Scene::OnFrameEnd(bool isCameraFirstPerson)
     info.color.data[0] *= f;
     info.color.data[1] *= f;
     info.color.data[2] *= f;
+
+    float relativeFov = Clamp(currentFOV / 75.0f, 1.0f, 1.5f);
+    info.angleOuter *= relativeFov;
 
     RgResult r = rgUploadSpotlightLight(instance, &info);
     RG_CHECKERROR(r);

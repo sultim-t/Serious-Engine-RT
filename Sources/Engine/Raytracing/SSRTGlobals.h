@@ -94,6 +94,8 @@ struct SSRTGlobals
   FLOAT srt_fBrushMetallicDefault = 0.1f;
   FLOAT srt_fBrushRoughnessDefault = 0.75f;
 
+  INDEX srt_bIndirRoughnessSqrt = 0;
+
   INDEX srt_bWeaponUseOriginalNormals = 0;
   FLOAT srt_fNormalMapStrength = 1.0f;
 
@@ -107,7 +109,7 @@ struct SSRTGlobals
   FLOAT srt_fSkyColorSaturation = 0.75f;
 
   INDEX srt_bTonemappingUseDefault = 0;
-  FLOAT srt_fTonemappingWhitePoint = 1.0f;
+  FLOAT srt_fTonemappingWhitePoint = 1.5f;
   FLOAT srt_fTonemappingMinLogLuminance = -2.0f;
   FLOAT srt_fTonemappingMaxLogLuminance = 0.0f;
 

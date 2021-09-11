@@ -77,6 +77,8 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fBrushRoughnessDefault;", &_srtGlobals.srt_fBrushRoughnessDefault);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fBrushMetallicDefault;", &_srtGlobals.srt_fBrushMetallicDefault);
 
+  _pShell->DeclareSymbol("persistent user INDEX srt_bIndirRoughnessSqrt;", &_srtGlobals.srt_bIndirRoughnessSqrt);
+
   _pShell->DeclareSymbol("persistent user INDEX srt_bEnableViewerShadows;", &_srtGlobals.srt_bEnableViewerShadows);
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_fSunIntensity;", &_srtGlobals.srt_fSunIntensity);
@@ -234,6 +236,8 @@ void SSRT::SSRTMain::NormalizeShellVariables()
   _srtGlobals.srt_fEmissionMapBoost = Max(_srtGlobals.srt_fEmissionMapBoost, 0.0f);
   _srtGlobals.srt_fEmissionMaxScreenColor = Max(_srtGlobals.srt_fEmissionMaxScreenColor, 0.0f);
   _srtGlobals.srt_fEmissionForFullbright = Max(_srtGlobals.srt_fEmissionForFullbright, 0.0f);
+
+  _srtGlobals.srt_bIndirRoughnessSqrt = !!_srtGlobals.srt_bIndirRoughnessSqrt;
 }
 
 
@@ -550,6 +554,9 @@ void SSRT::SSRTMain::EndFrame()
   // if world wasn't rendered, don't adapt
   frameInfo.disableEyeAdaptation = !wasWorldProcessed;
   frameInfo.disableRayTracing = !wasWorldProcessed;
+
+  frameInfo.useSqrtRoughnessForIndirect = _srtGlobals.srt_bIndirRoughnessSqrt;
+
   frameInfo.pTonemappingParams = _srtGlobals.srt_bTonemappingUseDefault ? nullptr : &tmParams;
   frameInfo.pShadowParams = _srtGlobals.srt_bMaxBounceShadowsUseDefault ? nullptr : &shadowParams;
   frameInfo.pBloomParams = &blParams;
