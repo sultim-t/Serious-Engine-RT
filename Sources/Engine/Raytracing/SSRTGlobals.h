@@ -127,7 +127,7 @@ struct SSRTGlobals
 
   INDEX srt_bMaxBounceShadowsUseDefault = 0;
   INDEX srt_iMaxBounceShadowsDirectionalLights = 8;
-  INDEX srt_iMaxBounceShadowsSphereLights = 1;
+  INDEX srt_iMaxBounceShadowsSphereLights = 2;
   INDEX srt_iMaxBounceShadowsSpotlights = 2;
 
   // If true, translucent models that are changing its alpha (disappering gibs/body parts/blood),
@@ -155,7 +155,7 @@ struct SSRTGlobals
   FLOAT srt_fAnimatedSunTimeLength = 0;
 
   FLOAT srt_fBloomIntensity = 1.0f;
-  FLOAT srt_fBloomInputThreshold = 0.5f;
+  FLOAT srt_fBloomInputThreshold = 0.75f;
   FLOAT srt_fBloomInputThresholdLength = 0.25f;
   FLOAT srt_fBloomUpsampleRadius = 1.0f;
   FLOAT srt_fBloomEmissionMultiplier = 32.0f;
