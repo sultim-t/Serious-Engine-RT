@@ -350,7 +350,7 @@ FLOAT plr_fViewDampLimitGroundUp = 0.1f;
 FLOAT plr_fViewDampLimitGroundDn = 0.4f;
 FLOAT plr_fViewDampLimitWater    = 0.1f;
 static FLOAT plr_fFrontClipDistance = 0.25f;
-static FLOAT plr_fFOV = 75.0f;
+static FLOAT plr_fFOV = 90.0f;
 static FLOAT net_tmLatencyAvg;
 INDEX plr_bRenderPicked = FALSE;
 INDEX plr_bRenderPickedParticles = FALSE;
