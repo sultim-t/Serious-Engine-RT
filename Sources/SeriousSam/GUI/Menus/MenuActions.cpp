@@ -766,23 +766,215 @@ static FLOAT SwitchToRenderScale(INDEX iSwitch)
   return 0.01f * aindRenderScalePercents[iSwitch];
 }
 
-// Separate function to not touch _bVideoOptionsChanged variable
-static void UpdateSSRTOptions(INDEX iSelected)
+static INDEX CPUPresetToSwitch()
 {
-  CVideoOptionsMenu &gmCurrent = _pGUIM->gmVideoOptionsMenu;
-  gmCurrent.gm_mgRenderScaleTrigger.mg_bEnabled = ((GfxAPIType)sam_iGfxAPI) == GfxAPIType::GAT_RT;
-  gmCurrent.gm_mgCPUPerformanceTrigger.mg_bEnabled = ((GfxAPIType)sam_iGfxAPI) == GfxAPIType::GAT_RT;
-
-  // apply immediately, as only shell variables are being changed
-  if (_pShell->GetSymbol("srt_fRenderScale", TRUE) != NULL)
-  {
-    _pShell->SetFLOAT("srt_fRenderScale", SwitchToRenderScale(gmCurrent.gm_mgRenderScaleTrigger.mg_iSelected));
-  } 
-  
   if (_pShell->GetSymbol("srt_iCullingMaxSectorDepthQualityLevel", TRUE) != NULL)
   {
-    _pShell->SetINDEX("srt_iCullingMaxSectorDepthQualityLevel", gmCurrent.gm_mgCPUPerformanceTrigger.mg_iSelected);
+    return _pShell->GetINDEX("srt_iCullingMaxSectorDepthQualityLevel");
   }
+
+  return 0;
+}
+
+static bool IsDLSSAvailable()
+{
+  if (_pShell->GetSymbol("srt_bDLSSAvailable", TRUE) != NULL)
+  {
+    return _pShell->GetINDEX("srt_bDLSSAvailable");
+  }
+
+  return false;
+}
+
+static INDEX NvDlssToSwitch()
+{
+  if (!IsDLSSAvailable())
+  {
+    return 0;
+  }
+
+  if (_pShell->GetSymbol("srt_iUpscaleMode", TRUE) == NULL || 
+      _pShell->GetSymbol("srt_iResolutionMode", TRUE) == NULL)
+  {
+    return 0;
+  }
+  INDEX srt_iUpscaleMode = _pShell->GetINDEX("srt_iUpscaleMode");
+  INDEX srt_iResolutionMode = _pShell->GetINDEX("srt_iResolutionMode");
+
+  // not dlss
+  if (srt_iUpscaleMode != 2)
+  {
+    // off
+    return 0;
+  }
+
+  switch (srt_iResolutionMode)
+  {
+    case 1: // RG_RENDER_RESOLUTION_MODE_ULTRA_PERFORMANCE
+      return 4;
+    case 2: // RG_RENDER_RESOLUTION_MODE_PERFORMANCE
+      return 3;
+    case 3: // RG_RENDER_RESOLUTION_MODE_BALANCED
+      return 2;
+    case 4: // RG_RENDER_RESOLUTION_MODE_QUALITY
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+static INDEX AmdFsrToSwitch()
+{
+  if (_pShell->GetSymbol("srt_iUpscaleMode", TRUE) == NULL ||
+      _pShell->GetSymbol("srt_iResolutionMode", TRUE) == NULL)
+  {
+    return 0;
+  }
+  INDEX srt_iUpscaleMode = _pShell->GetINDEX("srt_iUpscaleMode");
+  INDEX srt_iResolutionMode = _pShell->GetINDEX("srt_iResolutionMode");
+
+  // not fsr
+  if (srt_iUpscaleMode != 1)
+  {
+    // off
+    return 0;
+  }
+
+  switch (srt_iResolutionMode)
+  {
+    case 2: // RG_RENDER_RESOLUTION_MODE_PERFORMANCE
+      return 4;
+    case 3: // RG_RENDER_RESOLUTION_MODE_BALANCED
+      return 3;
+    case 4: // RG_RENDER_RESOLUTION_MODE_QUALITY
+      return 2;
+    case 5: // RG_RENDER_RESOLUTION_MODE_ULTRA_QUALITY
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+static void TrySetShellSymbolFloat(const char *pName, FLOAT f)
+{
+  if (_pShell->GetSymbol(pName, TRUE) != NULL)
+  {
+    _pShell->SetFLOAT(pName, f);
+  }
+}
+static void TrySetShellSymbol(const char *pName, INDEX i)
+{
+  if (_pShell->GetSymbol(pName, TRUE) != NULL)
+  {
+    _pShell->SetINDEX(pName, i);
+  }
+}
+
+// Separate function to not touch _bVideoOptionsChanged variable
+static void UpdateSSRTOptions(INDEX)
+{
+  CVideoOptionsMenu &gmCurrent = _pGUIM->gmVideoOptionsMenu;
+
+  gmCurrent.gm_mgCPUPerformanceTrigger.mg_bEnabled = ((GfxAPIType)sam_iGfxAPI) == GfxAPIType::GAT_RT;
+  gmCurrent.gm_mgNvDlssTrigger.mg_bEnabled = ((GfxAPIType)sam_iGfxAPI) == GfxAPIType::GAT_RT && IsDLSSAvailable();
+  gmCurrent.gm_mgAmdFsrTrigger.mg_bEnabled = ((GfxAPIType)sam_iGfxAPI) == GfxAPIType::GAT_RT;
+
+
+  gmCurrent.gm_mgNvDlssTrigger.mg_iSelected = NvDlssToSwitch();
+  gmCurrent.gm_mgAmdFsrTrigger.mg_iSelected = AmdFsrToSwitch();
+  // show new text
+  gmCurrent.gm_mgNvDlssTrigger.ApplyCurrentSelection();
+  gmCurrent.gm_mgAmdFsrTrigger.ApplyCurrentSelection();
+
+
+  // if RT enabled, but bith fsr and dlss are disabled
+  gmCurrent.gm_mgRenderScaleTrigger.mg_bEnabled =
+    ((GfxAPIType)sam_iGfxAPI) == GfxAPIType::GAT_RT &&
+    gmCurrent.gm_mgAmdFsrTrigger.mg_iSelected == 0 &&
+    gmCurrent.gm_mgNvDlssTrigger.mg_iSelected == 0;
+
+  // apply immediately, as only shell variables are being changed
+  TrySetShellSymbolFloat("srt_fRenderScale", SwitchToRenderScale(gmCurrent.gm_mgRenderScaleTrigger.mg_iSelected));
+  TrySetShellSymbol("srt_iCullingMaxSectorDepthQualityLevel", gmCurrent.gm_mgCPUPerformanceTrigger.mg_iSelected);
+}
+
+static void OnNvDlssChange(INDEX iSelected)
+{
+  if (!IsDLSSAvailable())
+  {
+    return;
+  }
+
+  CVideoOptionsMenu &gmCurrent = _pGUIM->gmVideoOptionsMenu;
+  ASSERT(gmCurrent.gm_mgNvDlssTrigger.mg_iSelected == iSelected);
+
+  // must match astrNvDlssTexts and RTGL1.h
+  switch (iSelected)
+  {
+    case 1:
+      TrySetShellSymbol("srt_iUpscaleMode", 2);     // RG_RENDER_UPSCALE_TECHNIQUE_NVIDIA_DLSS
+      TrySetShellSymbol("srt_iResolutionMode", 4);  // RG_RENDER_RESOLUTION_MODE_QUALITY
+      break;
+
+    case 2:
+      TrySetShellSymbol("srt_iUpscaleMode", 2);     // RG_RENDER_UPSCALE_TECHNIQUE_NVIDIA_DLSS
+      TrySetShellSymbol("srt_iResolutionMode", 3);  // RG_RENDER_RESOLUTION_MODE_BALANCED
+      break;
+
+    case 3:
+      TrySetShellSymbol("srt_iUpscaleMode", 2);     // RG_RENDER_UPSCALE_TECHNIQUE_NVIDIA_DLSS
+      TrySetShellSymbol("srt_iResolutionMode", 2);  // RG_RENDER_RESOLUTION_MODE_PERFORMANCE
+      break;
+
+    case 4:
+      TrySetShellSymbol("srt_iUpscaleMode", 2);     // RG_RENDER_UPSCALE_TECHNIQUE_NVIDIA_DLSS
+      TrySetShellSymbol("srt_iResolutionMode", 1);  // RG_RENDER_RESOLUTION_MODE_ULTRA_PERFORMANCE
+      break;
+
+    default:
+      TrySetShellSymbol("srt_iUpscaleMode", 0);     // RG_RENDER_UPSCALE_TECHNIQUE_LINEAR
+      TrySetShellSymbol("srt_iResolutionMode", 0);  // RG_RENDER_RESOLUTION_MODE_CUSTOM
+      break;
+  }
+
+  UpdateSSRTOptions(-1);
+}
+
+static void OnAmdFsrChange(INDEX iSelected)
+{
+  CVideoOptionsMenu &gmCurrent = _pGUIM->gmVideoOptionsMenu;
+  ASSERT(gmCurrent.gm_mgAmdFsrTrigger.mg_iSelected == iSelected);
+
+  // must match astrAmdFsrTexts and RTGL1.h
+  switch (iSelected)
+  {
+    case 1:
+      TrySetShellSymbol("srt_iUpscaleMode", 1);     // RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR
+      TrySetShellSymbol("srt_iResolutionMode", 5);  // RG_RENDER_RESOLUTION_MODE_ULTRA_QUALITY
+      break;
+
+    case 2:
+      TrySetShellSymbol("srt_iUpscaleMode", 1);     // RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR
+      TrySetShellSymbol("srt_iResolutionMode", 4);  // RG_RENDER_RESOLUTION_MODE_QUALITY
+      break;
+
+    case 3:
+      TrySetShellSymbol("srt_iUpscaleMode", 1);     // RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR
+      TrySetShellSymbol("srt_iResolutionMode", 3);  // RG_RENDER_RESOLUTION_MODE_BALANCED
+      break;
+
+    case 4:
+      TrySetShellSymbol("srt_iUpscaleMode", 1);     // RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR
+      TrySetShellSymbol("srt_iResolutionMode", 2);  // RG_RENDER_RESOLUTION_MODE_PERFORMANCE
+      break;
+
+    default:
+      TrySetShellSymbol("srt_iUpscaleMode", 0);     // RG_RENDER_UPSCALE_TECHNIQUE_LINEAR
+      TrySetShellSymbol("srt_iResolutionMode", 0);  // RG_RENDER_RESOLUTION_MODE_CUSTOM
+      break;
+  }
+
+  UpdateSSRTOptions(-1);
 }
 #endif // SE1_RAYTRACING
 
@@ -911,6 +1103,9 @@ extern void InitVideoOptionsButtons(void)
 
 #ifdef SE1_RAYTRACING
   gmCurrent.gm_mgRenderScaleTrigger.mg_iSelected = RenderScaleToSwitch();
+  gmCurrent.gm_mgCPUPerformanceTrigger.mg_iSelected = CPUPresetToSwitch();
+  gmCurrent.gm_mgNvDlssTrigger.mg_iSelected = NvDlssToSwitch();
+  gmCurrent.gm_mgAmdFsrTrigger.mg_iSelected = AmdFsrToSwitch();
 #endif
 
   gmCurrent.gm_mgFullScreenTrigger.ApplyCurrentSelection();
@@ -921,6 +1116,8 @@ extern void InitVideoOptionsButtons(void)
 #ifdef SE1_RAYTRACING
   gmCurrent.gm_mgRenderScaleTrigger.ApplyCurrentSelection();
   gmCurrent.gm_mgCPUPerformanceTrigger.ApplyCurrentSelection();
+  gmCurrent.gm_mgNvDlssTrigger.ApplyCurrentSelection();
+  gmCurrent.gm_mgAmdFsrTrigger.ApplyCurrentSelection();
 #endif
   gmCurrent.gm_mgBitsPerPixelTrigger.ApplyCurrentSelection();
 }
@@ -1000,6 +1197,8 @@ void InitActionsForVideoOptionsMenu()
 #ifdef SE1_RAYTRACING
   gmCurrent.gm_mgRenderScaleTrigger.mg_pOnTriggerChange = &UpdateSSRTOptions;
   gmCurrent.gm_mgCPUPerformanceTrigger.mg_pOnTriggerChange = &UpdateSSRTOptions;
+  gmCurrent.gm_mgNvDlssTrigger.mg_pOnTriggerChange = &OnNvDlssChange;
+  gmCurrent.gm_mgAmdFsrTrigger.mg_pOnTriggerChange = &OnAmdFsrChange;
 #endif
   gmCurrent.gm_mgBitsPerPixelTrigger.mg_pOnTriggerChange = &UpdateVideoOptionsButtons;
   gmCurrent.gm_mgVideoRendering.mg_pActivatedFunction = &StartRenderingOptionsMenu;

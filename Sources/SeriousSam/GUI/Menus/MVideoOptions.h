@@ -30,6 +30,8 @@ public:
   CMGTrigger gm_mgFullScreenTrigger;
   CMGTrigger gm_mgResolutionsTrigger;
 #ifdef SE1_RAYTRACING
+  CMGTrigger gm_mgNvDlssTrigger;
+  CMGTrigger gm_mgAmdFsrTrigger;
   CMGTrigger gm_mgRenderScaleTrigger;
   CMGTrigger gm_mgCPUPerformanceTrigger;
 #endif

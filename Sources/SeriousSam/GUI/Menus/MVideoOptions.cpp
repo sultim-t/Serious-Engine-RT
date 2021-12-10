@@ -57,14 +57,20 @@ void CVideoOptionsMenu::Initialize_t(void)
     gm_mgDisplayAPITrigger, gm_mgResolutionsTrigger, TRANS("DISPLAY ADAPTER"), astrNoYes);
   gm_mgDisplayAdaptersTrigger.mg_strTip = TRANS("choose display adapter to be used");
   TRIGGER_MG(gm_mgResolutionsTrigger, 2,
-    gm_mgDisplayAdaptersTrigger, gm_mgRenderScaleTrigger, TRANS("WINDOW SIZE"), astrNoYes);
+    gm_mgDisplayAdaptersTrigger, gm_mgNvDlssTrigger, TRANS("WINDOW SIZE"), astrNoYes);
   gm_mgResolutionsTrigger.mg_strTip = TRANS("select size of the presentation window");
 
   // new
-  TRIGGER_MG(gm_mgRenderScaleTrigger, 3,
-    gm_mgResolutionsTrigger, gm_mgCPUPerformanceTrigger, TRANS("RENDER SCALE"), astrRenderScalePercentsTexts);
-  gm_mgRenderScaleTrigger.mg_strTip = TRANS("set multiplier at which world is being rendered");  
-  TRIGGER_MG(gm_mgCPUPerformanceTrigger, 4,
+  TRIGGER_MG(gm_mgNvDlssTrigger, 3.5,
+    gm_mgResolutionsTrigger, gm_mgAmdFsrTrigger, TRANS("NVIDIA DLSS"), astrNvDlssTexts);
+  gm_mgNvDlssTrigger.mg_strTip = TRANS("set Nvidia DLSS quality mode");
+  TRIGGER_MG(gm_mgAmdFsrTrigger, 4.5,
+    gm_mgNvDlssTrigger, gm_mgRenderScaleTrigger, TRANS("AMD FSR"), astrAmdFsrTexts);
+  gm_mgAmdFsrTrigger.mg_strTip = TRANS("set AMD FSR 1.0 quality mode");
+  TRIGGER_MG(gm_mgRenderScaleTrigger, 5.5,
+    gm_mgAmdFsrTrigger, gm_mgCPUPerformanceTrigger, TRANS("CUSTOM RENDER SCALE"), astrRenderScalePercentsTexts);
+  gm_mgRenderScaleTrigger.mg_strTip = TRANS("set render resolution scale, if FSR and DLSS are disabled");  
+  TRIGGER_MG(gm_mgCPUPerformanceTrigger, 7,
     gm_mgRenderScaleTrigger, gm_mgVideoRendering, TRANS("CPU PRESET"), astrCPUPerformancePresetTexts);
   gm_mgCPUPerformanceTrigger.mg_strTip = TRANS("set CPU performance preset");
 
@@ -91,6 +97,8 @@ void CVideoOptionsMenu::Initialize_t(void)
 #ifdef SE1_RAYTRACING
   gm_mgRenderScaleTrigger.mg_pOnTriggerChange = NULL;
   gm_mgCPUPerformanceTrigger.mg_pOnTriggerChange = NULL;
+  gm_mgNvDlssTrigger.mg_pOnTriggerChange = NULL;
+  gm_mgAmdFsrTrigger.mg_pOnTriggerChange = NULL;
 #endif // SE1_RAYTRACING
   gm_mgBitsPerPixelTrigger.mg_pOnTriggerChange = NULL;
 
@@ -99,7 +107,7 @@ void CVideoOptionsMenu::Initialize_t(void)
   gm_mgVideoRendering.mg_boxOnScreen = BoxMediumRow(7.0f);
   gm_mgVideoRendering.mg_pmgUp = &gm_mgBitsPerPixelTrigger;
 #else
-  gm_mgVideoRendering.mg_boxOnScreen = BoxMediumRow(6.0f);
+  gm_mgVideoRendering.mg_boxOnScreen = BoxMediumRow(9.0f);
   gm_mgVideoRendering.mg_pmgUp = &gm_mgCPUPerformanceTrigger;
 #endif // !SE1_RAYTRACING
   gm_mgVideoRendering.mg_pmgDown = &gm_mgApply;
@@ -109,7 +117,7 @@ void CVideoOptionsMenu::Initialize_t(void)
   gm_mgVideoRendering.mg_pActivatedFunction = NULL;
 
   gm_mgApply.mg_bfsFontSize = BFS_LARGE;
-  gm_mgApply.mg_boxOnScreen = BoxBigRow(5.5f);
+  gm_mgApply.mg_boxOnScreen = BoxBigRow(7.0f);
   gm_mgApply.mg_pmgUp = &gm_mgVideoRendering;
   gm_mgApply.mg_pmgDown = &gm_mgDisplayAPITrigger;
   gm_mgApply.mg_strText = TRANS("APPLY");

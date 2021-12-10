@@ -387,7 +387,10 @@ void SSRT::Scene::AddLight(const CDirectionalLight &dirLt)
 {
   RgDirectionalLightUploadInfo info = {};
   info.uniqueID = dirLt.entityID;
-  info.color = { dirLt.color(1), dirLt.color(2), dirLt.color(3) };
+  info.color = {
+    dirLt.color(1) * _srtGlobals.srt_fFixSunIntensityGlobal,
+    dirLt.color(2) * _srtGlobals.srt_fFixSunIntensityGlobal,
+    dirLt.color(3) * _srtGlobals.srt_fFixSunIntensityGlobal };
   info.direction = { dirLt.direction(1), dirLt.direction(2), dirLt.direction(3) };
   info.angularDiameterDegrees = _srtGlobals.srt_fSunAngularDiameter;
 

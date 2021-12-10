@@ -37,7 +37,12 @@ void SSRT::SSRTMain::InitShellVariables()
 {
   _pShell->DeclareSymbol("persistent user INDEX srt_bDebugValidation;", &_srtGlobals.srt_bDebugValidation);
   _pShell->DeclareSymbol("persistent user INDEX srt_bVSync;", &_srtGlobals.srt_bVSync);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fRenderScale;", &_srtGlobals.srt_fRenderScale);
+
+  _pShell->DeclareSymbol("persistent user INDEX srt_iUpscaleMode;", &_srtGlobals.srt_iUpscaleMode);
+  _pShell->DeclareSymbol("persistent user INDEX srt_iResolutionMode;", &_srtGlobals.srt_iResolutionMode);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fResolutionScale;", &_srtGlobals.srt_fResolutionScale);
+  _pShell->DeclareSymbol("persistent user INDEX srt_iOversharpMode;", &_srtGlobals.srt_iOversharpMode);
+
   _pShell->DeclareSymbol("persistent user INDEX srt_bTonemappingUseDefault;", &_srtGlobals.srt_bTonemappingUseDefault);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingWhitePoint;", &_srtGlobals.srt_fTonemappingWhitePoint);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMinLogLuminance;", &_srtGlobals.srt_fTonemappingMinLogLuminance);
@@ -160,6 +165,11 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fBloomEmissionMultiplier;", &_srtGlobals.srt_fBloomEmissionMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fBloomSkyMultiplier;", &_srtGlobals.srt_fBloomSkyMultiplier);
 
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fFixSunIntensityGlobal;", &_srtGlobals.srt_fFixSunIntensityGlobal);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fFixSkyIntensityGlobal;", &_srtGlobals.srt_fFixSkyIntensityGlobal);
+
+  _pShell->DeclareSymbol("                INDEX srt_bDLSSAvailable;", &_srtGlobals.srt_bDLSSAvailable);
+
   // user controls
   _pShell->DeclareSymbol("user INDEX srt_bFlashlightEnable;", &_srtGlobals.srt_bFlashlightEnable);
 }
@@ -174,8 +184,6 @@ void SSRT::SSRTMain::NormalizeShellVariables()
   _srtGlobals.srt_bTexturesOriginalSRGB = !!_srtGlobals.srt_bTexturesOriginalSRGB;
   _srtGlobals.srt_bIgnoreDynamicTexCoords = !!_srtGlobals.srt_bIgnoreDynamicTexCoords;
   _srtGlobals.srt_bIgnoreWaterEffectTextureUpdates = !!_srtGlobals.srt_bIgnoreWaterEffectTextureUpdates;
-
-  _srtGlobals.srt_fRenderScale = Clamp(_srtGlobals.srt_fRenderScale, 0.25f, 2.0f);
 
   _srtGlobals.srt_iReflMaxDepth = Clamp(_srtGlobals.srt_iReflMaxDepth, (INDEX)0, (INDEX)4);
 
@@ -238,6 +246,35 @@ void SSRT::SSRTMain::NormalizeShellVariables()
   _srtGlobals.srt_fEmissionForFullbright = Max(_srtGlobals.srt_fEmissionForFullbright, 0.0f);
 
   _srtGlobals.srt_bIndirRoughnessSqrt = !!_srtGlobals.srt_bIndirRoughnessSqrt;
+
+  _srtGlobals.srt_fResolutionScale = Clamp(_srtGlobals.srt_fResolutionScale, 0.25f, 2.0f);
+
+  switch (_srtGlobals.srt_iUpscaleMode)
+  {
+    case RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR:         break;
+    case RG_RENDER_UPSCALE_TECHNIQUE_NVIDIA_DLSS:     break;
+    default: _srtGlobals.srt_iUpscaleMode = RG_RENDER_UPSCALE_TECHNIQUE_LINEAR; break;
+  }
+
+  switch (_srtGlobals.srt_iResolutionMode)
+  {
+    case RG_RENDER_RESOLUTION_MODE_ULTRA_PERFORMANCE: break;
+    case RG_RENDER_RESOLUTION_MODE_PERFORMANCE:       break;
+    case RG_RENDER_RESOLUTION_MODE_BALANCED:          break;
+    case RG_RENDER_RESOLUTION_MODE_QUALITY:           break;
+    case RG_RENDER_RESOLUTION_MODE_ULTRA_QUALITY:     break;
+    default: _srtGlobals.srt_iResolutionMode = RG_RENDER_RESOLUTION_MODE_CUSTOM; break;
+  }
+
+  switch (_srtGlobals.srt_iOversharpMode)
+  {
+    case RG_RENDER_SHARPEN_TECHNIQUE_NAIVE:           break;
+    case RG_RENDER_SHARPEN_TECHNIQUE_AMD_CAS:         break;
+    default: _srtGlobals.srt_iOversharpMode = RG_RENDER_SHARPEN_TECHNIQUE_NONE;  break;
+  }
+
+  _srtGlobals.srt_fFixSunIntensityGlobal = Max(_srtGlobals.srt_fFixSunIntensityGlobal, 0.0f);
+  _srtGlobals.srt_fFixSkyIntensityGlobal = Max(_srtGlobals.srt_fFixSkyIntensityGlobal, 0.0f);
 }
 
 
@@ -264,7 +301,8 @@ SSRT::SSRTMain::SSRTMain() :
   win32SurfaceInfo.hwnd = _hwndMain;
 
   RgInstanceCreateInfo info = {};
-  info.pName = "Serious Engine RT";
+  info.pAppName = "Serious Engine RT";
+  info.pAppGUID = "93fcfd2c-6e92-43cb-b3b3-5d6ecefd1527";
   info.enableValidationLayer = _srtGlobals.srt_bDebugValidation;
   info.pShaderFolderPath = shadersPath;
   info.pBlueNoiseFilePath = blueNoiseFilePath;
@@ -308,7 +346,12 @@ SSRT::SSRTMain::SSRTMain() :
   RgResult r = rgCreateInstance(&info, &instance);
   RG_CHECKERROR(r);
 
+
   textureUploader = new TextureUploader(instance);
+
+
+  RgBool32 dlssIsAvailable; r = rgIsRenderUpscaleTechniqueAvailable(instance, RG_RENDER_UPSCALE_TECHNIQUE_NVIDIA_DLSS, &dlssIsAvailable); RG_CHECKERROR(r);
+  _srtGlobals.srt_bDLSSAvailable = !!dlssIsAvailable;
 }
 SSRT::SSRTMain::~SSRTMain()
 {
@@ -363,7 +406,12 @@ void SSRT::SSRTMain::StartFrame(CViewPort *pvp)
   curWindowWidth = pvp->vp_Raster.ra_Width;
   curWindowHeight = pvp->vp_Raster.ra_Height;
 
-  _srtGlobals.srt_fRenderSize = { (float)curWindowWidth * _srtGlobals.srt_fRenderScale, (float)curWindowHeight * _srtGlobals.srt_fRenderScale };
+  // aprioximate render size, used for culling
+  _srtGlobals.srt_fRenderSize = { (float)curWindowWidth, (float)curWindowHeight };
+  if (_srtGlobals.srt_iResolutionMode == RG_RENDER_RESOLUTION_MODE_CUSTOM)
+  {
+    _srtGlobals.srt_fRenderSize *= _srtGlobals.srt_fResolutionScale;
+  }
 }
 
 void SSRT::SSRTMain::ProcessWorld(const CWorldRenderingInfo &info)
@@ -473,6 +521,17 @@ void SSRT::SSRTMain::EndFrame()
   }
 
 
+  RgDrawFrameRenderResolutionParams resolutionParams = {};
+  resolutionParams.upscaleTechnique = (RgRenderUpscaleTechnique)_srtGlobals.srt_iUpscaleMode;
+  resolutionParams.resolutionMode = (RgRenderResolutionMode)_srtGlobals.srt_iResolutionMode;
+  resolutionParams.renderSize = 
+  {
+    (uint32_t)(roundf(curWindowWidth * _srtGlobals.srt_fResolutionScale)),
+    (uint32_t)(roundf(curWindowHeight * _srtGlobals.srt_fResolutionScale))
+  };
+  resolutionParams.sharpenTechnique = (RgRenderSharpenTechnique)_srtGlobals.srt_iOversharpMode;
+
+
   RgDrawFrameShadowParams shadowParams = {};
   shadowParams.maxBounceShadowsDirectionalLights = _srtGlobals.srt_iMaxBounceShadowsDirectionalLights;
   shadowParams.maxBounceShadowsSphereLights = _srtGlobals.srt_iMaxBounceShadowsSphereLights;
@@ -487,7 +546,7 @@ void SSRT::SSRTMain::EndFrame()
 
     skyParams.skyViewerPosition = { backgroundViewerPos(1), backgroundViewerPos(2), backgroundViewerPos(3) };
     skyParams.skyColorDefault = { 0, 0, 0 };
-    skyParams.skyColorMultiplier = currentScene == nullptr ? 1.0f : currentScene->GetCustomInfo()->GetSkyIntensity();
+    skyParams.skyColorMultiplier = currentScene == nullptr ? 1.0f : currentScene->GetCustomInfo()->GetSkyIntensity() * _srtGlobals.srt_fFixSkyIntensityGlobal;
     skyParams.skyColorSaturation = currentScene == nullptr ? 1.0f : currentScene->GetCustomInfo()->GetSkySaturation();
   }
 
@@ -544,7 +603,6 @@ void SSRT::SSRTMain::EndFrame()
   memcpy(rflParams.portalRelativeRotation.matrix, mPortalRelativeRot.matrix, sizeof(float) * 9);
 
   RgDrawFrameInfo frameInfo = {};
-  frameInfo.renderSize = { (uint32_t)(roundf(curWindowWidth * _srtGlobals.srt_fRenderScale)), (uint32_t)(roundf(curWindowHeight * _srtGlobals.srt_fRenderScale)) };
   frameInfo.rayCullMaskWorld = currentScene == nullptr ? 0xFF : currentScene->GetCustomInfo()->GetCullMask(currentScene->GetCameraPosition());
   frameInfo.rayLength = currentScene == nullptr ? 10000.0f : currentScene->GetCustomInfo()->GetRayLength(currentScene->GetCameraPosition());
 
@@ -557,6 +615,7 @@ void SSRT::SSRTMain::EndFrame()
 
   frameInfo.useSqrtRoughnessForIndirect = _srtGlobals.srt_bIndirRoughnessSqrt;
 
+  frameInfo.pRenderResolutionParams = &resolutionParams;
   frameInfo.pTonemappingParams = _srtGlobals.srt_bTonemappingUseDefault ? nullptr : &tmParams;
   frameInfo.pShadowParams = _srtGlobals.srt_bMaxBounceShadowsUseDefault ? nullptr : &shadowParams;
   frameInfo.pBloomParams = &blParams;

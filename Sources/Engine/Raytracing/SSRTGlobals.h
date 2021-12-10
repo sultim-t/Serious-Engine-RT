@@ -25,7 +25,12 @@ struct SSRTGlobals
 {
   INDEX srt_bDebugValidation = 0;
   INDEX srt_bVSync = 1;
-  FLOAT srt_fRenderScale = 1.0;
+  INDEX srt_iUpscaleMode = RG_RENDER_UPSCALE_TECHNIQUE_LINEAR;
+  INDEX srt_iResolutionMode = RG_RENDER_RESOLUTION_MODE_CUSTOM;
+  FLOAT srt_fResolutionScale = 1.0;
+  INDEX srt_iOversharpMode = RG_RENDER_SHARPEN_TECHNIQUE_AMD_CAS;
+
+  INDEX srt_bDLSSAvailable = 0; // variable for settings menu
 
   INDEX srt_bReloadShaders = 0;
   INDEX srt_bPrintBrushPolygonInfo = 0;
@@ -160,6 +165,9 @@ struct SSRTGlobals
   FLOAT srt_fBloomUpsampleRadius = 1.0f;
   FLOAT srt_fBloomEmissionMultiplier = 32.0f;
   FLOAT srt_fBloomSkyMultiplier = 0.1f;
+
+  FLOAT srt_fFixSunIntensityGlobal = 0.5f;
+  FLOAT srt_fFixSkyIntensityGlobal = 0.5f;
 };
 
 }

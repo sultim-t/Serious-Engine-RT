@@ -39,31 +39,50 @@ extern CTString astrWeapon[] = {
 };
 
 extern INDEX aindRenderScalePercents[] = {
-  30,
   50,
+  60,
   75,
   90,
   100,
   125,
   150,
-  175,
-  200
 };
 
 extern CTString astrRenderScalePercentsTexts[] = {
-  "30%",
   "50%",
+  "60%",
   "75%",
   "90%",
   "100%",
   "125%",
-  "150%",
-  "175%",
-  "200%",
+  "150%"
 };
 
-static_assert(ARRAYCOUNT(aindRenderScalePercents) == 9, "Change size in the header file");
+static_assert(ARRAYCOUNT(aindRenderScalePercents) == 7, "Change size in MenuStuff.h");
 static_assert(ARRAYCOUNT(aindRenderScalePercents) == ARRAYCOUNT(astrRenderScalePercentsTexts), "Must have same counts");
+
+
+extern CTString astrNvDlssTexts[] =
+{
+  "Off",
+  // "Ultra Quality" is reserved
+  "Quality",
+  "Balanced",
+  "Performance",
+  "Ultra Performance",
+};
+extern CTString astrAmdFsrTexts[] =
+{
+  "Off",
+  "Ultra Quality",
+  "Quality",
+  "Balanced",
+  "Performance",
+};
+
+static_assert(ARRAYCOUNT(astrNvDlssTexts) == 5, "Change size in MenuStuff.h");
+static_assert(ARRAYCOUNT(astrAmdFsrTexts) == 5, "Change size in MenuStuff.h");
+
 
 extern CTString astrCPUPerformancePresetTexts[] = {
   "Default",
