@@ -114,12 +114,20 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
     stInfo.size.height = info.height;
     stInfo.textures.albedoAlpha.pData = info.imageData;
     stInfo.textures.albedoAlpha.isSRGB = _srtGlobals.srt_bTexturesOriginalSRGB;
-    stInfo.useMipmaps = info.generateMipmaps;
     stInfo.filter = info.filter;
     stInfo.addressModeU = info.wrapU;
     stInfo.addressModeV = info.wrapV;
-    stInfo.disableOverride = info.disableOverride;
     stInfo.pRelativePath = overridenPath;
+
+    if (!info.generateMipmaps)
+    {
+      stInfo.flags |= RG_MATERIAL_CREATE_DONT_GENERATE_MIPMAPS_BIT;
+    }
+
+    if (info.disableOverride)
+    {
+      stInfo.flags |= RG_MATERIAL_CREATE_DISABLE_OVERRIDE_BIT;
+    }
 
     RgResult r = rgCreateStaticMaterial(instance, &stInfo, &material);
     RG_CHECKERROR(r);
@@ -138,7 +146,7 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
       dninfo.size.height = info.height;
       dninfo.textures.albedoAlpha.pData = info.imageData;
       dninfo.textures.albedoAlpha.isSRGB = _srtGlobals.srt_bTexturesOriginalSRGB;
-      dninfo.useMipmaps = info.generateMipmaps;
+      dninfo.flags = info.generateMipmaps ? 0 : RG_MATERIAL_CREATE_DONT_GENERATE_MIPMAPS_BIT;
       dninfo.filter = info.filter;
       dninfo.addressModeU = info.wrapU;
       dninfo.addressModeV = info.wrapV;
@@ -216,11 +224,10 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedAnimatedTextureInfo &an
     f.size.height = animInfo.height;
     f.textures.albedoAlpha.pData = curFrameData;
     f.textures.albedoAlpha.isSRGB = _srtGlobals.srt_bTexturesOriginalSRGB;
-    f.useMipmaps = animInfo.generateMipmaps;
+    f.flags = animInfo.generateMipmaps ? 0 : RG_MATERIAL_CREATE_DONT_GENERATE_MIPMAPS_BIT;
     f.filter = animInfo.filter;
     f.addressModeU = animInfo.wrapU;
     f.addressModeV = animInfo.wrapV;
-    f.disableOverride = false;
     f.pRelativePath = curFrameOvrd;
   }
 

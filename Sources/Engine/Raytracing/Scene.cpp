@@ -386,7 +386,6 @@ void SSRT::Scene::AddLight(const CSphereLight &sphLt)
 void SSRT::Scene::AddLight(const CDirectionalLight &dirLt)
 {
   RgDirectionalLightUploadInfo info = {};
-  info.uniqueID = dirLt.entityID;
   info.color = {
     dirLt.color(1) * _srtGlobals.srt_fFixSunIntensityGlobal,
     dirLt.color(2) * _srtGlobals.srt_fFixSunIntensityGlobal,

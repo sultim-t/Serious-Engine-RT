@@ -251,9 +251,19 @@ void SSRT::SSRTMain::NormalizeShellVariables()
 
   switch (_srtGlobals.srt_iUpscaleMode)
   {
-    case RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR:         break;
-    case RG_RENDER_UPSCALE_TECHNIQUE_NVIDIA_DLSS:     break;
-    default: _srtGlobals.srt_iUpscaleMode = RG_RENDER_UPSCALE_TECHNIQUE_LINEAR; break;
+    case RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR:       
+      break;
+
+    case RG_RENDER_UPSCALE_TECHNIQUE_NVIDIA_DLSS:
+      if (!_srtGlobals.srt_bDLSSAvailable)
+      {
+        _srtGlobals.srt_iUpscaleMode = RG_RENDER_UPSCALE_TECHNIQUE_LINEAR;
+      }
+      break;
+
+    default: 
+      _srtGlobals.srt_iUpscaleMode = RG_RENDER_UPSCALE_TECHNIQUE_LINEAR;
+      break;
   }
 
   switch (_srtGlobals.srt_iResolutionMode)
@@ -311,6 +321,7 @@ SSRT::SSRTMain::SSRTMain() :
   info.primaryRaysMaxAlbedoLayers = 3;
   // without detail textures
   info.indirectIlluminationMaxAlbedoLayers = 2;
+  info.rayCullBackFacingTriangles = false;
 
   info.vertexPositionStride = sizeof(GFXVertex);
   info.vertexNormalStride = sizeof(GFXNormal);
@@ -536,6 +547,7 @@ void SSRT::SSRTMain::EndFrame()
   shadowParams.maxBounceShadowsDirectionalLights = _srtGlobals.srt_iMaxBounceShadowsDirectionalLights;
   shadowParams.maxBounceShadowsSphereLights = _srtGlobals.srt_iMaxBounceShadowsSphereLights;
   shadowParams.maxBounceShadowsSpotlights = _srtGlobals.srt_iMaxBounceShadowsSpotlights;
+  shadowParams.maxBounceShadowsPolygonalLights = 2;
 
 
   RgDrawFrameSkyParams skyParams = {};
@@ -566,9 +578,9 @@ void SSRT::SSRTMain::EndFrame()
   blParams.bloomSkyMultiplier = _srtGlobals.srt_fBloomSkyMultiplier;
 
 
-  RgDrawFrameOverridenTexturesParams tdParams = {};
+  RgDrawFrameTexturesParams tdParams = {};
   tdParams.normalMapStrength = _srtGlobals.srt_fNormalMapStrength;
-  tdParams.emissionMapBoost = _srtGlobals.srt_fEmissionMapBoost;
+  tdParams.emissionMapBoost = tdParams.emissionMapBoostForScreen = _srtGlobals.srt_fEmissionMapBoost;
   tdParams.emissionMaxScreenColor = _srtGlobals.srt_fEmissionMaxScreenColor;
 
 
@@ -621,7 +633,7 @@ void SSRT::SSRTMain::EndFrame()
   frameInfo.pBloomParams = &blParams;
   frameInfo.pSkyParams = &skyParams;
   frameInfo.pReflectRefractParams = &rflParams;
-  frameInfo.pOverridenTexturesParams = &tdParams;
+  frameInfo.pTexturesParams = &tdParams;
   frameInfo.pDebugParams = &dbgParams;
   
   memcpy(frameInfo.view,        worldRenderInfo.viewMatrix,       16 * sizeof(float));

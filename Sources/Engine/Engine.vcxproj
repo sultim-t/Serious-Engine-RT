@@ -244,18 +244,19 @@ if not exist $(SolutionDir)RTGL1\Build\x64-Debug\RayTracedGL1.lib echo "ERROR: $
       <SubSystem>Console</SubSystem>
       <OutputFile>Debug/EngineD.dll</OutputFile>
       <ImportLibrary>.\Debug\EngineD.lib</ImportLibrary>
-      <AdditionalDependencies>gdi32.lib;DbgHelp.lib;vulkan-1.lib;RayTracedGL1.lib;nvsdk_ngx_d_dbg.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>gdi32.lib;DbgHelp.lib;vulkan-1.lib;RayTracedGL1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateMapFile>true</GenerateMapFile>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
-      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(DLSS_SDK_PATH)\lib\Windows_x86_64\x86_64;$(SolutionDir)RTGL1\Build\x64-Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(SolutionDir)RTGL1\Build\x64-Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <CustomBuildStep>
       <Command>copy Debug\$(TargetName).dll $(SolutionDir)..\Bin\Debug\ &gt;nul
 copy Debug\$(TargetName).map $(SolutionDir)..\Bin\Debug\ &gt;nul
-copy Debug\$(TargetName).lib $(SolutionDir)..\Bin\Debug\ &gt;nul</Command>
+copy Debug\$(TargetName).lib $(SolutionDir)..\Bin\Debug\ &gt;nul
+copy  "$(RTGL1_SDK_PATH)\Build\x64-Debug\RayTracedGL1.dll"  "$(SolutionDir)..\Bin\Debug\"</Command>
       <Message>Copying %(Filename) binaries to \Bin\Debug</Message>
-      <Outputs>$(SolutionDir)..\Bin\Debug\$(TargetName).dll;%(Outputs)</Outputs>
+      <Outputs>$(SolutionDir)..\Bin\Debug\$(TargetName).dll;$(SolutionDir)..\Bin\Debug\RayTracedGL1.dll;%(Outputs)</Outputs>
     </CustomBuildStep>
     <PreBuildEvent>
       <Command>del $(SolutionDir)..\Bin\Debug\$(TargetName).dll /q &gt;nul;
@@ -365,18 +366,19 @@ if not exist $(SolutionDir)RTGL1\Build\x64-Release\RayTracedGL1.lib echo "ERROR:
       <SubSystem>Console</SubSystem>
       <OutputFile>.\Release\Engine.dll</OutputFile>
       <ImportLibrary>.\Release\Engine.lib</ImportLibrary>
-      <AdditionalDependencies>odbc32.lib;odbccp32.lib;DbgHelp.lib;vulkan-1.lib;RayTracedGL1.lib;nvsdk_ngx_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;DbgHelp.lib;vulkan-1.lib;RayTracedGL1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateMapFile>true</GenerateMapFile>
       <IgnoreSpecificDefaultLibraries>libci.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
-      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(DLSS_SDK_PATH)\lib\Windows_x86_64\x86_64;$(SolutionDir)RTGL1\Build\x64-Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(SolutionDir)RTGL1\Build\x64-Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <CustomBuildStep>
       <Command>copy Release\$(TargetName).dll $(SolutionDir)..\Bin\ &gt;nul
 copy Release\$(TargetName).map $(SolutionDir)..\Bin\ &gt;nul
-copy Release\$(TargetName).lib $(SolutionDir)..\Bin\ &gt;nul</Command>
+copy Release\$(TargetName).lib $(SolutionDir)..\Bin\ &gt;nul
+copy  "$(RTGL1_SDK_PATH)\Build\x64-Release\RayTracedGL1.dll"  "$(SolutionDir)..\Bin\"</Command>
       <Message>Copying %(Filename) binaries to \Bin</Message>
-      <Outputs>$(SolutionDir)..\Bin\$(TargetName).dll;%(Outputs)</Outputs>
+      <Outputs>$(SolutionDir)..\Bin\$(TargetName).dll;$(SolutionDir)..\Bin\RayTracedGL1.dll;%(Outputs)</Outputs>
     </CustomBuildStep>
     <PreBuildEvent>
       <Command>del $(SolutionDir)..\Bin\$(TargetName).dll /q &gt;nul;

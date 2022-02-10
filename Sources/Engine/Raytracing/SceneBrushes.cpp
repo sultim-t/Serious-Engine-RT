@@ -96,6 +96,12 @@ void SSRT::SceneBrushes::RegisterBrush(const CBrushGeometry &brush)
 
     stInfo.flags = brush.noMediaChangeOnRefraction ? RG_GEOMETRY_UPLOAD_NO_MEDIA_CHANGE_ON_REFRACT_BIT : 0;
 
+    if (stInfo.passThroughType == RG_GEOMETRY_PASS_THROUGH_TYPE_MIRROR || 
+        stInfo.passThroughType == RG_GEOMETRY_PASS_THROUGH_TYPE_PORTAL)
+    {
+      stInfo.flags |= RG_GEOMETRY_UPLOAD_REFL_REFR_ALBEDO_MULTIPLY_BIT;
+    }
+
     Utils::CopyTransform(stInfo.transform, brush);
 
     RgResult r = rgUploadGeometry(instance, &stInfo);
