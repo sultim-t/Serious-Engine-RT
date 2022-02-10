@@ -966,6 +966,8 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
     renderInfo.screenHeight = dpDrawport.GetHeight();
     renderInfo.screenX = dpDrawport.dp_MinI;
     renderInfo.screenY = dpDrawport.dp_MinJ;
+    renderInfo.pDrawport = &dpDrawport;
+    renderInfo.prProjection = prProjection;
 
     // RT: copied from CDrawPort::SetProjection which is called from BeginModelRenderingView(..)
     {

@@ -167,6 +167,8 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fBloomEmissionMultiplier;", &_srtGlobals.srt_fBloomEmissionMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fBloomSkyMultiplier;", &_srtGlobals.srt_fBloomSkyMultiplier);
 
+  _pShell->DeclareSymbol("persistent user INDEX srt_bLensFlares;", &_srtGlobals.srt_bLensFlares);
+
   _pShell->DeclareSymbol("persistent user FLOAT srt_fFixSunIntensityGlobal;", &_srtGlobals.srt_fFixSunIntensityGlobal);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fFixSkyIntensityGlobal;", &_srtGlobals.srt_fFixSkyIntensityGlobal);
 
@@ -186,6 +188,7 @@ void SSRT::SSRTMain::NormalizeShellVariables()
   _srtGlobals.srt_bTexturesOriginalSRGB = !!_srtGlobals.srt_bTexturesOriginalSRGB;
   _srtGlobals.srt_bIgnoreDynamicTexCoords = !!_srtGlobals.srt_bIgnoreDynamicTexCoords;
   _srtGlobals.srt_bIgnoreWaterEffectTextureUpdates = !!_srtGlobals.srt_bIgnoreWaterEffectTextureUpdates;
+  _srtGlobals.srt_bLensFlares = !!_srtGlobals.srt_bLensFlares;
 
   _srtGlobals.srt_iReflMaxDepth = Clamp(_srtGlobals.srt_iReflMaxDepth, (INDEX)0, (INDEX)4);
 

@@ -79,6 +79,8 @@ void SSRT::Scene::Update(const CWorldRenderingInfo &info)
   this->cameraPosition = info.cameraPosition;
   this->cameraRotation = info.cameraRotation;
   this->currentFOV = info.fovH;
+  this->pdpDrawport = info.pDrawport;
+  this->prProjection = info.prProjection;
 
   isCameraInHaze = false;
 
@@ -111,6 +113,16 @@ const CTString &SSRT::Scene::GetWorldName() const
 const CWorld *SSRT::Scene::GetWorld() const
 {
   return pWorld;
+}
+
+CDrawPort *SSRT::Scene::GetDrawPort()
+{
+  return pdpDrawport;
+}
+
+CAnyProjection3D &SSRT::Scene::GetProjection()
+{
+  return prProjection;
 }
 
 CWorld *SSRT::Scene::GetWorld()

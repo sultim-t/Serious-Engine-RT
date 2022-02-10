@@ -474,10 +474,9 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   {
     tmAnimatedSkyIntensityOrigin = -1.0f;
 
-    _srtGlobals.srt_fTonemappingMinLogLuminance = GREAT_PYRAMID_DEFAULT_TONEMAPPING_MIN_LOG;
-
     if (eCurrentWorld == EWorld::TheGreatPyramid)
     {
+      _srtGlobals.srt_fTonemappingMinLogLuminance = GREAT_PYRAMID_DEFAULT_TONEMAPPING_MIN_LOG;
       _srtGlobals.srt_fSkyColorMultiplier = GREAT_PYRAMID_SKY_COLOR_START;
     }
   }

@@ -193,6 +193,8 @@ struct CWorldRenderingInfo
 
   CEntity         *pViewerEntity;
   CWorld          *pWorld;
+  CDrawPort       *pDrawport;
+  CAnyProjection3D prProjection;
 
   FLOAT3D         cameraPosition;
   FLOATmatrix3D   cameraRotation;

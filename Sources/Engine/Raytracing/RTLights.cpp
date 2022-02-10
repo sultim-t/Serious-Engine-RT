@@ -31,7 +31,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "SSRT.h"
 #include "RTProcessing.h"
 #include "SSRTGlobals.h"
-
+#include "Engine/Graphics/DrawPort.h"
+#include "Engine/Light/LensFlares.h"
+#include "Engine/Rendering/Render.h"
 
 
 extern SSRT::SSRTGlobals _srtGlobals;
@@ -486,9 +488,199 @@ static void RT_AddSpotlight(CEntity *pEn, SSRT::Scene *pScene)
 }
 
 
+static FLOAT IntensityAtDistance(FLOAT fFallOff, FLOAT fHotSpot, FLOAT fDistance)
+{
+  // intensity is zero if further than fall-off range
+  if (fDistance > fFallOff) return 0.0f;
+  // intensity is maximum if closer than hot-spot range
+  if (fDistance < fHotSpot) return 1.0f;
+  // interpolate if between fall-off and hot-spot range
+  return (fFallOff - fDistance) / (fFallOff - fHotSpot);
+}
+
+
+// Based on CRenderer::AddLensFlare / CRenderer::RenderLensFlares
+// Assume gfx_iLensFlareQuality=3
+static void AddLensFlare(const CLightSource *plsLight, SSRT::Scene *pScene)
+{
+  if (!_srtGlobals.srt_bLensFlares)
+  {
+    return;
+  }
+
+  if (_wrpWorldRenderPrefs.wrp_lftLensFlares == CWorldRenderPrefs::LFT_NONE)
+  {
+    return;
+  }
+
+  CEntity *penModel = plsLight->ls_penEntity;
+  FLOAT3D position = penModel->GetLerpedPlacement().pl_PositionVector;
+
+  if (penModel->en_ulFlags & ENF_BACKGROUND)
+  {
+    FLOATmatrix3D bcgToWorld;
+    MakeInverseRotationMatrix(bcgToWorld, pScene->GetBackgroundViewerOrientationAngle());
+
+    // transform from background viewer space to world space
+    position -= pScene->GetBackgroundViewerPosition();
+    position = position * bcgToWorld;
+  }
+
+
+  FLOAT3D vScreen;
+  {
+    const CProjection3D *pprProjection = pScene->GetProjection();
+    FLOAT3D vRotated;
+    pprProjection->PreClip(position, vRotated);
+    // if it is behind near clip plane
+    if (-vRotated(3) < pprProjection->NearClipDistanceR())
+    {
+      //return;
+    }
+    // project it to screen
+    pprProjection->PostClip(vRotated, vScreen);
+  }
+
+
+  float lfi_fI = vScreen(1);
+  float lfi_fJ = vScreen(2);
+  float lfi_fDistance = (position - pScene->GetCameraPosition()).Length();
+  // RT: flare fading should be done on RTGL1 side
+  float lfi_fFadeFactor = 1.0f;
+
+
+  CDrawPort *pdpDrawPort = pScene->GetDrawPort();
+  if (pdpDrawPort == nullptr)
+  {
+    return;
+  }
+
+
+  float fScreenSizeI = pdpDrawPort->GetWidth();
+  FLOAT fScreenSizeJ = pdpDrawPort->GetHeight();
+  FLOAT fScreenCenterI = fScreenSizeI * 0.5f;
+  FLOAT fScreenCenterJ = fScreenSizeJ * 0.5f;
+  FLOAT fLightI = lfi_fI;
+  FLOAT fLightJ = lfi_fJ;
+  FLOAT fIPositionFactor = (fLightI - fScreenCenterI) / fScreenSizeI;
+  FLOAT fReflectionDirI = fScreenCenterI - fLightI;
+  FLOAT fReflectionDirJ = fScreenCenterJ - fLightJ;
+  UBYTE ubR, ubG, ubB;
+  plsLight->GetLightColor(ubR, ubG, ubB);
+  UBYTE ubI = (ULONG(ubR) + ULONG(ubG) + ULONG(ubB)) / 3;
+  FLOAT fReflectionDistance = sqrt(fReflectionDirI * fReflectionDirI + fReflectionDirJ * fReflectionDirJ);
+  FLOAT fOfCenterFadeFactor = 1.0f - 2.0f * fReflectionDistance / fScreenSizeI;
+  fOfCenterFadeFactor = Max(fOfCenterFadeFactor, 0.0f);
+
+
+  // RT: ignore LFF_HAZE / LFF_FOG
+  float fFogHazeFade = 1.0f;
+
+
+  CStaticArray<COneLensFlare> &aolf = plsLight->ls_plftLensFlare->lft_aolfFlares;
+  INDEX ctReflections = aolf.Count();
+  if (_wrpWorldRenderPrefs.wrp_lftLensFlares == CWorldRenderPrefs::LFT_SINGLE_FLARE)
+  {
+    ctReflections = 1;
+  }
+
+  for (INDEX iReflection = 0; iReflection < ctReflections; iReflection++)
+  {
+    COneLensFlare &olf = aolf[iReflection];
+    // calculate its fading factors
+    FLOAT fFadeFactor = lfi_fFadeFactor * IntensityAtDistance(
+      plsLight->ls_rFallOff * olf.oft_fFallOffFactor,
+      plsLight->ls_rHotSpot * olf.oft_fFallOffFactor,
+      lfi_fDistance);
+    fFadeFactor *= fFogHazeFade;
+    if (olf.olf_ulFlags & OLF_FADEOFCENTER)
+    {
+      fFadeFactor *= fOfCenterFadeFactor;
+    }
+
+    FLOAT fSizeIFactor = fScreenSizeI;
+    if (olf.olf_ulFlags & OLF_FADESIZE)
+    {
+      fSizeIFactor *= fFadeFactor;
+    }
+    FLOAT fIntensityFactor = olf.olf_fLightAmplification;
+    if (olf.olf_ulFlags & OLF_FADEINTENSITY)
+    {
+      fIntensityFactor *= fFadeFactor;
+    }
+
+    // calculate flare size
+    FLOAT fSizeI = olf.olf_fSizeIOverScreenSizeI * fSizeIFactor;
+    FLOAT fSizeJ = olf.olf_fSizeJOverScreenSizeI * fSizeIFactor;
+
+    // skip if this flare is invisible
+    if (fIntensityFactor < 0.01f || fSizeI < 2.0f || fSizeJ < 2.0f) continue;
+
+    // determine color
+    FLOAT fThisR = (ubR + (FLOAT(ubI) - ubR) * olf.olf_fLightDesaturation) * fIntensityFactor;
+    FLOAT fThisG = (ubG + (FLOAT(ubI) - ubG) * olf.olf_fLightDesaturation) * fIntensityFactor;
+    FLOAT fThisB = (ubB + (FLOAT(ubI) - ubB) * olf.olf_fLightDesaturation) * fIntensityFactor;
+    UBYTE ubThisR = Min(fThisR, 255.0f);
+    UBYTE ubThisG = Min(fThisG, 255.0f);
+    UBYTE ubThisB = Min(fThisB, 255.0f);
+    COLOR colBlending = RGBToColor(ubThisR, ubThisG, ubThisB);
+
+    // render the flare
+    pdpDrawPort->RenderLensFlare(
+      &olf.olf_toTexture,
+      fLightI + olf.olf_fReflectionPosition * fReflectionDirI,
+      fLightJ + olf.olf_fReflectionPosition * fReflectionDirJ,
+      fSizeI, fSizeJ,
+      olf.olf_aRotationFactor * fIPositionFactor,
+      colBlending);
+  }
+
+  // if screen glare is on
+  CLensFlareType &lft = *plsLight->ls_plftLensFlare;
+  FLOAT fGlearCompression = lft.lft_fGlareCompression;
+  if (_wrpWorldRenderPrefs.wrp_lftLensFlares >= CWorldRenderPrefs::LFT_REFLECTIONS_AND_GLARE && lft.lft_fGlareIntensity > 0.01f)
+  {
+    // calculate glare factor for current position
+    FLOAT fIntensity = IntensityAtDistance(plsLight->ls_rFallOff * lft.lft_fGlareFallOffFactor,
+                                           plsLight->ls_rHotSpot * lft.lft_fGlareFallOffFactor,
+                                           lfi_fDistance);
+    FLOAT fCenterFactor = (1 - fOfCenterFadeFactor);
+    FLOAT fGlare = lft.lft_fGlareIntensity * fIntensity
+      * (exp(1.0f / (1.0f + fGlearCompression * fCenterFactor * fCenterFactor)) - 1.0f) / (exp(1.0f) - 1.0f);
+    ULONG ulGlareA = ClampUp(NormFloatToByte(fGlare), 255UL);
+    // if there is any relevant glare
+    if (ulGlareA > 1)
+    {
+      // calculate glare color
+      FLOAT fGlareR = (ubR + (FLOAT(ubI) - ubR) * lft.lft_fGlareDesaturation);
+      FLOAT fGlareG = (ubG + (FLOAT(ubI) - ubG) * lft.lft_fGlareDesaturation);
+      FLOAT fGlareB = (ubB + (FLOAT(ubI) - ubB) * lft.lft_fGlareDesaturation);
+      FLOAT fMax = Max(fGlareR, Max(fGlareG, fGlareB));
+      FLOAT fBrightFactor = 255.0f / fMax;
+      fGlareR *= fBrightFactor;
+      fGlareG *= fBrightFactor;
+      fGlareB *= fBrightFactor;
+      ULONG ulGlareR = ClampUp(FloatToInt(fGlareR), 255L);
+      ULONG ulGlareG = ClampUp(FloatToInt(fGlareG), 255L);
+      ULONG ulGlareB = ClampUp(FloatToInt(fGlareB), 255L);
+      // add the glare to screen blending
+      pdpDrawPort->dp_ulBlendingRA += ulGlareR * ulGlareA;
+      pdpDrawPort->dp_ulBlendingGA += ulGlareG * ulGlareA;
+      pdpDrawPort->dp_ulBlendingBA += ulGlareB * ulGlareA;
+      pdpDrawPort->dp_ulBlendingA += ulGlareA;
+    }
+  }
+}
+
 static void RT_AddLight(const CLightSource *plsLight, SSRT::Scene *pScene)
 {
   ASSERT(plsLight != NULL);
+
+
+  if (plsLight->ls_plftLensFlare != NULL)
+  {
+    AddLensFlare(plsLight, pScene);
+  }
 
 
   // don't consider lights that subtract light or have only lens flare
@@ -668,6 +860,7 @@ void RT_ProcessModelLights(CEntity *penModel, SSRT::Scene *pScene)
 
   if (pls != NULL)
   {
+    ASSERT(penModel == pls->ls_penEntity);
     RT_AddLight(pls, pScene);
   }
   // RT: add light if model has fire texture

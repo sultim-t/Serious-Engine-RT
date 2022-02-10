@@ -168,6 +168,8 @@ struct SSRTGlobals
   FLOAT srt_fBloomEmissionMultiplier = 16.0f;
   FLOAT srt_fBloomSkyMultiplier = 0.1f;
 
+  INDEX srt_bLensFlares = 1;
+
   FLOAT srt_fFixSunIntensityGlobal = 0.75f;
   FLOAT srt_fFixSkyIntensityGlobal = 0.5f;
 };

@@ -1380,19 +1380,13 @@ void CDrawPort::RenderLensFlare( CTextureObject *pto, FLOAT fI, FLOAT fJ,
                                  FLOAT fSizeI, FLOAT fSizeJ, ANGLE aRotation, COLOR colLight) const
 {
   const GfxAPIType eAPI = _pGfx->gl_eCurrentAPI;
-  
-  if (eAPI == GAT_RT)
-  {
-    // ignore lens flare rendering
-    return;
-  }
 
   // check API
 #ifdef SE1_D3D
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_D3D || eAPI == GAT_NONE);
 #else // SE1_D3D
 #ifdef SE1_VULKAN
-  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_NONE);
+  ASSERT(eAPI == GAT_OGL || eAPI == GAT_VK || eAPI == GAT_RT || eAPI == GAT_NONE);
 #else
   ASSERT(eAPI == GAT_OGL || eAPI == GAT_NONE);
 #endif // SE1_VULKAN
@@ -1439,6 +1433,24 @@ void CDrawPort::RenderLensFlare( CTextureObject *pto, FLOAT fI, FLOAT fJ,
   pcol[1] = glcol;
   pcol[2] = glcol;
   pcol[3] = glcol;
+
+
+  if (eAPI == GAT_RT)
+  {
+    SSRT::CHudElementInfo hudInfo = {};
+    hudInfo.textureData = ptd;
+    hudInfo.textureWrapU = hudInfo.textureWrapV = GfxWrap::GFX_CLAMP;
+
+    hudInfo.pPositions = pvtx;
+    hudInfo.pTexCoords = ptex;
+    hudInfo.pColors = pcol;
+    hudInfo.vertexCount = 4;
+    HudElement_GenerateQuadIndices(&hudInfo);
+
+    // indices will be set there
+    _pGfx->gl_SSRT->ProcessHudElement(hudInfo);
+  }
+
   // render it
   _pGfx->gl_ctWorldTriangles += 2; 
   gfxFlushQuads();
