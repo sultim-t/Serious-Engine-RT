@@ -88,7 +88,8 @@ constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_CHANGE_LENGTH = 30.0f;
 constexpr FLOAT GREAT_PYRAMID_SUN_INTENSITY_DEFAULT = 2.0f;
 constexpr FLOAT GREAT_PYRAMID_SUN_INTENSITY_BOSS_FIGHT = 0.0f;
 constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_BOSS_FIGHT = 5.0f;
-constexpr FLOAT GREAT_PYRAMID_FIGHT_TONEMAPPING_MIN_LOG = -2;
+constexpr FLOAT GREAT_PYRAMID_DEFAULT_TONEMAPPING_MIN_LOG = -2;
+constexpr FLOAT GREAT_PYRAMID_BOSSFIGHT_TONEMAPPING_MIN_LOG = -2;
 
 const struct
 {
@@ -97,27 +98,27 @@ const struct
   FLOAT                             fSunSaturation;
   FLOAT                                   fSkyColorMultiplier;
   FLOAT                                         fSkyColorSaturation;
-  FLOAT                                                 fTonemappingMinLogLuminance;
-  FLOAT                                                         fTonemappingMaxLogLuminance;
-  FLOAT                                                               fPotentialLightSphFalloffDefault;
-  FLOAT                                                                     fPotentialLightSphFalloffMultiplier;
-  FLOAT                                                                         fOriginalLightSphFalloffMultiplier;
-  FLOAT                                                                             fPotentialLightSphFalloffMin;
+  // FLOAT                                            fTonemappingMinLogLuminance;
+  // FLOAT                                            fTonemappingMaxLogLuminance;
+  FLOAT                                               fPotentialLightSphFalloffDefault;
+  FLOAT                                                     fPotentialLightSphFalloffMultiplier;
+  FLOAT                                                           fOriginalLightSphFalloffMultiplier;
+  FLOAT                                                               fPotentialLightSphFalloffMin;
 }
 RT_WorldIlluminationParams[] =
 {
-  // defaults:                4,    0.5f, 1,    0.75f,  -2,     0,    1,    1,  1,  5 
-  { EWorld::SandCanyon,       3,    0.5f, 1,    0.75f,  -2,     0,    8,    1,  1,  5 },
-  { EWorld::ValleyOfTheKings, 3,    0.5f, 1,    0.75f,  -2,     0,    8,    1,  2,  5 },
-  { EWorld::Suburbs,          4,    0.5f, 0.5f, 1,      -2,     0,    1,    1,  1,  5 },
-  { EWorld::Sewers,           4,    0.5f, 1,    0.75f,  -2,     0,    1,    1,  2,  5 },
-  { EWorld::AlleyOfSphinxes,  4,    0.5f, 0.5f, 0.75f,  -2,     0,    1,    1,  1,  5 },
-  { EWorld::Metropolis,       4,    0.5f, 0.5f, 0.75f,  -2,     0,    1,    1,  1,  5 },
-  { EWorld::Luxor,            4,    0.5f, 1,    0.75f,  -2,     0,    4,    1,  1,  5 },
-  { EWorld::Karnak,           4,    0.9f, 0.5f, 1,      -2,     0,    1, 0.5f,  1,  7 },
-  { EWorld::SacredYards,      4,    0.5f, 0.5f, 0.75f,  -2,     0,    1,    1,  1,  5  },
+  // defaults:                4,    1,    1,    1,    1,    1,    1,  5 
+  { EWorld::SandCanyon,       4,    1,    1,    1,    8,    1, 1.5f,  5 },
+  { EWorld::ValleyOfTheKings, 2,    1,    1,    1,    8,    1,    2,  5 },
+  { EWorld::Suburbs,          4,    1, 0.5f,    1,    1,    1,    1,  5 },
+  { EWorld::Sewers,           4,    1,    1,    1,    1,    1,    2,  5 },
+  { EWorld::AlleyOfSphinxes,  4,0.75f, 0.5f,    1,    1,    1,    1,  5 },
+  { EWorld::Metropolis,       4, 0.9f, 0.5f,    1,    1,    1,    1,  5 },
+  { EWorld::Luxor,            2,    1,    1,    1,    4,    1,    1,  5 },
+  { EWorld::Karnak,           4,    1, 0.5f,    1,    1, 0.5f,    1,  7 },
+  { EWorld::SacredYards,      4,    1, 0.5f,    1,    1,    1,    1,  5  },
   { EWorld::TheGreatPyramid,  GREAT_PYRAMID_SUN_INTENSITY_DEFAULT, 
-                                       1, 0.5f, 1,       0,     2,    1,    1,  1,  5 },
+                                       1, 0.5f, 1,       1,    1,  1,  5 },
 };
 
 
@@ -434,14 +435,14 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
 
   {
     _srtGlobals.srt_fSunIntensity = 4.0f;
-    _srtGlobals.srt_fSunSaturation = 0.5f;
+    _srtGlobals.srt_fSunSaturation = 1.0f;
     _srtGlobals.srt_fSkyColorMultiplier = 1.0f;
-    _srtGlobals.srt_fSkyColorSaturation = 0.75f;
-    _srtGlobals.srt_fTonemappingMinLogLuminance = -2.0f;
-    _srtGlobals.srt_fTonemappingMaxLogLuminance = 0.0f;
+    _srtGlobals.srt_fSkyColorSaturation = 1.0f;
+    _srtGlobals.srt_fTonemappingMinLogLuminance = -4;
+    // _srtGlobals.srt_fTonemappingMaxLogLuminance = ;
     _srtGlobals.srt_fPotentialLightSphFalloffDefault = 1.0f;
-    _srtGlobals.srt_fPotentialLightSphFalloffMultiplier = 1.0f;
-    _srtGlobals.srt_fOriginalLightSphFalloffMultiplier = 1.0f;
+    _srtGlobals.srt_fPotentialLightSphFalloffMultiplier = 1.5f;
+    _srtGlobals.srt_fOriginalLightSphFalloffMultiplier = 1.5f;
     _srtGlobals.srt_fPotentialLightSphFalloffMin = 5.0f;
   }
   for (const auto &s : RT_WorldIlluminationParams)
@@ -452,8 +453,8 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
       _srtGlobals.srt_fSunSaturation = s.fSunSaturation;
       _srtGlobals.srt_fSkyColorMultiplier = s.fSkyColorMultiplier;
       _srtGlobals.srt_fSkyColorSaturation = s.fSkyColorSaturation;
-      _srtGlobals.srt_fTonemappingMinLogLuminance = s.fTonemappingMinLogLuminance;
-      _srtGlobals.srt_fTonemappingMaxLogLuminance = s.fTonemappingMaxLogLuminance;
+      // _srtGlobals.srt_fTonemappingMinLogLuminance = s.fTonemappingMinLogLuminance;
+      // _srtGlobals.srt_fTonemappingMaxLogLuminance = s.fTonemappingMaxLogLuminance;
       _srtGlobals.srt_fPotentialLightSphFalloffDefault = s.fPotentialLightSphFalloffDefault;
       _srtGlobals.srt_fPotentialLightSphFalloffMultiplier = s.fPotentialLightSphFalloffMultiplier;
       _srtGlobals.srt_fOriginalLightSphFalloffMultiplier = s.fOriginalLightSphFalloffMultiplier;
@@ -464,14 +465,16 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   // special case: Serious difficulty in Metropolis
   if (isMetropolisSerious)
   {    
-    _srtGlobals.srt_fSunIntensity = 0.75f;
+    _srtGlobals.srt_fSunIntensity = 0.4f;
     _srtGlobals.srt_fSunSaturation = 0.5f;
     _srtGlobals.srt_fSkyColorMultiplier = 0.25f;
-    _srtGlobals.srt_fSkyColorSaturation = 0.75f;
+    _srtGlobals.srt_fSkyColorSaturation = 1.0f;
   }
   // special case: Great Pyramid animated sky intensity
   {
     tmAnimatedSkyIntensityOrigin = -1.0f;
+
+    _srtGlobals.srt_fTonemappingMinLogLuminance = GREAT_PYRAMID_DEFAULT_TONEMAPPING_MIN_LOG;
 
     if (eCurrentWorld == EWorld::TheGreatPyramid)
     {
@@ -1839,7 +1842,7 @@ void SSRT::CustomInfo::Update(const FLOAT3D &vCameraPosition)
       _srtGlobals.srt_fSunIntensity = GREAT_PYRAMID_SUN_INTENSITY_BOSS_FIGHT;
       _srtGlobals.srt_fSkyColorMultiplier = GREAT_PYRAMID_SKY_COLOR_BOSS_FIGHT;
 
-      _srtGlobals.srt_fTonemappingMinLogLuminance = GREAT_PYRAMID_FIGHT_TONEMAPPING_MIN_LOG;
+      _srtGlobals.srt_fTonemappingMinLogLuminance = GREAT_PYRAMID_BOSSFIGHT_TONEMAPPING_MIN_LOG;
     }
     else
     {

@@ -373,7 +373,7 @@ void SSRT::Scene::AddLight(const CSphereLight &sphLt)
   info.color = { c(1), c(2), c(3) };
   info.position = { sphLt.absPosition(1), sphLt.absPosition(2), sphLt.absPosition(3) };
   info.radius = sphLt.radius;
-  info.falloffDistance = sphLt.falloffDistance;
+  info.falloffDistance = sphLt.falloffDistance * _srtGlobals.srt_fLightSphGlobalFalloffMultiplier;
 
   RgResult r = rgUploadSphericalLight(instance, &info);
   RG_CHECKERROR(r);

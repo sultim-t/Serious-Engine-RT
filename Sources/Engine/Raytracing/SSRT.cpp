@@ -93,9 +93,11 @@ void SSRT::SSRTMain::InitShellVariables()
 
   _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphMaxCount;", &_srtGlobals.srt_iLightSphMaxCount);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphGlobalIntensityMultiplier;", &_srtGlobals.srt_fLightSphGlobalIntensityMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphGlobalFalloffMultiplier;", &_srtGlobals.srt_fLightSphGlobalFalloffMultiplier);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphSaturation;", &_srtGlobals.srt_fLightSphSaturation);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphColorPow;", &_srtGlobals.srt_fLightSphColorPow);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphPolygonOffset;", &_srtGlobals.srt_fLightSphPolygonOffset);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphFirefliesClamp;", &_srtGlobals.srt_fLightSphFirefliesClamp);
   _pShell->DeclareSymbol("persistent user INDEX srt_bLightSphIgnoreEditorModels;", &_srtGlobals.srt_bLightSphIgnoreEditorModels);
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_fOriginalLightSphIntensity;", &_srtGlobals.srt_fOriginalLightSphIntensity);
@@ -548,6 +550,8 @@ void SSRT::SSRTMain::EndFrame()
   shadowParams.maxBounceShadowsSphereLights = _srtGlobals.srt_iMaxBounceShadowsSphereLights;
   shadowParams.maxBounceShadowsSpotlights = _srtGlobals.srt_iMaxBounceShadowsSpotlights;
   shadowParams.maxBounceShadowsPolygonalLights = 2;
+  shadowParams.polygonalLightSpotlightFactor = 2;
+  shadowParams.sphericalPolygonalLightsFirefliesClamp = _srtGlobals.srt_fLightSphFirefliesClamp;
 
 
   RgDrawFrameSkyParams skyParams = {};

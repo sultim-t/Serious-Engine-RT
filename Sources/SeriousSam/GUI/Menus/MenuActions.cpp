@@ -736,9 +736,9 @@ static INDEX RenderScaleToSwitch()
 {
   FLOAT fRenderScale = 1.0f;
 
-  if (_pShell->GetSymbol("srt_fRenderScale", TRUE) != NULL)
+  if (_pShell->GetSymbol("srt_fResolutionScale", TRUE) != NULL)
   {
-    fRenderScale = _pShell->GetFLOAT("srt_fRenderScale");
+    fRenderScale = _pShell->GetFLOAT("srt_fResolutionScale");
   }
 
   INDEX iPercentage = fRenderScale * 100.0f;
@@ -894,7 +894,7 @@ static void UpdateSSRTOptions(INDEX)
     gmCurrent.gm_mgNvDlssTrigger.mg_iSelected == 0;
 
   // apply immediately, as only shell variables are being changed
-  TrySetShellSymbolFloat("srt_fRenderScale", SwitchToRenderScale(gmCurrent.gm_mgRenderScaleTrigger.mg_iSelected));
+  TrySetShellSymbolFloat("srt_fResolutionScale", SwitchToRenderScale(gmCurrent.gm_mgRenderScaleTrigger.mg_iSelected));
   TrySetShellSymbol("srt_iCullingMaxSectorDepthQualityLevel", gmCurrent.gm_mgCPUPerformanceTrigger.mg_iSelected);
 }
 

@@ -292,6 +292,10 @@ static void RT_AddModifiedSphereLightToScene(const CLightSource *plsLight,
 
   if (isMuzzleFlash)
   {
+    // make muzzle flash yellow
+    float b = _srtGlobals.srt_fMuzzleLightIntensity;
+    light.color = { 1.0f * b, 0.8f * b, 0.21f * b };
+
     light.radius = _srtGlobals.srt_fMuzzleLightRadius;
     light.falloffDistance = f * _srtGlobals.srt_fMuzzleLightFalloffMultiplier;
   }
