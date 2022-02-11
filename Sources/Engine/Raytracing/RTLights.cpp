@@ -499,6 +499,71 @@ static FLOAT IntensityAtDistance(FLOAT fFallOff, FLOAT fHotSpot, FLOAT fDistance
 }
 
 
+static void UploadLensFlare(const FLOAT3D pointToCheck,
+                            CTextureObject *pto, 
+                            FLOAT fI, FLOAT fJ, FLOAT fSizeI, FLOAT fSizeJ, 
+                            ANGLE aRotation, COLOR colLight,
+                            FLOAT fScreenSizeI, FLOAT fScreenSizeJ)
+{
+  static const INDEX pindices[6] = { 0,1,2,2,3,0 };
+
+  GFXVertex pvtx[4];
+  GFXTexCoord ptex[4];
+  GFXColor pcol[4];
+
+  // find lens location and dimension
+  const FLOAT fRI = fSizeI * 0.5f;
+  const FLOAT fRJ = fSizeJ * 0.5f;
+  const FLOAT fSinA = SinFast(aRotation);
+  const FLOAT fCosA = CosFast(aRotation);
+  const FLOAT fRICosA = fRI * +fCosA;
+  const FLOAT fRJSinA = fRJ * -fSinA;
+  const FLOAT fRISinA = fRI * +fSinA;
+  const FLOAT fRJCosA = fRJ * +fCosA;
+
+  // get texture parameters for current frame and needed mip factor and upload texture
+  CTextureData *ptd = (CTextureData *)pto->GetData();
+  ptd->SetAsCurrent(pto->GetFrame());
+  // set lens color
+  colLight = AdjustColor(colLight, _slShdHueShift, _slShdSaturation);
+  const GFXColor glcol(colLight);
+
+  // prepare coordinates of the rectangle
+  pvtx[0].x = fI - fRICosA + fRJSinA;  pvtx[0].y = fJ - fRISinA + fRJCosA;  pvtx[0].z = 0.01f;
+  pvtx[1].x = fI - fRICosA - fRJSinA;  pvtx[1].y = fJ - fRISinA - fRJCosA;  pvtx[1].z = 0.01f;
+  pvtx[2].x = fI + fRICosA - fRJSinA;  pvtx[2].y = fJ + fRISinA - fRJCosA;  pvtx[2].z = 0.01f;
+  pvtx[3].x = fI + fRICosA + fRJSinA;  pvtx[3].y = fJ + fRISinA + fRJCosA;  pvtx[3].z = 0.01f;
+  ptex[0].s = 0;  ptex[0].t = 0;
+  ptex[1].s = 0;  ptex[1].t = 1;
+  ptex[2].s = 1;  ptex[2].t = 1;
+  ptex[3].s = 1;  ptex[3].t = 0;
+  pcol[0] = glcol;
+  pcol[1] = glcol;
+  pcol[2] = glcol;
+  pcol[3] = glcol;
+
+  // from pixel coords to [-1,1]
+  for (auto &v : pvtx)
+  {
+    v.x = (v.x / fScreenSizeI) * 2 - 1;
+    v.y = (v.y / fScreenSizeJ) * 2 - 1;
+  }
+
+  SSRT::CHudElementInfo hudInfo = {};
+  hudInfo.textureData = ptd;
+  hudInfo.textureWrapU = hudInfo.textureWrapV = GfxWrap::GFX_CLAMP;
+
+  hudInfo.pPositions = pvtx;
+  hudInfo.pTexCoords = ptex;
+  hudInfo.pColors = pcol;
+  hudInfo.vertexCount = 4;
+  hudInfo.pIndices = pindices;
+  hudInfo.indexCount = 6;
+  
+  _pGfx->gl_SSRT->ProcessLensFlare(hudInfo, pointToCheck);
+}
+
+
 // Based on CRenderer::AddLensFlare / CRenderer::RenderLensFlares
 // Assume gfx_iLensFlareQuality=3
 static void AddLensFlare(const CLightSource *plsLight, SSRT::Scene *pScene)
@@ -535,7 +600,7 @@ static void AddLensFlare(const CLightSource *plsLight, SSRT::Scene *pScene)
     // if it is behind near clip plane
     if (-vRotated(3) < pprProjection->NearClipDistanceR())
     {
-      //return;
+      return;
     }
     // project it to screen
     pprProjection->PostClip(vRotated, vScreen);
@@ -556,7 +621,7 @@ static void AddLensFlare(const CLightSource *plsLight, SSRT::Scene *pScene)
   }
 
 
-  float fScreenSizeI = pdpDrawPort->GetWidth();
+  FLOAT fScreenSizeI = pdpDrawPort->GetWidth();
   FLOAT fScreenSizeJ = pdpDrawPort->GetHeight();
   FLOAT fScreenCenterI = fScreenSizeI * 0.5f;
   FLOAT fScreenCenterJ = fScreenSizeJ * 0.5f;
@@ -626,14 +691,21 @@ static void AddLensFlare(const CLightSource *plsLight, SSRT::Scene *pScene)
     COLOR colBlending = RGBToColor(ubThisR, ubThisG, ubThisB);
 
     // render the flare
-    pdpDrawPort->RenderLensFlare(
+    UploadLensFlare(
+      position,
       &olf.olf_toTexture,
       fLightI + olf.olf_fReflectionPosition * fReflectionDirI,
       fLightJ + olf.olf_fReflectionPosition * fReflectionDirJ,
       fSizeI, fSizeJ,
       olf.olf_aRotationFactor * fIPositionFactor,
-      colBlending);
+      colBlending,
+      fScreenSizeI, fScreenSizeJ);
   }
+
+
+  // RT: ignore glare, doesn't look right
+  return;
+
 
   // if screen glare is on
   CLensFlareType &lft = *plsLight->ls_plftLensFlare;

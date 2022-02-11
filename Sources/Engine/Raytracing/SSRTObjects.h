@@ -223,27 +223,27 @@ struct CFirstPersonModelInfo
 struct CHudElementInfo
 {
   // always FALSE
-  // bool         alphaTest;
+  // bool           alphaTest;
   // always TRUE
-  // bool         blendEnable;
+  // bool           blendEnable;
   // always GFX_SRC_ALPHA
-  //GfxBlend      blendFuncSrc;
+  //GfxBlend        blendFuncSrc;
   // always GFX_INV_SRC_ALPHA
-  //GfxBlend      blendFuncDst;
+  //GfxBlend        blendFuncDst;
 
-  GfxWrap         textureWrapU;
-  GfxWrap         textureWrapV;
+  GfxWrap           textureWrapU;
+  GfxWrap           textureWrapV;
 
   // use CTextureData, assuming that there is only 1 frame
-  CTextureData    *textureData;
+  CTextureData      *textureData;
 
-  GFXVertex4      *pPositions; 
-  GFXTexCoord     *pTexCoords;
-  GFXColor        *pColors; 
-  INDEX           vertexCount;
+  const GFXVertex4  *pPositions;
+  const GFXTexCoord *pTexCoords;
+  const GFXColor    *pColors;
+  INDEX             vertexCount;
 
-  INDEX           *pIndices; 
-  INDEX           indexCount;
+  const INDEX       *pIndices; 
+  INDEX             indexCount;
 };
 
 

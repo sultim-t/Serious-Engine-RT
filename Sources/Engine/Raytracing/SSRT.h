@@ -48,6 +48,7 @@ public:
   void ProcessFirstPersonModel(const CFirstPersonModelInfo &info);
   // HUD elements will be drawn using rasterization
   void ProcessHudElement(const CHudElementInfo &hud);
+  void ProcessLensFlare(const CHudElementInfo &hud, const FLOAT3D &pointToCheck);
 
   void EndFrame();
   void NotifyGameStopped();

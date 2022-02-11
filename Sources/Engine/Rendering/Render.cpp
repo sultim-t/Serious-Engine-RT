@@ -967,7 +967,6 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
     renderInfo.screenX = dpDrawport.dp_MinI;
     renderInfo.screenY = dpDrawport.dp_MinJ;
     renderInfo.pDrawport = &dpDrawport;
-    renderInfo.prProjection = prProjection;
 
     // RT: copied from CDrawPort::SetProjection which is called from BeginModelRenderingView(..)
     {
@@ -1016,6 +1015,8 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
         extern void Svk_MatFrustum(float *result, float fLeft, float fRight, float fBottom, float fTop, float fNear, float fFar);
         Svk_MatFrustum(renderInfo.projectionMatrix, fLeft, fRight, fTop, fBottom, fNear, fFar);
       }
+
+      renderInfo.prProjection = proj;
     }
     
     // create view matrix

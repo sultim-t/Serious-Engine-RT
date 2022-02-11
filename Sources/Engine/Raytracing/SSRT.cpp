@@ -351,6 +351,8 @@ SSRT::SSRTMain::SSRTMain() :
 
   info.pWaterNormalTexturePath = waterNormalPath;
 
+  info.lensFlareVerticesInScreenSpace = RG_TRUE;
+
   info.pWin32SurfaceInfo = &win32SurfaceInfo;
 
   info.pfnPrint = [] (const char *pMessage, void *pUserData)
@@ -505,12 +507,34 @@ void SSRT::SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
     0, 1, 0, 0,
     0, 0, 1, 0
   };
-
+  
   float hudViewProj[16];
   extern void Svk_MatMultiply(float *result, const float *a, const float *b);
   Svk_MatMultiply(hudViewProj, viewMatrix, projMatrix);
 
   RgResult r = rgUploadRasterizedGeometry(instance, &hudInfo, hudViewProj, &currentViewport);
+  RG_CHECKERROR(r);
+}
+
+void SSRT::SSRTMain::ProcessLensFlare(const CHudElementInfo &hud, const FLOAT3D &pointToCheck)
+{
+  RgRasterizedGeometryVertexStruct vs[4] = {};
+  for (int i = 0; i < 4; i++)
+  {
+    memcpy(vs[i].position, &hud.pPositions[i], sizeof(float) * 3);
+    vs[i].packedColor = hud.pColors[i].abgr;
+    memcpy(vs[i].texCoord, &hud.pTexCoords[i], sizeof(float) * 2);
+  }
+  
+  RgLensFlareUploadInfo info = {};
+  info.pVertexData = vs;
+  info.vertexCount = 4;
+  info.indexCount = hud.indexCount;
+  info.pIndexData = hud.pIndices;
+  info.material = textureUploader->GetMaterial(hud.textureData);
+  info.pointToCheck = { pointToCheck(1), pointToCheck(2), pointToCheck(3) };
+
+  RgResult r = rgUploadLensFlare(instance, &info);
   RG_CHECKERROR(r);
 }
 
@@ -591,6 +615,11 @@ void SSRT::SSRTMain::EndFrame()
   tdParams.emissionMaxScreenColor = _srtGlobals.srt_fEmissionMaxScreenColor;
 
 
+  RgDrawFrameLensFlareParams lfParams = {};
+  lfParams.lensFlareBlendFuncSrc = RG_BLEND_FACTOR_ONE;
+  lfParams.lensFlareBlendFuncDst = RG_BLEND_FACTOR_ONE;
+
+
   RgDrawFrameDebugParams dbgParams = {};
   dbgParams.showMotionVectors = !!_srtGlobals.srt_bShowMotionVectors;
   dbgParams.showGradients = !!_srtGlobals.srt_bShowGradients;
@@ -641,6 +670,7 @@ void SSRT::SSRTMain::EndFrame()
   frameInfo.pSkyParams = &skyParams;
   frameInfo.pReflectRefractParams = &rflParams;
   frameInfo.pTexturesParams = &tdParams;
+  frameInfo.pLensFlareParams = &lfParams;
   frameInfo.pDebugParams = &dbgParams;
   
   memcpy(frameInfo.view,        worldRenderInfo.viewMatrix,       16 * sizeof(float));
