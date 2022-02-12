@@ -352,6 +352,7 @@ SSRT::SSRTMain::SSRTMain() :
   info.pWaterNormalTexturePath = waterNormalPath;
 
   info.lensFlareVerticesInScreenSpace = RG_TRUE;
+  info.lensFlarePointToCheckIsInScreenSpace = RG_TRUE;
 
   info.pWin32SurfaceInfo = &win32SurfaceInfo;
 

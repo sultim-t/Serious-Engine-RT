@@ -39,11 +39,11 @@ SSRT::Scene::Scene(RgInstance _instance, CWorld *_pWorld, TextureUploader *_pTex
   instance(_instance),
   pTextureUploader(_pTextureUploader),
   pSceneBrushes(new SceneBrushes(_instance, _pWorld, _pTextureUploader)),
+  pCustomInfo(new CustomInfo(_pWorld)),
   pWorld(_pWorld),
   worldName(_pWorld->GetName()),
   pViewerEntity(nullptr)
 {
-  pCustomInfo = new CustomInfo(_pWorld);
   RT_SetCustomInfoForTextures(pCustomInfo);
 
   ASSERT(pWorld != nullptr);
@@ -80,7 +80,8 @@ void SSRT::Scene::Update(const CWorldRenderingInfo &info)
   this->cameraRotation = info.cameraRotation;
   this->currentFOV = info.fovH;
   this->pdpDrawport = info.pDrawport;
-  this->prProjection = info.prProjection;
+  this->prSEProjection = info.prProjection;
+  this->prSEProjectionBackground = info.prProjectionBackground;
 
   isCameraInHaze = false;
 
@@ -120,9 +121,14 @@ CDrawPort *SSRT::Scene::GetDrawPort()
   return pdpDrawport;
 }
 
-CAnyProjection3D &SSRT::Scene::GetProjection()
+CAnyProjection3D &SSRT::Scene::GetSEProjection()
 {
-  return prProjection;
+  return prSEProjection;
+}
+
+CAnyProjection3D &SSRT::Scene::GetSEProjectionBackground()
+{
+  return prSEProjectionBackground;
 }
 
 CWorld *SSRT::Scene::GetWorld()

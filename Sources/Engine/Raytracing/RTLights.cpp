@@ -556,9 +556,9 @@ static void UploadLensFlare(const FLOAT3D pointToCheck,
   hudInfo.pPositions = pvtx;
   hudInfo.pTexCoords = ptex;
   hudInfo.pColors = pcol;
-  hudInfo.vertexCount = 4;
+  hudInfo.vertexCount = std::size(pvtx);
   hudInfo.pIndices = pindices;
-  hudInfo.indexCount = 6;
+  hudInfo.indexCount = std::size(pindices);
   
   _pGfx->gl_SSRT->ProcessLensFlare(hudInfo, pointToCheck);
 }
@@ -579,22 +579,26 @@ static void AddLensFlare(const CLightSource *plsLight, SSRT::Scene *pScene)
   }
 
   CEntity *penModel = plsLight->ls_penEntity;
-  FLOAT3D position = penModel->GetLerpedPlacement().pl_PositionVector;
 
-  if (penModel->en_ulFlags & ENF_BACKGROUND)
+  CDrawPort *pdpDrawPort = pScene->GetDrawPort();
+  if (pdpDrawPort == nullptr)
   {
-    FLOATmatrix3D bcgToWorld;
-    MakeInverseRotationMatrix(bcgToWorld, pScene->GetBackgroundViewerOrientationAngle());
-
-    // transform from background viewer space to world space
-    position -= pScene->GetBackgroundViewerPosition();
-    position = position * bcgToWorld;
+    return;
   }
 
+  FLOAT fScreenSizeI = (FLOAT)pdpDrawPort->GetWidth();
+  FLOAT fScreenSizeJ = (FLOAT)pdpDrawPort->GetHeight();
 
-  FLOAT3D vScreen;
+
+  FLOAT lfi_fI, lfi_fJ, lfi_fOoK, lfi_fDistance;
+  FLOAT3D pointToCheck;
   {
-    const CProjection3D *pprProjection = pScene->GetProjection();
+    FLOAT3D position = penModel->GetLerpedPlacement().pl_PositionVector;
+
+    const CProjection3D *pprProjection = penModel->en_ulFlags & ENF_BACKGROUND ?
+      pScene->GetSEProjectionBackground() :
+      pScene->GetSEProjection();
+
     FLOAT3D vRotated;
     pprProjection->PreClip(position, vRotated);
     // if it is behind near clip plane
@@ -603,26 +607,26 @@ static void AddLensFlare(const CLightSource *plsLight, SSRT::Scene *pScene)
       return;
     }
     // project it to screen
+    FLOAT3D vScreen;
     pprProjection->PostClip(vRotated, vScreen);
+
+    lfi_fI = vScreen(1);
+    lfi_fJ = vScreen(2);
+    lfi_fOoK = (1 - pprProjection->pr_fDepthBufferFactor / vRotated(3))
+      * pprProjection->pr_fDepthBufferMul + pprProjection->pr_fDepthBufferAdd;
+    lfi_fDistance = -vRotated(3);
+    
+    pointToCheck = FLOAT3D(
+      lfi_fI / fScreenSizeI,  // screen coords in [0..1]
+      lfi_fJ / fScreenSizeJ,
+      lfi_fOoK * 0.5f + 0.5f  // NDC depth in [0..1]
+    );
   }
-
-
-  float lfi_fI = vScreen(1);
-  float lfi_fJ = vScreen(2);
-  float lfi_fDistance = (position - pScene->GetCameraPosition()).Length();
+  
   // RT: flare fading should be done on RTGL1 side
-  float lfi_fFadeFactor = 1.0f;
+  FLOAT lfi_fFadeFactor = 1.0f;
 
 
-  CDrawPort *pdpDrawPort = pScene->GetDrawPort();
-  if (pdpDrawPort == nullptr)
-  {
-    return;
-  }
-
-
-  FLOAT fScreenSizeI = pdpDrawPort->GetWidth();
-  FLOAT fScreenSizeJ = pdpDrawPort->GetHeight();
   FLOAT fScreenCenterI = fScreenSizeI * 0.5f;
   FLOAT fScreenCenterJ = fScreenSizeJ * 0.5f;
   FLOAT fLightI = lfi_fI;
@@ -639,7 +643,7 @@ static void AddLensFlare(const CLightSource *plsLight, SSRT::Scene *pScene)
 
 
   // RT: ignore LFF_HAZE / LFF_FOG
-  float fFogHazeFade = 1.0f;
+  FLOAT fFogHazeFade = 1.0f;
 
 
   CStaticArray<COneLensFlare> &aolf = plsLight->ls_plftLensFlare->lft_aolfFlares;
@@ -692,7 +696,7 @@ static void AddLensFlare(const CLightSource *plsLight, SSRT::Scene *pScene)
 
     // render the flare
     UploadLensFlare(
-      position,
+      pointToCheck,
       &olf.olf_toTexture,
       fLightI + olf.olf_fReflectionPosition * fReflectionDirI,
       fLightJ + olf.olf_fReflectionPosition * fReflectionDirJ,

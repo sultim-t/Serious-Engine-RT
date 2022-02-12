@@ -971,15 +971,41 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
     // RT: copied from CDrawPort::SetProjection which is called from BeginModelRenderingView(..)
     {
       // copy projection
-      CAnyProjection3D proj = prProjection;
-      // reset transformation for projection matrix calculation
-      proj->ObjectPlacementL() = CPlacement3D(FLOAT3D(0, 0, 0), ANGLE3D(0, 0, 0));
-      proj->Prepare();
-      if (proj.IsIsometric())
+
+      {
+        renderInfo.prProjection = prProjection;
+
+        renderInfo.prProjection->ObjectPlacementL() = CPlacement3D(FLOAT3D(0, 0, 0), ANGLE3D(0, 0, 0));
+        renderInfo.prProjection->Prepare();
+      }
+
+
+      {
+        renderInfo.prProjectionBackground = prProjection;
+        
+        if (woWorld.GetBackgroundViewer() != NULL)
+        {
+          CPlacement3D plViewer = prProjection->ViewerPlacementR();
+          plViewer.pl_PositionVector = FLOAT3D(0, 0, 0);
+          CPlacement3D plBcgViewer = woWorld.GetBackgroundViewer()->GetLerpedPlacement();
+          plViewer.RelativeToAbsoluteSmooth(plBcgViewer);
+
+          renderInfo.prProjectionBackground->ViewerPlacementL() = plViewer;
+          renderInfo.prProjectionBackground->ObjectPlacementL() = CPlacement3D(FLOAT3D(0, 0, 0), ANGLE3D(0, 0, 0));
+          renderInfo.prProjectionBackground->FarClipDistanceL() = -1.0f;
+          renderInfo.prProjectionBackground->DepthBufferNearL() = 0.9f;
+          renderInfo.prProjectionBackground->DepthBufferFarL() = 1.0f;
+          renderInfo.prProjectionBackground->TurnOffWarpPlane();  // background never needs warp-plane clipping
+          renderInfo.prProjectionBackground->Prepare();
+        }
+      }
+
+
+      if (renderInfo.prProjection.IsIsometric())
       {
         ASSERTALWAYS("Only perspective projections are allowed for ray tracing");
 
-        CIsometricProjection3D &ipr = (CIsometricProjection3D &) *proj;
+        auto &ipr = static_cast<const CIsometricProjection3D&>(*renderInfo.prProjection);
         const FLOAT2D vMin = ipr.pr_ScreenBBox.Min() - ipr.pr_ScreenCenter;
         const FLOAT2D vMax = ipr.pr_ScreenBBox.Max() - ipr.pr_ScreenCenter;
         const FLOAT fFactor = 1.0f / (ipr.ipr_ZoomFactor * ipr.pr_fViewStretch);
@@ -999,7 +1025,7 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
       else
       {
         ASSERT(proj.IsPerspective());
-        CPerspectiveProjection3D &ppr = (CPerspectiveProjection3D &) *proj;
+        const auto &ppr = static_cast<const CPerspectiveProjection3D&>(*renderInfo.prProjection);
         const FLOAT fNear = ppr.pr_NearClipDistance;
         const FLOAT fLeft = ppr.pr_plClipL(3) / ppr.pr_plClipL(1) * fNear;
         const FLOAT fRight = ppr.pr_plClipR(3) / ppr.pr_plClipR(1) * fNear;
@@ -1015,8 +1041,6 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
         extern void Svk_MatFrustum(float *result, float fLeft, float fRight, float fBottom, float fTop, float fNear, float fFar);
         Svk_MatFrustum(renderInfo.projectionMatrix, fLeft, fRight, fTop, fBottom, fNear, fFar);
       }
-
-      renderInfo.prProjection = proj;
     }
     
     // create view matrix

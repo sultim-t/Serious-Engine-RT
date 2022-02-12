@@ -61,7 +61,8 @@ public:
   const CTString &GetWorldName() const;
   const CWorld *GetWorld() const;
   CDrawPort *GetDrawPort();
-  CAnyProjection3D &GetProjection();
+  CAnyProjection3D &GetSEProjection();
+  CAnyProjection3D &GetSEProjectionBackground();
   CWorld *GetWorld();
   FLOAT3D GetBackgroundViewerPosition() const;
   ANGLE3D GetBackgroundViewerOrientationAngle() const;
@@ -125,7 +126,8 @@ private:
   FLOATmatrix3D     cameraRotation;
 
   CDrawPort         *pdpDrawport;
-  CAnyProjection3D  prProjection;
+  CAnyProjection3D  prSEProjection;
+  CAnyProjection3D  prSEProjectionBackground;
 
   bool              isCameraInHaze;
 
