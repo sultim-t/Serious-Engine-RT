@@ -103,22 +103,23 @@ const struct
   FLOAT                                               fPotentialLightSphFalloffDefault;
   FLOAT                                                     fPotentialLightSphFalloffMultiplier;
   FLOAT                                                           fOriginalLightSphFalloffMultiplier;
-  FLOAT                                                               fPotentialLightSphFalloffMin;
+  FLOAT                                                                 fPotentialLightSphFalloffMin;
 }
 RT_WorldIlluminationParams[] =
 {
-  // defaults:                4,    1,    1,    1,    1,    1,    1,  5 
-  { EWorld::SandCanyon,       4,    1,    1,    1,    8,    1, 1.5f,  5 },
-  { EWorld::ValleyOfTheKings, 2,    1,    1,    1,    8,    1,    2,  5 },
-  { EWorld::Suburbs,          4,    1, 0.5f,    1,    1,    1,    1,  5 },
-  { EWorld::Sewers,           4,    1,    1,    1,    1,    1,    2,  5 },
-  { EWorld::AlleyOfSphinxes,  4,0.75f, 0.5f,    1,    1,    1,    1,  5 },
-  { EWorld::Metropolis,       4, 0.9f, 0.5f,    1,    1,    1,    1,  5 },
-  { EWorld::Luxor,            2,    1,    1,    1,    4,    1,    1,  5 },
-  { EWorld::Karnak,           4,    1, 0.5f,    1,    1, 0.5f,    1,  7 },
-  { EWorld::SacredYards,      4,    1, 0.5f,    1,    1,    1,    1,  5  },
+  // defaults:                4,    1,    1,    1,    1,    1,    1,    5 
+  { EWorld::Hatshepsut,       4,    1,    1,    1,    1,    1,    1,    5  },
+  { EWorld::SandCanyon,       4,    1,    1,    1,    8,    1, 1.5f,    5 },
+  { EWorld::ValleyOfTheKings, 2,    1,    1,    1,    8,    1,    2,    5 },
+  { EWorld::Suburbs,          4,    1, 0.5f,    1,    1,    1,    1,    5 },
+  { EWorld::Sewers,           4,    1,    1,    1,    1,    1,    2,    5 },
+  { EWorld::AlleyOfSphinxes,  4,0.75f, 0.5f,    1,    1,    1,    1,    5 },
+  { EWorld::Metropolis,       4, 0.9f, 0.5f,    1,    1,    1,    1,    5 },
+  { EWorld::Luxor,            2,    1,    1,    1,    4,    1,    1,    5 },
+  { EWorld::Karnak,           4,    1, 0.5f,    1,    1, 0.5f,    1,    7 },
+  { EWorld::SacredYards,      4,    1, 0.5f,    1,    1,    1,    1,    5 },
   { EWorld::TheGreatPyramid,  GREAT_PYRAMID_SUN_INTENSITY_DEFAULT, 
-                                       1, 0.5f, 1,       1,    1,  1,  5 },
+                                    1, 0.5f,    1,    1,    1,    1,    5 },
 };
 
 

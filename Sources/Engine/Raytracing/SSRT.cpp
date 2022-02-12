@@ -293,6 +293,13 @@ void SSRT::SSRTMain::NormalizeShellVariables()
 }
 
 
+static void DebugPrint(const char *pMessage, void *pUserData)
+{
+  CPrintF(pMessage);
+  CPrintF("\n");
+};
+
+
 SSRT::SSRTMain::SSRTMain() :
   worldRenderInfo({}),
   currentScene(nullptr),
@@ -356,11 +363,7 @@ SSRT::SSRTMain::SSRTMain() :
 
   info.pWin32SurfaceInfo = &win32SurfaceInfo;
 
-  info.pfnPrint = [] (const char *pMessage, void *pUserData)
-  {
-    CPrintF(pMessage);
-    CPrintF("\n");
-  };
+  info.pfnPrint = DebugPrint;
 
   RgResult r = rgCreateInstance(&info, &instance);
   RG_CHECKERROR(r);
