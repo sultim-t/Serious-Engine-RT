@@ -1024,7 +1024,7 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
       }
       else
       {
-        ASSERT(proj.IsPerspective());
+        ASSERT(renderInfo.prProjection.IsPerspective());
         const auto &ppr = static_cast<const CPerspectiveProjection3D&>(*renderInfo.prProjection);
         const FLOAT fNear = ppr.pr_NearClipDistance;
         const FLOAT fLeft = ppr.pr_plClipL(3) / ppr.pr_plClipL(1) * fNear;

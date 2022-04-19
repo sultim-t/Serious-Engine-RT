@@ -313,10 +313,10 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
     info.pIndexData = model.indices;
     info.color = { model.color(1), model.color(2), model.color(3), model.color(4) };
     info.material = pTextureUploader->GetMaterial(model.textures[0], model.textureFrames[0]);
-    info.blendEnable = model.blendEnable;
+    info.pipelineState = model.blendEnable ? RG_RASTERIZED_GEOMETRY_STATE_BLEND_ENABLE : 0;
+    info.pipelineState |= RG_RASTERIZED_GEOMETRY_STATE_DEPTH_TEST;
     info.blendFuncSrc = model.blendSrc;
     info.blendFuncDst = model.blendDst;
-    info.depthTest = RG_TRUE;
     info.renderType = model.isSky ? RG_RASTERIZED_GEOMETRY_RENDER_TYPE_SKY : RG_RASTERIZED_GEOMETRY_RENDER_TYPE_DEFAULT;
 
     Utils::CopyTransform(info.transform, model);
@@ -343,10 +343,10 @@ void SSRT::Scene::AddParticles(const CParticlesGeometry &particles)
   info.pIndexData = particles.pIndexData;
   info.color = { 1, 1, 1, _srtGlobals.srt_fParticlesAlphaMultiplier };
   info.material = pTextureUploader->GetMaterial(particles.pTexture, particles.textureFrame);
-  info.blendEnable = particles.blendEnable;
+  info.pipelineState = particles.blendEnable ? RG_RASTERIZED_GEOMETRY_STATE_BLEND_ENABLE : 0;
+  info.pipelineState |= RG_RASTERIZED_GEOMETRY_STATE_DEPTH_TEST;
   info.blendFuncSrc = particles.blendSrc;
   info.blendFuncDst = particles.blendDst;
-  info.depthTest = RG_TRUE;
   info.renderType = particles.isSky ? RG_RASTERIZED_GEOMETRY_RENDER_TYPE_SKY : RG_RASTERIZED_GEOMETRY_RENDER_TYPE_DEFAULT;
 
   if (particles.isSky)

@@ -142,9 +142,14 @@ void SSRT::SceneBrushes::RegisterBrush(const CBrushGeometry &brush)
       info.color = { brush.layerColors[i](1), brush.layerColors[i](2), brush.layerColors[i](3), brush.layerColors[i](4) };
       info.material = pTextureUploader->GetMaterial(brush.textures[i], brush.textureFrames[i]);
 
-      GetBlendingFromMaterialBlending(brush.layerBlendings[i], &info.blendEnable, &info.blendFuncSrc , &info.blendFuncDst);
-      info.depthTest = RG_TRUE;
-      info.depthWrite = RG_TRUE;
+      info.pipelineState = RG_RASTERIZED_GEOMETRY_STATE_DEPTH_TEST | RG_RASTERIZED_GEOMETRY_STATE_DEPTH_WRITE;
+
+      RgBool32 blendEnable = RG_FALSE;
+      GetBlendingFromMaterialBlending(brush.layerBlendings[i], &blendEnable, &info.blendFuncSrc , &info.blendFuncDst);
+      if (blendEnable)
+      {
+        info.pipelineState |= RG_RASTERIZED_GEOMETRY_STATE_BLEND_ENABLE;
+      }
 
       RgResult r = rgUploadRasterizedGeometry(instance, &info, nullptr, nullptr);
       RG_CHECKERROR(r);

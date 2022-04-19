@@ -500,11 +500,9 @@ void SSRT::SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
   hudInfo.pIndexData = hud.pIndices;
   hudInfo.material = textureUploader->GetMaterial(hud.textureData);
   hudInfo.color = { 1, 1, 1, 1 };
-  hudInfo.blendEnable = RG_TRUE;
+  hudInfo.pipelineState = RG_RASTERIZED_GEOMETRY_STATE_BLEND_ENABLE;
   hudInfo.blendFuncSrc = RG_BLEND_FACTOR_SRC_ALPHA;
   hudInfo.blendFuncDst = RG_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-  hudInfo.depthTest = RG_FALSE;
-  hudInfo.depthWrite = RG_FALSE;
   hudInfo.renderType = RG_RASTERIZED_GEOMETRY_RENDER_TYPE_SWAPCHAIN;
   hudInfo.transform = {
     1, 0, 0, 0,
@@ -615,7 +613,7 @@ void SSRT::SSRTMain::EndFrame()
 
   RgDrawFrameTexturesParams tdParams = {};
   tdParams.normalMapStrength = _srtGlobals.srt_fNormalMapStrength;
-  tdParams.emissionMapBoost = tdParams.emissionMapBoostForScreen = _srtGlobals.srt_fEmissionMapBoost;
+  tdParams.emissionMapBoost = _srtGlobals.srt_fEmissionMapBoost;
   tdParams.emissionMaxScreenColor = _srtGlobals.srt_fEmissionMaxScreenColor;
 
 
