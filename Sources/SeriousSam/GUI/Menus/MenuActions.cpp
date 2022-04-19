@@ -16,6 +16,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "StdH.h"
 #include <Engine/Build.h>
+#include <RTGL1/RTGL1.h>
 
 #include "MenuManager.h"
 #include "MenuStarters.h"
@@ -802,7 +803,7 @@ static INDEX NvDlssToSwitch()
   INDEX srt_iResolutionMode = _pShell->GetINDEX("srt_iResolutionMode");
 
   // not dlss
-  if (srt_iUpscaleMode != 2)
+  if (srt_iUpscaleMode != RG_RENDER_UPSCALE_TECHNIQUE_NVIDIA_DLSS)
   {
     // off
     return 0;
@@ -810,13 +811,13 @@ static INDEX NvDlssToSwitch()
 
   switch (srt_iResolutionMode)
   {
-    case 1: // RG_RENDER_RESOLUTION_MODE_ULTRA_PERFORMANCE
+    case RG_RENDER_RESOLUTION_MODE_ULTRA_PERFORMANCE:
       return 4;
-    case 2: // RG_RENDER_RESOLUTION_MODE_PERFORMANCE
+    case RG_RENDER_RESOLUTION_MODE_PERFORMANCE:
       return 3;
-    case 3: // RG_RENDER_RESOLUTION_MODE_BALANCED
+    case RG_RENDER_RESOLUTION_MODE_BALANCED:
       return 2;
-    case 4: // RG_RENDER_RESOLUTION_MODE_QUALITY
+    case RG_RENDER_RESOLUTION_MODE_QUALITY:
       return 1;
     default:
       return 0;
@@ -834,7 +835,7 @@ static INDEX AmdFsrToSwitch()
   INDEX srt_iResolutionMode = _pShell->GetINDEX("srt_iResolutionMode");
 
   // not fsr
-  if (srt_iUpscaleMode != 1)
+  if (srt_iUpscaleMode != RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR)
   {
     // off
     return 0;
@@ -842,13 +843,13 @@ static INDEX AmdFsrToSwitch()
 
   switch (srt_iResolutionMode)
   {
-    case 2: // RG_RENDER_RESOLUTION_MODE_PERFORMANCE
+    case RG_RENDER_RESOLUTION_MODE_PERFORMANCE:
       return 4;
-    case 3: // RG_RENDER_RESOLUTION_MODE_BALANCED
+    case RG_RENDER_RESOLUTION_MODE_BALANCED:
       return 3;
-    case 4: // RG_RENDER_RESOLUTION_MODE_QUALITY
+    case RG_RENDER_RESOLUTION_MODE_QUALITY:
       return 2;
-    case 5: // RG_RENDER_RESOLUTION_MODE_ULTRA_QUALITY
+    case RG_RENDER_RESOLUTION_MODE_ULTRA_QUALITY:
       return 1;
     default:
       return 0;
@@ -912,28 +913,28 @@ static void OnNvDlssChange(INDEX iSelected)
   switch (iSelected)
   {
     case 1:
-      TrySetShellSymbol("srt_iUpscaleMode", 2);     // RG_RENDER_UPSCALE_TECHNIQUE_NVIDIA_DLSS
-      TrySetShellSymbol("srt_iResolutionMode", 4);  // RG_RENDER_RESOLUTION_MODE_QUALITY
+      TrySetShellSymbol("srt_iUpscaleMode", RG_RENDER_UPSCALE_TECHNIQUE_NVIDIA_DLSS);
+      TrySetShellSymbol("srt_iResolutionMode", RG_RENDER_RESOLUTION_MODE_QUALITY);
       break;
 
     case 2:
-      TrySetShellSymbol("srt_iUpscaleMode", 2);     // RG_RENDER_UPSCALE_TECHNIQUE_NVIDIA_DLSS
-      TrySetShellSymbol("srt_iResolutionMode", 3);  // RG_RENDER_RESOLUTION_MODE_BALANCED
+      TrySetShellSymbol("srt_iUpscaleMode", RG_RENDER_UPSCALE_TECHNIQUE_NVIDIA_DLSS);
+      TrySetShellSymbol("srt_iResolutionMode", RG_RENDER_RESOLUTION_MODE_BALANCED);
       break;
 
     case 3:
-      TrySetShellSymbol("srt_iUpscaleMode", 2);     // RG_RENDER_UPSCALE_TECHNIQUE_NVIDIA_DLSS
-      TrySetShellSymbol("srt_iResolutionMode", 2);  // RG_RENDER_RESOLUTION_MODE_PERFORMANCE
+      TrySetShellSymbol("srt_iUpscaleMode", RG_RENDER_UPSCALE_TECHNIQUE_NVIDIA_DLSS);
+      TrySetShellSymbol("srt_iResolutionMode", RG_RENDER_RESOLUTION_MODE_PERFORMANCE);
       break;
 
     case 4:
-      TrySetShellSymbol("srt_iUpscaleMode", 2);     // RG_RENDER_UPSCALE_TECHNIQUE_NVIDIA_DLSS
-      TrySetShellSymbol("srt_iResolutionMode", 1);  // RG_RENDER_RESOLUTION_MODE_ULTRA_PERFORMANCE
+      TrySetShellSymbol("srt_iUpscaleMode", RG_RENDER_UPSCALE_TECHNIQUE_NVIDIA_DLSS);
+      TrySetShellSymbol("srt_iResolutionMode", RG_RENDER_RESOLUTION_MODE_ULTRA_PERFORMANCE);
       break;
 
     default:
-      TrySetShellSymbol("srt_iUpscaleMode", 0);     // RG_RENDER_UPSCALE_TECHNIQUE_LINEAR
-      TrySetShellSymbol("srt_iResolutionMode", 0);  // RG_RENDER_RESOLUTION_MODE_CUSTOM
+      TrySetShellSymbol("srt_iUpscaleMode", RG_RENDER_UPSCALE_TECHNIQUE_LINEAR);
+      TrySetShellSymbol("srt_iResolutionMode", RG_RENDER_RESOLUTION_MODE_CUSTOM);
       break;
   }
 
@@ -949,28 +950,28 @@ static void OnAmdFsrChange(INDEX iSelected)
   switch (iSelected)
   {
     case 1:
-      TrySetShellSymbol("srt_iUpscaleMode", 1);     // RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR
-      TrySetShellSymbol("srt_iResolutionMode", 5);  // RG_RENDER_RESOLUTION_MODE_ULTRA_QUALITY
+      TrySetShellSymbol("srt_iUpscaleMode", RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR);
+      TrySetShellSymbol("srt_iResolutionMode", RG_RENDER_RESOLUTION_MODE_ULTRA_QUALITY);
       break;
 
     case 2:
-      TrySetShellSymbol("srt_iUpscaleMode", 1);     // RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR
-      TrySetShellSymbol("srt_iResolutionMode", 4);  // RG_RENDER_RESOLUTION_MODE_QUALITY
+      TrySetShellSymbol("srt_iUpscaleMode", RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR);
+      TrySetShellSymbol("srt_iResolutionMode", RG_RENDER_RESOLUTION_MODE_QUALITY);
       break;
 
     case 3:
-      TrySetShellSymbol("srt_iUpscaleMode", 1);     // RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR
-      TrySetShellSymbol("srt_iResolutionMode", 3);  // RG_RENDER_RESOLUTION_MODE_BALANCED
+      TrySetShellSymbol("srt_iUpscaleMode", RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR);
+      TrySetShellSymbol("srt_iResolutionMode", RG_RENDER_RESOLUTION_MODE_BALANCED);
       break;
 
     case 4:
-      TrySetShellSymbol("srt_iUpscaleMode", 1);     // RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR
-      TrySetShellSymbol("srt_iResolutionMode", 2);  // RG_RENDER_RESOLUTION_MODE_PERFORMANCE
+      TrySetShellSymbol("srt_iUpscaleMode", RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR);
+      TrySetShellSymbol("srt_iResolutionMode", RG_RENDER_RESOLUTION_MODE_PERFORMANCE);
       break;
 
     default:
-      TrySetShellSymbol("srt_iUpscaleMode", 0);     // RG_RENDER_UPSCALE_TECHNIQUE_LINEAR
-      TrySetShellSymbol("srt_iResolutionMode", 0);  // RG_RENDER_RESOLUTION_MODE_CUSTOM
+      TrySetShellSymbol("srt_iUpscaleMode", RG_RENDER_UPSCALE_TECHNIQUE_LINEAR);
+      TrySetShellSymbol("srt_iResolutionMode", RG_RENDER_RESOLUTION_MODE_CUSTOM);
       break;
   }
 
