@@ -102,6 +102,7 @@ OverridenTextures/CreateKTX2.py
 OverridenTextures/OverridenTextures.zip
 OverridenTextures/Raw/*
 OverridenTextures/Compressed/*
+Shaders/*
 Demos/*
 ScreenShots/*
 

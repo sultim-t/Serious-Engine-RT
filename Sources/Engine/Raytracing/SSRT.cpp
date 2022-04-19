@@ -312,7 +312,7 @@ SSRT::SSRTMain::SSRTMain() :
 {
   extern CTFileName _fnmApplicationPath;
   const CTFileName overridenTexturesPath = _fnmApplicationPath + "OverridenTextures\\Compressed\\";
-  const CTFileName shadersPath = _fnmApplicationPath + "Sources\\RTGL1\\Build\\";
+  const CTFileName shadersPath = _fnmApplicationPath + "Shaders\\";
   const CTFileName blueNoiseFilePath = _fnmApplicationPath + "OverridenTextures\\BlueNoise_LDR_RGBA_128.ktx2";
   const CTFileName waterNormalPath = _fnmApplicationPath + "OverridenTextures\\WaterNormal_n.ktx2";
 
@@ -410,6 +410,14 @@ void SSRT::SSRTMain::StartFrame(CViewPort *pvp)
     return;
   }
 
+
+  wasWorldProcessed = false;
+  currentFirstPersonModelCount = 0;
+
+  curWindowWidth = pvp->vp_Raster.ra_Width;
+  curWindowHeight = pvp->vp_Raster.ra_Height;
+
+
   RgStartFrameInfo startInfo = {};
   startInfo.surfaceSize = { curWindowWidth, curWindowHeight };
   startInfo.requestShaderReload = _srtGlobals.srt_bReloadShaders;
@@ -421,12 +429,6 @@ void SSRT::SSRTMain::StartFrame(CViewPort *pvp)
   _srtGlobals.srt_bReloadShaders = 0;
 
   isFrameStarted = true;
-
-  wasWorldProcessed = false;
-  currentFirstPersonModelCount = 0;
-
-  curWindowWidth = pvp->vp_Raster.ra_Width;
-  curWindowHeight = pvp->vp_Raster.ra_Height;
 
   // aprioximate render size, used for culling
   _srtGlobals.srt_fRenderSize = { (float)curWindowWidth, (float)curWindowHeight };
@@ -653,7 +655,7 @@ void SSRT::SSRTMain::EndFrame()
   memcpy(rflParams.portalRelativeRotation.matrix, mPortalRelativeRot.matrix, sizeof(float) * 9);
 
   RgDrawFrameInfo frameInfo = {};
-  frameInfo.rayCullMaskWorld = currentScene == nullptr ? 0xFF : currentScene->GetCustomInfo()->GetCullMask(currentScene->GetCameraPosition());
+  frameInfo.rayCullMaskWorld = currentScene == nullptr ? RG_DRAW_FRAME_RAY_CULL_WORLD_0_BIT | RG_DRAW_FRAME_RAY_CULL_WORLD_1_BIT | RG_DRAW_FRAME_RAY_CULL_WORLD_2_BIT : currentScene->GetCustomInfo()->GetCullMask(currentScene->GetCameraPosition());
   frameInfo.rayLength = currentScene == nullptr ? 10000.0f : currentScene->GetCustomInfo()->GetRayLength(currentScene->GetCameraPosition());
 
   frameInfo.currentTime = _pTimer->GetLerpedCurrentTick();

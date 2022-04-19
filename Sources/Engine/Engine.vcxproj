@@ -260,7 +260,7 @@ copy  "$(RTGL1_SDK_PATH)\Build\x64-Debug\RayTracedGL1.dll"  "$(SolutionDir)..\Bi
     </CustomBuildStep>
     <PreBuildEvent>
       <Command>del $(SolutionDir)..\Bin\Debug\$(TargetName).dll /q &gt;nul;
-if not exist $(SolutionDir)RTGL1\Build\x64-Debug\RayTracedGL1.lib echo "ERROR: $(SolutionDir)RTGL1\Build\x64-Debug\RayTracedGL1.lib doesn't exist, please build RTGL1 project before building Engine"</Command>
+if not exist $(RTGL1_SDK_PATH)\Build\x64-Debug\RayTracedGL1.lib echo "ERROR: $(RTGL1_SDK_PATH)\Build\x64-Debug\RayTracedGL1.lib doesn't exist, please build RTGL1 project before building Engine"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -382,7 +382,7 @@ copy  "$(RTGL1_SDK_PATH)\Build\x64-Release\RayTracedGL1.dll"  "$(SolutionDir)..\
     </CustomBuildStep>
     <PreBuildEvent>
       <Command>del $(SolutionDir)..\Bin\$(TargetName).dll /q &gt;nul;
-if not exist $(SolutionDir)RTGL1\Build\x64-Release\RayTracedGL1.lib echo "ERROR: $(SolutionDir)RTGL1\Build\x64-Release\RayTracedGL1.lib doesn't exist, please build RTGL1 project before building Engine"</Command>
+if not exist $(RTGL1_SDK_PATH)\Build\x64-Release\RayTracedGL1.lib echo "ERROR: $(RTGL1_SDK_PATH)\Build\x64-Release\RayTracedGL1.lib doesn't exist, please build RTGL1 project before building Engine"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
