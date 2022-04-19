@@ -1,4 +1,0 @@
-[submodule "Sources/RTGL1"]
-	path = Sources/RTGL1
-	url = https://github.com/SultimTsyrendashiev/RayTracedGL1.git
-	branch = Draft
