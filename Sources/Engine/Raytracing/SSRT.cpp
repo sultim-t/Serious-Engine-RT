@@ -301,7 +301,7 @@ static void DebugPrint(const char *pMessage, void *pUserData)
 
 
 SSRT::SSRTMain::SSRTMain() :
-  worldRenderInfo({}),
+  worldRenderInfo{},
   currentScene(nullptr),
   wasWorldProcessed(false),
   currentFirstPersonModelCount(0),
@@ -382,12 +382,6 @@ SSRT::SSRTMain::~SSRTMain()
     delete currentScene;
     currentScene = nullptr;
   }
-
-  worldRenderInfo = {};
-  currentFirstPersonModelCount = 0;
-
-  curWindowWidth = 0;
-  curWindowHeight = 0;
 
   delete textureUploader;
 
