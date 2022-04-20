@@ -29,6 +29,7 @@ struct SSRTGlobals
   INDEX srt_iResolutionMode = RG_RENDER_RESOLUTION_MODE_CUSTOM;
   FLOAT srt_fResolutionScale = 1.0;
   INDEX srt_iOversharpMode = RG_RENDER_SHARPEN_TECHNIQUE_NONE;
+  INDEX srt_bCRTMode = 0;
 
   INDEX srt_bDLSSAvailable = 0; // variable for settings menu
 

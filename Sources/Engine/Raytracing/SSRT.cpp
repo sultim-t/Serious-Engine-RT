@@ -42,6 +42,7 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user INDEX srt_iResolutionMode;", &_srtGlobals.srt_iResolutionMode);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fResolutionScale;", &_srtGlobals.srt_fResolutionScale);
   _pShell->DeclareSymbol("persistent user INDEX srt_iOversharpMode;", &_srtGlobals.srt_iOversharpMode);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bCRTMode;", &_srtGlobals.srt_bCRTMode);
 
   _pShell->DeclareSymbol("persistent user INDEX srt_bTonemappingUseDefault;", &_srtGlobals.srt_bTonemappingUseDefault);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingWhitePoint;", &_srtGlobals.srt_fTonemappingWhitePoint);
@@ -189,6 +190,7 @@ void SSRT::SSRTMain::NormalizeShellVariables()
   _srtGlobals.srt_bIgnoreDynamicTexCoords = !!_srtGlobals.srt_bIgnoreDynamicTexCoords;
   _srtGlobals.srt_bIgnoreWaterEffectTextureUpdates = !!_srtGlobals.srt_bIgnoreWaterEffectTextureUpdates;
   _srtGlobals.srt_bLensFlares = !!_srtGlobals.srt_bLensFlares;
+  _srtGlobals.srt_bCRTMode = !!_srtGlobals.srt_bCRTMode;
 
   _srtGlobals.srt_iReflMaxDepth = Clamp(_srtGlobals.srt_iReflMaxDepth, (INDEX)0, (INDEX)4);
 
@@ -618,6 +620,10 @@ void SSRT::SSRTMain::EndFrame()
   lfParams.lensFlareBlendFuncDst = RG_BLEND_FACTOR_ONE;
 
 
+  RgPostEffectCRT crtParams = {};
+  crtParams.isActive = _srtGlobals.srt_bCRTMode;
+
+
   RgDrawFrameDebugParams dbgParams = {};
   dbgParams.showMotionVectors = !!_srtGlobals.srt_bShowMotionVectors;
   dbgParams.showGradients = !!_srtGlobals.srt_bShowGradients;
@@ -670,6 +676,7 @@ void SSRT::SSRTMain::EndFrame()
   frameInfo.pTexturesParams = &tdParams;
   frameInfo.pLensFlareParams = &lfParams;
   frameInfo.pDebugParams = &dbgParams;
+  frameInfo.postEffectParams.pCRT = &crtParams;
   
   memcpy(frameInfo.view,        worldRenderInfo.viewMatrix,       16 * sizeof(float));
   memcpy(frameInfo.projection,  worldRenderInfo.projectionMatrix, 16 * sizeof(float));
