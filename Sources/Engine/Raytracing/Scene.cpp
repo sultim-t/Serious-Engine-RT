@@ -386,12 +386,16 @@ void SSRT::Scene::AddLight(const CSphereLight &sphLt)
 
   FLOAT3D c = sphLt.color * _srtGlobals.srt_fLightSphGlobalIntensityMultiplier;
 
+  {
+    float t = Clamp(_srtGlobals.srt_fLightSphGlobalFalloffToIntensity, 0.0f, 1.0f);
+    c *= Lerp(1.0f, Max(0.0f, sphLt.falloffDistance), t);
+  }
+
   RgSphericalLightUploadInfo info = {};
   info.uniqueID = sphLt.entityID;
   info.color = { c(1), c(2), c(3) };
   info.position = { sphLt.absPosition(1), sphLt.absPosition(2), sphLt.absPosition(3) };
   info.radius = sphLt.radius;
-  info.falloffDistance = sphLt.falloffDistance * _srtGlobals.srt_fLightSphGlobalFalloffMultiplier;
 
   RgResult r = rgUploadSphericalLight(instance, &info);
   RG_CHECKERROR(r);
@@ -422,17 +426,18 @@ void SSRT::Scene::AddLight(const CSpotLight &spotLt)
   firstPersonFlashlight.isAdded |= spotLt.isFirstPerson;
   thirdPersonFlashlight.isAdded |= !spotLt.isFirstPerson;
 
+  FLOAT3D color = _srtGlobals.srt_vFlashlightColor * _srtGlobals.srt_fFlashlightIntensity;
+
   auto &sp = spotLt.isFirstPerson ? firstPersonFlashlight.spotlightInfo : thirdPersonFlashlight.spotlightInfo;
 
   sp.position = { spotLt.absPosition(1), spotLt.absPosition(2), spotLt.absPosition(3) };
   sp.direction = { spotLt.direction(1), spotLt.direction(2), spotLt.direction(3) };
   sp.upVector = { spotLt.upVector(1), spotLt.upVector(2), spotLt.upVector(3) };
-  sp.color = { _srtGlobals.srt_vFlashlightColor(1), _srtGlobals.srt_vFlashlightColor(2), _srtGlobals.srt_vFlashlightColor(3) };
+  sp.color = { color(1), color(2), color(3) };
 
   sp.angleOuter = RadAngle(_srtGlobals.srt_fFlashlightAngleOuter);
   sp.angleInner = RadAngle(_srtGlobals.srt_fFlashlightAngleInner);
   sp.radius = _srtGlobals.srt_fFlashlightRadius;
-  sp.falloffDistance = _srtGlobals.srt_fFlashlightFalloffDistance;
 }
 
 void SSRT::Scene::UpdateBrush(CEntity *pEntity)

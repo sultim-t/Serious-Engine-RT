@@ -226,7 +226,7 @@ static void RT_FixSpotlightPosition(CEntity *pEn,
     crRay.cr_bPhysical = TRUE;
     pScene->GetWorld()->CastRay(crRay);
 
-    FLOAT3D defaultEndPos = pScene->GetCameraPosition() + direction * _srtGlobals.srt_fFlashlightFalloffDistance;
+    FLOAT3D defaultEndPos = pScene->GetCameraPosition() + direction * SPOTLIGHT_NEAR_FIX_DIST_MAX;
 
     // if found intersection
     if (crRay.cr_penHit != nullptr)
@@ -296,7 +296,7 @@ static void RT_AddModifiedSphereLightToScene(const CLightSource *plsLight,
   {
     // make muzzle flash yellow
     float b = _srtGlobals.srt_fMuzzleLightIntensity;
-    light.color = { 1.0f * b, 0.8f * b, 0.21f * b };
+    light.color = { 1.0f * b, 0.87f * b, 0.53f * b };
 
     light.radius = _srtGlobals.srt_fMuzzleLightRadius;
     light.falloffDistance = f * _srtGlobals.srt_fMuzzleLightFalloffMultiplier;

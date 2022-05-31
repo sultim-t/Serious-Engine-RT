@@ -64,8 +64,8 @@ struct SSRTGlobals
 
   INDEX srt_iLightSphMaxCount = 1024;
   FLOAT srt_fLightSphGlobalIntensityMultiplier = 1.0f;
-  FLOAT srt_fLightSphGlobalFalloffMultiplier = 1.0f;
-  FLOAT srt_fLightSphSaturation = 0.75f;
+  FLOAT srt_fLightSphGlobalFalloffToIntensity = 1.0f;
+  FLOAT srt_fLightSphSaturation = 0.5f;
   FLOAT srt_fLightSphColorPow = 2.2f;
   INDEX srt_bLightSphIgnoreEditorModels = 1;
   FLOAT srt_fLightSphPolygonOffset = 1.0f;
@@ -131,7 +131,7 @@ struct SSRTGlobals
   ANGLE srt_fFlashlightAngleOuter = 15.0f;
   // In degrees
   ANGLE srt_fFlashlightAngleInner = 0.0f;
-  FLOAT srt_fFlashlightFalloffDistance = 50.0f;
+  FLOAT srt_fFlashlightIntensity = 50;
 
   INDEX srt_bMaxBounceShadowsUseDefault = 0;
   INDEX srt_iMaxBounceShadowsDirectionalLights = 8;

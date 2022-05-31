@@ -85,7 +85,7 @@ static EWorld GetWorldEnum(CWorld *pWorld)
 constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_START = 1.0f;
 constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_END = 0.25f;
 constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_CHANGE_LENGTH = 30.0f;
-constexpr FLOAT GREAT_PYRAMID_SUN_INTENSITY_DEFAULT = 2.0f;
+constexpr FLOAT GREAT_PYRAMID_SUN_INTENSITY_DEFAULT = 6.0f;
 constexpr FLOAT GREAT_PYRAMID_SUN_INTENSITY_BOSS_FIGHT = 0.0f;
 constexpr FLOAT GREAT_PYRAMID_SKY_COLOR_BOSS_FIGHT = 5.0f;
 constexpr FLOAT GREAT_PYRAMID_DEFAULT_TONEMAPPING_MIN_LOG = -2;
@@ -108,15 +108,15 @@ const struct
 RT_WorldIlluminationParams[] =
 {
   // defaults:                4,    1,    1,    1,    1,    1,    1,    5 
-  { EWorld::Hatshepsut,       4,    1,    1,    1,    1,    1,    1,    5  },
-  { EWorld::SandCanyon,       4,    1,    1,    1,    8,    1, 1.5f,    5 },
-  { EWorld::ValleyOfTheKings, 2,    1,    1,    1,    8,    1,    2,    5 },
-  { EWorld::Suburbs,          4,    1, 0.5f,    1,    1,    1,    1,    5 },
+  { EWorld::Hatshepsut,       8,    0.25f,    1,    1,    1,    1,    1,    5  },
+  { EWorld::SandCanyon,       6,    1,    1,    1,    8,    1, 1.5f,    5 },
+  { EWorld::ValleyOfTheKings, 5,    1,    1,    1,    8,    1,    2,    5 },
+  { EWorld::Suburbs,          8,    1, 0.5f,    1,    1,    1,    1,    5 },
   { EWorld::Sewers,           4,    1,    1,    1,    1,    1,    2,    5 },
-  { EWorld::AlleyOfSphinxes,  4,0.75f, 0.5f,    1,    1,    1,    1,    5 },
+  { EWorld::AlleyOfSphinxes,  5,0.5f, 0.5f,    1,    1,    1,    1,    5 },
   { EWorld::Metropolis,       4, 0.9f, 0.5f,    1,    1,    1,    1,    5 },
-  { EWorld::Luxor,            2,    1,    1,    1,    4,    1,    1,    5 },
-  { EWorld::Karnak,           4,    1, 0.5f,    1,    1, 0.5f,    1,    7 },
+  { EWorld::Luxor,            3,    0.75f,    1,    1,    4,    1,    1,    5 },
+  { EWorld::Karnak,           4,    0.5f, 0.5f,    1,    1, 0.5f,    1,    7 },
   { EWorld::SacredYards,      4,    1, 0.5f,    1,    1,    1,    1,    5 },
   { EWorld::TheGreatPyramid,  GREAT_PYRAMID_SUN_INTENSITY_DEFAULT, 
                                     1, 0.5f,    1,    1,    1,    1,    5 },
@@ -435,8 +435,8 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
 
 
   {
-    _srtGlobals.srt_fSunIntensity = 4.0f;
-    _srtGlobals.srt_fSunSaturation = 1.0f;
+    _srtGlobals.srt_fSunIntensity = 8.0f;
+    _srtGlobals.srt_fSunSaturation = 0.75f;
     _srtGlobals.srt_fSkyColorMultiplier = 1.0f;
     _srtGlobals.srt_fSkyColorSaturation = 1.0f;
     _srtGlobals.srt_fTonemappingMinLogLuminance = -4;
@@ -526,7 +526,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   // always disable flashlight on level start
   _srtGlobals.srt_bFlashlightEnable = false;
   _srtGlobals.srt_fFlashlightAngleOuter = 15;
-  _srtGlobals.srt_fFlashlightFalloffDistance = 50;
+  _srtGlobals.srt_fFlashlightIntensity = 50;
 
   isFlashlightHintEnabled = true;
   DisableFlashlightHint();
@@ -561,7 +561,7 @@ SSRT::CustomInfo::CustomInfo(CWorld *pWorld)
   {
     // too dark during spaceship's shadow
     _srtGlobals.srt_fFlashlightAngleOuter = 30;
-    _srtGlobals.srt_fFlashlightFalloffDistance = 150;
+    _srtGlobals.srt_fFlashlightIntensity = 150;
   }
 
 

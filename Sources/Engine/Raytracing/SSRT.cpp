@@ -94,7 +94,7 @@ void SSRT::SSRTMain::InitShellVariables()
 
   _pShell->DeclareSymbol("persistent user INDEX srt_iLightSphMaxCount;", &_srtGlobals.srt_iLightSphMaxCount);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphGlobalIntensityMultiplier;", &_srtGlobals.srt_fLightSphGlobalIntensityMultiplier);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphGlobalFalloffMultiplier;", &_srtGlobals.srt_fLightSphGlobalFalloffMultiplier);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphGlobalFalloffToIntensity;", &_srtGlobals.srt_fLightSphGlobalFalloffToIntensity);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphSaturation;", &_srtGlobals.srt_fLightSphSaturation);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphColorPow;", &_srtGlobals.srt_fLightSphColorPow);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fLightSphPolygonOffset;", &_srtGlobals.srt_fLightSphPolygonOffset);
@@ -132,7 +132,7 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fFlashlightRadius;", &_srtGlobals.srt_fFlashlightRadius);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fFlashlightAngleOuter;", &_srtGlobals.srt_fFlashlightAngleOuter);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fFlashlightAngleInner;", &_srtGlobals.srt_fFlashlightAngleInner);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fFlashlightFalloffDistance;", &_srtGlobals.srt_fFlashlightFalloffDistance);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fFlashlightIntensity;", &_srtGlobals.srt_fFlashlightIntensity);
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_vFlashlightOffset[3];", &_srtGlobals.srt_vFlashlightOffset);
   _pShell->DeclareSymbol("persistent user FLOAT srt_vFlashlightOffsetThirdPerson[3];", &_srtGlobals.srt_vFlashlightOffsetThirdPerson);
