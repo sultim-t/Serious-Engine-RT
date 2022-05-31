@@ -43,6 +43,7 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fResolutionScale;", &_srtGlobals.srt_fResolutionScale);
   _pShell->DeclareSymbol("persistent user INDEX srt_iOversharpMode;", &_srtGlobals.srt_iOversharpMode);
   _pShell->DeclareSymbol("persistent user INDEX srt_bCRTMode;", &_srtGlobals.srt_bCRTMode);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fChromaticAberration;", &_srtGlobals.srt_fChromaticAberration);
 
   _pShell->DeclareSymbol("persistent user INDEX srt_bTonemappingUseDefault;", &_srtGlobals.srt_bTonemappingUseDefault);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingWhitePoint;", &_srtGlobals.srt_fTonemappingWhitePoint);
@@ -620,6 +621,11 @@ void SSRT::SSRTMain::EndFrame()
   lfParams.lensFlareBlendFuncDst = RG_BLEND_FACTOR_ONE;
 
 
+  RgPostEffectChromaticAberration chrabrParams = {};
+  chrabrParams.isActive = _srtGlobals.srt_fChromaticAberration > 0.0f;
+  chrabrParams.intensity = _srtGlobals.srt_fChromaticAberration;
+
+
   RgPostEffectCRT crtParams = {};
   crtParams.isActive = _srtGlobals.srt_bCRTMode;
 
@@ -676,6 +682,7 @@ void SSRT::SSRTMain::EndFrame()
   frameInfo.pTexturesParams = &tdParams;
   frameInfo.pLensFlareParams = &lfParams;
   frameInfo.pDebugParams = &dbgParams;
+  frameInfo.postEffectParams.pChromaticAberration = &chrabrParams;
   frameInfo.postEffectParams.pCRT = &crtParams;
   
   memcpy(frameInfo.view,        worldRenderInfo.viewMatrix,       16 * sizeof(float));
