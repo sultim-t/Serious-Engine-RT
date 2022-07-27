@@ -835,7 +835,7 @@ static INDEX AmdFsrToSwitch()
   INDEX srt_iResolutionMode = _pShell->GetINDEX("srt_iResolutionMode");
 
   // not fsr
-  if (srt_iUpscaleMode != RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR)
+  if (srt_iUpscaleMode != RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR2)
   {
     // off
     return 0;
@@ -843,13 +843,13 @@ static INDEX AmdFsrToSwitch()
 
   switch (srt_iResolutionMode)
   {
-    case RG_RENDER_RESOLUTION_MODE_PERFORMANCE:
+    case RG_RENDER_RESOLUTION_MODE_ULTRA_PERFORMANCE:
       return 4;
-    case RG_RENDER_RESOLUTION_MODE_BALANCED:
+    case RG_RENDER_RESOLUTION_MODE_PERFORMANCE:
       return 3;
-    case RG_RENDER_RESOLUTION_MODE_QUALITY:
+    case RG_RENDER_RESOLUTION_MODE_BALANCED:
       return 2;
-    case RG_RENDER_RESOLUTION_MODE_ULTRA_QUALITY:
+    case RG_RENDER_RESOLUTION_MODE_QUALITY:
       return 1;
     default:
       return 0;
@@ -950,23 +950,23 @@ static void OnAmdFsrChange(INDEX iSelected)
   switch (iSelected)
   {
     case 1:
-      TrySetShellSymbol("srt_iUpscaleMode", RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR);
-      TrySetShellSymbol("srt_iResolutionMode", RG_RENDER_RESOLUTION_MODE_ULTRA_QUALITY);
-      break;
-
-    case 2:
-      TrySetShellSymbol("srt_iUpscaleMode", RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR);
+      TrySetShellSymbol("srt_iUpscaleMode", RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR2);
       TrySetShellSymbol("srt_iResolutionMode", RG_RENDER_RESOLUTION_MODE_QUALITY);
       break;
 
-    case 3:
-      TrySetShellSymbol("srt_iUpscaleMode", RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR);
+    case 2:
+      TrySetShellSymbol("srt_iUpscaleMode", RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR2);
       TrySetShellSymbol("srt_iResolutionMode", RG_RENDER_RESOLUTION_MODE_BALANCED);
       break;
 
-    case 4:
-      TrySetShellSymbol("srt_iUpscaleMode", RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR);
+    case 3:
+      TrySetShellSymbol("srt_iUpscaleMode", RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR2);
       TrySetShellSymbol("srt_iResolutionMode", RG_RENDER_RESOLUTION_MODE_PERFORMANCE);
+      break;
+
+    case 4:
+      TrySetShellSymbol("srt_iUpscaleMode", RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR2);
+      TrySetShellSymbol("srt_iResolutionMode", RG_RENDER_RESOLUTION_MODE_ULTRA_PERFORMANCE);
       break;
 
     default:

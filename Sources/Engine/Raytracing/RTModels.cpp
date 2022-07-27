@@ -212,6 +212,28 @@ static void FlushModelInfo(ULONG entityID,
   RT_PrepareRotation(rm, pScene->GetCameraPosition(), pScene->GetCameraRotation(), rotation);
 
 
+  static std::vector<RgVertex> tempVerts;
+  {
+    tempVerts.clear();
+    tempVerts.reserve(vd.vertexCount);
+
+    for (uint32_t i = 0; i < vd.vertexCount; i++)
+    {
+      RgVertex v = {};
+      memcpy(v.position, &vd.pPositons[i], sizeof(float) * 3);
+      memcpy(v.texCoord, &vd.pTexCoords[i], sizeof(float) * 2);
+      v.packedColor = UINT32_MAX;
+
+      if (vd.pNormals != nullptr)
+      {
+        memcpy(v.normal, &vd.pNormals[i], sizeof(float) * 3);
+      }
+
+      tempVerts.emplace_back(v);
+    }
+  }
+
+
   SSRT::CModelGeometry modelInfo = {};
   modelInfo.entityID = entityID;
   modelInfo.modelPartIndex = RT_ModelPartIndex;
@@ -220,9 +242,7 @@ static void FlushModelInfo(ULONG entityID,
   modelInfo.absRotation = rotation;
 
   modelInfo.vertexCount = vd.vertexCount;
-  modelInfo.vertices = vd.pPositons;
-  modelInfo.normals = vd.pNormals;
-  modelInfo.texCoordLayers[0] = vd.pTexCoords;
+  modelInfo.vertices = tempVerts.data();
 
   modelInfo.indexCount = indexCount;
   modelInfo.indices = pIndices;
@@ -316,6 +336,7 @@ static void FlushModelInfo(ULONG entityID,
   RT_SetBlend(modelInfo.blendEnable, modelInfo.blendSrc, modelInfo.blendDst, stt, forceTranslucency);
 
 
+  modelInfo.generateNormals = vd.pNormals == nullptr;
   modelInfo.invertedNormals = rm.rm_ulFlags & RMF_INVERTED;
 
   if ((rm.rm_ulFlags & RMF_WEAPON) && !_srtGlobals.srt_bWeaponUseOriginalNormals)
@@ -323,14 +344,14 @@ static void FlushModelInfo(ULONG entityID,
     // kludge: reverse IsCalcNormalsForced for RMF_WEAPON
     if (!pScene->GetCustomInfo()->IsCalcNormalsForced(&mo.mo_toTexture))
     {
-      modelInfo.normals = nullptr;
+      modelInfo.generateNormals = true;
     }
   }
   else
   {
-    if (modelInfo.normals != nullptr && pScene->GetCustomInfo()->IsCalcNormalsForced(&mo.mo_toTexture))
+    if (vd.pNormals != nullptr && pScene->GetCustomInfo()->IsCalcNormalsForced(&mo.mo_toTexture))
     {
-      modelInfo.normals = nullptr;
+      modelInfo.generateNormals = true;
     }
   }
 

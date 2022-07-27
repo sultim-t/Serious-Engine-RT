@@ -40,7 +40,7 @@ extern const FLOAT *pfCosTable;
 
 
 // variables used for rendering particles
-static CStaticStackArray<RgRasterizedGeometryVertexStruct> RT_Vertices;
+static CStaticStackArray<RgVertex> RT_Verts;
 static FLOAT          RT_fTextureCorrectionU, RT_fTextureCorrectionV;
 static GFXTexCoord    RT_atex[4];
 static CTextureData   *RT_ptd = NULL;
@@ -287,7 +287,7 @@ void RT_Particle_RenderSquare(const FLOAT3D &vPos, FLOAT fSize, ANGLE aRotation,
   FLOAT3D v3 = vPos + dx + dy;
 
   // add to vertex arrays
-  RgRasterizedGeometryVertexStruct *pVerts = RT_Vertices.Push(4);
+  RgVertex *pVerts = RT_Verts.Push(4);
 
   memcpy(pVerts[0].position, v0.vector, sizeof(float) * 3);
   memcpy(pVerts[1].position, v1.vector, sizeof(float) * 3);
@@ -333,7 +333,7 @@ void RT_Particle_RenderLine(const FLOAT3D &a, const FLOAT3D &b, FLOAT width, COL
   FLOAT3D b1 = b - cross;
 
   // add to vertex arrays
-  RgRasterizedGeometryVertexStruct *pVerts = RT_Vertices.Push(4);
+  RgVertex *pVerts = RT_Verts.Push(4);
 
   memcpy(pVerts[0].position, a0.vector, sizeof(float) * 3);
   memcpy(pVerts[1].position, b0.vector, sizeof(float) * 3);
@@ -367,7 +367,7 @@ void RT_Particle_RenderQuad3D(const FLOAT3D &vPos0, const FLOAT3D &vPos1, const 
   col0 = col1 = col2 = col3 = col;
 
   // add to vertex arrays
-  RgRasterizedGeometryVertexStruct *pVerts = RT_Vertices.Push(4);
+  RgVertex *pVerts = RT_Verts.Push(4);
 
   // RT: use global space, so don't project
   memcpy(pVerts[0].position, vPos0.vector, sizeof(float) * 3);
@@ -393,7 +393,7 @@ void RT_Particle_RenderQuad3D(const FLOAT3D &vPos0, const FLOAT3D &vPos1, const 
 
 void RT_Particle_Flush()
 {
-  if (RT_sCurrentScene != nullptr && RT_Vertices.Count() > 0)
+  if (RT_sCurrentScene != nullptr && RT_Verts.Count() > 0)
   {
     FLOATmatrix3D identity;
     identity(1, 1) = 1; identity(1, 2) = 0; identity(1, 3) = 0;
@@ -411,8 +411,8 @@ void RT_Particle_Flush()
       SSRT::CParticlesGeometry info = {};
       info.absPosition = { 0,0,0 };
       info.absRotation = identity;
-      info.vertexCount = RT_Vertices.Count();
-      info.pVertexData = &RT_Vertices[0];
+      info.vertexCount = RT_Verts.Count();
+      info.pVertexData = &RT_Verts[0];
 
       info.pTexture = RT_ptd;
       info.textureFrame = RT_iFrame;
@@ -441,31 +441,15 @@ void RT_Particle_Flush()
       info.absPosition = { 0,0,0 };
       info.absRotation = identity;
 
-      info.vertexCount = RT_Vertices.Count();
-
-      auto *pSrc = &RT_Vertices[0];
-      auto *pVrtDst = RT_PlainVrtBuffer.Push(info.vertexCount);
-      auto *pTexDst = RT_PlainTexBuffer.Push(info.vertexCount);
-
-      // need to conver from array of struct to struct of arrays
-      for (int i = 0; i < info.vertexCount; i++)
-      {
-        memcpy(&pVrtDst[i], pSrc[i].position, sizeof(pSrc[i].position));
-        memcpy(&pTexDst[i], pSrc[i].texCoord, sizeof(pSrc[i].texCoord));
-      }
-
-      info.vertices = pVrtDst;
-      info.texCoordLayers[0] = pTexDst;
-      info.normals = nullptr;
+      info.vertexCount = RT_Verts.Count();
+      info.vertices = &RT_Verts[0];
 
       RT_GenerateQuadIndices(info.vertexCount, &info.indexCount, &info.indices);
 
       info.textures[0] = RT_ptd;
       info.textureFrames[0] = RT_iFrame;
 
-      UBYTE r, g, b, a;
-      ColorToRGBA(pSrc[0].packedColor, r, g, b, a);
-      info.color = { r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f };
+      info.color = { 1.0f, 1.0f, 1.0f, 1.0f };
 
       info.isSky = false;
       info.isEmissive = false;
@@ -486,7 +470,7 @@ void RT_Particle_Flush()
   RT_ptd = nullptr;
   RT_iFrame = 0;
 
-  RT_Vertices.PopAll();
+  RT_Verts.PopAll();
 
   // all done
   gfxResetArrays();

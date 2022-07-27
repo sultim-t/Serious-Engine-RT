@@ -36,10 +36,7 @@ struct SSRTGlobals
 
   INDEX srt_bReloadShaders = 0;
   INDEX srt_bPrintBrushPolygonInfo = 0;
-  INDEX srt_bTexturesOriginalSRGB = 1;
   INDEX srt_bEnableViewerShadows = 1;
-  INDEX srt_bShowGradients = 0;
-  INDEX srt_bShowMotionVectors = 0;
 
   INDEX srt_bIgnoreDynamicTexCoords = 0;
   INDEX srt_bIgnoreWaterEffectTextureUpdates = 0;
@@ -100,8 +97,8 @@ struct SSRTGlobals
   FLOAT srt_fModelSpecularRoughnessDefault = 0.025f;
   FLOAT srt_fModelReflectiveMetallicDefault = 1.0f;
   FLOAT srt_fModelReflectiveRoughnessDefault = 0.0001f;
-  FLOAT srt_fBrushMetallicDefault = 0.1f;
-  FLOAT srt_fBrushRoughnessDefault = 0.75f;
+  FLOAT srt_fBrushMetallicDefault = 0.0f;
+  FLOAT srt_fBrushRoughnessDefault = 0.9f;
 
   INDEX srt_bIndirRoughnessSqrt = 0;
 
@@ -133,11 +130,8 @@ struct SSRTGlobals
   // In degrees
   ANGLE srt_fFlashlightAngleInner = 0.0f;
   FLOAT srt_fFlashlightIntensity = 50;
-
-  INDEX srt_bMaxBounceShadowsUseDefault = 0;
-  INDEX srt_iMaxBounceShadowsDirectionalLights = 8;
-  INDEX srt_iMaxBounceShadowsSphereLights = 2;
-  INDEX srt_iMaxBounceShadowsSpotlights = 2;
+  
+  INDEX srt_iMaxBounceShadows = 2;
 
   // If true, translucent models that are changing its alpha (disappering gibs/body parts/blood),
   // are uploaded as alpha-tested geometry

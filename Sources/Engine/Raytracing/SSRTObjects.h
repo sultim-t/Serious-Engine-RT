@@ -46,9 +46,7 @@ struct CAbstractGeometry
   // This data will become invalid after adding CModelGeometry
   // as SE will reset global arrays
   INDEX               vertexCount;
-  const GFXVertex     *vertices;
-  const GFXNormal     *normals;
-  const GFXTexCoord   *texCoordLayers[3];
+  const RgVertex      *vertices;
 
   // each 3 indices make a triangle
   INDEX               indexCount;
@@ -64,7 +62,8 @@ struct CAbstractGeometry
   RgBlendFactor       blendDst;
 
   bool                isSky;
-  bool                isEmissive; 
+  bool                isEmissive;
+  bool                generateNormals;
 
   RgGeometryPrimaryVisibilityType visibilityType;
 
@@ -80,6 +79,7 @@ struct CModelGeometry : public CAbstractGeometry
   Vector<FLOAT, 4>    color;
 
   bool                invertedNormals;
+  bool                generateNormals;
 
   bool                isSpecular;
   bool                isReflective;
@@ -135,8 +135,8 @@ struct CParticlesGeometry
   FLOAT3D             absPosition;
   FLOATmatrix3D       absRotation;
 
-  INDEX vertexCount;
-  const RgRasterizedGeometryVertexStruct *pVertexData;
+  INDEX               vertexCount;
+  const RgVertex      *pVertexData;
 
   // each 3 indices make a triangle
   INDEX               indexCount;
@@ -202,6 +202,7 @@ struct CWorldRenderingInfo
 
   // horizontal FOV in degrees
   float           fovH;
+  float           cameraNear, cameraFar;
 
   // optional matrices
   // perspective projection matrix

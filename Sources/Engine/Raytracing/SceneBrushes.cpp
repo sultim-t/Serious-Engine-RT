@@ -72,17 +72,15 @@ void SSRT::SceneBrushes::RegisterBrush(const CBrushGeometry &brush)
     stInfo.passThroughType = brush.passThroughType;
     stInfo.visibilityType = brush.visibilityType;
     stInfo.vertexCount = brush.vertexCount;
-    stInfo.pVertexData = brush.vertices;
-    stInfo.pNormalData = brush.normals;
+    stInfo.pVertices = brush.vertices;
     stInfo.defaultRoughness = _srtGlobals.srt_fBrushRoughnessDefault;
     stInfo.defaultMetallicity = _srtGlobals.srt_fBrushMetallicDefault;
     stInfo.defaultEmission = brush.isEmissive ? _srtGlobals.srt_fEmissionForFullbright : 0.0f;
     stInfo.indexCount = brush.indexCount;
-    stInfo.pIndexData = brush.indices;
+    stInfo.pIndices = (uint32_t*)brush.indices;
 
     for (uint32_t i = 0; i < 3; i++)
     {
-      stInfo.pTexCoordLayerData[i] = brush.texCoordLayers[i];
       stInfo.layerBlendingTypes[i] = brush.layerBlendings[i];
       stInfo.layerColors[i] = { brush.layerColors[i](1), brush.layerColors[i](2), brush.layerColors[i](3), brush.layerColors[i](4) };
     }
@@ -112,32 +110,39 @@ void SSRT::SceneBrushes::RegisterBrush(const CBrushGeometry &brush)
     // for now, no other brushes except background should be drawn with rasterization;
     // SceneBrushes::Update uses this assumption
     ASSERT(brush.isSky);
-
-    RgRasterizedGeometryVertexArrays vertInfo = {};
-    vertInfo.pVertexData = brush.vertices;
-    vertInfo.pColorData = nullptr;
-    vertInfo.vertexStride = sizeof(GFXVertex);
-    vertInfo.texCoordStride = sizeof(GFXTexCoord);
-    vertInfo.colorStride = sizeof(GFXColor);
-
+    
     RgRasterizedGeometryUploadInfo info = {};
     info.renderType = brush.isSky ? RG_RASTERIZED_GEOMETRY_RENDER_TYPE_SKY : RG_RASTERIZED_GEOMETRY_RENDER_TYPE_DEFAULT;
     info.vertexCount = brush.vertexCount;
-    info.pArrays = &vertInfo;
+    info.pVertices = brush.vertices;
     info.indexCount = brush.indexCount;
-    info.pIndexData = brush.indices;
+    info.pIndices = brush.indices;
 
     Utils::CopyTransform(info.transform, brush);
 
     // draw each material layer separately (like in the original renderer)
-    for (uint32_t i = 0; i < sizeof(brush.textures) / sizeof(brush.textures[0]); i++)
+    for (uint32_t i = 0; i < 3; i++)
     {
       if (brush.textures[i] == nullptr)
       {
         continue;
       }
-    
-      vertInfo.pTexCoordData = brush.texCoordLayers[i];
+
+      /* this is really bad */
+      auto *newtexcoordVerts = const_cast<RgVertex *>(info.pVertices);
+      for (INDEX v = 0; v < brush.vertexCount; v++)
+      {
+        if (i == 1)
+        {
+          newtexcoordVerts[v].texCoord[0] = newtexcoordVerts[v].texCoordLayer1[0];
+          newtexcoordVerts[v].texCoord[1] = newtexcoordVerts[v].texCoordLayer1[1];
+        }
+        else if (i == 2)
+        {
+          newtexcoordVerts[v].texCoord[0] = newtexcoordVerts[v].texCoordLayer2[0];
+          newtexcoordVerts[v].texCoord[1] = newtexcoordVerts[v].texCoordLayer2[1];
+        }
+      }
 
       info.color = { brush.layerColors[i](1), brush.layerColors[i](2), brush.layerColors[i](3), brush.layerColors[i](4) };
       info.material = pTextureUploader->GetMaterial(brush.textures[i], brush.textureFrames[i]);

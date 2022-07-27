@@ -1021,6 +1021,9 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
         // calculate projection matrix
         extern void Svk_MatOrtho(float *result, float fLeft, float fRight, float fBottom, float fTop, float fNear, float fFar);
         Svk_MatOrtho(renderInfo.projectionMatrix, fLeft, fRight, fTop, fBottom, fNear, fFar);
+
+        renderInfo.cameraNear = fNear;
+        renderInfo.cameraFar = fFar;
       }
       else
       {
@@ -1040,6 +1043,9 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
         // calculate projection matrix
         extern void Svk_MatFrustum(float *result, float fLeft, float fRight, float fBottom, float fTop, float fNear, float fFar);
         Svk_MatFrustum(renderInfo.projectionMatrix, fLeft, fRight, fTop, fBottom, fNear, fFar);
+
+        renderInfo.cameraNear = fNear;
+        renderInfo.cameraFar = fFar;
       }
     }
     

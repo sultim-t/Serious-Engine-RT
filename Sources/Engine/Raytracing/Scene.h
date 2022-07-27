@@ -84,7 +84,7 @@ private:
   struct FlashlightState
   {
     bool isAdded;
-    RgSpotlightUploadInfo spotlightInfo;
+    RgSpotLightUploadInfo spotlightInfo;
   };
 
   struct WarpPortalState
@@ -125,21 +125,21 @@ private:
   FLOAT3D           cameraPosition;
   FLOATmatrix3D     cameraRotation;
 
-  CDrawPort         *pdpDrawport;
+  CDrawPort         *pdpDrawport{};
   CAnyProjection3D  prSEProjection;
   CAnyProjection3D  prSEProjectionBackground;
 
-  bool              isCameraInHaze;
+  bool              isCameraInHaze{};
 
   // Scene light sources, cleaned up by the end of a frame
-  std::vector<CSphereLight>         sphLights;
-  std::vector<CDirectionalLight>    dirLights;
-  FlashlightState                   firstPersonFlashlight;
-  FlashlightState                   thirdPersonFlashlight;
+  std::vector<CSphereLight>         sphLights{};
+  std::vector<CDirectionalLight>    dirLights{};
+  FlashlightState                   firstPersonFlashlight{};
+  FlashlightState                   thirdPersonFlashlight{};
   // Used to correct flashlight outer angle
-  float                             currentFOV;
+  float                             currentFOV{};
   
-  std::unordered_set<WarpPortalState, WarpPortalStateHash> warpPortals;
+  std::unordered_set<WarpPortalState, WarpPortalStateHash> warpPortals{};
 };
 
 }

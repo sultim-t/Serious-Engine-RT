@@ -74,10 +74,10 @@ extern CTString astrNvDlssTexts[] =
 extern CTString astrAmdFsrTexts[] =
 {
   "Off",
-  "Ultra Quality",
   "Quality",
   "Balanced",
   "Performance",
+  "Ultra Performance",
 };
 
 static_assert(ARRAYCOUNT(astrNvDlssTexts) == 5, "Change size in MenuStuff.h");

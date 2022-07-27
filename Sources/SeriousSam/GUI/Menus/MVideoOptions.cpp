@@ -65,8 +65,8 @@ void CVideoOptionsMenu::Initialize_t(void)
     gm_mgResolutionsTrigger, gm_mgAmdFsrTrigger, TRANS("NVIDIA DLSS"), astrNvDlssTexts);
   gm_mgNvDlssTrigger.mg_strTip = TRANS("set Nvidia DLSS quality mode");
   TRIGGER_MG(gm_mgAmdFsrTrigger, 4.5,
-    gm_mgNvDlssTrigger, gm_mgRenderScaleTrigger, TRANS("AMD FSR"), astrAmdFsrTexts);
-  gm_mgAmdFsrTrigger.mg_strTip = TRANS("set AMD FSR 1.0 quality mode");
+    gm_mgNvDlssTrigger, gm_mgRenderScaleTrigger, TRANS("AMD FSR 2.0"), astrAmdFsrTexts);
+  gm_mgAmdFsrTrigger.mg_strTip = TRANS("set AMD FSR 2.0 quality mode");
   TRIGGER_MG(gm_mgRenderScaleTrigger, 5.5,
     gm_mgAmdFsrTrigger, gm_mgCPUPerformanceTrigger, TRANS("CUSTOM RENDER SCALE"), astrRenderScalePercentsTexts);
   gm_mgRenderScaleTrigger.mg_strTip = TRANS("set render resolution scale, if FSR and DLSS are disabled");  

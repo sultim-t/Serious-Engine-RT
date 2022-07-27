@@ -49,11 +49,8 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingWhitePoint;", &_srtGlobals.srt_fTonemappingWhitePoint);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMinLogLuminance;", &_srtGlobals.srt_fTonemappingMinLogLuminance);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMaxLogLuminance;", &_srtGlobals.srt_fTonemappingMaxLogLuminance);
-  _pShell->DeclareSymbol("           user INDEX srt_bShowGradients;", &_srtGlobals.srt_bShowGradients);
-  _pShell->DeclareSymbol("           user INDEX srt_bShowMotionVectors;", &_srtGlobals.srt_bShowMotionVectors);
   _pShell->DeclareSymbol("           user INDEX srt_bReloadShaders;", &_srtGlobals.srt_bReloadShaders);
   _pShell->DeclareSymbol("           user INDEX srt_bPrintBrushPolygonInfo;", &_srtGlobals.srt_bPrintBrushPolygonInfo);
-  _pShell->DeclareSymbol("persistent user INDEX srt_bTexturesOriginalSRGB;", &_srtGlobals.srt_bTexturesOriginalSRGB);
   _pShell->DeclareSymbol("persistent user INDEX srt_bIgnoreDynamicTexCoords;", &_srtGlobals.srt_bIgnoreDynamicTexCoords);
   _pShell->DeclareSymbol("persistent user INDEX srt_bIgnoreWaterEffectTextureUpdates;", &_srtGlobals.srt_bIgnoreWaterEffectTextureUpdates);
 
@@ -138,11 +135,8 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_vFlashlightOffset[3];", &_srtGlobals.srt_vFlashlightOffset);
   _pShell->DeclareSymbol("persistent user FLOAT srt_vFlashlightOffsetThirdPerson[3];", &_srtGlobals.srt_vFlashlightOffsetThirdPerson);
   _pShell->DeclareSymbol("persistent user FLOAT srt_vFlashlightColor[3];", &_srtGlobals.srt_vFlashlightColor);
-
-  _pShell->DeclareSymbol("persistent user INDEX srt_bMaxBounceShadowsUseDefault;", &_srtGlobals.srt_bMaxBounceShadowsUseDefault);
-  _pShell->DeclareSymbol("persistent user INDEX srt_iMaxBounceShadowsDirectionalLights;", &_srtGlobals.srt_iMaxBounceShadowsDirectionalLights);
-  _pShell->DeclareSymbol("persistent user INDEX srt_iMaxBounceShadowsSphereLights;", &_srtGlobals.srt_iMaxBounceShadowsSphereLights);
-  _pShell->DeclareSymbol("persistent user INDEX srt_iMaxBounceShadowsSpotlights;", &_srtGlobals.srt_iMaxBounceShadowsSpotlights);
+  
+  _pShell->DeclareSymbol("persistent user INDEX srt_iMaxBounceShadowsSphereLights;", &_srtGlobals.srt_iMaxBounceShadows);
 
   _pShell->DeclareSymbol("persistent user INDEX srt_bModelChangeableTranslucentToAlphaTested;", &_srtGlobals.srt_bModelChangeableTranslucentToAlphaTested);
   _pShell->DeclareSymbol("persistent user INDEX srt_iCullingMaxSectorDepth;", &_srtGlobals.srt_iCullingMaxSectorDepth);
@@ -184,10 +178,7 @@ void SSRT::SSRTMain::NormalizeShellVariables()
 {
   _srtGlobals.srt_bVSync = !!_srtGlobals.srt_bVSync;
   _srtGlobals.srt_bTonemappingUseDefault = !!_srtGlobals.srt_bTonemappingUseDefault;
-  _srtGlobals.srt_bShowGradients = !!_srtGlobals.srt_bShowGradients;
-  _srtGlobals.srt_bShowMotionVectors = !!_srtGlobals.srt_bShowMotionVectors;
   _srtGlobals.srt_bReloadShaders = !!_srtGlobals.srt_bReloadShaders;
-  _srtGlobals.srt_bTexturesOriginalSRGB = !!_srtGlobals.srt_bTexturesOriginalSRGB;
   _srtGlobals.srt_bIgnoreDynamicTexCoords = !!_srtGlobals.srt_bIgnoreDynamicTexCoords;
   _srtGlobals.srt_bIgnoreWaterEffectTextureUpdates = !!_srtGlobals.srt_bIgnoreWaterEffectTextureUpdates;
   _srtGlobals.srt_bLensFlares = !!_srtGlobals.srt_bLensFlares;
@@ -237,10 +228,7 @@ void SSRT::SSRTMain::NormalizeShellVariables()
 
   _srtGlobals.srt_fParticlesAlphaMultiplier = Max(_srtGlobals.srt_fParticlesAlphaMultiplier, 0.0f);
 
-  _srtGlobals.srt_bMaxBounceShadowsUseDefault = !!_srtGlobals.srt_bMaxBounceShadowsUseDefault;
-  _srtGlobals.srt_iMaxBounceShadowsDirectionalLights = Max(_srtGlobals.srt_iMaxBounceShadowsDirectionalLights, (INDEX)0);
-  _srtGlobals.srt_iMaxBounceShadowsSphereLights      = Max(_srtGlobals.srt_iMaxBounceShadowsSphereLights,      (INDEX)0);
-  _srtGlobals.srt_iMaxBounceShadowsSpotlights        = Max(_srtGlobals.srt_iMaxBounceShadowsSpotlights,        (INDEX)0);
+  _srtGlobals.srt_iMaxBounceShadows = Max(_srtGlobals.srt_iMaxBounceShadows, (INDEX)0);
 
   _srtGlobals.srt_bModelChangeableTranslucentToAlphaTested = !!_srtGlobals.srt_bModelChangeableTranslucentToAlphaTested;
 
@@ -259,7 +247,7 @@ void SSRT::SSRTMain::NormalizeShellVariables()
 
   switch (_srtGlobals.srt_iUpscaleMode)
   {
-    case RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR:       
+    case RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR2:       
       break;
 
     case RG_RENDER_UPSCALE_TECHNIQUE_NVIDIA_DLSS:
@@ -338,11 +326,6 @@ SSRT::SSRTMain::SSRTMain() :
   info.indirectIlluminationMaxAlbedoLayers = 2;
   info.rayCullBackFacingTriangles = false;
 
-  info.vertexPositionStride = sizeof(GFXVertex);
-  info.vertexNormalStride = sizeof(GFXNormal);
-  info.vertexTexCoordStride = sizeof(GFXTexCoord);
-  info.vertexColorStride = sizeof(uint32_t);
-
   info.rasterizedMaxVertexCount = 1 << 16;
   info.rasterizedMaxIndexCount = info.rasterizedMaxVertexCount * 3 / 2;
   info.rasterizedSkyMaxVertexCount = 1 << 16;
@@ -354,6 +337,10 @@ SSRT::SSRTMain::SSRTMain() :
   info.pOverridenAlbedoAlphaTexturePostfix = "";
   info.pOverridenRoughnessMetallicEmissionTexturePostfix = "_rme";
   info.pOverridenNormalTexturePostfix = "_n";
+
+  info.originalAlbedoAlphaTextureIsSRGB = RG_TRUE;
+  info.originalRoughnessMetallicEmissionTextureIsSRGB = RG_FALSE;
+  info.originalNormalTextureIsSRGB = RG_FALSE;
 
   info.overridenAlbedoAlphaTextureIsSRGB = RG_TRUE;
   info.overridenRoughnessMetallicEmissionTextureIsSRGB = RG_FALSE;
@@ -375,8 +362,7 @@ SSRT::SSRTMain::SSRTMain() :
   textureUploader = new TextureUploader(instance);
 
 
-  RgBool32 dlssIsAvailable; r = rgIsRenderUpscaleTechniqueAvailable(instance, RG_RENDER_UPSCALE_TECHNIQUE_NVIDIA_DLSS, &dlssIsAvailable); RG_CHECKERROR(r);
-  _srtGlobals.srt_bDLSSAvailable = !!dlssIsAvailable;
+  _srtGlobals.srt_bDLSSAvailable = !!rgIsRenderUpscaleTechniqueAvailable(instance, RG_RENDER_UPSCALE_TECHNIQUE_NVIDIA_DLSS);
 }
 SSRT::SSRTMain::~SSRTMain()
 {
@@ -416,7 +402,6 @@ void SSRT::SSRTMain::StartFrame(CViewPort *pvp)
 
 
   RgStartFrameInfo startInfo = {};
-  startInfo.surfaceSize = { curWindowWidth, curWindowHeight };
   startInfo.requestShaderReload = _srtGlobals.srt_bReloadShaders;
   startInfo.requestVSync = _srtGlobals.srt_bVSync;
   startInfo.requestRasterizedSkyGeometryReuse = false;
@@ -484,19 +469,24 @@ void SSRT::SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
     hud.textureData->td_tpLocal.tp_eWrapV = hud.textureWrapV;
   }
 
-  RgRasterizedGeometryVertexArrays vertData = {};
-  vertData.pVertexData = hud.pPositions;
-  vertData.pTexCoordData = hud.pTexCoords;
-  vertData.pColorData = hud.pColors;
-  vertData.vertexStride = sizeof(GFXVertex4);
-  vertData.texCoordStride = sizeof(GFXTexCoord);
-  vertData.colorStride = sizeof(GFXColor);
+  static std::vector<RgVertex> tempVerts;
+  tempVerts.clear();
+  tempVerts.reserve(hud.vertexCount);
+  for (int i = 0; i < hud.vertexCount; i++)
+  {
+    RgVertex v = {};
+    memcpy(v.position, &hud.pPositions[i].x, sizeof(float) * 3);
+    memcpy(v.texCoord, &hud.pTexCoords[i].u, sizeof(float) * 2);
+    v.packedColor = hud.pColors[i].abgr;
+
+    tempVerts.emplace_back(v);
+  }
 
   RgRasterizedGeometryUploadInfo hudInfo = {};
   hudInfo.vertexCount = hud.vertexCount;
-  hudInfo.pArrays = &vertData;
+  hudInfo.pVertices = tempVerts.data();
   hudInfo.indexCount = hud.indexCount;
-  hudInfo.pIndexData = hud.pIndices;
+  hudInfo.pIndices = hud.pIndices;
   hudInfo.material = textureUploader->GetMaterial(hud.textureData);
   hudInfo.color = { 1, 1, 1, 1 };
   hudInfo.pipelineState = RG_RASTERIZED_GEOMETRY_STATE_BLEND_ENABLE;
@@ -519,19 +509,19 @@ void SSRT::SSRTMain::ProcessHudElement(const CHudElementInfo &hud)
 
 void SSRT::SSRTMain::ProcessLensFlare(const CHudElementInfo &hud, const FLOAT3D &pointToCheck)
 {
-  RgRasterizedGeometryVertexStruct vs[4] = {};
+  RgVertex vs[4] = {};
   for (int i = 0; i < 4; i++)
   {
     memcpy(vs[i].position, &hud.pPositions[i], sizeof(float) * 3);
-    vs[i].packedColor = hud.pColors[i].abgr;
     memcpy(vs[i].texCoord, &hud.pTexCoords[i], sizeof(float) * 2);
+    vs[i].packedColor = hud.pColors[i].abgr;
   }
   
   RgLensFlareUploadInfo info = {};
-  info.pVertexData = vs;
+  info.pVertices = vs;
   info.vertexCount = 4;
   info.indexCount = hud.indexCount;
-  info.pIndexData = hud.pIndices;
+  info.pIndices = (uint32_t*)hud.pIndices;
   info.material = textureUploader->GetMaterial(hud.textureData);
   info.pointToCheck = { pointToCheck(1), pointToCheck(2), pointToCheck(3) };
 
@@ -574,10 +564,7 @@ void SSRT::SSRTMain::EndFrame()
 
 
   RgDrawFrameShadowParams shadowParams = {};
-  shadowParams.maxBounceShadowsDirectionalLights = _srtGlobals.srt_iMaxBounceShadowsDirectionalLights;
-  shadowParams.maxBounceShadowsSphereLights = _srtGlobals.srt_iMaxBounceShadowsSphereLights;
-  shadowParams.maxBounceShadowsSpotlights = _srtGlobals.srt_iMaxBounceShadowsSpotlights;
-  shadowParams.maxBounceShadowsPolygonalLights = 2;
+  shadowParams.maxBounceShadows = _srtGlobals.srt_iMaxBounceShadows;
   shadowParams.polygonalLightSpotlightFactor = 2;
   shadowParams.sphericalPolygonalLightsFirefliesClamp = _srtGlobals.srt_fLightSphFirefliesClamp;
 
@@ -631,8 +618,6 @@ void SSRT::SSRTMain::EndFrame()
 
 
   RgDrawFrameDebugParams dbgParams = {};
-  dbgParams.showMotionVectors = !!_srtGlobals.srt_bShowMotionVectors;
-  dbgParams.showGradients = !!_srtGlobals.srt_bShowGradients;
 
 
   RgDrawFrameReflectRefractParams rflParams = {};
@@ -675,7 +660,7 @@ void SSRT::SSRTMain::EndFrame()
 
   frameInfo.pRenderResolutionParams = &resolutionParams;
   frameInfo.pTonemappingParams = _srtGlobals.srt_bTonemappingUseDefault ? nullptr : &tmParams;
-  frameInfo.pShadowParams = _srtGlobals.srt_bMaxBounceShadowsUseDefault ? nullptr : &shadowParams;
+  frameInfo.pShadowParams = &shadowParams;
   frameInfo.pBloomParams = &blParams;
   frameInfo.pSkyParams = &skyParams;
   frameInfo.pReflectRefractParams = &rflParams;
@@ -688,6 +673,13 @@ void SSRT::SSRTMain::EndFrame()
   memcpy(frameInfo.view,        worldRenderInfo.viewMatrix,       16 * sizeof(float));
   memcpy(frameInfo.projection,  worldRenderInfo.projectionMatrix, 16 * sizeof(float));
   frameInfo.fovYRadians = RadAngle(worldRenderInfo.fovH);
+  frameInfo.cameraNear = worldRenderInfo.cameraNear;
+  frameInfo.cameraFar = worldRenderInfo.cameraFar;
+  if (!wasWorldProcessed)
+  {
+    frameInfo.cameraNear = 0.1f;
+    frameInfo.cameraFar = 10.0f;
+  }
 
   RgResult r = rgDrawFrame(instance, &frameInfo);
   RG_CHECKERROR(r);

@@ -67,7 +67,7 @@ SSRT::Scene::~Scene()
   delete pCustomInfo;
 
   // submit empty scene to destroy current
-  RgResult r = rgStartNewScene(instance);
+  RgResult r = rgBeginStaticGeometries(instance);
   RG_CHECKERROR(r);
   r = rgSubmitStaticGeometries(instance);
   RG_CHECKERROR(r);
@@ -268,14 +268,19 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
     info.passThroughType = model.passThroughType;
     info.visibilityType = model.visibilityType;
     info.vertexCount = model.vertexCount;
-    info.pVertexData = model.vertices;
-    info.pNormalData = model.normals;
-    info.flags = model.invertedNormals ? RG_GEOMETRY_UPLOAD_GENERATE_INVERTED_NORMALS_BIT : 0;
-    info.pTexCoordLayerData[0] = model.texCoordLayers[0];
-    info.pTexCoordLayerData[1] = nullptr;
-    info.pTexCoordLayerData[2] = nullptr;
+    info.pVertices = model.vertices;
     info.indexCount = model.indexCount;
-    info.pIndexData = model.indices;
+    info.pIndices = (const uint32_t*)model.indices;
+
+    info.flags = 0;
+    if (model.generateNormals)
+    {
+      info.flags |= RG_GEOMETRY_UPLOAD_GENERATE_NORMALS_BIT;
+    }
+    if (model.invertedNormals)
+    {
+      info.flags |= RG_GEOMETRY_UPLOAD_GENERATE_INVERTED_NORMALS_BIT;
+    }
 
     info.defaultMetallicity = metallic;
     info.defaultRoughness = roughness;
@@ -298,19 +303,11 @@ void SSRT::Scene::AddModel(const CModelGeometry &model)
   }
   else
   {
-    RgRasterizedGeometryVertexArrays vertInfo = {};
-    vertInfo.pVertexData = model.vertices;
-    vertInfo.pTexCoordData = model.texCoordLayers[0];
-    vertInfo.pColorData = nullptr;
-    vertInfo.vertexStride = sizeof(GFXVertex);
-    vertInfo.texCoordStride = sizeof(GFXTexCoord);
-    vertInfo.colorStride = sizeof(GFXColor);
-
     RgRasterizedGeometryUploadInfo info = {};
     info.vertexCount = model.vertexCount;
-    info.pArrays = &vertInfo;
+    info.pVertices = model.vertices;
     info.indexCount = model.indexCount;
-    info.pIndexData = model.indices;
+    info.pIndices = model.indices;
     info.color = { model.color(1), model.color(2), model.color(3), model.color(4) };
     info.material = pTextureUploader->GetMaterial(model.textures[0], model.textureFrames[0]);
     info.pipelineState = model.blendEnable ? RG_RASTERIZED_GEOMETRY_STATE_BLEND_ENABLE : 0;
@@ -337,10 +334,9 @@ void SSRT::Scene::AddParticles(const CParticlesGeometry &particles)
 
   RgRasterizedGeometryUploadInfo info = {};
   info.vertexCount = particles.vertexCount;
-  info.pStructs = particles.pVertexData;
-  info.pArrays = nullptr;
+  info.pVertices = particles.pVertexData;
   info.indexCount = particles.indexCount;
-  info.pIndexData = particles.pIndexData;
+  info.pIndices = particles.pIndexData;
   info.color = { 1, 1, 1, _srtGlobals.srt_fParticlesAlphaMultiplier };
   info.material = pTextureUploader->GetMaterial(particles.pTexture, particles.textureFrame);
   info.pipelineState = particles.blendEnable ? RG_RASTERIZED_GEOMETRY_STATE_BLEND_ENABLE : 0;
@@ -408,6 +404,7 @@ void SSRT::Scene::AddLight(const CSphereLight &sphLt)
 void SSRT::Scene::AddLight(const CDirectionalLight &dirLt)
 {
   RgDirectionalLightUploadInfo info = {};
+  info.uniqueID = dirLt.entityID;
   info.color = {
     dirLt.color(1) * _srtGlobals.srt_fFixSunIntensityGlobal,
     dirLt.color(2) * _srtGlobals.srt_fFixSunIntensityGlobal,
@@ -432,7 +429,6 @@ void SSRT::Scene::AddLight(const CSpotLight &spotLt)
 
   sp.position = { spotLt.absPosition(1), spotLt.absPosition(2), spotLt.absPosition(3) };
   sp.direction = { spotLt.direction(1), spotLt.direction(2), spotLt.direction(3) };
-  sp.upVector = { spotLt.upVector(1), spotLt.upVector(2), spotLt.upVector(3) };
   sp.color = { color(1), color(2), color(3) };
 
   sp.angleOuter = RadAngle(_srtGlobals.srt_fFlashlightAngleOuter);
@@ -482,7 +478,7 @@ void SSRT::Scene::ProcessFirstPersonModel(const CFirstPersonModelInfo &info, ULO
 
 void SSRT::Scene::ProcessBrushes()
 {
-  RgResult r = rgStartNewScene(instance);
+  RgResult r = rgBeginStaticGeometries(instance);
   RG_CHECKERROR(r);
 
   // find all brushes, their geomtry won't change,
@@ -558,7 +554,7 @@ void SSRT::Scene::OnFrameEnd(bool isCameraFirstPerson)
   // spotlights are processed, add one of them;
   // it's done here because a way to determine,
   // if the camera is first or third person, wasn't found
-  RgSpotlightUploadInfo info = {};
+  RgSpotLightUploadInfo info = {};
   bool added = false;
 
   if (isCameraFirstPerson && firstPersonFlashlight.isAdded)
@@ -582,7 +578,9 @@ void SSRT::Scene::OnFrameEnd(bool isCameraFirstPerson)
     float relativeFov = Clamp(currentFOV / 75.0f, 1.0f, 1.5f);
     info.angleOuter *= relativeFov;
 
-    RgResult r = rgUploadSpotlightLight(instance, &info);
+    info.uniqueID = UINT64_MAX;
+
+    RgResult r = rgUploadSpotLight(instance, &info);
     RG_CHECKERROR(r);
   }
 }

@@ -112,8 +112,7 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
     RgStaticMaterialCreateInfo stInfo = {};
     stInfo.size.width = info.width;
     stInfo.size.height = info.height;
-    stInfo.textures.albedoAlpha.pData = info.imageData;
-    stInfo.textures.albedoAlpha.isSRGB = _srtGlobals.srt_bTexturesOriginalSRGB;
+    stInfo.textures.pDataAlbedoAlpha = info.imageData;
     stInfo.filter = info.filter;
     stInfo.addressModeU = info.wrapU;
     stInfo.addressModeV = info.wrapV;
@@ -144,8 +143,7 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
       RgDynamicMaterialCreateInfo dninfo = {};
       dninfo.size.width = info.width;
       dninfo.size.height = info.height;
-      dninfo.textures.albedoAlpha.pData = info.imageData;
-      dninfo.textures.albedoAlpha.isSRGB = _srtGlobals.srt_bTexturesOriginalSRGB;
+      dninfo.textures.pDataAlbedoAlpha = info.imageData;
       dninfo.flags = info.generateMipmaps ? 0 : RG_MATERIAL_CREATE_DONT_GENERATE_MIPMAPS_BIT;
       dninfo.filter = info.filter;
       dninfo.addressModeU = info.wrapU;
@@ -163,8 +161,7 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
 
       RgDynamicMaterialUpdateInfo updateInfo = {};
       updateInfo.dynamicMaterial = material;
-      updateInfo.textures.albedoAlpha.pData = info.imageData;
-      updateInfo.textures.albedoAlpha.isSRGB = _srtGlobals.srt_bTexturesOriginalSRGB;
+      updateInfo.textures.pDataAlbedoAlpha = info.imageData;
 
       RgResult r = rgUpdateDynamicMaterial(instance, &updateInfo);
       RG_CHECKERROR(r);
@@ -222,8 +219,7 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedAnimatedTextureInfo &an
     auto &f = frames[i];
     f.size.width = animInfo.width;
     f.size.height = animInfo.height;
-    f.textures.albedoAlpha.pData = curFrameData;
-    f.textures.albedoAlpha.isSRGB = _srtGlobals.srt_bTexturesOriginalSRGB;
+    f.textures.pDataAlbedoAlpha = curFrameData;
     f.flags = animInfo.generateMipmaps ? 0 : RG_MATERIAL_CREATE_DONT_GENERATE_MIPMAPS_BIT;
     f.filter = animInfo.filter;
     f.addressModeU = animInfo.wrapU;

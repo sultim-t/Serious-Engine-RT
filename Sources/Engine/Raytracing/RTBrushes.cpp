@@ -43,23 +43,15 @@ constexpr uint32_t MAX_BRUSH_TEXTURE_COUNT = 3;
 
 
 static uint32_t RT_BrushPartIndex = 0;
-static CStaticStackArray<GFXVertex> RT_AllSectorVertices;
-static CStaticStackArray<GFXNormal> RT_AllSectorNormals;
+static CStaticStackArray<RgVertex> RT_AllSectorVertices;
 static CStaticStackArray<INDEX> RT_AllSectorIndices;
-static CStaticStackArray<GFXTexCoord> RT_AllSectorTexCoords[MAX_BRUSH_TEXTURE_COUNT];
 
 
 
 static void RT_BrushClear()
 {
-  RT_AllSectorNormals.PopAll();
   RT_AllSectorVertices.PopAll();
   RT_AllSectorIndices.PopAll();
-
-  for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
-  {
-    RT_AllSectorTexCoords[i].PopAll();
-  }
 }
 
 void RT_BrushProcessingClear()
@@ -232,7 +224,6 @@ static void RT_FlushBrushInfo(CEntity *penBrush, uint32_t brushPartIndex, const 
 
   brushInfo.vertexCount = RT_AllSectorVertices.Count();
   brushInfo.vertices = &RT_AllSectorVertices[0];
-  brushInfo.normals = &RT_AllSectorNormals[0];
 
   brushInfo.indexCount = RT_AllSectorIndices.Count();
   brushInfo.indices = &RT_AllSectorIndices[0];
@@ -246,8 +237,6 @@ static void RT_FlushBrushInfo(CEntity *penBrush, uint32_t brushPartIndex, const 
 
   for (uint32_t iSrcIndex = 0; iSrcIndex < MAX_BRUSH_TEXTURE_COUNT; iSrcIndex++)
   {
-    ASSERT(RT_AllSectorTexCoords[iSrcIndex].Count() == RT_AllSectorVertices.Count());
-
     if (f.textures[iSrcIndex] == nullptr)
     {
       continue;
@@ -262,7 +251,6 @@ static void RT_FlushBrushInfo(CEntity *penBrush, uint32_t brushPartIndex, const 
     }
 
     brushInfo.textureObjects[iDstIndex] = &to;
-    brushInfo.texCoordLayers[iDstIndex] = &RT_AllSectorTexCoords[iSrcIndex][0];
 
     // layer texture data
     brushInfo.textures[iDstIndex] = td;
@@ -328,12 +316,11 @@ static void RT_UpdateBrushTexCoords(CEntity *penBrush, uint32_t brushPartIndex, 
 
   for (uint32_t i = 0; i < MAX_BRUSH_TEXTURE_COUNT; i++)
   {
-    ASSERT(RT_AllSectorTexCoords[i].Count() == RT_AllSectorVertices.Count());
-
-    info.texCoordLayers[i] = &RT_AllSectorTexCoords[i][0];
+    // info.texCoordLayers[i] = &RT_AllSectorTexCoords[i][0];
   }
 
-  pScene->UpdateBrushTexCoords(info);
+  // TODO: does nothing at the moment
+  // pScene->UpdateBrushTexCoords(info);
 }
 
 
@@ -395,30 +382,30 @@ static bool RT_AreBlendingsSame(const RT_TextureLayerBlending &a, const RT_Textu
 }
 
 
-static void RT_ProcessPositions(const CBrushPolygon &polygon, GFXVertex *vertices, INDEX vertCount)
+static void RT_ProcessPositions(const CBrushPolygon &polygon, RgVertex *vertices, INDEX vertCount)
 {
   for (INDEX i = 0; i < vertCount; i++)
   {
     const CBrushVertex *brushVert = polygon.bpo_apbvxTriangleVertices[i];
-    vertices[i].x = brushVert->bvx_vRelative(1);
-    vertices[i].y = brushVert->bvx_vRelative(2);
-    vertices[i].z = brushVert->bvx_vRelative(3);
+    vertices[i].position[0] = brushVert->bvx_vRelative(1);
+    vertices[i].position[1] = brushVert->bvx_vRelative(2);
+    vertices[i].position[2] = brushVert->bvx_vRelative(3);
     //vertices[i].shade = 0;
+
+    vertices[i].packedColor = UINT32_MAX;
   }
 }
 
 
-static void RT_ProcessNormals(const CBrushPolygon &polygon, uint32_t vertCount)
+static void RT_ProcessNormals(const CBrushPolygon &polygon, RgVertex *vertices, uint32_t vertCount)
 {
-  GFXNormal *normals = RT_AllSectorNormals.Push(vertCount);
   float *planeNormal = polygon.bpo_pbplPlane->bpl_plRelative.vector;
 
   for (INDEX i = 0; i < vertCount; i++)
   {
-    normals[i].nx = planeNormal[0];
-    normals[i].ny = planeNormal[1];
-    normals[i].nz = planeNormal[2];
-    normals[i].ul = 0;
+    vertices[i].normal[0] = planeNormal[0];
+    vertices[i].normal[1] = planeNormal[1];
+    vertices[i].normal[2] = planeNormal[2];
   }
 }
 
@@ -470,7 +457,7 @@ static bool RT_HasScrollingTextures(CBrushPolygon &polygon)
 }
 
 
-static void RT_ProcessTexCoords(CBrushPolygon &polygon, const GFXVertex *vertices, uint32_t vertCount, SSRT::Scene *pScene)
+static void RT_ProcessTexCoords(CBrushPolygon &polygon, RgVertex *vertices, uint32_t vertCount, SSRT::Scene *pScene)
 {
   FLOAT3D polygonReferencePoint = polygon.bpo_pbplPlane->bpl_plRelative.ReferencePoint();
   const CMappingVectors &mvBrushSpace = polygon.bpo_pbplPlane->bpl_pwplWorking->wpl_mvRelative;
@@ -480,8 +467,6 @@ static void RT_ProcessTexCoords(CBrushPolygon &polygon, const GFXVertex *vertice
   {
     // tex coord data: from RSSetTextureCoords(..)
     // always push tex coords of vertCount amount, for 1 to 1 mapping of vertex atttributes
-    GFXTexCoord *texCoords = RT_AllSectorTexCoords[iLayer].Push(vertCount);
-
 
     CBrushPolygonTexture &layerTexture = polygon.bpo_abptTextures[iLayer];
 
@@ -548,12 +533,33 @@ static void RT_ProcessTexCoords(CBrushPolygon &polygon, const GFXVertex *vertice
 
       for (INDEX i = 0; i < vertCount; i++)
       {
-        const FLOAT fDX = vertices[i].x - vO(1);
-        const FLOAT fDY = vertices[i].y - vO(2);
-        const FLOAT fDZ = vertices[i].z - vO(3);
+        const FLOAT fDX = vertices[i].position[0] - vO(1);
+        const FLOAT fDY = vertices[i].position[1] - vO(2);
+        const FLOAT fDZ = vertices[i].position[2] - vO(3);
 
-        texCoords[i].s = vU(1) * fDX + vU(2) * fDY + vU(3) * fDZ;
-        texCoords[i].t = vV(1) * fDX + vV(2) * fDY + vV(3) * fDZ;
+        float s = vU(1) * fDX + vU(2) * fDY + vU(3) * fDZ;
+        float t = vV(1) * fDX + vV(2) * fDY + vV(3) * fDZ;
+
+        switch (iLayer)
+        {
+        case 0: 
+          vertices[i].texCoord[0] = s;
+          vertices[i].texCoord[1] = t;
+          break;
+
+        case 1:
+          vertices[i].texCoordLayer1[0] = s;
+          vertices[i].texCoordLayer1[1] = t;
+          break;
+
+        case 2:
+          vertices[i].texCoordLayer2[0] = s;
+          vertices[i].texCoordLayer2[1] = t;
+          break;
+
+        default:
+          break;
+        }
       }
     }
   }
@@ -776,7 +782,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
     INDEX vertCount = polygon.bpo_apbvxTriangleVertices.Count();
 
     // position data
-    GFXVertex *vertices = RT_AllSectorVertices.Push(vertCount);
+    RgVertex *vertices = RT_AllSectorVertices.Push(vertCount);
 
     if (!onlyTexCoords || hasScrollingTextures)
     {
@@ -786,7 +792,7 @@ static void RT_AddActiveSector(CBrushSector &bscSector, CEntity *penBrush, bool 
 
     if (!onlyTexCoords)
     {
-      RT_ProcessNormals(polygon, vertCount);
+      RT_ProcessNormals(polygon, vertices, vertCount);
       RT_ProcessIndices(polygon, firstVertexId);
     }
 
