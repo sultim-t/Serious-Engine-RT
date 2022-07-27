@@ -461,7 +461,12 @@ static void RT_ProcessTexCoords(CBrushPolygon &polygon, RgVertex *vertices, uint
 {
   FLOAT3D polygonReferencePoint = polygon.bpo_pbplPlane->bpl_plRelative.ReferencePoint();
   const CMappingVectors &mvBrushSpace = polygon.bpo_pbplPlane->bpl_pwplWorking->wpl_mvRelative;
-
+  for (INDEX i = 0; i < vertCount; i++)
+  {
+    memset(vertices[i].texCoord, 0, sizeof(vertices[i].texCoord));
+    memset(vertices[i].texCoordLayer1, 0, sizeof(vertices[i].texCoordLayer1));
+    memset(vertices[i].texCoordLayer2, 0, sizeof(vertices[i].texCoordLayer2));
+  }
 
   for (uint32_t iLayer = 0; iLayer < MAX_BRUSH_TEXTURE_COUNT; iLayer++)
   {

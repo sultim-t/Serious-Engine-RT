@@ -136,7 +136,7 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_vFlashlightOffsetThirdPerson[3];", &_srtGlobals.srt_vFlashlightOffsetThirdPerson);
   _pShell->DeclareSymbol("persistent user FLOAT srt_vFlashlightColor[3];", &_srtGlobals.srt_vFlashlightColor);
   
-  _pShell->DeclareSymbol("persistent user INDEX srt_iMaxBounceShadowsSphereLights;", &_srtGlobals.srt_iMaxBounceShadows);
+  _pShell->DeclareSymbol("persistent user INDEX srt_iMaxBounceShadows;", &_srtGlobals.srt_iMaxBounceShadows);
 
   _pShell->DeclareSymbol("persistent user INDEX srt_bModelChangeableTranslucentToAlphaTested;", &_srtGlobals.srt_bModelChangeableTranslucentToAlphaTested);
   _pShell->DeclareSymbol("persistent user INDEX srt_iCullingMaxSectorDepth;", &_srtGlobals.srt_iCullingMaxSectorDepth);

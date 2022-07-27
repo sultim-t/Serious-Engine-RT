@@ -25,8 +25,8 @@ struct SSRTGlobals
 {
   INDEX srt_bDebugValidation = 0;
   INDEX srt_bVSync = 1;
-  INDEX srt_iUpscaleMode = RG_RENDER_UPSCALE_TECHNIQUE_LINEAR;
-  INDEX srt_iResolutionMode = RG_RENDER_RESOLUTION_MODE_CUSTOM;
+  INDEX srt_iUpscaleMode = RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR2;
+  INDEX srt_iResolutionMode = RG_RENDER_RESOLUTION_MODE_BALANCED;
   FLOAT srt_fResolutionScale = 1.0;
   INDEX srt_iOversharpMode = RG_RENDER_SHARPEN_TECHNIQUE_NONE;
   INDEX srt_bCRTMode = 0;
