@@ -156,7 +156,7 @@ ANGLE3D SSRT::Scene::GetBackgroundViewerOrientationAngle() const
   return pWorld->GetBackgroundViewer()->GetLerpedPlacement().pl_OrientationAngle;
 }
 
-void SSRT::Scene::GetNearestToCameraPortalInfo(FLOAT3D &vRefPortalInputPos, FLOAT3D &vRefPortalOutputPos, FLOATmatrix3D &mRefPortalRelativeRotation) const
+void SSRT::Scene::GetNearestToCameraPortalInfo(FLOAT3D &vInPos, FLOAT3D &vOutPos, FLOAT3D &vOutDir, FLOAT3D &vOutUp) const
 {
   float fNearestSqDist = FLT_MAX;
 
@@ -183,9 +183,14 @@ void SSRT::Scene::GetNearestToCameraPortalInfo(FLOAT3D &vRefPortalInputPos, FLOA
 
   if (bFound)
   {
-    vRefPortalInputPos = mFound.mp_plWarpIn.pl_PositionVector;
-    vRefPortalOutputPos = mFound.mp_plWarpOut.pl_PositionVector;
-    MakeRotationMatrix(mRefPortalRelativeRotation, mFound.mp_plWarpOut.pl_OrientationAngle - mFound.mp_plWarpIn.pl_OrientationAngle);
+    vInPos = mFound.mp_plWarpIn.pl_PositionVector;
+    vOutPos = mFound.mp_plWarpOut.pl_PositionVector;
+
+    FLOATmatrix3D mOutRotation;
+    MakeRotationMatrix(mOutRotation, mFound.mp_plWarpOut.pl_OrientationAngle);
+    
+    vOutDir = FLOAT3D(0.0f, 0.0f, -1.0f) * mOutRotation;
+    vOutUp = FLOAT3D(0.0f, 1.0f, 0.0f) * mOutRotation;
   }
 }
 

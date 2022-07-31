@@ -35,7 +35,6 @@ extern SSRT::SSRTGlobals _srtGlobals = SSRT::SSRTGlobals();
 
 void SSRT::SSRTMain::InitShellVariables()
 {
-  _pShell->DeclareSymbol("persistent user INDEX srt_bDebugValidation;", &_srtGlobals.srt_bDebugValidation);
   _pShell->DeclareSymbol("persistent user INDEX srt_bVSync;", &_srtGlobals.srt_bVSync);
 
   _pShell->DeclareSymbol("persistent user INDEX srt_iUpscaleMode;", &_srtGlobals.srt_iUpscaleMode);
@@ -316,7 +315,6 @@ SSRT::SSRTMain::SSRTMain() :
   RgInstanceCreateInfo info = {};
   info.pAppName = "Serious Engine RT";
   info.pAppGUID = "93fcfd2c-6e92-43cb-b3b3-5d6ecefd1527";
-  info.enableValidationLayer = _srtGlobals.srt_bDebugValidation;
   info.pShaderFolderPath = shadersPath;
   info.pBlueNoiseFilePath = blueNoiseFilePath;
 
@@ -635,15 +633,15 @@ void SSRT::SSRTMain::EndFrame()
   rflParams.waterWaveTextureDerivativesMultiplier = _srtGlobals.srt_fWaterNormalSharpness;
   rflParams.forceNoWaterRefraction = currentScene == nullptr ? false : currentScene->GetCustomInfo()->IsNoWaterRefractionForced(currentScene->GetCameraPosition());
   rflParams.disableBackfaceReflectionsForNoMediaChange = currentScene == nullptr ? false : currentScene->GetCustomInfo()->IsNoBackfaceReflForNoMediaChange(currentScene->GetCameraPosition());
-  FLOAT3D vPortalIn = FLOAT3D(0, 0, 0), vPortalOut = FLOAT3D(0, 0, 0);
-  FLOATmatrix3D mPortalRelativeRot(0.0f); mPortalRelativeRot(1, 1) = 1.0f; mPortalRelativeRot(2, 2) = 1.0f; mPortalRelativeRot(2, 2) = 1.0f;
+  FLOAT3D vPortalIn = FLOAT3D(0, 0, 0), vPortalOut = FLOAT3D(0, 0, 0), vPortalOutDir = FLOAT3D(0, 0, 1), vPortalOutUp = FLOAT3D(0, 1, 0);
   if (currentScene != nullptr)
   {
-    currentScene->GetNearestToCameraPortalInfo(vPortalIn, vPortalOut, mPortalRelativeRot);
+    currentScene->GetNearestToCameraPortalInfo(vPortalIn, vPortalOut, vPortalOutDir, vPortalOutUp);
   }
   memcpy(rflParams.portalInputPosition.data, vPortalIn.vector, sizeof(float) * 3);
   memcpy(rflParams.portalOutputPosition.data, vPortalOut.vector, sizeof(float) * 3);
-  memcpy(rflParams.portalRelativeRotation.matrix, mPortalRelativeRot.matrix, sizeof(float) * 9);
+  memcpy(rflParams.portalOutputDirection.data, vPortalOutDir.vector, sizeof(float) * 3);
+  memcpy(rflParams.portalOutputUp.data, vPortalOutUp.vector, sizeof(float) * 3);
 
   RgDrawFrameInfo frameInfo = {};
   frameInfo.rayCullMaskWorld = currentScene == nullptr ? RG_DRAW_FRAME_RAY_CULL_WORLD_0_BIT | RG_DRAW_FRAME_RAY_CULL_WORLD_1_BIT | RG_DRAW_FRAME_RAY_CULL_WORLD_2_BIT : currentScene->GetCustomInfo()->GetCullMask(currentScene->GetCameraPosition());

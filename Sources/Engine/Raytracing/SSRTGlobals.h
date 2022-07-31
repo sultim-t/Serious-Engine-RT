@@ -23,7 +23,6 @@ namespace SSRT
 
 struct SSRTGlobals
 {
-  INDEX srt_bDebugValidation = 0;
   INDEX srt_bVSync = 1;
   INDEX srt_iUpscaleMode = RG_RENDER_UPSCALE_TECHNIQUE_AMD_FSR2;
   INDEX srt_iResolutionMode = RG_RENDER_RESOLUTION_MODE_BALANCED;
