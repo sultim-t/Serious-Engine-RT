@@ -636,12 +636,8 @@ void SSRT::SSRTMain::EndFrame()
   FLOAT3D vPortalIn = FLOAT3D(0, 0, 0), vPortalOut = FLOAT3D(0, 0, 0), vPortalOutDir = FLOAT3D(0, 0, 1), vPortalOutUp = FLOAT3D(0, 1, 0);
   if (currentScene != nullptr)
   {
-    currentScene->GetNearestToCameraPortalInfo(vPortalIn, vPortalOut, vPortalOutDir, vPortalOutUp);
+    currentScene->AddNearestToCameraPortalInfo();
   }
-  memcpy(rflParams.portalInputPosition.data, vPortalIn.vector, sizeof(float) * 3);
-  memcpy(rflParams.portalOutputPosition.data, vPortalOut.vector, sizeof(float) * 3);
-  memcpy(rflParams.portalOutputDirection.data, vPortalOutDir.vector, sizeof(float) * 3);
-  memcpy(rflParams.portalOutputUp.data, vPortalOutUp.vector, sizeof(float) * 3);
 
   RgDrawFrameInfo frameInfo = {};
   frameInfo.rayCullMaskWorld = currentScene == nullptr ? RG_DRAW_FRAME_RAY_CULL_WORLD_0_BIT | RG_DRAW_FRAME_RAY_CULL_WORLD_1_BIT | RG_DRAW_FRAME_RAY_CULL_WORLD_2_BIT : currentScene->GetCustomInfo()->GetCullMask(currentScene->GetCameraPosition());
