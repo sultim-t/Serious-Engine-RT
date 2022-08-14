@@ -109,7 +109,7 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
     // static textures must not be uploaded yet 
     ASSERT(!materialExist[textureIndex]);
 
-    RgStaticMaterialCreateInfo stInfo = {};
+    RgMaterialCreateInfo stInfo = {};
     stInfo.size.width = info.width;
     stInfo.size.height = info.height;
     stInfo.textures.pDataAlbedoAlpha = info.imageData;
@@ -125,10 +125,10 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
 
     if (info.disableOverride)
     {
-      stInfo.flags |= RG_MATERIAL_CREATE_DISABLE_OVERRIDE_BIT;
+      stInfo.pRelativePath = nullptr;
     }
 
-    RgResult r = rgCreateStaticMaterial(instance, &stInfo, &material);
+    RgResult r = rgCreateMaterial(instance, &stInfo, &material);
     RG_CHECKERROR(r);
 
     AddMaterial(textureIndex, material);
@@ -140,7 +140,7 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
 
     if (!onlyUpdate)
     {
-      RgDynamicMaterialCreateInfo dninfo = {};
+      RgMaterialCreateInfo dninfo = {};
       dninfo.size.width = info.width;
       dninfo.size.height = info.height;
       dninfo.textures.pDataAlbedoAlpha = info.imageData;
@@ -149,7 +149,9 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
       dninfo.addressModeU = info.wrapU;
       dninfo.addressModeV = info.wrapV;
 
-      RgResult r = rgCreateDynamicMaterial(instance, &dninfo, &material);
+      dninfo.flags |= RG_MATERIAL_CREATE_UPDATEABLE_BIT;
+
+      RgResult r = rgCreateMaterial(instance, &dninfo, &material);
       RG_CHECKERROR(r);
 
       
@@ -159,11 +161,11 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedTextureInfo &info)
     {
       material = materials[textureIndex];
 
-      RgDynamicMaterialUpdateInfo updateInfo = {};
-      updateInfo.dynamicMaterial = material;
+      RgMaterialUpdateInfo updateInfo = {};
+      updateInfo.target = material;
       updateInfo.textures.pDataAlbedoAlpha = info.imageData;
 
-      RgResult r = rgUpdateDynamicMaterial(instance, &updateInfo);
+      RgResult r = rgUpdateMaterialContents(instance, &updateInfo);
       RG_CHECKERROR(r);
 
       // don't add
@@ -187,7 +189,7 @@ void SSRT::TextureUploader::UploadTexture(const CPreparedAnimatedTextureInfo &an
 
   // allocate for frame infos
   RgMaterial material;
-  std::vector<RgStaticMaterialCreateInfo> frames(animInfo.frameCount);
+  std::vector<RgMaterialCreateInfo> frames(animInfo.frameCount);
 
 
   // overriden path
