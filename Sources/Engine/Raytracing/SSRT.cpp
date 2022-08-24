@@ -561,10 +561,14 @@ void SSRT::SSRTMain::EndFrame()
   resolutionParams.sharpenTechnique = (RgRenderSharpenTechnique)_srtGlobals.srt_iOversharpMode;
 
 
-  RgDrawFrameShadowParams shadowParams = {};
-  shadowParams.maxBounceShadows = _srtGlobals.srt_iMaxBounceShadows;
-  shadowParams.polygonalLightSpotlightFactor = 2;
-  shadowParams.sphericalPolygonalLightsFirefliesClamp = _srtGlobals.srt_fLightSphFirefliesClamp;
+  RgDrawFrameIlluminationParams illumParams = {};
+  illumParams.maxBounceShadows = _srtGlobals.srt_iMaxBounceShadows;
+  illumParams.cellWorldSize = 2.0f;
+  illumParams.directDiffuseSensitivityToChange = 0.5f;
+  illumParams.indirectDiffuseSensitivityToChange = 0.1f;
+  illumParams.specularSensitivityToChange = 0.5f;
+  illumParams.polygonalLightSpotlightFactor = 2;
+  illumParams.sphericalPolygonalLightsFirefliesClamp = _srtGlobals.srt_fLightSphFirefliesClamp;
 
 
   RgDrawFrameSkyParams skyParams = {};
@@ -599,6 +603,8 @@ void SSRT::SSRTMain::EndFrame()
   tdParams.normalMapStrength = _srtGlobals.srt_fNormalMapStrength;
   tdParams.emissionMapBoost = _srtGlobals.srt_fEmissionMapBoost;
   tdParams.emissionMaxScreenColor = _srtGlobals.srt_fEmissionMaxScreenColor;
+  tdParams.useSqrtRoughnessForIndirect = _srtGlobals.srt_bIndirRoughnessSqrt;
+  tdParams.minRoughness = 0.01f;
 
 
   RgDrawFrameLensFlareParams lfParams = {};
@@ -648,13 +654,11 @@ void SSRT::SSRTMain::EndFrame()
 
   // if world wasn't rendered, don't adapt
   frameInfo.disableEyeAdaptation = !wasWorldProcessed;
-  frameInfo.disableRayTracing = !wasWorldProcessed;
-
-  frameInfo.useSqrtRoughnessForIndirect = _srtGlobals.srt_bIndirRoughnessSqrt;
+  frameInfo.disableRayTracedGeometry = !wasWorldProcessed;
 
   frameInfo.pRenderResolutionParams = &resolutionParams;
   frameInfo.pTonemappingParams = _srtGlobals.srt_bTonemappingUseDefault ? nullptr : &tmParams;
-  frameInfo.pShadowParams = &shadowParams;
+  frameInfo.pIlluminationParams = &illumParams;
   frameInfo.pBloomParams = &blParams;
   frameInfo.pSkyParams = &skyParams;
   frameInfo.pReflectRefractParams = &rflParams;
