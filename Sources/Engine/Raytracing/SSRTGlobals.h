@@ -31,6 +31,9 @@ struct SSRTGlobals
   INDEX srt_bCRTMode = 0;
   FLOAT srt_fChromaticAberration = 0.2f;
 
+  FLOAT srt_fCameraNear = 0.01f;
+  FLOAT srt_fVolumetricFar = 200.0f;
+
   INDEX srt_bDLSSAvailable = 0; // variable for settings menu
 
   INDEX srt_bReloadShaders = 0;

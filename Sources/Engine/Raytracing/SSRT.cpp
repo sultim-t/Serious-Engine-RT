@@ -44,6 +44,9 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user INDEX srt_bCRTMode;", &_srtGlobals.srt_bCRTMode);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fChromaticAberration;", &_srtGlobals.srt_fChromaticAberration);
 
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fCameraNear;", &_srtGlobals.srt_fCameraNear);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_fVolumetricFar;", &_srtGlobals.srt_fVolumetricFar);
+
   _pShell->DeclareSymbol("persistent user INDEX srt_bTonemappingUseDefault;", &_srtGlobals.srt_bTonemappingUseDefault);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingWhitePoint;", &_srtGlobals.srt_fTonemappingWhitePoint);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fTonemappingMinLogLuminance;", &_srtGlobals.srt_fTonemappingMinLogLuminance);
@@ -668,16 +671,23 @@ void SSRT::SSRTMain::EndFrame()
   frameInfo.postEffectParams.pChromaticAberration = &chrabrParams;
   frameInfo.postEffectParams.pCRT = &crtParams;
   
-  memcpy(frameInfo.view,        worldRenderInfo.viewMatrix,       16 * sizeof(float));
-  memcpy(frameInfo.projection,  worldRenderInfo.projectionMatrix, 16 * sizeof(float));
-  frameInfo.fovYRadians = RadAngle(worldRenderInfo.fovH);
-  frameInfo.cameraNear = worldRenderInfo.cameraNear;
+  memcpy(frameInfo.view, worldRenderInfo.viewMatrix, 16 * sizeof(float));
+  {
+    float aspect = static_cast<float>(resolutionParams.renderSize.width)
+                 / static_cast<float>(resolutionParams.renderSize.height);
+
+    float tanHalfX = tanf(RadAngle(worldRenderInfo.fovH) * 0.5f);
+    float tanHalfY = tanHalfX / aspect;
+    frameInfo.fovYRadians = atanf(tanHalfY) * 2.0f;
+  }
+  frameInfo.cameraNear = _srtGlobals.srt_fCameraNear;
   frameInfo.cameraFar = worldRenderInfo.cameraFar;
   if (!wasWorldProcessed)
   {
     frameInfo.cameraNear = 0.1f;
     frameInfo.cameraFar = 10.0f;
   }
+  frameInfo.volumetricFar = _srtGlobals.srt_fVolumetricFar;
 
   RgResult r = rgDrawFrame(instance, &frameInfo);
   RG_CHECKERROR(r);

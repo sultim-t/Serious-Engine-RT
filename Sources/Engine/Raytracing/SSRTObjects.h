@@ -202,11 +202,8 @@ struct CWorldRenderingInfo
 
   // horizontal FOV in degrees
   float           fovH;
-  float           cameraNear, cameraFar;
-
-  // optional matrices
-  // perspective projection matrix
-  float           projectionMatrix[16];
+  float           cameraFar;
+  
   // view matrix
   float           viewMatrix[16];
 };
