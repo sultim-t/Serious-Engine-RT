@@ -44,12 +44,9 @@ struct SSRTGlobals
   INDEX srt_bIgnoreWaterEffectTextureUpdates = 0;
 
   INDEX srt_iReflMaxDepth = 2;
-  bool  srt_bReflRefrShadows = 0;
-  bool  srt_bReflRefrToIndirect = 0;
   FLOAT srt_fReflRefrIndexOfRefractionGlass = 1.1f;
   FLOAT srt_fReflRefrIndexOfRefractionWater = 1.33f;
-  FLOAT srt_fWaterDensityMultiplier = 5.0f;
-  FLOAT3D srt_vWaterExtinction = { 0.025f, 0.016f, 0.011f };
+  FLOAT3D srt_vWaterColor = { 0.8f, 0.87f, 0.9f };
   FLOAT srt_fWaterSpeed = 1.0f;
   FLOAT srt_fWaterNormalStrength = 1.0f;
   FLOAT srt_fWaterNormalSharpness = 1.0f;
@@ -63,7 +60,7 @@ struct SSRTGlobals
   FLOAT srt_fSunAngularDiameter = 0.5f;
 
   INDEX srt_iLightSphMaxCount = 1024;
-  FLOAT srt_fLightSphGlobalIntensityMultiplier = 1.0f;
+  FLOAT srt_fLightSphGlobalIntensityMultiplier = 5.0f;
   FLOAT srt_fLightSphGlobalFalloffToIntensity = 1.0f;
   FLOAT srt_fLightSphSaturation = 0.5f;
   FLOAT srt_fLightSphColorPow = 2.2f;
@@ -102,7 +99,7 @@ struct SSRTGlobals
   FLOAT srt_fBrushMetallicDefault = 0.0f;
   FLOAT srt_fBrushRoughnessDefault = 0.9f;
 
-  INDEX srt_bIndirRoughnessSqrt = 0;
+  INDEX srt_bRoughnessLinear = 0;
 
   INDEX srt_bWeaponUseOriginalNormals = 0;
   FLOAT srt_fNormalMapStrength = 1.0f;
@@ -159,17 +156,14 @@ struct SSRTGlobals
   // Animation is disabled, if it's negative
   FLOAT srt_fAnimatedSunTimeLength = 0;
 
-  FLOAT srt_fBloomIntensity = 1.0f;
+  FLOAT srt_fBloomIntensity = 0.0f;
   FLOAT srt_fBloomInputThreshold = 15.0f;
-  FLOAT srt_fBloomInputThresholdLength = 0.25f;
-  FLOAT srt_fBloomUpsampleRadius = 1.0f;
   FLOAT srt_fBloomEmissionMultiplier = 32.0f;
-  FLOAT srt_fBloomSkyMultiplier = 0.1f;
 
   INDEX srt_bLensFlares = 1;
 
-  FLOAT srt_fFixSunIntensityGlobal = 0.75f;
-  FLOAT srt_fFixSkyIntensityGlobal = 0.5f;
+  FLOAT srt_fFixSunIntensityGlobal = 5.0f;
+  FLOAT srt_fFixSkyIntensityGlobal = 1.0f;
 };
 
 }

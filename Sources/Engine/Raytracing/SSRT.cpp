@@ -57,12 +57,9 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user INDEX srt_bIgnoreWaterEffectTextureUpdates;", &_srtGlobals.srt_bIgnoreWaterEffectTextureUpdates);
 
   _pShell->DeclareSymbol("persistent user INDEX srt_iReflMaxDepth;", &_srtGlobals.srt_iReflMaxDepth);
-  _pShell->DeclareSymbol("persistent user INDEX srt_bReflRefrShadows;", &_srtGlobals.srt_bReflRefrShadows);
-  _pShell->DeclareSymbol("persistent user INDEX srt_bReflRefrToIndirect;", &_srtGlobals.srt_bReflRefrToIndirect);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fReflRefrIndexOfRefractionGlass;", &_srtGlobals.srt_fReflRefrIndexOfRefractionGlass);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fReflRefrIndexOfRefractionWater;", &_srtGlobals.srt_fReflRefrIndexOfRefractionWater);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fWaterDensityMultiplier;", &_srtGlobals.srt_fWaterDensityMultiplier);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_vWaterExtinction[3];", &_srtGlobals.srt_vWaterExtinction);
+  _pShell->DeclareSymbol("persistent user FLOAT srt_vWaterColor[3];", &_srtGlobals.srt_vWaterColor);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fWaterSpeed;", &_srtGlobals.srt_fWaterSpeed);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fWaterNormalStrength;", &_srtGlobals.srt_fWaterNormalStrength);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fWaterNormalSharpness;", &_srtGlobals.srt_fWaterNormalSharpness);
@@ -83,7 +80,7 @@ void SSRT::SSRTMain::InitShellVariables()
   _pShell->DeclareSymbol("persistent user FLOAT srt_fBrushRoughnessDefault;", &_srtGlobals.srt_fBrushRoughnessDefault);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fBrushMetallicDefault;", &_srtGlobals.srt_fBrushMetallicDefault);
 
-  _pShell->DeclareSymbol("persistent user INDEX srt_bIndirRoughnessSqrt;", &_srtGlobals.srt_bIndirRoughnessSqrt);
+  _pShell->DeclareSymbol("persistent user INDEX srt_bRoughnessLinear;", &_srtGlobals.srt_bRoughnessLinear);
 
   _pShell->DeclareSymbol("persistent user INDEX srt_bEnableViewerShadows;", &_srtGlobals.srt_bEnableViewerShadows);
 
@@ -160,10 +157,7 @@ void SSRT::SSRTMain::InitShellVariables()
 
   _pShell->DeclareSymbol("persistent user FLOAT srt_fBloomIntensity;", &_srtGlobals.srt_fBloomIntensity);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fBloomInputThreshold;", &_srtGlobals.srt_fBloomInputThreshold);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fBloomInputThresholdLength;", &_srtGlobals.srt_fBloomInputThresholdLength);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fBloomUpsampleRadius;", &_srtGlobals.srt_fBloomUpsampleRadius);
   _pShell->DeclareSymbol("persistent user FLOAT srt_fBloomEmissionMultiplier;", &_srtGlobals.srt_fBloomEmissionMultiplier);
-  _pShell->DeclareSymbol("persistent user FLOAT srt_fBloomSkyMultiplier;", &_srtGlobals.srt_fBloomSkyMultiplier);
 
   _pShell->DeclareSymbol("persistent user INDEX srt_bLensFlares;", &_srtGlobals.srt_bLensFlares);
 
@@ -243,7 +237,7 @@ void SSRT::SSRTMain::NormalizeShellVariables()
   _srtGlobals.srt_fEmissionMaxScreenColor = Max(_srtGlobals.srt_fEmissionMaxScreenColor, 0.0f);
   _srtGlobals.srt_fEmissionForFullbright = Max(_srtGlobals.srt_fEmissionForFullbright, 0.0f);
 
-  _srtGlobals.srt_bIndirRoughnessSqrt = !!_srtGlobals.srt_bIndirRoughnessSqrt;
+  _srtGlobals.srt_bRoughnessLinear = !!_srtGlobals.srt_bRoughnessLinear;
 
   _srtGlobals.srt_fResolutionScale = Clamp(_srtGlobals.srt_fResolutionScale, 0.25f, 2.0f);
 
@@ -327,10 +321,8 @@ SSRT::SSRTMain::SSRTMain() :
   info.indirectIlluminationMaxAlbedoLayers = 2;
   info.rayCullBackFacingTriangles = false;
 
-  info.rasterizedMaxVertexCount = 1 << 16;
+  info.rasterizedMaxVertexCount = 1 << 17;
   info.rasterizedMaxIndexCount = info.rasterizedMaxVertexCount * 3 / 2;
-  info.rasterizedSkyMaxVertexCount = 1 << 16;
-  info.rasterizedSkyMaxIndexCount = info.rasterizedSkyMaxVertexCount * 3 / 2;
   info.rasterizedSkyCubemapSize = 256;
   info.rasterizedVertexColorGamma = RG_TRUE;
 
@@ -405,7 +397,6 @@ void SSRT::SSRTMain::StartFrame(CViewPort *pvp)
   RgStartFrameInfo startInfo = {};
   startInfo.requestShaderReload = _srtGlobals.srt_bReloadShaders;
   startInfo.requestVSync = _srtGlobals.srt_bVSync;
-  startInfo.requestRasterizedSkyGeometryReuse = false;
 
   RgResult r = rgStartFrame(instance, &startInfo);
   RG_CHECKERROR(r);
@@ -556,7 +547,7 @@ void SSRT::SSRTMain::EndFrame()
   RgDrawFrameRenderResolutionParams resolutionParams = {};
   resolutionParams.upscaleTechnique = (RgRenderUpscaleTechnique)_srtGlobals.srt_iUpscaleMode;
   resolutionParams.resolutionMode = (RgRenderResolutionMode)_srtGlobals.srt_iResolutionMode;
-  resolutionParams.renderSize = 
+  resolutionParams.customRenderSize = 
   {
     (uint32_t)(roundf(curWindowWidth * _srtGlobals.srt_fResolutionScale)),
     (uint32_t)(roundf(curWindowHeight * _srtGlobals.srt_fResolutionScale))
@@ -566,12 +557,30 @@ void SSRT::SSRTMain::EndFrame()
 
   RgDrawFrameIlluminationParams illumParams = {};
   illumParams.maxBounceShadows = _srtGlobals.srt_iMaxBounceShadows;
+  illumParams.enableSecondBounceForIndirect = true;
   illumParams.cellWorldSize = 2.0f;
   illumParams.directDiffuseSensitivityToChange = 0.5f;
   illumParams.indirectDiffuseSensitivityToChange = 0.1f;
   illumParams.specularSensitivityToChange = 0.5f;
   illumParams.polygonalLightSpotlightFactor = 2;
-  illumParams.sphericalPolygonalLightsFirefliesClamp = _srtGlobals.srt_fLightSphFirefliesClamp;
+
+
+  RgDrawFrameVolumetricParams volumeParams = {};
+  volumeParams.sourceDirection = { 0,-1,0 };
+  if (currentScene)
+  {
+    if (auto* sun = currentScene->TryGetSun())
+    {
+      volumeParams.enable = true;
+      volumeParams.useSimpleDepthBased = false;
+      volumeParams.volumetricFar = _srtGlobals.srt_fVolumetricFar;
+      volumeParams.ambientColor = { 0,0,0 };
+      volumeParams.scaterring = 0.2f;
+      volumeParams.sourceAssymetry = 0.0f;
+      volumeParams.sourceColor = { sun->color(1), sun->color(2), sun->color(3) };
+      volumeParams.sourceDirection = { sun->direction(1), sun->direction(2), sun->direction(3) };
+    }
+  }
 
 
   RgDrawFrameSkyParams skyParams = {};
@@ -596,17 +605,14 @@ void SSRT::SSRTMain::EndFrame()
   RgDrawFrameBloomParams blParams = {};
   blParams.bloomIntensity = _srtGlobals.srt_fBloomIntensity;
   blParams.inputThreshold = _srtGlobals.srt_fBloomInputThreshold;
-  blParams.inputThresholdLength = _srtGlobals.srt_fBloomInputThresholdLength;
-  blParams.upsampleRadius = _srtGlobals.srt_fBloomUpsampleRadius;
   blParams.bloomEmissionMultiplier = _srtGlobals.srt_fBloomEmissionMultiplier;
-  blParams.bloomSkyMultiplier = _srtGlobals.srt_fBloomSkyMultiplier;
 
 
   RgDrawFrameTexturesParams tdParams = {};
   tdParams.normalMapStrength = _srtGlobals.srt_fNormalMapStrength;
   tdParams.emissionMapBoost = _srtGlobals.srt_fEmissionMapBoost;
   tdParams.emissionMaxScreenColor = _srtGlobals.srt_fEmissionMaxScreenColor;
-  tdParams.useSqrtRoughnessForIndirect = _srtGlobals.srt_bIndirRoughnessSqrt;
+  tdParams.squareInputRoughness = _srtGlobals.srt_bRoughnessLinear;
   tdParams.minRoughness = 0.01f;
 
 
@@ -630,19 +636,16 @@ void SSRT::SSRTMain::EndFrame()
   RgDrawFrameReflectRefractParams rflParams = {};
   rflParams.maxReflectRefractDepth = _srtGlobals.srt_iReflMaxDepth;
   rflParams.typeOfMediaAroundCamera = (currentScene != nullptr && currentScene->IsCameraInHaze()) ? RG_MEDIA_TYPE_WATER : RG_MEDIA_TYPE_VACUUM;
-  rflParams.reflectRefractCastShadows = _srtGlobals.srt_bReflRefrShadows;
-  rflParams.reflectRefractToIndirect = _srtGlobals.srt_bReflRefrToIndirect;
   rflParams.indexOfRefractionGlass = _srtGlobals.srt_fReflRefrIndexOfRefractionGlass;
   rflParams.indexOfRefractionWater = _srtGlobals.srt_fReflRefrIndexOfRefractionWater;
-  rflParams.waterExtinction = { _srtGlobals.srt_vWaterExtinction(1) * _srtGlobals.srt_fWaterDensityMultiplier,
-                                _srtGlobals.srt_vWaterExtinction(2) * _srtGlobals.srt_fWaterDensityMultiplier,
-                                _srtGlobals.srt_vWaterExtinction(3) * _srtGlobals.srt_fWaterDensityMultiplier };
   rflParams.waterWaveSpeed = _srtGlobals.srt_fWaterSpeed;
   rflParams.waterWaveNormalStrength = _srtGlobals.srt_fWaterNormalStrength;
+  rflParams.waterColor = { Clamp( _srtGlobals.srt_vWaterColor(1), 0.0f, 1.0f),
+                                Clamp(_srtGlobals.srt_vWaterColor(2), 0.0f, 1.0f),
+                                Clamp(_srtGlobals.srt_vWaterColor(3), 0.0f, 1.0f) };
   rflParams.waterWaveTextureDerivativesMultiplier = _srtGlobals.srt_fWaterNormalSharpness;
   rflParams.forceNoWaterRefraction = currentScene == nullptr ? false : currentScene->GetCustomInfo()->IsNoWaterRefractionForced(currentScene->GetCameraPosition());
   rflParams.disableBackfaceReflectionsForNoMediaChange = currentScene == nullptr ? false : currentScene->GetCustomInfo()->IsNoBackfaceReflForNoMediaChange(currentScene->GetCameraPosition());
-  FLOAT3D vPortalIn = FLOAT3D(0, 0, 0), vPortalOut = FLOAT3D(0, 0, 0), vPortalOutDir = FLOAT3D(0, 0, 1), vPortalOutUp = FLOAT3D(0, 1, 0);
   if (currentScene != nullptr)
   {
     currentScene->AddNearestToCameraPortalInfo();
@@ -662,6 +665,7 @@ void SSRT::SSRTMain::EndFrame()
   frameInfo.pRenderResolutionParams = &resolutionParams;
   frameInfo.pTonemappingParams = _srtGlobals.srt_bTonemappingUseDefault ? nullptr : &tmParams;
   frameInfo.pIlluminationParams = &illumParams;
+  frameInfo.pVolumetricParams = &volumeParams;
   frameInfo.pBloomParams = &blParams;
   frameInfo.pSkyParams = &skyParams;
   frameInfo.pReflectRefractParams = &rflParams;
@@ -673,8 +677,8 @@ void SSRT::SSRTMain::EndFrame()
   
   memcpy(frameInfo.view, worldRenderInfo.viewMatrix, 16 * sizeof(float));
   {
-    float aspect = static_cast<float>(resolutionParams.renderSize.width)
-                 / static_cast<float>(resolutionParams.renderSize.height);
+    float aspect = static_cast<float>(curWindowWidth)
+                 / static_cast<float>(curWindowHeight);
 
     float tanHalfX = tanf(RadAngle(worldRenderInfo.fovH) * 0.5f);
     float tanHalfY = tanHalfX / aspect;
@@ -687,7 +691,6 @@ void SSRT::SSRTMain::EndFrame()
     frameInfo.cameraNear = 0.1f;
     frameInfo.cameraFar = 10.0f;
   }
-  frameInfo.volumetricFar = _srtGlobals.srt_fVolumetricFar;
 
   RgResult r = rgDrawFrame(instance, &frameInfo);
   RG_CHECKERROR(r);

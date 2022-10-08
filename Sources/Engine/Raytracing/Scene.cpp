@@ -239,6 +239,11 @@ bool SSRT::Scene::IsBrushMovable(CEntity *penBrush)
     (penBrush->en_penParent != nullptr && penBrush->en_penParent->en_penParent != nullptr && penBrush->en_penParent->en_penParent->en_ulPhysicsFlags & EPF_BRUSH_MOVING);
 }
 
+const SSRT::CDirectionalLight* SSRT::Scene::TryGetSun() const
+{
+  return dirLights.empty() ? nullptr : &dirLights[0];
+}
+
 const SSRT::CustomInfo *SSRT::Scene::GetCustomInfo() const
 {
   ASSERT(pCustomInfo != nullptr);

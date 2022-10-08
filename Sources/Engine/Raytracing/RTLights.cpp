@@ -599,6 +599,19 @@ static void AddLensFlare(const CLightSource *plsLight, SSRT::Scene *pScene)
       pScene->GetSEProjectionBackground() :
       pScene->GetSEProjection();
 
+
+
+
+
+
+    // TODO: need world space, as projection matrix is inside RTGL1,
+    // and pprProjection doesn't match it, so we can see through walls!
+
+
+
+
+
+
     FLOAT3D vRotated;
     pprProjection->PreClip(position, vRotated);
     // if it is behind near clip plane

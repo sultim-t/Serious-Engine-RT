@@ -1004,47 +1004,25 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
       if (renderInfo.prProjection.IsIsometric())
       {
         ASSERTALWAYS("Only perspective projections are allowed for ray tracing");
-
         auto &ipr = static_cast<const CIsometricProjection3D&>(*renderInfo.prProjection);
-        const FLOAT2D vMin = ipr.pr_ScreenBBox.Min() - ipr.pr_ScreenCenter;
-        const FLOAT2D vMax = ipr.pr_ScreenBBox.Max() - ipr.pr_ScreenCenter;
-        const FLOAT fFactor = 1.0f / (ipr.ipr_ZoomFactor * ipr.pr_fViewStretch);
-        const FLOAT fNear = ipr.pr_NearClipDistance;
-        const FLOAT fLeft = +vMin(1) * fFactor;
-        const FLOAT fRight = +vMax(1) * fFactor;
-        const FLOAT fTop = -vMin(2) * fFactor;
-        const FLOAT fBottom = -vMax(2) * fFactor;
+
         // if far clip plane is not specified use maximum expected dimension of the world
         FLOAT fFar = ipr.pr_FarClipDistance;
         if (fFar < 0) fFar = 1E5f;  // max size 32768, 3D (sqrt(3)), rounded up
 
-        // calculate projection matrix
-        extern void Svk_MatOrtho(float *result, float fLeft, float fRight, float fBottom, float fTop, float fNear, float fFar);
-        Svk_MatOrtho(renderInfo.projectionMatrix, fLeft, fRight, fTop, fBottom, fNear, fFar);
-
-        renderInfo.cameraNear = fNear;
+        renderInfo.fovH = 90.0f;
         renderInfo.cameraFar = fFar;
       }
       else
       {
         ASSERT(renderInfo.prProjection.IsPerspective());
         const auto &ppr = static_cast<const CPerspectiveProjection3D&>(*renderInfo.prProjection);
-        const FLOAT fNear = ppr.pr_NearClipDistance;
-        const FLOAT fLeft = ppr.pr_plClipL(3) / ppr.pr_plClipL(1) * fNear;
-        const FLOAT fRight = ppr.pr_plClipR(3) / ppr.pr_plClipR(1) * fNear;
-        const FLOAT fTop = ppr.pr_plClipU(3) / ppr.pr_plClipU(2) * fNear;
-        const FLOAT fBottom = ppr.pr_plClipD(3) / ppr.pr_plClipD(2) * fNear;
+
         // if far clip plane is not specified use maximum expected dimension of the world
         FLOAT fFar = ppr.pr_FarClipDistance;
         if (fFar < 0) fFar = 1E5f;  // max size 32768, 3D (sqrt(3)), rounded up
 
         renderInfo.fovH = ppr.FOVR();
-
-        // calculate projection matrix
-        extern void Svk_MatFrustum(float *result, float fLeft, float fRight, float fBottom, float fTop, float fNear, float fFar);
-        Svk_MatFrustum(renderInfo.projectionMatrix, fLeft, fRight, fTop, fBottom, fNear, fFar);
-
-        renderInfo.cameraNear = fNear;
         renderInfo.cameraFar = fFar;
       }
     }
@@ -1073,12 +1051,7 @@ void RenderView(CWorld &woWorld, CEntity &enViewer,
       {
         FLOATmatrix3D m;
         MakeInverseRotationMatrix(m, r);
-
-        // inverse Y axis for Vulkan
-        m(2, 1) = -m(2, 1);
-        m(2, 2) = -m(2, 2);
-        m(2, 3) = -m(2, 3);
-
+        
         // 4th column of (T*M)^-1 = M^(-1)*T^(-1),
         FLOAT3D t =
         {

@@ -70,6 +70,7 @@ public:
   bool HasBrushWarpPortal(CEntity *penBrush) const;
   bool IsCameraInHaze() const;
   static bool IsBrushMovable(CEntity *penBrush);
+  const CDirectionalLight* TryGetSun() const;
 
   const CustomInfo *GetCustomInfo() const;
   CustomInfo *GetCustomInfo();
